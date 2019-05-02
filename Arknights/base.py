@@ -203,7 +203,7 @@ class ArknightsHelper(object):
         self.shell_color.warning_text("[*] 装在模块....")
         self.shell_color.warning_text("[+] 战斗模块...启动！")
         # c_id = "2-2"
-        c_id = "CE-3"
+        # c_id = "CE-3"
         self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
         flag = False
 
