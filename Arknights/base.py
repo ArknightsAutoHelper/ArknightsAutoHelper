@@ -1,8 +1,11 @@
+import os
+
+os.path.join(os.path.abspath('../'))
+
 from ADBShell import ADBShell
 from config import *
 from time import sleep
 from Arknights.click_location import *
-import os
 
 
 class BattleChapter(object):
