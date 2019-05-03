@@ -83,7 +83,7 @@ class ArknightsHelper(object):
             XY=CLICK_LOCATION['LOGIN_START_WAKEUP']
         )
         self.__wait(SECURITY_WAIT)
-        self.adb.get_screen_shoot("login.png")
+        # self.adb.get_screen_shoot("login.png")
 
     def battle_selector(self, c_id, first_battle_signal=False):
         if self.ch_id.id_checker(c_id) == 1:
@@ -288,6 +288,6 @@ if __name__ == '__main__':
     TASK_LIST = OrderedDict()
     # TASK_LIST["S2-1"] = 6
     # TASK_LIST["PR-A-1"] = 100
-    TASK_LIST["SK-3"] = 5
+    TASK_LIST["SK-3"] = 4
     h = ArknightsHelper()
     h.main_handler(TASK_LIST)

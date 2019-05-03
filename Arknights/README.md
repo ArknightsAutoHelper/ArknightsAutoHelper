@@ -10,9 +10,11 @@
 - `restart` 包含了完整的启动。只要你的模拟器开着就能直接用，当然，没有写密码输入模块。
 
 ## 目前支持的关卡
+芯片和日常，我感觉坐标点都是一样的么...
+
 如果我有需要我会继续更新
 
-- 标准任务关卡
+- 标准任务关卡（可以刷材料）
     - `2-1`
     - `2-2`
 - 日常任务关卡
@@ -59,7 +61,7 @@
 
 今天失了智。又抽了20连。。。。。第一发是这样子
 
-（）
+![非洲30连](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/feizhou_30_lian.jpg?raw=true)
 
 三个舔狗仿佛在嘲笑我有多非
 
@@ -70,6 +72,10 @@
 太坑了！！！！
 
 从群里加了几个非洲人，感觉又有感觉！
+
+纪念一下今天份的战果
+
+![5_3](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_3.png?raw=true)
 
 
 
