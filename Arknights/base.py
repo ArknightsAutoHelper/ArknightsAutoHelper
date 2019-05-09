@@ -21,9 +21,9 @@ class BattleChapter(object):
 
     @staticmethod
     def id_checker(id):
-        if id[0].isnumeric() or id[0:2] == "S-":
+        if id[0].isnumeric() or (id[0] == "S" and id[1].isnumeric()):
             return 1
-        elif id[0:2].upper() == "CE" or id[0:2].upper() == "SK":
+        elif id[0:2].upper() == "CE" or id[0:2].upper() == "SK" or id[0:2].upper() == "LS":
             return 2
         elif id[0:2].upper() == "PR":
             return 3
@@ -101,77 +101,9 @@ class ArknightsHelper(object):
         self.__wait(SECURITY_WAIT)
         # self.adb.get_screen_shoot("login.png")
 
-    def battle_selector(self, c_id, first_battle_signal=False):
-        if self.ch_id.id_checker(c_id) == 1:
-            if first_battle_signal:
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']
-                )
-                # 章节选择
-                if c_id[0].isnumeric():
-                    self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[0])]
-                    )
-                elif c_id[0] == "S":
-                    self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[1])]
-                    )
-                else:
-                    raise IndexError("C_ID Error")
-                self.__wait(3)
-                # 章节选择结束
-                # 拖动
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
-                sleep(SMALL_WAIT)
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
-                sleep(SMALL_WAIT)
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
-                )
-            else:
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
-                )
-
-        elif self.ch_id.id_checker(c_id) == 2:
-            if first_battle_signal:
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION']
-                )
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(c_id[0:2])]
-                )
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(c_id)]
-                )
-            else:
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(c_id)]
-                )
-        elif self.ch_id.id_checker(c_id) == 3:
-            if first_battle_signal:
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH']
-                )
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_{}'.format(c_id[0:4])]
-                )
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_{}'.format(c_id)]
-                )
-            else:
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_{}'.format(c_id)]
-                )
-
     def module_battle(self, c_id, set_count=1000):
         strength_end_signal = False
         first_battle_signal = True
-        return_to_index_signal = False
         count = 0
         while not strength_end_signal:
             # 初始化 变量
@@ -179,7 +111,7 @@ class ArknightsHelper(object):
             battle_end_signal_max_execute_time = 10
             # TODO 战斗状态存活检测
             # 初始化 返回主页面
-            if first_battle_signal or return_to_index_signal:
+            if first_battle_signal:
                 for i in range(4):
                     self.adb.get_mouse_click(
                         XY=CLICK_LOCATION['MAIN_RETURN_INDEX']
@@ -270,8 +202,7 @@ class ArknightsHelper(object):
             if count >= set_count:
                 strength_end_signal = True
 
-            if first_battle_signal:
-                first_battle_signal = False
+            first_battle_signal = False
 
             self.shell_color.info_text("[-] 战斗结束 重新开始")
 
@@ -292,6 +223,7 @@ class ArknightsHelper(object):
                 raise IndexError("无此关卡")
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
             flag = self.module_battle(c_id, count)
+            # flag = self.module_battle_for_test(c_id, count)
 
         if flag:
             self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
@@ -312,11 +244,120 @@ class ArknightsHelper(object):
         self.module_login()
         self.main_handler()
 
+    def __module_battle_for_test(self, c_id, set_count=1000):
+        strength_end_signal = False
+        first_battle_signal = True
+        count = 0
+        while not strength_end_signal:
+            # 初始化 变量
+            # TODO 战斗状态存活检测
+            # 初始化 返回主页面
+            if first_battle_signal:
+                for i in range(4):
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX']
+                    )
+                # 进入战斗选择页面
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_CLICK_IN']
+                )
+            # 选关部分
+            self.battle_selector(c_id, first_battle_signal)
+            # 选关结束
+            count += 1
+            self.shell_color.info_text("[*] 当前战斗次数  {}".format(count))
+            if count >= set_count:
+                strength_end_signal = True
+            first_battle_signal = False
+            self.shell_color.info_text("[-] 战斗结束 重新开始")
+        return True
+
+    def battle_selector(self, c_id, first_battle_signal=True):
+        mode = self.ch_id.id_checker(c_id)
+        if mode == 1:
+            if first_battle_signal:
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']
+                )
+                # 章节选择
+                if c_id[0].isnumeric():
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[0])]
+                    )
+                elif c_id[0] == "S":
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[1])]
+                    )
+                else:
+                    raise IndexError("C_ID Error")
+                self.__wait(3)
+                # 章节选择结束
+                # 拖动
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                sleep(SMALL_WAIT)
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                sleep(SMALL_WAIT)
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
+                )
+            else:
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
+                )
+
+        elif mode == 2:
+            try:
+                X = DAILY_LIST[mode][__import__('datetime').datetime.now().strftime("%w")][c_id[0:2]]
+            except Exception as e:
+                self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
+                X = None
+                exit(0)
+            if first_battle_signal:
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION']
+                )
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(X)]
+                )
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])]
+                )
+            else:
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])]
+                )
+        elif mode == 3:
+            try:
+                X = DAILY_LIST[mode][__import__('datetime').datetime.now().strftime("%w")][c_id[3]]
+            except Exception as e:
+                self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
+                X = None
+                exit(0)
+            if first_battle_signal:
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH']
+                )
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-{}'.format(X)]
+                )
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]
+                )
+            else:
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]
+                )
+
 
 if __name__ == '__main__':
     TASK_LIST = OrderedDict()
-    # TASK_LIST["S2-1"] = 6
+    # TASK_LIST["S2-1"] = 2
+    # TASK_LIST['2-2'] = 10
     # TASK_LIST["PR-A-1"] = 100
-    TASK_LIST["SK-3"] = 4
+    TASK_LIST["LS-5"] = 5
     h = ArknightsHelper()
     h.main_handler(TASK_LIST)
