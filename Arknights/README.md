@@ -85,7 +85,7 @@
 
 EMMM 好像很久没有COMMIT 新的代码了。游戏也不知不觉长草了。现在在精二的路上越走越远，现在大概是这样子的
 
-![5_9](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_9.png?raw=true)
+![5_9](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_9.jpg?raw=true)
 
 今天打算更新一点东西，包括了更加快速的战斗流程（当然，有时候网不好会出现不同步的问题）
 
