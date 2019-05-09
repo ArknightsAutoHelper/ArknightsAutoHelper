@@ -77,6 +77,37 @@
 
 ![5_3](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_3.png?raw=true)
 
+### 2018.5.9 
 
+5.6号，刷出了一个高级资深TAG 出了一个夜莺
 
+昨天出了一个小艾。但是我还是没有高星的物理输出，哭了
+
+EMMM 好像很久没有COMMIT 新的代码了。游戏也不知不觉长草了。现在在精二的路上越走越远，现在大概是这样子的
+
+![5_9](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_9.png?raw=true)
+
+今天打算更新一点东西，包括了更加快速的战斗流程（当然，有时候网不好会出现不同步的问题）
+
+以及全新的日常任务点击机制，可以在点击目录下看到我新写的一个字典文件。谁让所有的坐标都是一样的呢？
+```python
+DAILY_LIST = {
+    3: {
+        # __import__('datetime').datetime.now().strftime("%w")
+        '4':
+            {
+                'A': 1,
+                'C': 2,
+            }
+    },
+    2: {
+        '1':
+            {
+                'LS': 0,
+            },
+        }
+}
+```
+
+于是乎今天碎了10块石头去刷材料。希望赶紧精二吧。
 
