@@ -250,7 +250,7 @@ class ArknightsHelper(object):
         count = 0
         while not strength_end_signal:
             # 初始化 变量
-            # TODO 战斗状态存活检测
+            # 战斗状态存活检测
             # 初始化 返回主页面
             if first_battle_signal:
                 for i in range(4):
