@@ -1,4 +1,4 @@
-from Arknights.click_location import MAIN_TASK_SWIPE
+from datetime import datetime, timedelta
 
 
 class BattleSelector(object):
@@ -14,6 +14,8 @@ class BattleSelector(object):
     def id_checker(self, id=None):
         if id is not None:
             self.id = id
+        else:
+            id = self.id
         if id[0].isnumeric() or (id[0] == "S" and id[1].isnumeric()):
             return 1
         elif id[0:2].upper() == "CE" or id[0:2].upper() == "SK" or id[0:2].upper() == "LS" or id[0:2].upper() == 'AP':
@@ -27,3 +29,12 @@ class BattleSelector(object):
 
     def get_id_swipe(self):
         pass
+
+    @staticmethod
+    def get_week():
+        return (datetime.now() - timedelta(hours=6)).strftime("%w")
+
+
+# if __name__ == '__main__':
+#     b = BattleSelector()
+#     print(b.get_week())

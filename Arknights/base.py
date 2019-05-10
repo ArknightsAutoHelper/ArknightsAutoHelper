@@ -260,6 +260,18 @@ class ArknightsHelper(object):
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']
                 )
+
+                # 拖动到正确的地方
+                if c_id[0] in MAIN_TASK_CHAPTER_SWIPE.keys() or c_id[1] in MAIN_TASK_CHAPTER_SWIPE.keys():
+                    if c_id[0].isnumeric():
+                        x = MAIN_TASK_CHAPTER_SWIPE[c_id[0]]
+                    else:
+                        x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
+                    self.shell_color.helper_text("[-] 拖动%{}次".format(x))
+                    for x in range(0, x):
+                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'])
+                        self.__wait(MEDIUM_WAIT)
+
                 # 章节选择
                 if c_id[0].isnumeric():
                     self.adb.get_mouse_click(
@@ -279,6 +291,15 @@ class ArknightsHelper(object):
                 self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
                 sleep(SMALL_WAIT)
                 self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+
+                # 拖动到正确的地方
+                if c_id in MAIN_TASK_BATTLE_SWIPE.keys():
+                    x = MAIN_TASK_BATTLE_SWIPE[c_id]
+                    self.shell_color.helper_text("[-] 拖动%{}次".format(x))
+                    for x in range(0, x):
+                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'])
+                        self.__wait(MEDIUM_WAIT)
+
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
                 )
@@ -290,7 +311,7 @@ class ArknightsHelper(object):
 
         elif mode == 2:
             try:
-                X = DAILY_LIST[mode][__import__('datetime').datetime.now().strftime("%w")][c_id[0:2]]
+                X = DAILY_LIST[mode][self.selector.get_week()][c_id[0:2]]
             except Exception as e:
                 self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
                 X = None
@@ -312,7 +333,7 @@ class ArknightsHelper(object):
                 )
         elif mode == 3:
             try:
-                X = DAILY_LIST[mode][__import__('datetime').datetime.now().strftime("%w")][c_id[3]]
+                X = DAILY_LIST[mode][self.selector.get_week()][c_id[3]]
             except Exception as e:
                 self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
                 X = None
@@ -331,13 +352,3 @@ class ArknightsHelper(object):
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]
                 )
-
-
-if __name__ == '__main__':
-    TASK_LIST = OrderedDict()
-    # TASK_LIST["S2-1"] = 2
-    # TASK_LIST['2-2'] = 10
-    TASK_LIST["PR-A-1"] = 100
-    TASK_LIST["LS-5"] = 5
-    h = ArknightsHelper()
-    h.main_handler(TASK_LIST)

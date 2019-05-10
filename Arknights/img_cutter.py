@@ -1,3 +1,6 @@
+'''
+在这里做一些测试，包括图像的匹配度算法操作
+'''
 from config import *
 from PIL import Image
 import hashlib
