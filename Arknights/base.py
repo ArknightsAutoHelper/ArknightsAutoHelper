@@ -337,7 +337,7 @@ if __name__ == '__main__':
     TASK_LIST = OrderedDict()
     # TASK_LIST["S2-1"] = 2
     # TASK_LIST['2-2'] = 10
-    # TASK_LIST["PR-A-1"] = 100
+    TASK_LIST["PR-A-1"] = 100
     TASK_LIST["LS-5"] = 5
     h = ArknightsHelper()
     h.main_handler(TASK_LIST)
