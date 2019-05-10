@@ -8,29 +8,8 @@ from time import sleep
 from Arknights.click_location import *
 from collections import OrderedDict
 from random import randint
-
-
-class BattleChapter(object):
-    def __init__(self):
-        self.battle_selectors = {
-            1: 'MAIN_TASK',  # 主线任务
-            2: 'MATERIAL_COLLECTION',  # 物资筹备
-            3: 'CHIP_SEARCH',  # 芯片收集
-            4: 'EXTERMINATE_BATTLE'
-        }
-
-    @staticmethod
-    def id_checker(id):
-        if id[0].isnumeric() or (id[0] == "S" and id[1].isnumeric()):
-            return 1
-        elif id[0:2].upper() == "CE" or id[0:2].upper() == "SK" or id[0:2].upper() == "LS":
-            return 2
-        elif id[0:2].upper() == "PR":
-            return 3
-        # elif id[0].upper() == "E":
-        #     return 4
-        else:
-            return False
+from math import floor
+from Arknights.BattleSelector import BattleSelector
 
 
 class ArknightsHelper(object):
@@ -41,7 +20,7 @@ class ArknightsHelper(object):
         self.__check_game_active()
         self.MAX_STRENGTH = 80
         self.CURRENT_STRENGTH = 80
-        self.ch_id = BattleChapter()
+        self.selector = BattleSelector()
 
     def __del(self):
         self.adb.ch_tools("shell")
@@ -72,7 +51,7 @@ class ArknightsHelper(object):
 
     @staticmethod
     def __wait(n=10):
-        sleep(n)
+        sleep(randint(n - n % floor(n / 2), n + n % floor(n / 2)))
 
     def __simulate_man(self):
         '''
@@ -222,6 +201,7 @@ class ArknightsHelper(object):
             if c_id not in LIZHI_CONSUME.keys():
                 raise IndexError("无此关卡")
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
+            self.selector.id = c_id
             flag = self.module_battle(c_id, count)
             # flag = self.module_battle_for_test(c_id, count)
 
@@ -273,7 +253,7 @@ class ArknightsHelper(object):
         return True
 
     def battle_selector(self, c_id, first_battle_signal=True):
-        mode = self.ch_id.id_checker(c_id)
+        mode = self.selector.id_checker()
         if mode == 1:
             if first_battle_signal:
                 self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])

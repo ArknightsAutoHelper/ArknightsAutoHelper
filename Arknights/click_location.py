@@ -20,40 +20,26 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_MAIN_TASK_2": (1213, 311),
     "BATTLE_SELECT_MAIN_TASK_2-2": (1265, 338),
     "BATTLE_SELECT_MAIN_TASK_S2-1": (1054, 431),
-    # "BATTLE_SELECT_MAIN_TASK_Chapter1": (153, 346),
-    # "BATTLE_SELECT_MAIN_TASK_Chapter2": (657, 366),
-    # "BATTLE_SELECT_MAIN_TASK_2-2": (881, 346),
-    # "BATTLE_SELECT_MAIN_TASK_2-1": (622, 345),
 
     "BATTLE_SELECT_MATERIAL_COLLECTION": (236, 658),
     # 预定义部分
     "BATTLE_SELECT_MATERIAL_COLLECTION_0": (168, 375),
     "BATTLE_SELECT_MATERIAL_COLLECTION_1": (452, 375),
     "BATTLE_SELECT_MATERIAL_COLLECTION_2": (739, 375),
+    "BATTLE_SELECT_MATERIAL_COLLECTION_3": (0, 0),
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-1": (135, 570),
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-2": (135, 570),
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-3": (664, 402),
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-4": (778, 293),
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-5": (880, 167),
-    # COLLECTION NOT FINISH
-    "BATTLE_SELECT_MATERIAL_COLLECTION_CE": (998, 384),
-    "BATTLE_SELECT_MATERIAL_COLLECTION_CE-3": (664, 402),
-    "BATTLE_SELECT_MATERIAL_COLLECTION_CE-4": (776, 284),
-    # SK
-    "BATTLE_SELECT_MATERIAL_COLLECTION_SK": (745, 384),  # 3 LOCATION
-    "BATTLE_SELECT_MATERIAL_COLLECTION_SK-3": (664, 402),
 
     "BATTLE_SELECT_CHIP_SEARCH": (387, 658),
     # 预定义部分
+    "BATTLE_SELECT_CHIP_SEARCH_PR-1": (0, 0),
     "BATTLE_SELECT_CHIP_SEARCH_PR-2": (503, 414),
+    "BATTLE_SELECT_CHIP_SEARCH_PR-3": (0, 0),
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-1": (324, 415),
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-2": (767, 251),
-    # 实际部分方便操作
-    "BATTLE_SELECT_CHIP_SEARCH_PR-A": (248, 456),
-    "BATTLE_SELECT_CHIP_SEARCH_PR-A-1": (452, 432),
-    "BATTLE_SELECT_CHIP_SEARCH_PR-C": (478, 412),
-    "BATTLE_SELECT_CHIP_SEARCH_PR-C-1": (324, 415),
-    "BATTLE_SELECT_CHIP_SEARCH_PR-C-2": (767, 251)
 }
 
 MAIN_TASK_LOCATION = {
@@ -76,13 +62,30 @@ SWIPE_LOCATION = {
 
 LIZHI_CONSUME = {
     # 理智消耗 c_id : number
+    # CA
+    'CA-1': 10,
+    'CA-2': 15,
+    'CA-3': 20,
+    'CA-4': 25,
+    'CA-5': 30,
+    # CE
     'CE-3': 20,
     'CE-2': 15,
     'CE-1': 10,
     'CE-4': 25,
     'CE-5': 30,
+    # LS
+    'LS-1': 10,
+    'LS-2': 15,
+    'LS-3': 20,
+    'LS-4': 25,
     'LS-5': 30,
+    # SK
+    'SK-1': 10,
+    'SK-2': 15,
     'SK-3': 20,
+    'SK-4': 25,
+    'SK-5': 30,
     # PR
     'PR-A-1': 18,
     'PR-A-2': 36,
@@ -104,30 +107,86 @@ BATTLE_SELECTORS = {
     4: 'EXTERMINATE_BATTLE'
 }
 
+# 拖动次数
+# 只更新一些需要刷素材的关卡
+MAIN_TASK_SWIPE = {
+
+}
+
 DAILY_LIST = {
     # 日常位置定位
-    # 键值表示 BATTLE_SELECTORS
+    # 数据来自于http://wiki.joyme.com/arknights/%E9%A6%96%E9%A1%B5
+    # 顺序可能有问题
     3: {
         # __import__('datetime').datetime.now().strftime("%w")
+        # 关卡名	开放时间	        掉落物资                关卡ID
+        # 固若金汤	一、四、五、日	重装、医疗精英化材料     A
+        # 摧枯拉朽	一、二、五、六	术师、狙击精英化材料     B
+        # 势不可挡	三、四、六、日	先锋、辅助精英化材料     C
+        # 身先士卒	二、三、六、日	近卫、特种精英化材料     D
+        '1':
+            {
+                'A': 1,
+                'B': 2,
+            },
+        '2':
+            {
+                'B': 1,
+                'D': 2,
+            },
+        '3':
+            {
+                'C': 1,
+                'D': 2,
+            },
         '4':
             {
                 'A': 1,
                 'C': 2,
-            }
+            },
+        '5':
+            {
+                'A': 1,
+                'B': 2,
+            },
+        '6':
+            {
+                'B': 1,
+                'C': 2,
+                'D': 3,
+            },
+        '7':
+            {
+                'A': 1,
+                'C': 1,
+                'D': 3,
+            },
     },
     2: {
+        # 关卡名	开放时间	        掉落物资       关卡ID
+        # 战术演习	常驻开放        	作战记录       LS
+        # 空中威胁	二、三、五、日	技巧概要       CA
+        # 粉碎防御	一、四、六、日	采购凭证       AP
+        # 资源保障	一、三、五、六	碳、家具零件   SK
+        # 货物运送	二、四、六、日	龙门币         CE
         # __import__('datetime').datetime.now().strftime("%w")
         '1':
             {
                 'LS': 0,
+                'AP': 1,
+                'SK': 2,
             },
         '2':
             {
                 'LS': 0,
+                'CA': 1,
+                'CE': 2,
             },
         '3':
             {
                 'LS': 0,
+                'CA': 1,
+                'SK': 2,
             },
         '4':
             {
@@ -138,14 +197,22 @@ DAILY_LIST = {
         '5':
             {
                 'LS': 0,
+                'CA': 1,
+                'SK': 2,
             },
         '6':
             {
                 'LS': 0,
+                'AP': 1,
+                'SK': 2,
+                'CE': 3,
             },
         '7':
             {
                 'LS': 0,
+                'AP': 1,
+                'CA': 2,
+                'CE': 3,
             },
     }
 }
