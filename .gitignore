@@ -105,7 +105,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-#.gitignore
 .idea/
 code_bin/
 screen_shoot/
