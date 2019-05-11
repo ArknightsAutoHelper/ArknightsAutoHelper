@@ -14,14 +14,44 @@ from Arknights.flags import *
 
 
 class ArknightsHelper(object):
-    def __init__(self):
+    def __init__(self, current_strength=None):
         self.adb = ADBShell()
         self.shell_color = ShellColor()
         self.__is_game_active = False
         self.__check_game_active()
-        self.MAX_STRENGTH = 80
-        self.CURRENT_STRENGTH = 80
+        # self.MAX_STRENGTH = 80
+        self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
+        self.ocr_active = False
+        self.__is_ocr_active(current_strength)
+
+    def __is_ocr_active(self, current_strength):
+        os.popen(
+            "tesseract {} {}".format(
+                STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "1"
+            )
+        )
+        self.__wait(3)
+        with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
+            tmp = f.read()  #
+            try:
+                test_1 = int(tmp.split("/")[0])
+                if test_1 == 18:
+                    self.ocr_active = True
+                else:
+                    self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
+                    if current_strength is not None:
+                        self.CURRENT_STRENGTH = current_strength
+                    else:
+                        self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
+                        exit(0)
+            except Exception as e:
+                self.shell_color.failure_text("[!] OCR 模块未检测...装载初始理智值")
+                if current_strength is not None:
+                    self.CURRENT_STRENGTH = current_strength
+                else:
+                    self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
+                    exit(0)
 
     def __del(self):
         self.adb.ch_tools("shell")
@@ -119,23 +149,29 @@ class ArknightsHelper(object):
                     self.shell_color.helper_text("[+] 代理指挥已设置")
 
             # 查看理智剩余
-            self.adb.get_screen_shoot(
-                file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
-            )
-            os.popen(
-                "tesseract {} {}".format(
-                    SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
+            if self.ocr_active:
+                self.adb.get_screen_shoot(
+                    file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
                 )
-            )
-            self.__wait(3)
-            with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
-                tmp = f.read()  #
-                try:
-                    self.CURRENT_STRENGTH = int(tmp.split("/")[0])
-                    self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
-                except Exception as e:
-                    self.shell_color.failure_text("[!] {}".format(e))
-                    self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+                os.popen(
+                    "tesseract {} {}".format(
+                        SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
+                    )
+                )
+                self.__wait(3)
+                with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
+                    tmp = f.read()  #
+                    try:
+                        self.CURRENT_STRENGTH = int(tmp.split("/")[0])
+                        self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
+                    except Exception as e:
+                        self.shell_color.failure_text("[!] {}".format(e))
+                        self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+            else:
+                self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+                self.shell_color.warning_text("[*] OCR 模块为装载，系统将直接计算理智值")
+                self.__wait(TINY_WAIT)
+                self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
 
             if self.CURRENT_STRENGTH - LIZHI_CONSUME[c_id] < 0:
                 strength_end_signal = True
@@ -169,7 +205,7 @@ class ArknightsHelper(object):
                     battle_end_signal = True
                 battle_end_signal_max_execute_time -= 1
                 self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['MAIN_RETURN_INDEX'],FLAG=None
+                    XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
                 )
                 if battle_end_signal_max_execute_time < 1:
                     self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
@@ -236,7 +272,7 @@ class ArknightsHelper(object):
             if first_battle_signal:
                 for i in range(4):
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX'],FLAG=None
+                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
                     )
                 # 进入战斗选择页面
                 self.adb.get_mouse_click(
