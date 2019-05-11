@@ -36,8 +36,7 @@
 
 555群里一群海豹都在晒卡，我好酸，我想要能天使。附上自己当初随手截的一张图。酸死了
 
-![5_1](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_1.jpg?raw=true)
-
+![2019_5_1.jpg-130.9kB][1]
 
 ### 2018.5.2 
 
@@ -47,7 +46,7 @@
 
 我想要能天使小姐姐，我想要闪灵小姐姐。而且今天我把所有体力都拿去打龙门币了。没有芯片给小姐姐升级了。哭哭
 
-![5_2](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_2.jpg?raw=true)
+![2019_5_2.jpg-133.1kB][2]
 
 ### 2018.5.3
 
@@ -61,7 +60,7 @@
 
 今天失了智。又抽了20连。。。。。第一发是这样子
 
-![非洲30连](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/feizhou_30_lian.jpg?raw=true)
+![feizhou_30_lian.jpg-922.5kB][3]
 
 三个舔狗仿佛在嘲笑我有多非
 
@@ -73,9 +72,7 @@
 
 从群里加了几个非洲人，感觉又有感觉！
 
-纪念一下今天份的战果
 
-![5_3](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_3.png?raw=true)
 
 ### 2018.5.9 
 
@@ -83,9 +80,7 @@
 
 昨天出了一个小艾。但是我还是没有高星的物理输出，哭了
 
-EMMM 好像很久没有COMMIT 新的代码了。游戏也不知不觉长草了。现在在精二的路上越走越远，现在大概是这样子的
-
-![5_9](https://github.com/ninthDevilHAUNSTER/shaobao_adb/blob/master/Arknights/development_step_by_step/2019_5_9.jpg?raw=true)
+EMMM 好像很久没有COMMIT 新的代码了。游戏也不知不觉长草了。现在在精二的路上越走越远。
 
 今天打算更新一点东西，包括了更加快速的战斗流程（当然，有时候网不好会出现不同步的问题）
 
@@ -121,3 +116,8 @@ DAILY_LIST = {
 想让每次点击的内容不一样。写起来问题还挺大的，目前还在更新中...
 
 增加了OCR的自检测模块。现在可以不用OCR进行战斗了，但是可能会有系统错误的风险
+
+
+  [1]: http://static.zybuluo.com/shaobaobaoer/9m5yme8jiwdk4zhfav259iom/2019_5_1.jpg
+  [2]: http://static.zybuluo.com/shaobaobaoer/wqtlavh1zul8s08h0my417z2/2019_5_2.jpg
+  [3]: http://static.zybuluo.com/shaobaobaoer/zdgezifv1tjtmzhz9kdfoshh/feizhou_30_lian.jpg
