@@ -187,7 +187,6 @@ class ArknightsHelper(object):
             self.adb.get_mouse_click(
                 XY=CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO']
             )
-
             t = 0
 
             while not battle_end_signal:
