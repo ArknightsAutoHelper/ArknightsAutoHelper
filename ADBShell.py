@@ -1,8 +1,8 @@
 import os
-from config.config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH
-from config.config import ShellColor
+from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, FLAGS_CLICK_BIAS_TINY
 from PIL import Image
 from time import sleep
+from random import randint
 
 
 class ADBShell(object):
@@ -116,19 +116,36 @@ class ADBShell(object):
         if screen_range.__len__() == 2:
             self.get_sub_screen(file_name, screen_range)
 
-    def get_mouse_swipe(self, XY_mXmY=None):
+    def get_mouse_swipe(self, XY_mXmY=None, FLAG=None):
         sleep(1)
+        assert type(XY_mXmY).__name__ == "tuple"
+        assert XY_mXmY.__len__() == 2
         XY, mXmY = XY_mXmY
+        # XY = list(XY[0], XY[1])
+        # mXmY = list(mXmY[0], mXmY[1])
+        # if FLAG is not None:
+        #     FLAG_XY, FLAG_mXmY = FLAG
+        #     XY[0] = XY[0] + randint(-FLAG_XY[0], FLAG_XY[0])
+        #     XY[1] = XY[0] + randint(-FLAG_XY[1], FLAG_XY[1])
+        #     mXmY[0] = mXmY[0] + randint(-FLAG_mXmY[0], FLAG_mXmY[0])
+        #     mXmY[1] = mXmY[1] + randint(-FLAG_mXmY[1], FLAG_mXmY[1])
         self.__adb_tools = "shell"
         self.__adb_command = "input swipe {X1} {Y1} {X2} {Y2}".format(
             X1=XY[0], Y1=XY[1], X2=XY[0] + mXmY[0], Y2=XY[1] + mXmY[1]
         )
         self.run_cmd(DEBUG_LEVEL=0)
 
-    def get_mouse_click(self, XY=None):
+    def get_mouse_click(self, XY=None, FLAG=None):
         sleep(1)
         if XY is None:
             XY = [0, 0]
+        # else:
+        #     XY = [XY[0], XY[1]]
+        # if FLAG is None:
+        #     FLAG = FLAGS_CLICK_BIAS_TINY
+        # print(FLAG)
+        # XY[0] = XY[0] + randint(-FLAG[0], FLAG[0])
+        # XY[1] = XY[0] + randint(-FLAG[1], FLAG[1])
         self.__adb_tools = "shell"
         self.__adb_command = "input tap {} {}".format(XY[0], XY[1])
         self.run_cmd(DEBUG_LEVEL=0)

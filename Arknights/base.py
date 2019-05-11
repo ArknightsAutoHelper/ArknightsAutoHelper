@@ -10,6 +10,7 @@ from collections import OrderedDict
 from random import randint
 from math import floor
 from Arknights.BattleSelector import BattleSelector
+from Arknights.flags import *
 
 
 class ArknightsHelper(object):
@@ -93,7 +94,7 @@ class ArknightsHelper(object):
             if first_battle_signal:
                 for i in range(4):
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX']
+                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
                     )
                 # 进入战斗选择页面
                 self.adb.get_mouse_click(
@@ -168,7 +169,7 @@ class ArknightsHelper(object):
                     battle_end_signal = True
                 battle_end_signal_max_execute_time -= 1
                 self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['MAIN_RETURN_INDEX']
+                    XY=CLICK_LOCATION['MAIN_RETURN_INDEX'],FLAG=None
                 )
                 if battle_end_signal_max_execute_time < 1:
                     self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
@@ -235,7 +236,7 @@ class ArknightsHelper(object):
             if first_battle_signal:
                 for i in range(4):
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX']
+                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX'],FLAG=None
                     )
                 # 进入战斗选择页面
                 self.adb.get_mouse_click(
@@ -256,7 +257,7 @@ class ArknightsHelper(object):
         mode = self.selector.id_checker()
         if mode == 1:
             if first_battle_signal:
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']
                 )
@@ -269,7 +270,7 @@ class ArknightsHelper(object):
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
                     self.shell_color.helper_text("[-] 拖动%{}次".format(x))
                     for x in range(0, x):
-                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'])
+                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
 
                 # 章节选择
@@ -286,25 +287,25 @@ class ArknightsHelper(object):
                 self.__wait(3)
                 # 章节选择结束
                 # 拖动
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 sleep(SMALL_WAIT)
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 sleep(SMALL_WAIT)
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
 
                 # 拖动到正确的地方
                 if c_id in MAIN_TASK_BATTLE_SWIPE.keys():
                     x = MAIN_TASK_BATTLE_SWIPE[c_id]
                     self.shell_color.helper_text("[-] 拖动%{}次".format(x))
                     for x in range(0, x):
-                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'])
+                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
 
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
                 )
             else:
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
                 )
@@ -317,7 +318,7 @@ class ArknightsHelper(object):
                 X = None
                 exit(0)
             if first_battle_signal:
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
+                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION']
                 )

@@ -7,6 +7,9 @@ STORAGE_PATH = "D:\\python_box\\shaobao_adb\\storage\\"
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"
 ArkNights_ACTIVITY_NAME = "com.u8.sdk.U8UnityContext"
 
+# manlike action
+FLAGS_CLICK_BIAS_TINY = (3, 3)
+
 
 class ShellColor(object):
     def __init__(self):
@@ -36,7 +39,6 @@ class ShellColor(object):
         self.info_text(string)
         self.failure_text(string)
         self.helper_text(string)
-
 
 # if __name__ == '__main__':
 #     ShellColor().run_test()

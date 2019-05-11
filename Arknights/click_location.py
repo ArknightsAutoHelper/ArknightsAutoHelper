@@ -1,11 +1,5 @@
 from collections import OrderedDict
 
-SMALL_WAIT = 3
-MEDIUM_WAIT = 5
-BIG_WAIT = 10
-SECURITY_WAIT = 15
-BATTLE_FINISH_DETECT = 30
-
 CLICK_LOCATION = {
     # 开始页面点击 QS 位置
     'MAIN_RETURN_INDEX': (16, 62),
@@ -23,6 +17,8 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_MAIN_TASK_2-2": (1265, 338),
     "BATTLE_SELECT_MAIN_TASK_S2-1": (1054, 431),
     "BATTLE_SELECT_MAIN_TASK_4-4": (610, 339),
+    "BATTLE_SELECT_MAIN_TASK_4-5": (824, 254),
+    "BATTLE_SELECT_MAIN_TASK_4-6": (1034, 340),
 
     "BATTLE_SELECT_MATERIAL_COLLECTION": (236, 658),
     # 预定义部分
@@ -102,6 +98,9 @@ LIZHI_CONSUME = {
     "S2-1": 9,
     "2-2": 9,
     '4-4': 18,
+    '4-5': 18,
+    '4-6': 18,
+
 }
 
 BATTLE_SELECTORS = {
@@ -121,6 +120,8 @@ MAIN_TASK_CHAPTER_SWIPE = {
 MAIN_TASK_BATTLE_SWIPE = {
     # 1 代表 1次 BATTLE_TO_MAP_RIGHT
     '4-4': 1,
+    '4-5': 1,
+    '4-6': 1,
 }
 
 DAILY_LIST = {
