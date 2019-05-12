@@ -118,7 +118,7 @@ class ArknightsHelper(object):
         while not strength_end_signal:
             # 初始化 变量
             battle_end_signal = False
-            battle_end_signal_max_execute_time = 10
+            battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
             # TODO 战斗状态存活检测
             # 初始化 返回主页面
             if first_battle_signal:
@@ -135,49 +135,15 @@ class ArknightsHelper(object):
             self.battle_selector(c_id, first_battle_signal)
             # 选关结束
 
-            if first_battle_signal:
-                self.adb.get_screen_shoot('{}.png'.format(c_id), MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
-                if self.adb.img_difference(
-                        SCREEN_SHOOT_SAVE_PATH + "{}.png".format(c_id),
-                        STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
-                ) <= 0.8:
-                    self.shell_color.helper_text("[-] 代理指挥未设置，设置代理指挥")
-                    self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']
-                    )
-                else:
-                    self.shell_color.helper_text("[+] 代理指挥已设置")
+            # 代理指挥部分
+            self.set_ai_commander(c_id, first_battle_signal)
+            # 代理指挥部分结束
 
-            # 查看理智剩余
-            if self.ocr_active:
-                self.adb.get_screen_shoot(
-                    file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
-                )
-                os.popen(
-                    "tesseract {} {}".format(
-                        SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
-                    )
-                )
-                self.__wait(3)
-                with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
-                    tmp = f.read()  #
-                    try:
-                        self.CURRENT_STRENGTH = int(tmp.split("/")[0])
-                        self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
-                    except Exception as e:
-                        self.shell_color.failure_text("[!] {}".format(e))
-                        self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
-            else:
-                self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
-                self.shell_color.warning_text("[*] OCR 模块为装载，系统将直接计算理智值")
-                self.__wait(TINY_WAIT)
-                self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
-
-            if self.CURRENT_STRENGTH - LIZHI_CONSUME[c_id] < 0:
-                strength_end_signal = True
-                self.shell_color.failure_text("[!] 理智不足 退出战斗")
+            # 查看理智剩余部分
+            strength_end_signal = not self.check_current_strength(c_id)
+            if strength_end_signal:
                 continue
-                # 理智不够退出战斗
+            # 查看理智剩余部分结束
 
             self.shell_color.info_text("[+] 开始战斗")
             self.adb.get_mouse_click(
@@ -288,6 +254,52 @@ class ArknightsHelper(object):
             self.shell_color.info_text("[-] 战斗结束 重新开始")
         return True
 
+    def set_ai_commander(self, c_id, first_battle_signal=False):
+        if first_battle_signal:
+            self.adb.get_screen_shoot('{}.png'.format(c_id), MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
+            if self.adb.img_difference(
+                    SCREEN_SHOOT_SAVE_PATH + "{}.png".format(c_id),
+                    STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
+            ) <= 0.8:
+                self.shell_color.helper_text("[-] 代理指挥未设置，设置代理指挥")
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']
+                )
+            else:
+                self.shell_color.helper_text("[+] 代理指挥已设置")
+
+    def check_current_strength(self, c_id):
+        if self.ocr_active:
+            self.adb.get_screen_shoot(
+                file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
+            )
+            os.popen(
+                "tesseract {} {}".format(
+                    SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
+                )
+            )
+            self.__wait(3)
+            with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
+                tmp = f.read()  #
+                try:
+                    self.CURRENT_STRENGTH = int(tmp.split("/")[0])
+                    self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
+                except Exception as e:
+                    self.shell_color.failure_text("[!] {}".format(e))
+                    self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+        else:
+            self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+            self.shell_color.warning_text("[*] OCR 模块为装载，系统将直接计算理智值")
+            self.__wait(TINY_WAIT)
+            self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
+
+        if self.CURRENT_STRENGTH - LIZHI_CONSUME[c_id] < 0:
+            self.shell_color.failure_text("[!] 理智不足 退出战斗")
+            return False
+        else:
+            return True
+            # 理智不够退出战斗
+
     def battle_selector(self, c_id, first_battle_signal=True):
         mode = self.selector.id_checker()
         if mode == 1:
@@ -339,11 +351,17 @@ class ArknightsHelper(object):
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
                 )
+
             else:
-                self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
-                )
+                # 好像打过了就不用再点了，直接PASS就行
+                pass
+                # self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
+                # if c_id in MAIN_TASK_RELOCATE.keys():
+                #     self.adb.get_mouse_click(MAIN_TASK_RELOCATE[c_id])
+                # else:
+                #     self.adb.get_mouse_click(
+                #         XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
+                #     )
 
         elif mode == 2:
             try:

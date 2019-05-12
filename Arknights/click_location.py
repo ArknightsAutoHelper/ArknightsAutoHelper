@@ -19,6 +19,7 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_MAIN_TASK_4-4": (610, 339),
     "BATTLE_SELECT_MAIN_TASK_4-5": (824, 254),
     "BATTLE_SELECT_MAIN_TASK_4-6": (1034, 340),
+    "BATTLE_SELECT_MAIN_TASK_4-7": (819, 339),
 
     "BATTLE_SELECT_MATERIAL_COLLECTION": (236, 658),
     # 预定义部分
@@ -40,11 +41,11 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-1": (324, 415),
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-2": (767, 251),
 }
-
-MAIN_TASK_LOCATION = {
-    "2-2": (1, 1),
-    "2-1": (1, 1)
-}
+#
+# MAIN_TASK_LOCATION = {
+#     "2-2": (1, 1),
+#     "2-1": (1, 1)
+# }
 
 MAP_LOCATION = {
     # 截图位置 # （X,Y） (DX,DY)
@@ -100,7 +101,8 @@ LIZHI_CONSUME = {
     '4-4': 18,
     '4-5': 18,
     '4-6': 18,
-
+    '4-7': 18,
+    '4-8': 18,
 }
 
 BATTLE_SELECTORS = {
@@ -122,6 +124,13 @@ MAIN_TASK_BATTLE_SWIPE = {
     '4-4': 1,
     '4-5': 1,
     '4-6': 1,
+    '4-7': 2,
+    '4-8': 2,
+}
+
+MAIN_TASK_RELOCATE = {
+    # 可能我们不需要这个
+    "4-7": (494, 342),
 }
 
 DAILY_LIST = {
