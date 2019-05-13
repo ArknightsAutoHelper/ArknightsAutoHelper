@@ -32,7 +32,7 @@ class ArknightsHelper(object):
             )
         )
         self.__wait(3)
-        with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
+        with open(STORAGE_PATH + "ocr_test.txt", 'r', encoding="utf8") as f:
             tmp = f.read()  #
             try:
                 test_1 = int(tmp.split("/")[0])
