@@ -117,7 +117,27 @@ DAILY_LIST = {
 
 增加了OCR的自检测模块。现在可以不用OCR进行战斗了，但是可能会有系统错误的风险
 
+### 2018.5.13
+
+更新了SLIM 模块，可以帮你快速启动。在此之前你需要把页面调整到如下的样子：
+
+![TIM截图20190513101009.png-1013.8kB][4]
+
+之后通过这样的代码就可以迅速开始战斗，你可以手动选关。并且理论上该模块比完整的模块稳定并且不容易被系统检测。
+
+```python
+Ark = ArknightsHelper()
+Ark.module_battle_slim(c_id='4-8', set_count=8)
+```
+
+你可以比较懒，不点代理指挥，在此之前传入参数
+```python
+Ark.module_battle_slim(c_id='4-8', set_count=8,set_ai=True)
+```
+即可让系统帮你点代理指挥
+祝刷的愉快
 
   [1]: http://static.zybuluo.com/shaobaobaoer/9m5yme8jiwdk4zhfav259iom/2019_5_1.jpg
   [2]: http://static.zybuluo.com/shaobaobaoer/wqtlavh1zul8s08h0my417z2/2019_5_2.jpg
   [3]: http://static.zybuluo.com/shaobaobaoer/zdgezifv1tjtmzhz9kdfoshh/feizhou_30_lian.jpg
+  [4]: http://static.zybuluo.com/shaobaobaoer/27owy5sd99gk0ciqzgdrnnee/TIM%E6%88%AA%E5%9B%BE20190513101009.png

@@ -81,8 +81,11 @@ class ArknightsHelper(object):
                 self.__is_game_active = True
 
     @staticmethod
-    def __wait(n=10):
-        sleep(randint(n - n % floor(n / 2), n + n % floor(n / 2)))
+    def __wait(n=10, MANLIKE_FLAG=True):
+        if MANLIKE_FLAG:
+            sleep(randint(n - n % floor(n / 2), n + n % floor(n / 2)))
+        else:
+            sleep(n)
 
     def __simulate_man(self):
         '''
@@ -111,7 +114,78 @@ class ArknightsHelper(object):
         self.__wait(SECURITY_WAIT)
         # self.adb.get_screen_shoot("login.png")
 
+    def module_battle_slim(self, c_id, set_count=1000, set_ai=True):
+        '''
+        简单的战斗模式，请参考 Arknights README.md 中的使用方法调用
+        该模块 略去了选关部分，直接开始打
+        :param c_id: 关卡 ID
+        :param set_count: 设置总次数
+        :param set_ai: 是否设置代理指挥，默认已经设置
+        :return:
+        '''
+        self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
+        if not set_ai:
+            self.set_ai_commander(c_id=c_id, first_battle_signal=False)
+
+        strength_end_signal = False
+        count = 0
+        while not strength_end_signal:
+            # 初始化 变量
+            battle_end_signal = False
+            battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
+            # 初始化 返回主页面
+
+            # 查看理智剩余部分
+            strength_end_signal = not self.check_current_strength(c_id)
+            if strength_end_signal:
+                continue
+            # 查看理智剩余部分结束
+
+            self.shell_color.info_text("[+] 开始战斗")
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE']
+            )
+            self.__wait(4, False)
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO']
+            )
+            t = 0
+
+            while not battle_end_signal:
+                self.__wait(BATTLE_FINISH_DETECT)
+                t += BATTLE_FINISH_DETECT
+                self.shell_color.helper_text("[*] 战斗进行{}S 判断是否结束".format(t))
+                self.adb.get_screen_shoot(
+                    file_name="battle_end.png",
+                    screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
+                )
+                if self.adb.img_difference(
+                        img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
+                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
+                ) >= 0.8:
+                    battle_end_signal = True
+                battle_end_signal_max_execute_time -= 1
+                self.adb.get_mouse_click(
+                    XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
+                )
+                if battle_end_signal_max_execute_time < 1:
+                    self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
+                    self.restart()
+                    battle_end_signal = True
+
+            count += 1
+            self.shell_color.info_text("[*] 当前战斗次数  {}".format(count))
+
+            if count >= set_count:
+                strength_end_signal = True
+            self.shell_color.info_text("[-] 战斗结束 重新开始")
+            self.__wait(5, False)
+
+        self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
+        return True
+
     def module_battle(self, c_id, set_count=1000):
+        sleep(3)
         strength_end_signal = False
         first_battle_signal = True
         count = 0
@@ -270,6 +344,7 @@ class ArknightsHelper(object):
 
     def check_current_strength(self, c_id):
         if self.ocr_active:
+            sleep(4)
             self.adb.get_screen_shoot(
                 file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
             )
@@ -346,15 +421,15 @@ class ArknightsHelper(object):
                     self.shell_color.helper_text("[-] 拖动%{}次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        self.__wait(MEDIUM_WAIT)
-
+                        # self.__wait(MEDIUM_WAIT)
+                        sleep(5)
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
                 )
 
             else:
+                sleep(5)
                 # 好像打过了就不用再点了，直接PASS就行
-                pass
                 # self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 # if c_id in MAIN_TASK_RELOCATE.keys():
                 #     self.adb.get_mouse_click(MAIN_TASK_RELOCATE[c_id])

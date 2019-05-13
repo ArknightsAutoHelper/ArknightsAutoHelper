@@ -2,12 +2,5 @@ from Arknights import ArknightsHelper
 from collections import OrderedDict
 
 TASK_LIST = OrderedDict()
-# TASK_LIST["S2-1"] = 2
-# TASK_LIST['2-2'] = 10
-TASK_LIST["4-7"] = 20
-# TASK_LIST["4-6"] = 10
-# TASK_LIST["4-4"] = 10
-# TASK_LIST["CE-5"] = 3
-# TASK_LIST["LS-5"] = 3
 Ark = ArknightsHelper()
-Ark.main_handler(TASK_LIST)
+Ark.module_battle_slim(c_id='4-8', set_count=8,set_ai=True)

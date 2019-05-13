@@ -19,7 +19,7 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_MAIN_TASK_4-4": (610, 339),
     "BATTLE_SELECT_MAIN_TASK_4-5": (824, 254),
     "BATTLE_SELECT_MAIN_TASK_4-6": (1034, 340),
-    "BATTLE_SELECT_MAIN_TASK_4-7": (819, 339),
+    "BATTLE_SELECT_MAIN_TASK_4-7": (771, 343),
 
     "BATTLE_SELECT_MATERIAL_COLLECTION": (236, 658),
     # 预定义部分
@@ -98,6 +98,7 @@ LIZHI_CONSUME = {
     # 主关卡
     "S2-1": 9,
     "2-2": 9,
+    '3-8': 18,
     '4-4': 18,
     '4-5': 18,
     '4-6': 18,

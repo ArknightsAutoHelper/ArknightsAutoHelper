@@ -11,11 +11,10 @@ ark.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
 ark.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])
 
 ark.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'])
-ark.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'])
 
-ark.adb.get_mouse_click(CLICK_LOCATION["BATTLE_SELECT_MAIN_TASK_4-7"])
+ark.adb.get_mouse_click(CLICK_LOCATION["BATTLE_SELECT_MAIN_TASK_4-6"])
 ark.adb.get_mouse_click((91, 159))
-ark.adb.get_mouse_click(MAIN_TASK_RELOCATE["4-7"])
+# ark.adb.get_mouse_click(MAIN_TASK_RELOCATE["4-7"])
 sleep(3)
 
 # ark.adb.get_mouse_click(CLICK_LOCATION["BATTLE_SELECT_MAIN_TASK_4-6"])
