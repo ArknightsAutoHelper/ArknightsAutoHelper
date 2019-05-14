@@ -2,13 +2,14 @@ from collections import OrderedDict
 
 CLICK_LOCATION = {
     # 开始页面点击 QS 位置
+    'CENTER_CLICK': (640, 375),
     'MAIN_RETURN_INDEX': (16, 62),
     "LOGIN_QUICK_LOGIN": (640, 675),
     "LOGIN_START_WAKEUP": (642, 507),
     "BATTLE_CLICK_IN": (1173, 186),
     'BATTLE_CLICK_AI_COMMANDER': (1109, 588),
-    'BATTLE_CLICK_START_BATTLE': (1137, 658),
-    'BATTLE_CLICK_ENSURE_TEAM_INFO': (1094, 613),
+    'BATTLE_CLICK_START_BATTLE': (1151, 658),
+    'BATTLE_CLICK_ENSURE_TEAM_INFO': (1104, 512),
 
     "BATTLE_SELECT_MAIN_TASK": (75, 663),
     "BATTLE_SELECT_MAIN_TASK_2": (1213, 311),
@@ -103,7 +104,7 @@ LIZHI_CONSUME = {
     '4-5': 18,
     '4-6': 18,
     '4-7': 18,
-    '4-8': 18,
+    '4-8': 21,
     '4-9': 21,
 }
 

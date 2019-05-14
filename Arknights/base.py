@@ -143,11 +143,11 @@ class ArknightsHelper(object):
 
             self.shell_color.info_text("[+] 开始战斗")
             self.adb.get_mouse_click(
-                XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE']
+                XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'], FLAG=FLAGS_START_BATTLE_BIAS
             )
             self.__wait(4, False)
             self.adb.get_mouse_click(
-                XY=CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO']
+                XY=CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO'], FLAG=FLAGS_ENSURE_TEAM_INFO_BIAS,
             )
             t = 0
 
@@ -164,10 +164,11 @@ class ArknightsHelper(object):
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
                 ) >= 0.8:
                     battle_end_signal = True
-                battle_end_signal_max_execute_time -= 1
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
-                )
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
+                    )
+                else:
+                    battle_end_signal_max_execute_time -= 1
                 if battle_end_signal_max_execute_time < 1:
                     self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
                     self.restart()

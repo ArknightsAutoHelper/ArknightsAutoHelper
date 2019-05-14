@@ -1,8 +1,8 @@
-# shaobao_adb
-> 明日方舟辅助脚本，当然只是开发阶段，只是刚刚上线我就很气！
+# Arknghts Auto Helper
+> 明日方舟辅助脚本，当然只是开发阶段
 
-## ADBShell 
-基于夜神模拟器集成了多种安卓模拟器操作方法，可以进行安卓辅助开发。当然你要在电脑端跑
+## 0x01 ADBShell 
+基于夜神模拟器集成了多种adb操作方法，可以进行安卓辅助开发。当然你要在电脑端跑
 
 ### 运行须知
 
@@ -48,10 +48,46 @@ urllib3    1.24.2
  - 获取子图
  - 子图与目标子图比较
 
-<!--行了行了...抽卡各种保底。心态崩了
-看着别人在群里晒能天使我也很酸啊
-然而我仓库里一群菜刀队不说...6*的到现在只抽到一个（5-2更新）
-好的我懂了，就是老天让我好好学习不要整天打手游。反正本人手残塔防也玩不来。
-不要说了，我把外挂开源了。我感觉我和这游戏缘分不咋地。记得添加点坐标，再`click_location.py`底下
-当然想拿去二次开发或者自己用的话也可以。我感觉我和这游戏没缘分但也许未来还会说真香-->
+## 0x02 ArknightsHelper
+> 需要安装OCR模块
 
+### 快速启动！快乐护肝！
+
+之后通过这样的代码就可以迅速开始战斗，你需要手动选关。到如下画面
+```python
+from Arknights import ArknightsHelper
+Ark = ArknightsHelper()
+Ark.module_battle_slim(c_id='4-8', set_count=8)
+# c_id 是战斗章节
+# set_count 是战斗次数
+```
+![TIM截图20190513101009.png-1013.8kB][4]
+
+理论上该模块比完整的模块稳定并且不容易被系统检测。并且该模块所有的点击序列都是随机化的，不容易被检测
+
+### 任务清单功能
+
+通过传入任务清单可以执行一系列任务。
+目前支持的关卡请看在click_location.LIZHI_CONSUME中的关卡章节。
+基本上里面的所有章节都测试过，但是总有一些奇奇怪怪的状况发生。并且请不要让你的自律翻车。不然就没了
+
+```python
+from Arknights import ArknightsHelper
+from collections import OrderedDict
+
+TASK_LIST = OrderedDict()
+TASK_LIST['LS-4'] = 10
+Ark = ArknightsHelper()
+Ark.main_handler(TASK_LIST)
+```
+
+### 自定义开发与更多功能
+
+详情请联系作者或者提出你的issue！祝大家玩的愉快
+
+欢迎来加好友
+
+> 泰拉 九涅烧包包儿
+QQ 2454225341
+
+  [4]: http://static.zybuluo.com/shaobaobaoer/27owy5sd99gk0ciqzgdrnnee/TIM%E6%88%AA%E5%9B%BE20190513101009.png
