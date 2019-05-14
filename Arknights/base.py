@@ -36,7 +36,7 @@ class ArknightsHelper(object):
             tmp = f.read()  #
             try:
                 test_1 = int(tmp.split("/")[0])
-                if test_1 == 18:
+                if test_1 == 13:
                     self.ocr_active = True
                 else:
                     self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
@@ -182,6 +182,8 @@ class ArknightsHelper(object):
             self.__wait(5, False)
 
         self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
+        self.__wait(1024, False)
+        self.__del()
         return True
 
     def module_battle(self, c_id, set_count=1000):

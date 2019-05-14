@@ -104,6 +104,7 @@ LIZHI_CONSUME = {
     '4-6': 18,
     '4-7': 18,
     '4-8': 18,
+    '4-9': 21,
 }
 
 BATTLE_SELECTORS = {
