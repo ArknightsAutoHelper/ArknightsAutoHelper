@@ -81,13 +81,28 @@ Ark = ArknightsHelper()
 Ark.main_handler(TASK_LIST)
 ```
 
+### 未安装OCR模块的用法
+如果你没有安装OCR模块，需要在初始化时候赋予初值，该值为你当前的理智。
+由于系统不知道你啥时候升级，所以减好了还需要重新设置。
+
+```python
+from Arknights import ArknightsHelper
+from collections import OrderedDict
+
+TASK_LIST = OrderedDict()
+TASK_LIST['LS-4'] = 10
+Ark = ArknightsHelper(100)# 
+Ark.main_handler(TASK_LIST)
+```
+
+
+
 ### 自定义开发与更多功能
 
 详情请联系作者或者提出你的issue！祝大家玩的愉快
 
 欢迎来加好友
 
-> 泰拉 九涅烧包包儿
 QQ 2454225341
 
   [4]: http://static.zybuluo.com/shaobaobaoer/27owy5sd99gk0ciqzgdrnnee/TIM%E6%88%AA%E5%9B%BE20190513101009.png
