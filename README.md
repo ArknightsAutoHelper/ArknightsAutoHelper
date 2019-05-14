@@ -95,7 +95,11 @@ Ark = ArknightsHelper(100)#
 Ark.main_handler(TASK_LIST)
 ```
 
+### 关于后续的想法
 
+目前所有功能基本完善了，我也用的比较爽了。总之刷材料啥的都没啥问题。
+
+之后可能会用 WXPYTHON 写个GUI。另外会写个访问好友基建的脚本。
 
 ### 自定义开发与更多功能
 
@@ -104,5 +108,9 @@ Ark.main_handler(TASK_LIST)
 欢迎来加好友
 
 QQ 2454225341
+
+## 0x03 关于一些常见的问题
+
+TODO
 
   [4]: http://static.zybuluo.com/shaobaobaoer/27owy5sd99gk0ciqzgdrnnee/TIM%E6%88%AA%E5%9B%BE20190513101009.png
