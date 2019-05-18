@@ -114,16 +114,18 @@ class ArknightsHelper(object):
         self.__wait(SECURITY_WAIT)
         # self.adb.get_screen_shoot("login.png")
 
-    def module_battle_slim(self, c_id, set_count=1000, set_ai=True):
+    def module_battle_slim(self, c_id, set_count=1000, set_ai=True, sub=False):
         '''
         简单的战斗模式，请参考 Arknights README.md 中的使用方法调用
         该模块 略去了选关部分，直接开始打
         :param c_id: 关卡 ID
         :param set_count: 设置总次数
         :param set_ai: 是否设置代理指挥，默认已经设置
+        :param sub: 是否是子程序。（是否为module_battle所调用的)
         :return:
         '''
-        self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
+        if not sub:
+            self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
         if not set_ai:
             self.set_ai_commander(c_id=c_id, first_battle_signal=False)
 
@@ -138,7 +140,7 @@ class ArknightsHelper(object):
             # 查看理智剩余部分
             strength_end_signal = not self.check_current_strength(c_id)
             if strength_end_signal:
-                continue
+                return False
             # 查看理智剩余部分结束
 
             self.shell_color.info_text("[+] 开始战斗")
@@ -182,21 +184,18 @@ class ArknightsHelper(object):
             self.shell_color.info_text("[-] 战斗结束 重新开始")
             self.__wait(5, False)
 
-        self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
-        self.__wait(1024, False)
-        self.__del()
-        return True
+        if not sub:
+            self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
+            self.__wait(1024, False)
+            self.__del()
+        else:
+            return True
 
     def module_battle(self, c_id, set_count=1000):
         sleep(3)
         strength_end_signal = False
         first_battle_signal = True
-        count = 0
         while not strength_end_signal:
-            # 初始化 变量
-            battle_end_signal = False
-            battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
-            # TODO 战斗状态存活检测
             # 初始化 返回主页面
             if first_battle_signal:
                 for i in range(4):
@@ -211,59 +210,8 @@ class ArknightsHelper(object):
             # 选关部分
             self.battle_selector(c_id, first_battle_signal)
             # 选关结束
-
-            # 代理指挥部分
-            self.set_ai_commander(c_id, first_battle_signal)
-            # 代理指挥部分结束
-
-            # 查看理智剩余部分
-            strength_end_signal = not self.check_current_strength(c_id)
-            if strength_end_signal:
-                continue
-            # 查看理智剩余部分结束
-
-            self.shell_color.info_text("[+] 开始战斗")
-            self.adb.get_mouse_click(
-                XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE']
-            )
-            self.__wait(3)
-            self.adb.get_mouse_click(
-                XY=CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO']
-            )
-            t = 0
-
-            while not battle_end_signal:
-                self.__wait(BATTLE_FINISH_DETECT)
-                t += BATTLE_FINISH_DETECT
-                self.shell_color.helper_text("[*] 战斗进行{}S 判断是否结束".format(t))
-                self.adb.get_screen_shoot(
-                    file_name="battle_end.png",
-                    screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
-                )
-                if self.adb.img_difference(
-                        img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
-                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
-                ) >= 0.8:
-                    battle_end_signal = True
-                battle_end_signal_max_execute_time -= 1
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
-                )
-                if battle_end_signal_max_execute_time < 1:
-                    self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
-                    self.restart()
-                    battle_end_signal = True
-
-            count += 1
-            self.shell_color.info_text("[*] 当前战斗次数  {}".format(count))
-
-            if count >= set_count:
-                strength_end_signal = True
-
+            strength_end_signal = self.module_battle_slim(c_id, set_count=set_count, set_ai=True, sub=True)
             first_battle_signal = False
-
-            self.shell_color.info_text("[-] 战斗结束 重新开始")
-
         return True
 
     def main_handler(self, battle_task_list=None):
