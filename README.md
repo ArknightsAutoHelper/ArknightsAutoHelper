@@ -18,7 +18,10 @@ ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"
 ArkNights_ACTIVITY_NAME = "com.u8.sdk.U8UnityContext"
 ```
 
-如想要二次开发，请修改`config.py`下的相关参数。以绝对路径为佳
+如想要二次开发，请修改`config.py`下的相关参数。以绝对路径为佳。
+
+关于修改方法和样例代码，可以参考`ArknightsHelper_examples.py`下的代码和说明
+
 
 #### 依赖包
 

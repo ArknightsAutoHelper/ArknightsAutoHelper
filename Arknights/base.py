@@ -175,7 +175,7 @@ class ArknightsHelper(object):
                     battle_end_signal_max_execute_time -= 1
                 if battle_end_signal_max_execute_time < 1:
                     self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
-                    self.restart()
+                    # self.restart()
                     battle_end_signal = True
 
             count += 1
@@ -248,6 +248,10 @@ class ArknightsHelper(object):
             self.__del()
 
     def restart(self):
+        '''
+        由于重启的逻辑比较困难，暂时废弃这里的功能
+        :return:
+        '''
         self.shell_color.failure_text("[!] 检测异常发生 重新唤醒所有模块")
         self.__del()
         self.__init__()

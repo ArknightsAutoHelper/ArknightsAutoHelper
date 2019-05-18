@@ -6,21 +6,56 @@
 
 ## 目前支持的启动方式
 
-- `main_handler` 包含了非完整的启动。也就是从首页面进行的各种操作
-- `restart` 包含了完整的启动。只要你的模拟器开着就能直接用，当然，没有写密码输入模块。
+### main_handler
+>  `main_handler` 包含了非完整的启动。也就是从首页面进行的各种操作
+
+所需要的代码如下：
+
+```python
+from Arknights import ArknightsHelper
+from collections import OrderedDict
+
+TASK_LIST = OrderedDict()
+TASK_LIST['CE-5'] = 5
+TASK_LIST['4-8'] = 10
+Ark = ArknightsHelper()
+Ark.main_handler(TASK_LIST)
+```
+
+### main_battle_slim
+> `main_battle_slim` 包含了不完整的战斗过程，也就是从你点击关卡开始的一系列操作
+
+在此之前你需要把页面调整到类似于这样子：
+![TIM截图20190513101009.png-1013.8kB][4]
+
+所需要的代码如下:
+
+```python
+Ark = ArknightsHelper()
+Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
+```
+
+### OCR 模块未安装的操作方法
+
+如果没有安装OCR模块，请在初始化ArknightsHelper()类时告知系统初值，就像这样子
+
+```python
+Ark = ArknightsHelper(123)
+Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
+```
 
 ## 目前支持的关卡
-芯片和日常，我感觉坐标点都是一样的么...
+芯片和日常，我感觉坐标点都是一样的么。
 
-如果我有需要我会继续更新
+关于支持的关卡，可以查看`click_location.LIZHI_CONSUME`的相关信息。
 
-- 标准任务关卡（可以刷材料）
-    - `2-1`
-    - `2-2`
-- 日常任务关卡
-    - `CE-3`
+------
 
-## 烧包的苦逼抽卡日志
+【分割线】
+
+------
+
+## 烧包的苦逼开发日志
 
 ### 2018.4.30
 
@@ -136,6 +171,17 @@ Ark.module_battle_slim(c_id='4-8', set_count=8,set_ai=True)
 ```
 即可让系统帮你点代理指挥
 祝刷的愉快
+
+
+### 2018.5.18
+
+好像好久不来写点README了，现在辅助的开发已经基本没有问题了，支持了绝大部分关卡。
+今天重构了一下战斗部分的代码逻辑，我把slim模式给嵌套进去了，但是在故障处理方面还是颇为困难。。。毕竟要考虑的事情很多。
+
+另外我也精二了两个角色啦一个推王一个天火，目前开始护肝了，也就是不碎石头换体力了。
+不得不承认，精二立绘真棒！
+
+
 
   [1]: http://static.zybuluo.com/shaobaobaoer/9m5yme8jiwdk4zhfav259iom/2019_5_1.jpg
   [2]: http://static.zybuluo.com/shaobaobaoer/wqtlavh1zul8s08h0my417z2/2019_5_2.jpg
