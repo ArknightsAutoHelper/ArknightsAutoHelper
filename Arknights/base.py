@@ -123,6 +123,8 @@ class ArknightsHelper(object):
         :param set_ai: 是否设置代理指挥，默认已经设置
         :param sub: 是否是子程序。（是否为module_battle所调用的)
         :return:
+            True  当且仅当所有战斗计数达到设定值的时候
+            False 当且仅当理智不足的时候
         '''
         if not sub:
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
@@ -140,7 +142,7 @@ class ArknightsHelper(object):
             # 查看理智剩余部分
             strength_end_signal = not self.check_current_strength(c_id)
             if strength_end_signal:
-                return False
+                return True
             # 查看理智剩余部分结束
 
             self.shell_color.info_text("[+] 开始战斗")
@@ -181,6 +183,7 @@ class ArknightsHelper(object):
 
             if count >= set_count:
                 strength_end_signal = True
+
             self.shell_color.info_text("[-] 战斗结束 重新开始")
             self.__wait(5, False)
 
@@ -189,10 +192,11 @@ class ArknightsHelper(object):
             self.__wait(1024, False)
             self.__del()
         else:
-            return True
+            return False
 
     def module_battle(self, c_id, set_count=1000):
         sleep(3)
+        self.selector.id = c_id
         strength_end_signal = False
         first_battle_signal = True
         while not strength_end_signal:
