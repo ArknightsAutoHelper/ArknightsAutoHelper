@@ -107,4 +107,4 @@ venv.bak/
 
 .idea/
 code_bin/
-screen_shoot/
+screen_shoot/*.png

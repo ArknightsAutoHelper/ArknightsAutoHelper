@@ -2,6 +2,7 @@ import os
 
 os.path.join(os.path.abspath('../'))
 
+import mp3play
 from ADBShell import ADBShell
 from config import *
 from time import sleep
@@ -163,6 +164,20 @@ class ArknightsHelper(object):
                     file_name="battle_end.png",
                     screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                 )
+                # 升级的情况
+                if self.adb.img_difference(
+                        img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
+                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
+                ) >= 0.9:
+                    self.adb.shell_color.helper_text("[*] 检测到升级！")
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
+                    )
+                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    self.adb.get_screen_shoot(
+                        file_name="battle_end.png",
+                        screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
+                    )
                 if self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
@@ -183,13 +198,16 @@ class ArknightsHelper(object):
 
             if count >= set_count:
                 strength_end_signal = True
-
             self.shell_color.info_text("[-] 战斗结束 重新开始")
-            self.__wait(5, False)
+            self.__wait(10, MANLIKE_FLAG=True)
 
         if not sub:
             self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
+            # c = mp3play.load('a.mp3')
+            # c.play()
+            # c.volume(level=100)
             self.__wait(1024, False)
+            # c.stop()
             self.__del()
         else:
             return False
