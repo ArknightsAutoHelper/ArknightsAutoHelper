@@ -29,15 +29,17 @@ class ArknightsHelper(object):
     def __is_ocr_active(self, current_strength):
         os.popen(
             "tesseract {} {}".format(
-                STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "1"
+                STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result"
             )
         )
         self.__wait(3)
-        with open(STORAGE_PATH + "ocr_test.txt", 'r', encoding="utf8") as f:
-            tmp = f.read()  #
-            try:
+        try:
+            with open(SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt", 'r', encoding="utf8") as f:
+                # assert  读取结果应该为 18/121 当然只要判断18就行了
+                tmp = f.read()
                 test_1 = int(tmp.split("/")[0])
-                if test_1 == 13:
+                # test_1 = 17  # OCR 识别错误测试
+                if test_1 == 18:
                     self.ocr_active = True
                 else:
                     self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
@@ -46,13 +48,13 @@ class ArknightsHelper(object):
                     else:
                         self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
                         exit(0)
-            except Exception as e:
-                self.shell_color.failure_text("[!] OCR 模块未检测...装载初始理智值")
-                if current_strength is not None:
-                    self.CURRENT_STRENGTH = current_strength
-                else:
-                    self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
-                    exit(0)
+        except Exception as e:
+            self.shell_color.failure_text("[!] OCR 模块未检测...装载初始理智值")
+            if current_strength is not None:
+                self.CURRENT_STRENGTH = current_strength
+            else:
+                self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
+                exit(0)
 
     def __del(self):
         self.adb.ch_tools("shell")
@@ -168,7 +170,7 @@ class ArknightsHelper(object):
                 if self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
-                ) >= 0.9:
+                ) >= 0.8:
                     self.adb.shell_color.helper_text("[*] 检测到升级！")
                     self.adb.get_mouse_click(
                         XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
@@ -178,6 +180,7 @@ class ArknightsHelper(object):
                         file_name="battle_end.png",
                         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                     )
+
                 if self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
@@ -213,7 +216,14 @@ class ArknightsHelper(object):
             return False
 
     def module_battle(self, c_id, set_count=1000):
-        sleep(3)
+        '''
+            保留 first_battle_signal 尽管这样的代码有些冗余但是可能会在之后用到。
+
+        :param c_id:
+        :param set_count:
+        :return:
+        '''
+        self.__wait(3, MANLIKE_FLAG=False)
         self.selector.id = c_id
         strength_end_signal = False
         first_battle_signal = True
@@ -232,7 +242,7 @@ class ArknightsHelper(object):
             # 选关部分
             self.battle_selector(c_id, first_battle_signal)
             # 选关结束
-            strength_end_signal = self.module_battle_slim(c_id, set_count=set_count, set_ai=True, sub=True)
+            strength_end_signal = self.module_battle_slim(c_id, set_count=set_count, set_ai=False, sub=True)
             first_battle_signal = False
         return True
 
@@ -417,6 +427,7 @@ class ArknightsHelper(object):
 
         elif mode == 2:
             try:
+
                 X = DAILY_LIST[mode][self.selector.get_week()][c_id[0:2]]
             except Exception as e:
                 self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')

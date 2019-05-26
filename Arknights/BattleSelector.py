@@ -32,8 +32,11 @@ class BattleSelector(object):
 
     @staticmethod
     def get_week():
-        return (datetime.now() - timedelta(hours=6)).strftime("%w")
-
+        '''
+        由于明日方舟的时间更新时间是从 4：00 AM 开始的所以我们把时区往前挪4个小时
+        :return:
+        '''
+        return str((datetime.now() - timedelta(hours=4)).weekday())
 
 # if __name__ == '__main__':
 #     b = BattleSelector()
