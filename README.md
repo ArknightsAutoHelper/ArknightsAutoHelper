@@ -38,7 +38,6 @@ pip        10.0.1
 requests   2.21.0
 setuptools 39.1.0
 soupsieve  1.9.1
-tesserocr  2.4.0
 urllib3    1.24.2
 ```
 
@@ -108,12 +107,16 @@ Ark.main_handler(TASK_LIST)
 
 详情请联系作者或者提出你的issue！祝大家玩的愉快
 
-欢迎来加好友
+欢迎来加好友QQ 2454225341
 
-QQ 2454225341
+也可以来加群
+![qrcode_1558871927006.jpg-60.7kB][6]
+
 
 ## 0x03 关于一些常见的问题
 
 TODO
 
   [4]: http://static.zybuluo.com/shaobaobaoer/27owy5sd99gk0ciqzgdrnnee/TIM%E6%88%AA%E5%9B%BE20190513101009.png
+  
+  [6]: http://static.zybuluo.com/shaobaobaoer/14ufv5gx72buoo1vyaa9jmgy/qrcode_1558871927006.jpg
