@@ -36,7 +36,7 @@ class BattleSelector(object):
         由于明日方舟的时间更新时间是从 4：00 AM 开始的所以我们把时区往前挪4个小时
         :return:
         '''
-        return str((datetime.now() - timedelta(hours=4)).weekday())
+        return str((datetime.now() - timedelta(hours=4)).weekday() + 1)
 
 # if __name__ == '__main__':
 #     b = BattleSelector()
