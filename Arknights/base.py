@@ -28,7 +28,7 @@ class ArknightsHelper(object):
 
     def __is_ocr_active(self, current_strength):
         os.popen(
-            "tesseract {} {}".format(
+            "tesseract {} {} --psm 7".format(
                 STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result"
             )
         )
@@ -36,10 +36,12 @@ class ArknightsHelper(object):
         try:
             with open(SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt", 'r', encoding="utf8") as f:
                 # assert  读取结果应该为 18/121 当然只要判断18就行了
+                # 很神奇，我的ocr无法识别test，但是截图可以
                 tmp = f.read()
                 test_1 = int(tmp.split("/")[0])
                 # test_1 = 17  # OCR 识别错误测试
-                if test_1 == 18:
+                # test_1 = 18
+                if test_1 == 51:
                     self.ocr_active = True
                 else:
                     self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
@@ -170,7 +172,8 @@ class ArknightsHelper(object):
                 if self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
-                ) >= 0.8:
+                ) >= 0.7:
+                    # 0.8没检测升级状况，尝试降低
                     self.adb.shell_color.helper_text("[*] 检测到升级！")
                     self.adb.get_mouse_click(
                         XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
@@ -187,7 +190,8 @@ class ArknightsHelper(object):
                 ) >= 0.8:
                     battle_end_signal = True
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
+                        # 点到了经验尝试降低从（200, 200）降低（200, 150）
                     )
                 else:
                     battle_end_signal_max_execute_time -= 1
@@ -336,7 +340,7 @@ class ArknightsHelper(object):
                 file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
             )
             os.popen(
-                "tesseract {} {}".format(
+                "tesseract {} {} --psm 7".format(
                     SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
                 )
             )
