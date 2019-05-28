@@ -52,7 +52,7 @@ MAP_LOCATION = {
     # 截图位置 # （X,Y） (DX,DY)
     "BATTLE_CLICK_AI_COMMANDER": ((1055, 580), (23, 23)),
     "BATTLE_INFO_BATTLE_END": ((30, 573), (375, 100)),
-    "BATTLE_INFO_STRENGTH_REMAIN": ((1128, 21), (128, 33))
+    "BATTLE_INFO_STRENGTH_REMAIN": ((1128, 21), (152, 33))
 }
 
 SWIPE_LOCATION = {
@@ -98,6 +98,7 @@ LIZHI_CONSUME = {
     'PR-D-2': 36,
     # 主关卡
     "S2-1": 9,
+    "S2-12": 15,
     "2-2": 9,
     '3-8': 18,
     '4-4': 18,
