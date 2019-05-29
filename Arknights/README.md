@@ -71,7 +71,6 @@ Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
 
 555群里一群海豹都在晒卡，我好酸，我想要能天使。附上自己当初随手截的一张图。酸死了
 
-![2019_5_1.jpg-130.9kB][1]
 
 ### 2018.5.2 
 
@@ -183,7 +182,6 @@ Ark.module_battle_slim(c_id='4-8', set_count=8,set_ai=True)
 
 
 
-  [1]: http://static.zybuluo.com/shaobaobaoer/9m5yme8jiwdk4zhfav259iom/2019_5_1.jpg
   [2]: http://static.zybuluo.com/shaobaobaoer/wqtlavh1zul8s08h0my417z2/2019_5_2.jpg
   [3]: http://static.zybuluo.com/shaobaobaoer/zdgezifv1tjtmzhz9kdfoshh/feizhou_30_lian.jpg
   [4]: http://static.zybuluo.com/shaobaobaoer/27owy5sd99gk0ciqzgdrnnee/TIM%E6%88%AA%E5%9B%BE20190513101009.png
