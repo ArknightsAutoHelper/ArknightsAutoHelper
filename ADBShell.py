@@ -3,6 +3,7 @@ from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, FLAGS
 from PIL import Image
 from time import sleep
 from random import randint
+from numpy import average, dot, linalg
 
 
 class ADBShell(object):
@@ -163,17 +164,37 @@ class ADBShell(object):
 
     @staticmethod
     def img_difference(img1, img2):
+        """
         img1 = Image.open(img1).convert('1')
         img2 = Image.open(img2).convert('1')
         hist1 = list(img1.getdata())
         hist2 = list(img2.getdata())
         sum1 = 0
         for i in range(len(hist1)):
-            if (hist1[i] == hist2[i]):
+            if hist1[i] == hist2[i]:
                 sum1 += 1
             else:
                 sum1 += 1 - float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])
         return sum1 / len(hist1)
+        尝试更换识别算法
+        """
+        img1 = Image.open(img1).convert('L')
+        img2 = Image.open(img2).convert('L')
+        imges = [img1, img2]
+        vectors = []
+        norms = []
+        for img in imges:
+            vector = []
+            for pixel_tuple in img.getdata():
+                vector.append(average(pixel_tuple))
+            vectors.append(vector)
+            # linalg=linear（线性）+algebra（代数），norm则表示范数
+            # 求图片的范数？？
+            norms.append(linalg.norm(vector, 2))
+        a_1, b_1 = vectors
+        a_norm, b_norm = norms
+        res = dot(a_1/a_norm, b_1/b_norm)
+        return res
 
     def ch_tools(self, tools):
         self.__adb_tools = tools
