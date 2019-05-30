@@ -107,7 +107,6 @@ venv.bak/
 
 .idea/
 code_bin/
-screen_shoot/*.png
 mouse_location.py
 image_test.py
 config/config.py
