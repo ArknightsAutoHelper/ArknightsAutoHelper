@@ -12,8 +12,8 @@ import os
     为啥这些路径我都要写绝对路径呢...因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：
 '''
 ADB_ROOT = r"D:\Program Files\Nox\bin"
-SCREEN_SHOOT_SAVE_PATH = "D:\\python_box\\shaobao_adb\\screen_shoot\\"
-STORAGE_PATH = "D:\\python_box\\shaobao_adb\\storage\\"
+SCREEN_SHOOT_SAVE_PATH = r"C:\Users\ltb\Documents\GitHub\ArknightsAutoHelper\screen_shoot\\"
+STORAGE_PATH = r"C:\Users\ltb\Documents\GitHub\ArknightsAutoHelper\storage\\"
 
 ADB_HOST = "127.0.0.1:62001"
 

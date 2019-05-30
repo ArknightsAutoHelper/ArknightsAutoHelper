@@ -2,7 +2,7 @@ import os
 
 os.path.join(os.path.abspath('../'))
 
-import mp3play
+# import mp3play
 from ADBShell import ADBShell
 from config import *
 from time import sleep
@@ -13,6 +13,7 @@ from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
 
+from random import uniform
 
 class ArknightsHelper(object):
     def __init__(self, current_strength=None):
@@ -84,9 +85,13 @@ class ArknightsHelper(object):
                 self.__is_game_active = True
 
     @staticmethod
+    # n的+-随机值服从均匀分布
     def __wait(n=10, MANLIKE_FLAG=True):
         if MANLIKE_FLAG:
-            sleep(randint(n - n % floor(n / 2), n + n % floor(n / 2)))
+            # sleep(randint(n - n % floor(n / 2), n + n % floor(n / 2)))
+            m = uniform(0, 0.3)
+            n = uniform(n - m * 0.5 * n, n + m * n)
+            sleep(n)
         else:
             sleep(n)
 
@@ -152,42 +157,72 @@ class ArknightsHelper(object):
             self.adb.get_mouse_click(
                 XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'], FLAG=FLAGS_START_BATTLE_BIAS
             )
-            self.__wait(4, False)
+            self.__wait(1.7, True)
             self.adb.get_mouse_click(
                 XY=CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO'], FLAG=FLAGS_ENSURE_TEAM_INFO_BIAS,
             )
-            t = 0
 
+            t = 0
             while not battle_end_signal:
-                self.__wait(BATTLE_FINISH_DETECT)
+                if t == 0:
+                    self.__wait(60)
+                    t += 60
+                else:
+                    self.__wait(BATTLE_FINISH_DETECT)
                 t += BATTLE_FINISH_DETECT
                 self.shell_color.helper_text("[*] 战斗进行{}S 判断是否结束".format(t))
+
+                # self.adb.get_screen_shoot(
+                #     file_name="battle_end.png",
+                #     screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
+                # )
+
+                # 升级的情况
+                # if self.adb.img_difference(
+                #         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
+                #         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
+                # ) >= 0.8:
+                #     self.adb.shell_color.helper_text("[*] 检测到升级！")
+                #     self.adb.get_mouse_click(
+                #         XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(400, 150)
+                #     )
+                #     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                #     self.adb.get_screen_shoot(
+                #         file_name="battle_end.png",
+                #         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
+                #     )
+
+
+                # 升级的情况
+                self.adb.get_screen_shoot(file_name="levelup_realtime.png", screen_range=ADD_LOCATION["LEVEL_UP"])
+                num = self.adb.img_difference(img1=SCREEN_SHOOT_SAVE_PATH+"levelup_realtime.png", img2=SCREEN_SHOOT_SAVE_PATH+"levelup.png")
+                print(num)
+                if num > 0.7:
+                    battle_end_signal = True
+                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    self.adb.shell_color.helper_text("[*] 检测到升级！")
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(400, 150)
+                    )
+                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(400, 150)
+                    )
+                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+
+                # 战斗结束
                 self.adb.get_screen_shoot(
                     file_name="battle_end.png",
                     screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                 )
-                # 升级的情况
-                if self.adb.img_difference(
-                        img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
-                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
-                ) >= 0.8:
-                    self.adb.shell_color.helper_text("[*] 检测到升级！")
-                    self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
-                    )
-                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
-                    self.adb.get_screen_shoot(
-                        file_name="battle_end.png",
-                        screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
-                    )
-
                 if self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
                 ) >= 0.8:
                     battle_end_signal = True
+                    self.__wait(5, MANLIKE_FLAG=True)
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(400, 150)
                     )
                 else:
                     battle_end_signal_max_execute_time -= 1
@@ -209,7 +244,7 @@ class ArknightsHelper(object):
             # c = mp3play.load('a.mp3')
             # c.play()
             # c.volume(level=100)
-            self.__wait(1024, False)
+            self.__wait(20, False)
             # c.stop()
             self.__del()
         else:

@@ -1,8 +1,16 @@
 from collections import OrderedDict
 
+ADD_LOCATION = {
+    "LEVEL_UP": ((288, 348), (184, 58)),
+    "LEVEL_UP_BLACK": ((827, 244), (136, 67)),
+    "EAT_STONE": ((880, 520), (113, 37))
+}
+
+
 CLICK_LOCATION = {
     # 开始页面点击 QS 位置
-    'CENTER_CLICK': (640, 375),
+    # 'CENTER_CLICK': (640, 375),
+    'CENTER_CLICK': (650, 230),
     'MAIN_RETURN_INDEX': (16, 62),
     "LOGIN_QUICK_LOGIN": (640, 675),
     "LOGIN_START_WAKEUP": (642, 507),
