@@ -8,7 +8,7 @@ from config import *
 from time import sleep
 from Arknights.click_location import *
 from collections import OrderedDict
-from random import randint
+from random import randint, uniform
 from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
@@ -87,8 +87,16 @@ class ArknightsHelper(object):
 
     @staticmethod
     def __wait(n=10, MANLIKE_FLAG=True):
+        '''
+        写了个很诡异的等待函数,大家可以比赛一下谁写的随机等待函数最诡异哈哈哈哈
+        :param n:
+        :param MANLIKE_FLAG:
+        :return:
+        '''
+        assert n >= 1
         if MANLIKE_FLAG:
-            sleep(randint(n - n % floor(n / 2), n + n % floor(n / 2)))
+            bias = floor(n / 2) if floor(n / 2) < 1 else uniform(0, 1)
+            sleep(uniform(n - bias, n + bias))
         else:
             sleep(n)
 

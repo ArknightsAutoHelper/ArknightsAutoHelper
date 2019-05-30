@@ -55,7 +55,8 @@ urllib3    1.24.2
 
 ### 快速启动！快乐护肝！
 
-之后通过这样的代码就可以迅速开始战斗，你需要手动选关。到如下画面
+之后通过这样的代码就可以迅速开始战斗，你需要手动选关。到如下画面，活动关卡你也可以这么刷
+
 ```python
 from Arknights import ArknightsHelper
 Ark = ArknightsHelper()
@@ -64,6 +65,7 @@ Ark.module_battle_slim(c_id='4-8', set_count=8)
 # set_count 是战斗次数
 ```
 ![TIM截图20190513101009.png-1013.8kB][4]
+
 
 理论上该模块比完整的模块稳定并且不容易被系统检测。并且该模块所有的点击序列都是随机化的，不容易被检测
 
@@ -115,8 +117,8 @@ Ark.main_handler(TASK_LIST)
 
 ## 0x03 关于一些常见的问题
 
-TODO
 
-  [4]: http://static.zybuluo.com/shaobaobaoer/27owy5sd99gk0ciqzgdrnnee/TIM%E6%88%AA%E5%9B%BE20190513101009.png
-  
+
+
+  [4]: http://static.zybuluo.com/shaobaobaoer/7ifp1acn3an7a3z23t96owt1/TIM%E6%88%AA%E5%9B%BE20190530114456.png  
   [6]: http://static.zybuluo.com/shaobaobaoer/14ufv5gx72buoo1vyaa9jmgy/qrcode_1558871927006.jpg
