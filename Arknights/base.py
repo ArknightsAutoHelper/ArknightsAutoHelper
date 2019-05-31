@@ -2,7 +2,6 @@ import os
 
 os.path.join(os.path.abspath('../'))
 
-import mp3play
 from ADBShell import ADBShell
 from config import *
 from time import sleep
@@ -88,15 +87,15 @@ class ArknightsHelper(object):
     @staticmethod
     def __wait(n=10, MANLIKE_FLAG=True):
         '''
-        写了个很诡异的等待函数,大家可以比赛一下谁写的随机等待函数最诡异哈哈哈哈
+        n的+-随机值服从均匀分布
         :param n:
         :param MANLIKE_FLAG:
         :return:
         '''
-        assert n >= 1
         if MANLIKE_FLAG:
-            bias = floor(n / 2) if floor(n / 2) < 1 else uniform(0, 1)
-            sleep(uniform(n - bias, n + bias))
+            m = uniform(0, 0.3)
+            n = uniform(n - m * 0.5 * n, n + m * n)
+            sleep(n)
         else:
             sleep(n)
 
@@ -170,47 +169,54 @@ class ArknightsHelper(object):
             t = 0
 
             while not battle_end_signal:
-                self.__wait(BATTLE_FINISH_DETECT)
+                # 先打个60S，不检测
+                if t == 0:
+                    self.__wait(60)
+                    t += 60
+                else:
+                    self.__wait(BATTLE_FINISH_DETECT)
                 t += BATTLE_FINISH_DETECT
                 self.shell_color.helper_text("[*] 战斗进行{}S 判断是否结束".format(t))
 
-                self.adb.get_screen_shoot(
-                    file_name="battle_end.png",
-                    screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
-                )
-
                 # 升级的情况
-                # TODO 在调低阈值后，检测方法会有些诡异。之后可能用更加优秀的方法该进。
-                # if self.adb.img_difference(
-                #         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
-                #         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
-                # ) >= 0.55:
-                #     # 0.8没检测升级状况，尝试降低
-                #     self.adb.shell_color.helper_text("[*] 检测到升级！")
-                #     self.adb.get_mouse_click(
-                #         XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
-                #     )
-                #     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
-                #     self.adb.get_screen_shoot(
-                #         file_name="battle_end.png",
-                #         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
-                #     )
-
-                if self.adb.img_difference(
-                        img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
-                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
-                ) >= 0.8:
+                self.adb.get_screen_shoot(
+                    file_name="level_up_real_time.png",
+                    screen_range=MAP_LOCATION['LEVEL_UP']
+                )
+                num = self.adb.img_difference(img1=SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
+                                              img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
+                if num > .7:
                     battle_end_signal = True
+                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    self.adb.shell_color.helper_text("[*] 检测到升级！")
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(400, 150)
+                    )
+                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.adb.get_mouse_click(
                         XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
-                        # 点到了经验尝试降低从（200, 200）降低（200, 150）
                     )
+                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                 else:
-                    battle_end_signal_max_execute_time -= 1
-                if battle_end_signal_max_execute_time < 1:
-                    self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
-                    # self.restart()
-                    battle_end_signal = True
+                    self.adb.get_screen_shoot(
+                        file_name="battle_end.png",
+                        screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
+                    )
+
+                    if self.adb.img_difference(
+                            img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
+                            img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
+                    ) >= 0.8:
+                        battle_end_signal = True
+                        self.adb.get_mouse_click(
+                            XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
+                            # 点到了经验尝试降低从（200, 200）降低（200, 150）
+                        )
+                    else:
+                        battle_end_signal_max_execute_time -= 1
+                    if battle_end_signal_max_execute_time < 1:
+                        self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
+                        battle_end_signal = True
 
             count += 1
             self.shell_color.info_text("[*] 当前战斗次数  {}".format(count))
@@ -223,7 +229,7 @@ class ArknightsHelper(object):
         if not sub:
             if auto_close:
                 self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
-                self.__wait(1024, False)
+                self.__wait(120, False)
                 self.__del()
             else:
                 return False
