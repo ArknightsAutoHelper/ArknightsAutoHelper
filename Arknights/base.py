@@ -127,7 +127,7 @@ class ArknightsHelper(object):
         self.__wait(SECURITY_WAIT)
         # self.adb.get_screen_shoot("login.png")
 
-    def module_battle_slim(self, c_id, set_count=1000, set_ai=True, sub=False):
+    def module_battle_slim(self, c_id, set_count=1000, set_ai=True, sub=False, auto_close=True):
         '''
         简单的战斗模式，请参考 Arknights README.md 中的使用方法调用
         该模块 略去了选关部分，直接开始打
@@ -135,6 +135,7 @@ class ArknightsHelper(object):
         :param set_count: 设置总次数
         :param set_ai: 是否设置代理指挥，默认已经设置
         :param sub: 是否是子程序。（是否为module_battle所调用的)
+        :param auto_close: 是否自动关闭，默认为 True
         :return:
             True  当且仅当所有战斗计数达到设定值的时候
             False 当且仅当理智不足的时候
@@ -172,25 +173,28 @@ class ArknightsHelper(object):
                 self.__wait(BATTLE_FINISH_DETECT)
                 t += BATTLE_FINISH_DETECT
                 self.shell_color.helper_text("[*] 战斗进行{}S 判断是否结束".format(t))
+
                 self.adb.get_screen_shoot(
                     file_name="battle_end.png",
                     screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                 )
+
                 # 升级的情况
-                if self.adb.img_difference(
-                        img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
-                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
-                ) >= 0.7:
-                    # 0.8没检测升级状况，尝试降低
-                    self.adb.shell_color.helper_text("[*] 检测到升级！")
-                    self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
-                    )
-                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
-                    self.adb.get_screen_shoot(
-                        file_name="battle_end.png",
-                        screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
-                    )
+                # TODO 在调低阈值后，检测方法会有些诡异。之后可能用更加优秀的方法该进。
+                # if self.adb.img_difference(
+                #         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
+                #         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
+                # ) >= 0.55:
+                #     # 0.8没检测升级状况，尝试降低
+                #     self.adb.shell_color.helper_text("[*] 检测到升级！")
+                #     self.adb.get_mouse_click(
+                #         XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
+                #     )
+                #     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                #     self.adb.get_screen_shoot(
+                #         file_name="battle_end.png",
+                #         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
+                #     )
 
                 if self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
@@ -217,13 +221,12 @@ class ArknightsHelper(object):
             self.__wait(10, MANLIKE_FLAG=True)
 
         if not sub:
-            self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
-            # c = mp3play.load('a.mp3')
-            # c.play()
-            # c.volume(level=100)
-            self.__wait(1024, False)
-            # c.stop()
-            self.__del()
+            if auto_close:
+                self.shell_color.helper_text("[+] 简略模块结束，系统准备退出".format(c_id))
+                self.__wait(1024, False)
+                self.__del()
+            else:
+                return False
         else:
             return False
 

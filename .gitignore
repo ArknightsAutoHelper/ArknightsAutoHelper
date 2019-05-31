@@ -108,3 +108,9 @@ venv.bak/
 .idea/
 code_bin/
 screen_shoot/*.png
+Arknights/daliy_task_screen
+Arknights/dev_tools
+screen_shoot/1.txt
+screen_shoot/ocr_test_result.txt
+start.py
+storage/1.txt
