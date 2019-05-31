@@ -177,17 +177,14 @@ class ArknightsHelper(object):
                     screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                 )
                 # 升级的情况
-                if self.adb.img_difference(
+                level_up = self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
-                ) >= 0.9:
+                )
+                self.adb.shell_color.helper_text("level_up:{}".format(level_up))
+                if level_up >= 0.7:
                     # 0.8没检测升级状况，尝试降低
-                    value = self.adb.img_difference(
-                        img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
-                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP_TRUE.png"
-                    )
                     self.adb.shell_color.helper_text("[*] 检测到升级！")
-                    self.adb.shell_color.helper_text(value)
                     self.adb.get_mouse_click(
                         XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 200)
                     )
@@ -196,17 +193,17 @@ class ArknightsHelper(object):
                         file_name="battle_end.png",
                         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                     )
-
-                if self.adb.img_difference(
+                mission_end = self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                         img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
-                ) >= 0.8:
-                    battle_end_signal = True
-                    sleep(1)
+                )
+                self.adb.shell_color.helper_text("mission_end:{}".format(mission_end))
+                if mission_end >= 0.8:
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=(1000, 400)
-                        # 点到了经验,尝试更为MAIN_RETURN_INDEX（1000, 500）
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
                     )
+                    sleep(2)
+                    battle_end_signal = True
                 else:
                     battle_end_signal_max_execute_time -= 1
                 if battle_end_signal_max_execute_time < 1:
