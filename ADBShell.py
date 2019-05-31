@@ -137,19 +137,21 @@ class ADBShell(object):
         self.run_cmd(DEBUG_LEVEL=0)
 
     def get_mouse_click(self, XY=None, FLAG=None):
-        sleep(1)
+        # sleep(10)
+        self.__adb_tools = "shell"
         if FLAG is not None:
             # self.shell_color.info_text(XY.__str__())
-            self.__adb_tools = "shell"
+            # self.__adb_tools = "shell"
             self.__adb_command = "input tap {} {}".format(XY[0] + randint(-FLAG[0], FLAG[0]),
                                                           XY[1] + randint(-FLAG[1], FLAG[1]))
-            self.run_cmd(DEBUG_LEVEL=0)
+            # self.run_cmd(DEBUG_LEVEL=0)
         else:
             # self.shell_color.info_text(XY.__str__())
-            self.__adb_tools = "shell"
+            # self.__adb_tools = "shell"
             self.__adb_command = "input tap {} {}".format(XY[0] + randint(-1, 1),
                                                           XY[1] + randint(-1, 1))
-            self.run_cmd(DEBUG_LEVEL=0)
+            # self.run_cmd(DEBUG_LEVEL=0)
+        self.run_cmd(DEBUG_LEVEL=0)
 
     def mv_file(self, file_name, file_path="/sdcard/", RM=False):
         self.__adb_tools = "pull"
