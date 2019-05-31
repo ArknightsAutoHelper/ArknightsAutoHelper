@@ -3,7 +3,7 @@ from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, FLAGS
 from PIL import Image
 from time import sleep
 from random import randint
-from numpy import average, dot, linalg
+#from numpy import average, dot, linalg
 
 
 class ADBShell(object):
