@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 CLICK_LOCATION = {
     # 开始页面点击 QS 位置
-    'CENTER_CLICK': (640, 375),
+    'CENTER_CLICK': (650, 230),
     'MAIN_RETURN_INDEX': (16, 62),
     "LOGIN_QUICK_LOGIN": (640, 675),
     "LOGIN_START_WAKEUP": (642, 507),
@@ -52,7 +52,10 @@ MAP_LOCATION = {
     # 截图位置 # （X,Y） (DX,DY)
     "BATTLE_CLICK_AI_COMMANDER": ((1055, 580), (23, 23)),
     "BATTLE_INFO_BATTLE_END": ((30, 573), (375, 100)),
-    "BATTLE_INFO_STRENGTH_REMAIN": ((1128, 21), (152, 33))
+    "BATTLE_INFO_STRENGTH_REMAIN": ((1128, 21), (152, 33)),
+    "BATTLE_INFO_LEVEL_UP": ((288, 348), (184, 58)),
+    "BATTLE_INFO_LEVEL_UP_BLACK": ((827, 244), (136, 67)),
+    "BATTLE_INFO_EAT_STONE": ((880, 520), (113, 37)),
 }
 
 SWIPE_LOCATION = {
