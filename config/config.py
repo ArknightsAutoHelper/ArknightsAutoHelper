@@ -11,11 +11,17 @@ import os
     
     为啥这些路径我都要写绝对路径呢...因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：
 '''
-ADB_ROOT = r"D:\Program Files\Nox\bin"
-SCREEN_SHOOT_SAVE_PATH = "D:\\python_box\\shaobao_adb\\screen_shoot\\"
-STORAGE_PATH = "D:\\python_box\\shaobao_adb\\storage\\"
+ADB_ROOT = r"D:\yeshen\Nox\bin"
+SCREEN_SHOOT_SAVE_PATH = "E:\\GitHub\\ArknightsAutoHelper\\screen_shoot\\"
+STORAGE_PATH = "E:\\GitHub\\ArknightsAutoHelper\\storage\\"
 
 ADB_HOST = "127.0.0.1:62001"
+# 是否启用百度api作为ocr识别方案，需要自行注册
+Enable_api = False
+""" 你的 APPID AK SK """
+APP_ID = '你的 App ID'
+API_KEY = '你的 Api Key'
+SECRET_KEY = '你的 Secret Key'
 
 # arknights INFO
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"

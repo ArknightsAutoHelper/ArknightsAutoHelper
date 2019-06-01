@@ -1,8 +1,5 @@
 import os
-
-os.path.join(os.path.abspath('../'))
-
-import mp3play
+# import mp3play
 from ADBShell import ADBShell
 from config import *
 from time import sleep
@@ -12,6 +9,8 @@ from random import randint, uniform
 from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
+from Baidu_api import Baidu_OCR
+os.path.join(os.path.abspath('../'))
 
 
 class ArknightsHelper(object):
@@ -27,13 +26,23 @@ class ArknightsHelper(object):
         self.__is_ocr_active(current_strength)
 
     def __is_ocr_active(self, current_strength):
-        os.popen(
-            "tesseract {} {} --psm 7".format(
-                STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result"
+        if not Enable_api:
+            os.popen(
+                "tesseract {} {} --psm 7".format(
+                    STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result"
+                )
             )
-        )
-        self.__wait(3)
+            self.__wait(3)
+        else:
+            try:
+                Baidu_OCR.ocr(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt")
+            except IndexError:
+                config.Enable_api = False
+                self.shell_color.failure_text("[!] 百度API未检测到文本")
+                self.shell_color.warning_text("请检查storage目录下OCR_TEST_1.png文件")
+                self.shell_color.helper_text("继续使用tesseract")
         try:
+
             with open(SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt", 'r', encoding="utf8") as f:
                 # assert  读取结果应该为 18/121 当然只要判断18就行了
                 # 很神奇，我的ocr无法识别test，但是截图可以
@@ -350,12 +359,21 @@ class ArknightsHelper(object):
             self.adb.get_screen_shoot(
                 file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
             )
-            os.popen(
-                "tesseract {} {} --psm 7".format(
-                    SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
+            if not Enable_api:
+                os.popen(
+                    "tesseract {} {} --psm 7".format(
+                        SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
+                    )
                 )
-            )
-            self.__wait(3)
+                self.__wait(3)
+            else:
+                try:
+                    Baidu_OCR.ocr(SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1.txt")
+                except IndexError:
+                    config.Enable_api = False
+                    self.shell_color.failure_text("[!] 百度API未检测到文本")
+                    self.shell_color.warning_text("游戏界面可能出错")
+                    self.shell_color.helper_text("继续使用tesseract")
             with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
                 tmp = f.read()  #
                 try:
