@@ -16,6 +16,12 @@ SCREEN_SHOOT_SAVE_PATH = "D:\\python_box\\shaobao_adb\\screen_shoot\\"
 STORAGE_PATH = "D:\\python_box\\shaobao_adb\\storage\\"
 
 ADB_HOST = "127.0.0.1:62001"
+# 是否启用百度api作为ocr识别方案，需要自行注册
+Enable_api = False
+""" 你的 APPID AK SK """
+APP_ID = '你的 App ID'
+API_KEY = '你的 Api Key'
+SECRET_KEY = '你的 Secret Key'
 
 # arknights INFO
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"
