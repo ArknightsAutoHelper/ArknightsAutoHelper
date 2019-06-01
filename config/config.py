@@ -16,7 +16,13 @@ SCREEN_SHOOT_SAVE_PATH = "D:\\python_box\\shaobao_adb\\screen_shoot\\"
 STORAGE_PATH = "D:\\python_box\\shaobao_adb\\storage\\"
 
 ADB_HOST = "127.0.0.1:62001"
-# 是否启用百度api作为ocr识别方案，需要自行注册
+
+# 启动ocr来检测关卡后是否升级
+# 注意：如不使用百度api并要使用ocr识别的话，请使用前确认已经安装中文识别
+enable_ocr_check_update = False
+# 启动ocr来检测关卡是否结束
+enable_ocr_check_end = False
+# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
 Enable_api = False
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
