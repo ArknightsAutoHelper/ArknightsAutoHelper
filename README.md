@@ -51,7 +51,7 @@ urllib3    1.24.2
  - 子图与目标子图比较
 
 ## 0x02 ArknightsHelper
-> 需要安装OCR模块
+> 需要安装OCR模块;感谢群友的贡献！
 
 ### 快速启动！快乐护肝！
 
@@ -68,6 +68,27 @@ Ark.module_battle_slim(c_id='4-8', set_count=8)
 
 
 理论上该模块比完整的模块稳定并且不容易被系统检测。并且该模块所有的点击序列都是随机化的，不容易被检测
+
+### 多开启动！效率至上！
+关于多开器的用法
+请在初始化前，带入 ADB_HOST。如果你不知道你的 ADB_HOST 是多少，就带入一个空值。系统会自动检测,并让你手动选择。
+
+    [!] 检测到多台设备，根据 ADB_HOST 参数将自动选择设备
+    [*]  0	127.0.0.1:62025	device
+    [*]  1	127.0.0.1:62001	device
+    系统未检测到设备名称，请根据上述内容自行输入数字并选择
+    >0
+    127.0.0.1:62025
+
+请不要直接带入和你另一个设备同样的ADB_HOST，这样会导致连到另一台设备上去
+
+```python
+from Arknights import ArknightsHelper
+ADB_HOST = "127.0.0.1:62025"
+# OR ADB_HOST = ""
+Ark = ArknightsHelper(adb_host=ADB_HOST)
+Ark.module_battle_slim(c_id='CE-3', set_count=50, set_ai=True)
+```
 
 ### 任务清单功能
 
