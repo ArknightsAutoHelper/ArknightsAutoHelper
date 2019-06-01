@@ -14,12 +14,13 @@ from Arknights.flags import *
 
 
 class ArknightsHelper(object):
-    def __init__(self, current_strength=None):
-        self.adb = ADBShell()
+    def __init__(self, current_strength=None, adb_host=None):
+        if adb_host is None:
+            adb_host = ADB_HOST
+        self.adb = ADBShell(adb_host=adb_host)
         self.shell_color = ShellColor()
         self.__is_game_active = False
         self.__check_game_active()
-        # self.MAX_STRENGTH = 80
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
         self.ocr_active = False
@@ -34,12 +35,8 @@ class ArknightsHelper(object):
         self.__wait(3)
         try:
             with open(SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt", 'r', encoding="utf8") as f:
-                # assert  读取结果应该为 18/121 当然只要判断18就行了
-                # 很神奇，我的ocr无法识别test，但是截图可以
                 tmp = f.read()
                 test_1 = int(tmp.split("/")[0])
-                # test_1 = 17  # OCR 识别错误测试
-                # test_1 = 18
                 if test_1 == 51:
                     self.ocr_active = True
                 else:
@@ -181,7 +178,7 @@ class ArknightsHelper(object):
                 # 升级的情况
                 self.adb.get_screen_shoot(
                     file_name="level_up_real_time.png",
-                    screen_range=MAP_LOCATION['LEVEL_UP']
+                    screen_range=MAP_LOCATION['BATTLE_INFO_LEVEL_UP']
                 )
                 num = self.adb.img_difference(img1=SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
                                               img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
@@ -239,7 +236,6 @@ class ArknightsHelper(object):
     def module_battle(self, c_id, set_count=1000):
         '''
             保留 first_battle_signal 尽管这样的代码有些冗余但是可能会在之后用到。
-
         :param c_id:
         :param set_count:
         :return:

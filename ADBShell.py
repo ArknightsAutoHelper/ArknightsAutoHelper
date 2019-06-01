@@ -6,26 +6,58 @@ from random import randint
 
 
 class ADBShell(object):
-    def __init__(self):
+    '''
+    '''
+
+    def __init__(self, adb_host=ADB_HOST):
         self.SCREEN_SHOOT_SAVE_PATH = SCREEN_SHOOT_SAVE_PATH
         os.chdir(ADB_ROOT)
         self.ADB_ROOT = ADB_ROOT
-        self.ADB_HOST = ADB_HOST
-        self.__command = "adb {tools} {command}"
+        self.ADB_HOST = adb_host
         self.__buffer = ""
         self.shell_color = ShellColor()
         self.__adb_tools = ""
         self.__adb_command = ""
+        self.DEVICE_NAME = self.__adb_device_name_detector()
+        self.__command = "adb -s " + self.DEVICE_NAME + " {tools} {command} "
         self.__adb_connect()
+
+    def __adb_device_name_detector(self):
+        self.__command = "adb {tools} {command}"
+        self.__adb_tools = "devices"
+        content = self.run_cmd(DEBUG_LEVEL=1).strip().split("\n")
+        content.pop(0)
+        if content.__len__() == 1:
+            device_name = content[0].split("\t")[0]
+        else:
+            self.shell_color.helper_text("[!] 检测到多台设备，根据 ADB_HOST 参数将自动选择设备")
+            device_name = ""
+            for c in range(content.__len__()):
+                print("[*]  " + c.__str__() + "\t" + content[c])
+                if self.ADB_HOST == content[c].split("\t")[0]:
+                    device_name = self.ADB_HOST
+            if device_name == "":
+                print("自动选择设备失败，请根据上述内容自行输入数字并选择")
+                input_valid_flag = False
+                num = "0"
+                while not input_valid_flag:
+                    num = input(">")
+                    if num.isnumeric() and int(num) <= content.__len__():
+                        input_valid_flag = True
+                    else:
+                        print("输入不合法，请重新输入")
+                device_name = content[int(num)].split("\t")[0]
+        self.shell_color.helper_text("[+] 确认设备名称\t" + device_name)
+        return device_name
 
     def __adb_connect(self):
         self.__adb_tools = "connect"
-        self.__adb_command = self.ADB_HOST
+        self.__adb_command = self.DEVICE_NAME
         self.run_cmd(DEBUG_LEVEL=1)
-        if "device" in self.__buffer or "already connected to {}".format(self.ADB_HOST) in self.__buffer:
-            self.shell_color.warning_text("[+] Connect to DEVICE {}  Success".format(self.ADB_HOST))
+        if "device" in self.__buffer or "already connected to {}".format(self.DEVICE_NAME) in self.__buffer:
+            self.shell_color.warning_text("[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
         else:
-            self.shell_color.failure_text("[-] Connect to DEVICE {}  Failed".format(self.ADB_HOST))
+            self.shell_color.failure_text("[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
 
     def run_cmd(self, DEBUG_LEVEL=2):
         """
@@ -63,6 +95,7 @@ class ADBShell(object):
                 tools=self.__adb_tools,
                 command=self.__adb_command
             )).read()
+            return self.__buffer
         else:
             os.system(self.__command.format(
                 tools=self.__adb_tools,
@@ -87,6 +120,7 @@ class ADBShell(object):
         elif BUFFER_OUT_PUT_LEVEL == 0:
             print(self.shell_color.H_OK_GREEN + "[+] DEBUG HELPER " + self.shell_color.E_END + "\n" +
                   self.__buffer[0:n])
+        return self.__buffer[0:n]
 
     @staticmethod
     def get_sub_screen(file_name, screen_range):
@@ -184,4 +218,3 @@ class ADBShell(object):
 
 if __name__ == '__main__':
     a = ADBShell()
-    a.mv_file("shaobao.pcap", RM=True)
