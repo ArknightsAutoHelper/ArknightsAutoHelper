@@ -3,6 +3,7 @@ from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, FLAGS
 from PIL import Image
 from time import sleep
 from random import randint
+#from numpy import average, dot, linalg
 
 
 class ADBShell(object):
@@ -170,19 +171,21 @@ class ADBShell(object):
         self.run_cmd(DEBUG_LEVEL=0)
 
     def get_mouse_click(self, XY=None, FLAG=None):
-        sleep(1)
+        # sleep(10)
+        self.__adb_tools = "shell"
         if FLAG is not None:
             # self.shell_color.info_text(XY.__str__())
-            self.__adb_tools = "shell"
+            # self.__adb_tools = "shell"
             self.__adb_command = "input tap {} {}".format(XY[0] + randint(-FLAG[0], FLAG[0]),
                                                           XY[1] + randint(-FLAG[1], FLAG[1]))
-            self.run_cmd(DEBUG_LEVEL=0)
+            # self.run_cmd(DEBUG_LEVEL=0)
         else:
             # self.shell_color.info_text(XY.__str__())
-            self.__adb_tools = "shell"
+            # self.__adb_tools = "shell"
             self.__adb_command = "input tap {} {}".format(XY[0] + randint(-1, 1),
                                                           XY[1] + randint(-1, 1))
-            self.run_cmd(DEBUG_LEVEL=0)
+            # self.run_cmd(DEBUG_LEVEL=0)
+        self.run_cmd(DEBUG_LEVEL=0)
 
     def mv_file(self, file_name, file_path="/sdcard/", RM=False):
         self.__adb_tools = "pull"
@@ -203,7 +206,7 @@ class ADBShell(object):
         hist2 = list(img2.getdata())
         sum1 = 0
         for i in range(len(hist1)):
-            if (hist1[i] == hist2[i]):
+            if hist1[i] == hist2[i]:
                 sum1 += 1
             else:
                 sum1 += 1 - float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])

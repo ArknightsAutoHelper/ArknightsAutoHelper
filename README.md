@@ -49,6 +49,7 @@ urllib3    1.24.2
  - 截图动作
  - 获取子图
  - 子图与目标子图比较
+ - OCR检测识别
 
 ## 0x02 ArknightsHelper
 > 需要安装OCR模块;感谢群友的贡献！
@@ -119,6 +120,31 @@ TASK_LIST['LS-4'] = 10
 Ark = ArknightsHelper(100)# 
 Ark.main_handler(TASK_LIST)
 ```
+
+### 启动百度API的方式识别OCR
+#### 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，按次计费
+文档地址：https://cloud.baidu.com/doc/OCR/index.html
+需要安装 ```baidu-api```库，执行```pip install baidu-aip```即可
+启用百度api作为ocr识别方案，需要自行注册百度云
+```False```则使用默认的原始方案
+```
+Enable_api = False
+```
+
+### OCR检测关卡的方法
+
+#### 相关配置文件在config.py下
+
+启动ocr来检测关卡后是否升级
+注意：如不使用百度api并要使用ocr识别的话，请使用前确认已经安装中文识别
+```
+enable_ocr_check_update = False
+```
+启动ocr来检测关卡是否结束
+```
+enable_ocr_check_end = False
+```
+
 
 ### 关于后续的想法
 

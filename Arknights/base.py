@@ -1,7 +1,5 @@
 import os
-
-os.path.join(os.path.abspath('../'))
-
+# import mp3play
 from ADBShell import ADBShell
 from config import *
 from time import sleep
@@ -11,6 +9,8 @@ from random import randint, uniform
 from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
+from Baidu_api import *
+os.path.join(os.path.abspath('../'))
 
 
 class ArknightsHelper(object):
@@ -26,13 +26,32 @@ class ArknightsHelper(object):
         self.ocr_active = False
         self.__is_ocr_active(current_strength)
 
-    def __is_ocr_active(self, current_strength):
-        os.popen(
-            "tesseract {} {} --psm 7".format(
-                STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result"
+    def __ocr_check(self, file_path, save_path, option=None):
+        if config.Enable_api:
+            try:
+                ocr(file_path, save_path+".txt")
+                # Baidu_OCR.ocr(file_path, save_path+".txt")
+            except ConnectionError:
+                self.shell_color.failure_text("[!] 百度API无法连接")
+                config.Enable_api = False
+                self.shell_color.helper_text("继续使用tesseract")
+                if option is not None:
+                    option = " " + option
+                os.popen(
+                    "tesseract {} {}{}".format(file_path, save_path, option)
+                )
+                self.__wait(3)
+
+        else:
+            if option is not None:
+                option = " " + option
+            os.popen(
+                "tesseract {} {}{}".format(file_path, save_path, option)
             )
-        )
-        self.__wait(3)
+            self.__wait(3)
+
+    def __is_ocr_active(self, current_strength):
+        self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7")
         try:
             with open(SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt", 'r', encoding="utf8") as f:
                 tmp = f.read()
@@ -40,6 +59,9 @@ class ArknightsHelper(object):
                 if test_1 == 51:
                     self.ocr_active = True
                 else:
+                    # 如果启动了api检测失误的话，关闭api
+                    if config.Enable_api:
+                        config.Enable_api = False
                     self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
                     if current_strength is not None:
                         self.CURRENT_STRENGTH = current_strength
@@ -180,9 +202,22 @@ class ArknightsHelper(object):
                     file_name="level_up_real_time.png",
                     screen_range=MAP_LOCATION['BATTLE_INFO_LEVEL_UP']
                 )
-                num = self.adb.img_difference(img1=SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
-                                              img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
-                if num > .7:
+                level_up_signal = False
+                level_up_num = 0
+                # 检测是否启动ocr检查升级情况
+                if enable_ocr_check_update:
+                    self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
+                                     SCREEN_SHOOT_SAVE_PATH + "1",
+                                     "--psm 7 -l chi_sim")
+                    level_up_text = "等级提升"
+                    f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
+                    tmp = f.readline()
+                    if tmp[:5] == level_up_text:
+                        level_up_signal = True
+                else:
+                    level_up_num = self.adb.img_difference(img1=SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
+                                                           img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
+                if level_up_num > .7 or level_up_signal:
                     battle_end_signal = True
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.adb.shell_color.helper_text("[*] 检测到升级！")
@@ -195,15 +230,27 @@ class ArknightsHelper(object):
                     )
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                 else:
+                    # 检测游戏是否结束
                     self.adb.get_screen_shoot(
                         file_name="battle_end.png",
                         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                     )
-
-                    if self.adb.img_difference(
+                    end_num = 0
+                    end_signal = False
+                    if enable_ocr_check_end:
+                        self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
+                                         SCREEN_SHOOT_SAVE_PATH + "1",
+                                         "--psm 7 -l chi_sim")
+                        end_text = "行动结束"
+                        f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
+                        tmp = f.readline()
+                        if tmp[:5] == end_text:
+                            end_signal = True
+                    else:
+                        end_num = self.adb.img_difference(
                             img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
-                            img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
-                    ) >= 0.8:
+                            img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png")
+                    if end_num >= 0.8 or end_signal:
                         battle_end_signal = True
                         self.adb.get_mouse_click(
                             XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
@@ -352,12 +399,7 @@ class ArknightsHelper(object):
             self.adb.get_screen_shoot(
                 file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
             )
-            os.popen(
-                "tesseract {} {} --psm 7".format(
-                    SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1"
-                )
-            )
-            self.__wait(3)
+            self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1", "--psm 7")
             with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
                 tmp = f.read()  #
                 try:
