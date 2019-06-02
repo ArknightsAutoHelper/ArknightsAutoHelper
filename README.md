@@ -39,6 +39,7 @@ requests   2.21.0
 setuptools 39.1.0
 soupsieve  1.9.1
 urllib3    1.24.2
+baidu-aip  2.2.13.0
 ```
 
 ### 目前支持的功能
@@ -49,7 +50,8 @@ urllib3    1.24.2
  - 截图动作
  - 获取子图
  - 子图与目标子图比较
- - OCR检测识别
+ - OCR 检测识别
+ - 百度OCR （感谢群友的贡献，目前该功能基本完善，如有BUG请多多包涵）
 
 ## 0x02 ArknightsHelper
 > 需要安装OCR模块;感谢群友的贡献！
@@ -144,6 +146,7 @@ enable_ocr_check_update = False
 ```
 enable_ocr_check_end = False
 ```
+默认方法为利用子图识别
 
 
 ### 关于后续的想法
