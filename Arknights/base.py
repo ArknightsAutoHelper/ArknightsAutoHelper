@@ -313,7 +313,7 @@ class ArknightsHelper(object):
         return True
 
     def main_handler(self, battle_task_list=None):
-        if battle_task_list == None:
+        if battle_task_list is None:
             battle_task_list = OrderedDict()
 
         self.shell_color.warning_text("[*] 装在模块....")
