@@ -223,7 +223,7 @@ class ArknightsHelper(object):
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.adb.shell_color.helper_text("[*] 检测到升级！")
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(400, 150)
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
                     )
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.adb.get_mouse_click(

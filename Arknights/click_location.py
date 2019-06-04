@@ -2,7 +2,7 @@ from collections import OrderedDict
 
 CLICK_LOCATION = {
     # 开始页面点击 QS 位置
-    'CENTER_CLICK': (650, 230),
+    'CENTER_CLICK': (350, 230),
     'MAIN_RETURN_INDEX': (16, 62),
     "LOGIN_QUICK_LOGIN": (640, 675),
     "LOGIN_START_WAKEUP": (642, 507),
