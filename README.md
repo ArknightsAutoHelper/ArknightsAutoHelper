@@ -126,7 +126,7 @@ Ark.main_handler(TASK_LIST)
 ### 启动百度API的方式识别OCR
 #### 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，按次计费
 文档地址：https://cloud.baidu.com/doc/OCR/index.html
-需要安装 ```baidu-api```库，执行```pip install baidu-aip```即可
+需要安装 ```baidu-aip```库，执行```pip install baidu-aip```即可
 启用百度api作为ocr识别方案，需要自行注册百度云
 ```False```则使用默认的原始方案
 ```
