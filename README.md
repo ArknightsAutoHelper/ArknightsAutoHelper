@@ -39,7 +39,7 @@ requests   2.21.0
 setuptools 39.1.0
 soupsieve  1.9.1
 urllib3    1.24.2
-baidu-aip  2.2.13.0
+baidu-api  2.2.13.0
 ```
 
 ### 目前支持的功能
