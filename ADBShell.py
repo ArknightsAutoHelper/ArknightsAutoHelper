@@ -3,7 +3,9 @@ from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, FLAGS
 from PIL import Image
 from time import sleep
 from random import randint
-#from numpy import average, dot, linalg
+
+
+# from numpy import average, dot, linalg
 
 
 class ADBShell(object):
@@ -185,6 +187,8 @@ class ADBShell(object):
             self.__adb_command = "input tap {} {}".format(XY[0] + randint(-1, 1),
                                                           XY[1] + randint(-1, 1))
             # self.run_cmd(DEBUG_LEVEL=0)
+        # print(self.__adb_command)
+        # 如果你遇到了问题，可以把这百年输出并把日志分享到群里。
         self.run_cmd(DEBUG_LEVEL=0)
 
     def mv_file(self, file_name, file_path="/sdcard/", RM=False):

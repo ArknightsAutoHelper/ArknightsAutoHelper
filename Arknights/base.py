@@ -10,6 +10,7 @@ from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
 from Baidu_api import *
+
 os.path.join(os.path.abspath('../'))
 
 
@@ -29,7 +30,7 @@ class ArknightsHelper(object):
     def __ocr_check(self, file_path, save_path, option=None):
         if config.Enable_api:
             try:
-                ocr(file_path, save_path+".txt")
+                ocr(file_path, save_path + ".txt")
                 # Baidu_OCR.ocr(file_path, save_path+".txt")
             except ConnectionError:
                 self.shell_color.failure_text("[!] 百度API无法连接")
@@ -222,7 +223,7 @@ class ArknightsHelper(object):
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.adb.shell_color.helper_text("[*] 检测到升级！")
                     self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(400, 150)
+                        XY=CLICK_LOCATION['CENTER_CLICK'], FLAG=(200, 150)
                     )
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.adb.get_mouse_click(
@@ -237,6 +238,7 @@ class ArknightsHelper(object):
                     )
                     end_num = 0
                     end_signal = False
+
                     if enable_ocr_check_end:
                         self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                                          SCREEN_SHOOT_SAVE_PATH + "1",
@@ -311,7 +313,7 @@ class ArknightsHelper(object):
         return True
 
     def main_handler(self, battle_task_list=None):
-        if battle_task_list == None:
+        if battle_task_list is None:
             battle_task_list = OrderedDict()
 
         self.shell_color.warning_text("[*] 装在模块....")

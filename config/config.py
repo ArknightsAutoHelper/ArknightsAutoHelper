@@ -1,4 +1,5 @@
 import os
+
 '''
 如果需要二次开发，请修改 
     
@@ -15,7 +16,9 @@ ADB_ROOT = r"D:\Program Files\Nox\bin"
 SCREEN_SHOOT_SAVE_PATH = "D:\\python_box\\shaobao_adb\\screen_shoot\\"
 STORAGE_PATH = "D:\\python_box\\shaobao_adb\\storage\\"
 
-ADB_HOST = "127.0.0.1:62001"
+# ADB_HOST = "127.0.0.1:62001"  # 如果你不想用多开器的功能，请用此行配置
+ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并手动选择或在启动时自行添加HOST。
+# 另外推荐将这里的ADB_HOST 赋值为空字符串，如果仅有一台设备连接，系统会自动读取到设备名称
 
 # 启动ocr来检测关卡后是否升级
 # 注意：如不使用百度api并要使用ocr识别的话，请使用前确认已经安装中文识别
