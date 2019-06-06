@@ -409,10 +409,17 @@ class ArknightsHelper(object):
                     self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
                 except Exception as e:
                     self.shell_color.failure_text("[!] {}".format(e))
+                    # 排除ocr识别失败，目前只有素材界面bug会导致识别识别，因为检测时处于关卡结束界面
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION['FIX_RETURN_PROBLEM'], FLAG=(100, 100)
+                        # 再点一下，解决之前界面退出问题，点击位置即使是ocr识别错误也不会影响什么
+                    )
+                    self.shell_color.warning_text("已尝试无害化处理")
+                    self.__wait(1)
                     self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
         else:
             self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
-            self.shell_color.warning_text("[*] OCR 模块为装载，系统将直接计算理智值")
+            self.shell_color.warning_text("[*] OCR 模块未装载，系统将直接计算理智值")
             self.__wait(TINY_WAIT)
             self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
 
