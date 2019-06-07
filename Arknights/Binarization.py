@@ -2,6 +2,12 @@ from PIL import Image
 
 
 def binarization_image(filepath, threshold=200):
+    '''
+    二值化图像
+    :param filepath:
+    :param threshold:
+    :return:
+    '''
     picture = Image.open(filepath)
     _L_form = picture.convert('L')
     table = []
