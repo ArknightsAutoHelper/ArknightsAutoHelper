@@ -10,6 +10,7 @@ from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
 from Baidu_api import *
+from Arknights.Binarization import binarization_image
 
 os.path.join(os.path.abspath('../'))
 
@@ -21,13 +22,19 @@ class ArknightsHelper(object):
         self.adb = ADBShell(adb_host=adb_host)
         self.shell_color = ShellColor()
         self.__is_game_active = False
+        self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
+            if enable_rebase_to_null else ""
+
         self.__check_game_active()
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
         self.ocr_active = False
         self.__is_ocr_active(current_strength)
 
-    def __ocr_check(self, file_path, save_path, option=None):
+    def __ocr_check(self, file_path, save_path, option=None, change_image=True):
+        # 对图形进行二值化操作
+        if change_image:
+            binarization_image(file_path)
         if config.Enable_api:
             try:
                 ocr(file_path, save_path + ".txt")
@@ -39,19 +46,20 @@ class ArknightsHelper(object):
                 if option is not None:
                     option = " " + option
                 os.popen(
-                    "tesseract {} {}{}".format(file_path, save_path, option)
+                    "tesseract {} {}{}".format(file_path, save_path, option) + self.__rebase_to_null
                 )
                 self.__wait(3)
         else:
             if option is not None:
                 option = " " + option
             os.popen(
-                "tesseract {} {}{}".format(file_path, save_path, option)
+                "tesseract {} {}{}".format(file_path, save_path, option) + self.__rebase_to_null
             )
             self.__wait(3)
 
     def __is_ocr_active(self, current_strength):
-        self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7")
+        self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7",
+                         change_image=False)
         try:
             with open(SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt", 'r', encoding="utf8") as f:
                 tmp = f.read()
@@ -145,16 +153,21 @@ class ArknightsHelper(object):
         self.__wait(SECURITY_WAIT)
         # self.adb.get_screen_shoot("login.png")
 
-    def module_battle_slim(self, c_id, set_count=1000, set_ai=True, **kwargs):
+    def module_battle_slim(self, c_id, set_count=1000, set_ai=False, **kwargs):
         '''
         简单的战斗模式，请参考 Arknights README.md 中的使用方法调用
         该模块 略去了选关部分，直接开始打
         :param c_id: 关卡 ID
         :param set_count: 设置总次数
-        :param set_ai: 是否设置代理指挥，默认已经设置
+        :param set_ai: 是否设置代理指挥，默认没有设置
+                        True 的时候，系统不会判断 AI 是否设置
+                        False 的时候，系统会判断 AI 是否设置，所以省略不写该参数事一个比较保险的选择
         扩展参数
         :param sub: 是否是子程序。（是否为module_battle所调用的)
         :param auto_close: 是否自动关闭，默认为 False
+        :param self_fix: 是否自动修复，默认为 False
+                            该参数如果设置为 True 会在安装OCR模块且获取理智失败的情况下进入DEBUG逻辑
+                            目前只支持不小心点到素材页面导致卡死的状况
         :param MAX_TIME: 最大迭代次数，默认为config的设置
                             该次数 * 14 S  + 60 得到每次战斗的最长时间
                             建议自定义这个数值，如果出现一定失误，超出最大判断次数后有一定的自我修复能力
@@ -178,7 +191,7 @@ class ArknightsHelper(object):
         if not sub:
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
         if not set_ai:
-            self.set_ai_commander(c_id=c_id, first_battle_signal=False)
+            self.set_ai_commander(c_id=c_id, first_battle_signal=True)
 
         strength_end_signal = False
         count = 0
@@ -229,7 +242,7 @@ class ArknightsHelper(object):
                     level_up_text = "等级提升"
                     f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
                     tmp = f.readline()
-                    if tmp[:5] == level_up_text:
+                    if level_up_text in tmp:
                         level_up_signal = True
                 else:
                     level_up_num = self.adb.img_difference(img1=SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
@@ -262,7 +275,7 @@ class ArknightsHelper(object):
                         end_text = "行动结束"
                         f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
                         tmp = f.readline()
-                        if tmp[:5] == end_text:
+                        if end_text in tmp:
                             end_signal = True
                     else:
                         end_num = self.adb.img_difference(
@@ -295,9 +308,9 @@ class ArknightsHelper(object):
                 self.__wait(120, False)
                 self.__del()
             else:
-                return False
+                return True
         else:
-            return False
+            return True
 
     def module_battle(self, c_id, set_count=1000):
         '''
@@ -306,27 +319,24 @@ class ArknightsHelper(object):
         :param set_count:
         :return:
         '''
-        self.__wait(3, MANLIKE_FLAG=False)
+        self.__wait(5, MANLIKE_FLAG=False)
         self.selector.id = c_id
-        strength_end_signal = False
-        first_battle_signal = True
-        while not strength_end_signal:
-            # 初始化 返回主页面
-            if first_battle_signal:
-                for i in range(4):
-                    self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
-                    )
-                # 进入战斗选择页面
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_CLICK_IN']
-                )
+        # 初始化 返回主页面
+        for i in range(3):
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
+            )
+        #     TODO 好像UI 改了，现在的魔法坐标做不到这个了。打算这边做个识别
+        # 进入战斗选择页面
+        self.adb.get_mouse_click(
+            XY=CLICK_LOCATION['BATTLE_CLICK_IN']
+        )
 
-            # 选关部分
-            self.battle_selector(c_id, first_battle_signal)
-            # 选关结束
-            strength_end_signal = self.module_battle_slim(c_id, set_count=set_count, set_ai=False, sub=True)
-            first_battle_signal = False
+        # 选关部分
+        self.battle_selector(c_id)
+        # 选关结束
+        self.module_battle_slim(c_id, set_count=set_count, set_ai=False, sub=True,
+                                self_fix=self.ocr_active)
         return True
 
     def main_handler(self, battle_task_list=None):
@@ -370,7 +380,7 @@ class ArknightsHelper(object):
         self.module_login()
         self.main_handler()
 
-    def set_ai_commander(self, c_id, first_battle_signal=False):
+    def set_ai_commander(self, c_id, first_battle_signal=True):
         if first_battle_signal:
             self.adb.get_screen_shoot('{}.png'.format(c_id), MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
             if self.adb.img_difference(
@@ -419,7 +429,7 @@ class ArknightsHelper(object):
             end_text = "首次掉落"
             f = open(SCREEN_SHOOT_SAVE_PATH + "debug.txt", 'r', encoding="utf8")
             tmp = f.readline()
-            if tmp[:5] == end_text:
+            if end_text in tmp:
                 self.shell_color.helper_text("[$] 检测 BUG 成功，系统停留在素材页面，请求返回...")
                 self.adb.get_mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
                 self.__check_current_strength()
