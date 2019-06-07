@@ -10,6 +10,7 @@ from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
 from Baidu_api import *
+from Arknights.Binarization import binarization_image
 
 os.path.join(os.path.abspath('../'))
 
@@ -27,7 +28,10 @@ class ArknightsHelper(object):
         self.ocr_active = False
         self.__is_ocr_active(current_strength)
 
-    def __ocr_check(self, file_path, save_path, option=None):
+    def __ocr_check(self, file_path, save_path, option=None, change_image=True):
+        # 对图形进行二值化操作
+        if change_image:
+            binarization_image(file_path)
         if config.Enable_api:
             try:
                 ocr(file_path, save_path + ".txt")
@@ -51,7 +55,8 @@ class ArknightsHelper(object):
             self.__wait(3)
 
     def __is_ocr_active(self, current_strength):
-        self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7")
+        self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7",
+                         change_image=False)
         try:
             with open(SCREEN_SHOOT_SAVE_PATH + "ocr_test_result.txt", 'r', encoding="utf8") as f:
                 tmp = f.read()
@@ -229,7 +234,7 @@ class ArknightsHelper(object):
                     level_up_text = "等级提升"
                     f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
                     tmp = f.readline()
-                    if tmp[:5] == level_up_text:
+                    if level_up_text in tmp:
                         level_up_signal = True
                 else:
                     level_up_num = self.adb.img_difference(img1=SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
@@ -262,7 +267,7 @@ class ArknightsHelper(object):
                         end_text = "行动结束"
                         f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
                         tmp = f.readline()
-                        if tmp[:5] == end_text:
+                        if end_text in tmp:
                             end_signal = True
                     else:
                         end_num = self.adb.img_difference(
