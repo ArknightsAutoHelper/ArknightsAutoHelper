@@ -42,7 +42,6 @@ class ArknightsHelper(object):
                     "tesseract {} {}{}".format(file_path, save_path, option)
                 )
                 self.__wait(3)
-
         else:
             if option is not None:
                 option = " " + option
@@ -146,19 +145,36 @@ class ArknightsHelper(object):
         self.__wait(SECURITY_WAIT)
         # self.adb.get_screen_shoot("login.png")
 
-    def module_battle_slim(self, c_id, set_count=1000, set_ai=True, sub=False, auto_close=True):
+    def module_battle_slim(self, c_id, set_count=1000, set_ai=True, **kwargs):
         '''
         简单的战斗模式，请参考 Arknights README.md 中的使用方法调用
         该模块 略去了选关部分，直接开始打
         :param c_id: 关卡 ID
         :param set_count: 设置总次数
         :param set_ai: 是否设置代理指挥，默认已经设置
+        扩展参数
         :param sub: 是否是子程序。（是否为module_battle所调用的)
-        :param auto_close: 是否自动关闭，默认为 True
+        :param auto_close: 是否自动关闭，默认为 False
+        :param MAX_TIME: 最大迭代次数，默认为config的设置
+                            该次数 * 14 S  + 60 得到每次战斗的最长时间
+                            建议自定义这个数值，如果出现一定失误，超出最大判断次数后有一定的自我修复能力
         :return:
             True  当且仅当所有战斗计数达到设定值的时候
             False 当且仅当理智不足的时候
         '''
+        if "sub" in kwargs.keys():
+            sub = kwargs['sub']
+        else:
+            sub = False
+        if "auto_close" in kwargs.keys():
+            auto_close = kwargs['auto_close']
+        else:
+            auto_close = True
+        if "self_fix" in kwargs.keys():
+            self_fix = kwargs['self_fix']
+        else:
+            self_fix = False
+
         if not sub:
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
         if not set_ai:
@@ -169,11 +185,12 @@ class ArknightsHelper(object):
         while not strength_end_signal:
             # 初始化 变量
             battle_end_signal = False
-            battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
-            # 初始化 返回主页面
-
+            if "MAX_TIME" in kwargs.keys():
+                battle_end_signal_max_execute_time = kwargs["MAX_TIME"]
+            else:
+                battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
             # 查看理智剩余部分
-            strength_end_signal = not self.check_current_strength(c_id)
+            strength_end_signal = not self.check_current_strength(c_id, self_fix)
             if strength_end_signal:
                 return True
             # 查看理智剩余部分结束
@@ -197,7 +214,6 @@ class ArknightsHelper(object):
                     self.__wait(BATTLE_FINISH_DETECT)
                 t += BATTLE_FINISH_DETECT
                 self.shell_color.helper_text("[*] 战斗进行{}S 判断是否结束".format(t))
-
                 # 升级的情况
                 self.adb.get_screen_shoot(
                     file_name="level_up_real_time.png",
@@ -252,6 +268,7 @@ class ArknightsHelper(object):
                         end_num = self.adb.img_difference(
                             img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                             img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png")
+
                     if end_num >= 0.8 or end_signal:
                         battle_end_signal = True
                         self.adb.get_mouse_click(
@@ -261,7 +278,7 @@ class ArknightsHelper(object):
                     else:
                         battle_end_signal_max_execute_time -= 1
                     if battle_end_signal_max_execute_time < 1:
-                        self.shell_color.failure_text("[!] 超过最大战斗时常，默认战斗结束")
+                        self.shell_color.failure_text("[!] 超过最大战斗时常")  # 推测BUG发生，启动自检测模块")
                         battle_end_signal = True
 
             count += 1
@@ -353,34 +370,6 @@ class ArknightsHelper(object):
         self.module_login()
         self.main_handler()
 
-    def __module_battle_for_test(self, c_id, set_count=1000):
-        strength_end_signal = False
-        first_battle_signal = True
-        count = 0
-        while not strength_end_signal:
-            # 初始化 变量
-            # 战斗状态存活检测
-            # 初始化 返回主页面
-            if first_battle_signal:
-                for i in range(4):
-                    self.adb.get_mouse_click(
-                        XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
-                    )
-                # 进入战斗选择页面
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_CLICK_IN']
-                )
-            # 选关部分
-            self.battle_selector(c_id, first_battle_signal)
-            # 选关结束
-            count += 1
-            self.shell_color.info_text("[*] 当前战斗次数  {}".format(count))
-            if count >= set_count:
-                strength_end_signal = True
-            first_battle_signal = False
-            self.shell_color.info_text("[-] 战斗结束 重新开始")
-        return True
-
     def set_ai_commander(self, c_id, first_battle_signal=False):
         if first_battle_signal:
             self.adb.get_screen_shoot('{}.png'.format(c_id), MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
@@ -395,7 +384,59 @@ class ArknightsHelper(object):
             else:
                 self.shell_color.helper_text("[+] 代理指挥已设置")
 
-    def check_current_strength(self, c_id):
+    def __check_current_strength(self):
+        '''
+        简易的模式，在debug后重新启动
+        :return:
+        '''
+        assert self.ocr_active
+        sleep(4)
+        self.adb.get_screen_shoot(
+            file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
+        )
+        self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1", "--psm 7")
+        with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
+            tmp = f.read()  #
+            try:
+                self.CURRENT_STRENGTH = int(tmp.split("/")[0])
+                self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
+                return True
+            except Exception as e:
+                self.shell_color.failure_text("[!] {}".format(e))
+                return False
+
+    def __check_current_strength_debug(self):
+        # 查看是否在素材页面
+        self.shell_color.helper_text("[+] 启动自修复模块,检查是否停留在素材页面")
+        self.adb.get_screen_shoot(
+            file_name="debug.png",
+            screen_range=MAP_LOCATION['BATTLE_DEBUG_WHEN_OCR_ERROR']
+        )
+        if enable_ocr_debugger:
+            self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "debug.png",
+                             SCREEN_SHOOT_SAVE_PATH + "debug",
+                             "--psm 7 -l chi_sim")
+            end_text = "首次掉落"
+            f = open(SCREEN_SHOOT_SAVE_PATH + "debug.txt", 'r', encoding="utf8")
+            tmp = f.readline()
+            if tmp[:5] == end_text:
+                self.shell_color.helper_text("[$] 检测 BUG 成功，系统停留在素材页面，请求返回...")
+                self.adb.get_mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
+                self.__check_current_strength()
+            else:
+                self.shell_color.failure_text("[-] 检测 BUG 失败，系统将继续执行任务")
+        else:
+            if self.adb.img_difference(
+                    img1=SCREEN_SHOOT_SAVE_PATH + "debug.png",
+                    img2=STORAGE_PATH + "BATTLE_DEBUG_CHECK_LOCATION_IN_SUCAI.png"
+            ) > 0.75:
+                self.shell_color.helper_text("[$] 检测 BUG 成功，系统停留在素材页面，请求返回...")
+                self.adb.get_mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
+                self.__check_current_strength()
+            else:
+                self.shell_color.failure_text("[-] 检测 BUG 失败，系统将继续执行任务")
+
+    def check_current_strength(self, c_id, self_fix=False):
         if self.ocr_active:
             sleep(4)
             self.adb.get_screen_shoot(
@@ -409,7 +450,10 @@ class ArknightsHelper(object):
                     self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
                 except Exception as e:
                     self.shell_color.failure_text("[!] {}".format(e))
-                    self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+                    if self_fix:
+                        self.__check_current_strength_debug()
+                    else:
+                        self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
         else:
             self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
             self.shell_color.warning_text("[*] OCR 模块为装载，系统将直接计算理智值")
@@ -477,14 +521,6 @@ class ArknightsHelper(object):
 
             else:
                 sleep(5)
-                # 好像打过了就不用再点了，直接PASS就行
-                # self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                # if c_id in MAIN_TASK_RELOCATE.keys():
-                #     self.adb.get_mouse_click(MAIN_TASK_RELOCATE[c_id])
-                # else:
-                #     self.adb.get_mouse_click(
-                #         XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
-                #     )
 
         elif mode == 2:
             try:
