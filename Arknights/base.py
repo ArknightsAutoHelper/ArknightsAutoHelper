@@ -150,7 +150,6 @@ class ArknightsHelper(object):
             XY=CLICK_LOCATION['LOGIN_START_WAKEUP']
         )
         self.__wait(SECURITY_WAIT)
-        # self.adb.get_screen_shoot("login.png")
 
     def module_battle_slim(self, c_id, set_count=1000, set_ai=False, **kwargs):
         '''
@@ -189,7 +188,7 @@ class ArknightsHelper(object):
         if not sub:
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
         if not set_ai:
-            self.set_ai_commander(c_id=c_id, first_battle_signal=True)
+            self.set_ai_commander()
 
         strength_end_signal = False
         count = 0
@@ -410,19 +409,18 @@ class ArknightsHelper(object):
         self.module_login()
         self.main_handler()
 
-    def set_ai_commander(self, c_id, first_battle_signal=True):
-        if first_battle_signal:
-            self.adb.get_screen_shoot('{}.png'.format(c_id), MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
-            if self.adb.img_difference(
-                    SCREEN_SHOOT_SAVE_PATH + "{}.png".format(c_id),
-                    STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
-            ) <= 0.8:
-                self.shell_color.helper_text("[-] 代理指挥未设置，设置代理指挥")
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']
-                )
-            else:
-                self.shell_color.helper_text("[+] 代理指挥已设置")
+    def set_ai_commander(self):
+        self.adb.get_screen_shoot('is_ai.png', MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
+        if self.adb.img_difference(
+                SCREEN_SHOOT_SAVE_PATH + "is_ai.png",
+                STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
+        ) <= 0.8:
+            self.shell_color.helper_text("[-] 代理指挥未设置，设置代理指挥")
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']
+            )
+        else:
+            self.shell_color.helper_text("[+] 代理指挥已设置")
 
     def __check_current_strength(self):
         '''
