@@ -24,7 +24,6 @@ class ArknightsHelper(object):
         self.__is_game_active = False
         self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
             if enable_rebase_to_null else ""
-
         self.__check_game_active()
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
@@ -187,7 +186,6 @@ class ArknightsHelper(object):
             self_fix = kwargs['self_fix']
         else:
             self_fix = False
-
         if not sub:
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
         if not set_ai:
@@ -312,6 +310,34 @@ class ArknightsHelper(object):
         else:
             return True
 
+    def __check_is_on_setting(self):
+        '''
+        检查是否在设置页面
+        :return: True 如果在设置页面
+        '''
+        self.adb.get_screen_shoot(
+            'is_setting.png', MAP_LOCATION['INDEX_INFO_IS_SETTING']
+        )
+        if enable_ocr_debugger:
+            self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_setting.png",
+                             SCREEN_SHOOT_SAVE_PATH + "1",
+                             "--psm 7 -l chi_sim")
+            end_text = "保持"
+            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
+            tmp = f.readline()
+            if end_text in tmp:
+                return True
+            else:
+                return False
+        else:
+            if self.adb.img_difference(
+                    img1=STORAGE_PATH + "INDEX_INFO_IS_SETTING.png",
+                    img2=SCREEN_SHOOT_SAVE_PATH + "is_setting.png"
+            ) > .85:
+                return True
+            else:
+                return False
+
     def module_battle(self, c_id, set_count=1000):
         '''
             保留 first_battle_signal 尽管这样的代码有些冗余但是可能会在之后用到。
@@ -319,14 +345,18 @@ class ArknightsHelper(object):
         :param set_count:
         :return:
         '''
-        self.__wait(5, MANLIKE_FLAG=False)
+        self.__wait(3, MANLIKE_FLAG=False)
         self.selector.id = c_id
         # 初始化 返回主页面
         for i in range(3):
             self.adb.get_mouse_click(
                 XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
             )
-        #     TODO 好像UI 改了，现在的魔法坐标做不到这个了。打算这边做个识别
+        if self.__check_is_on_setting():
+            self.shell_color.helper_text("[=] 不小心点到设置了，点击返回")
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None
+            )
         # 进入战斗选择页面
         self.adb.get_mouse_click(
             XY=CLICK_LOCATION['BATTLE_CLICK_IN']
@@ -534,7 +564,6 @@ class ArknightsHelper(object):
 
         elif mode == 2:
             try:
-
                 X = DAILY_LIST[mode][self.selector.get_week()][c_id[0:2]]
             except Exception as e:
                 self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
