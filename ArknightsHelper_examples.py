@@ -32,6 +32,7 @@ from collections import OrderedDict
 '''
 main_handler 的启动模式
 '''
+'''
 
 TASK_LIST = OrderedDict()
 TASK_LIST['CE-5'] = 5
@@ -40,16 +41,21 @@ Ark = ArknightsHelper()
 Ark.main_handler(TASK_LIST)
 
 '''
+'''
 main_battle_slim 的启动模式
+'''
 '''
 Ark = ArknightsHelper()
 Ark.module_battle_slim(c_id='CE-5', set_count=14, set_ai=True)
 '''
+'''
 如果没有安装OCR模块，请在初始化ArknightsHelper()类时告知系统初值，就像这样子
+'''
 '''
 Ark = ArknightsHelper(123)
 Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
 
+'''
 '''
 关于多开器的用法
 请在初始化前，带入 ADB_HOST。如果你不知道你的 ADB_HOST 是多少，就带入一个空值。系统会自动检测,并让你手动选择。
@@ -63,7 +69,7 @@ Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
 
 请不要直接带入和你另一个设备同样的ADB_HOST，这样会导致连到另一台设备上去
 '''
-ADB_HOST = "127.0.0.1:62025"
+ADB_HOST = "127.0.0.1:62001"
 # OR ADB_HOST = ""
 Ark = ArknightsHelper(adb_host=ADB_HOST)
-Ark.module_battle_slim(c_id='CE-3', set_count=50, set_ai=True)
+Ark.module_battle_slim(c_id='GT-6', set_count=2, set_ai=True)
