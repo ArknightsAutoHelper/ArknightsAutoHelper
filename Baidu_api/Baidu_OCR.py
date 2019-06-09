@@ -11,6 +11,13 @@ def get_file_content(filePath):
 
 
 def ocr(file_path, save_path, line=0):
+    """
+    调用百度api进行图片识别
+    :param file_path: ocr识别图片路径
+    :param save_path: 识别结果保存路径
+    :param line: 选择行数，暂时没有用途，以防万一留下这个变量，默认为第一行
+    :return: 返回总行数（原打算debug使用，现直接在函数内完成）
+    """
     image = get_file_content(file_path)
 
     """ 调用通用文字识别, 图片参数为本地图片 """
