@@ -31,7 +31,14 @@ class ArknightsHelper(object):
         self.__is_ocr_active(current_strength)
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
-        # 对图形进行二值化操作
+        """
+        选择百度ocr识别，还是tesseract识别；以及图片二值化是否开启，
+        :param file_path: ocr识别图片路径
+        :param save_path: ocr结果保存路径，建议使用txt跟tesseract同一
+        :param option: 对tesseract的命令传递
+        :param change_image:是否进行二值化，默认使用二值化
+        :return:
+        """
         if change_image:
             binarization_image(file_path)
         if config.Enable_api:
@@ -57,6 +64,11 @@ class ArknightsHelper(object):
             self.__wait(3)
 
     def __is_ocr_active(self, current_strength):
+        """
+        启用ocr判断
+        :param current_strength: 当前理智
+        :return:
+        """
         self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7",
                          change_image=False)
         try:
@@ -112,12 +124,12 @@ class ArknightsHelper(object):
 
     @staticmethod
     def __wait(n=10, MANLIKE_FLAG=True):
-        '''
+        """
         n的+-随机值服从均匀分布
         :param n:
         :param MANLIKE_FLAG:
         :return:
-        '''
+        """
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
@@ -126,10 +138,10 @@ class ArknightsHelper(object):
             sleep(n)
 
     def __simulate_man(self):
-        '''
+        """
         模仿人操作，给检测机制提供一些困扰
         :return:
-        '''
+        """
         action = randint(1, 4)
         if action == 1:
             pass
@@ -153,7 +165,7 @@ class ArknightsHelper(object):
         # self.adb.get_screen_shoot("login.png")
 
     def module_battle_slim(self, c_id, set_count=1000, set_ai=False, **kwargs):
-        '''
+        """
         简单的战斗模式，请参考 Arknights README.md 中的使用方法调用
         该模块 略去了选关部分，直接开始打
         :param c_id: 关卡 ID
@@ -173,7 +185,7 @@ class ArknightsHelper(object):
         :return:
             True  当且仅当所有战斗计数达到设定值的时候
             False 当且仅当理智不足的时候
-        '''
+        """
         if "sub" in kwargs.keys():
             sub = kwargs['sub']
         else:
@@ -311,10 +323,10 @@ class ArknightsHelper(object):
             return True
 
     def __check_is_on_setting(self):
-        '''
+        """
         检查是否在设置页面
         :return: True 如果在设置页面
-        '''
+        """
         self.adb.get_screen_shoot(
             'is_setting.png', MAP_LOCATION['INDEX_INFO_IS_SETTING']
         )
@@ -339,12 +351,12 @@ class ArknightsHelper(object):
                 return False
 
     def module_battle(self, c_id, set_count=1000):
-        '''
+        """
             保留 first_battle_signal 尽管这样的代码有些冗余但是可能会在之后用到。
         :param c_id:
         :param set_count:
         :return:
-        '''
+        """
         self.__wait(3, MANLIKE_FLAG=False)
         self.selector.id = c_id
         # 初始化 返回主页面
@@ -399,10 +411,10 @@ class ArknightsHelper(object):
             self.__del()
 
     def restart(self):
-        '''
+        """
         由于重启的逻辑比较困难，暂时废弃这里的功能
         :return:
-        '''
+        """
         self.shell_color.failure_text("[!] 检测异常发生 重新唤醒所有模块")
         self.__del()
         self.__init__()
@@ -425,10 +437,10 @@ class ArknightsHelper(object):
                 self.shell_color.helper_text("[+] 代理指挥已设置")
 
     def __check_current_strength(self):
-        '''
+        """
         简易的模式，在debug后重新启动
         :return:
-        '''
+        """
         assert self.ocr_active
         sleep(4)
         self.adb.get_screen_shoot(
