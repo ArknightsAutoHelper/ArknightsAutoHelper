@@ -16,11 +16,18 @@ os.path.join(os.path.abspath('../'))
 
 
 class ArknightsHelper(object):
-    def __init__(self, current_strength=None, adb_host=None):
+    def __init__(self, current_strength=None, adb_host=None, out_put=0):
+        '''
+
+        :param current_strength:
+        :param adb_host:
+        :param out_put:  0 default with console
+                          1 no out put
+        '''
         if adb_host is None:
             adb_host = ADB_HOST
         self.adb = ADBShell(adb_host=adb_host)
-        self.shell_color = ShellColor()
+        self.shell_color = ShellColor() if out_put == 0 else BufferColor()
         self.__is_game_active = False
         self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
             if enable_rebase_to_null else ""
@@ -37,7 +44,6 @@ class ArknightsHelper(object):
         if config.Enable_api:
             try:
                 ocr(file_path, save_path + ".txt")
-                # Baidu_OCR.ocr(file_path, save_path+".txt")
             except ConnectionError:
                 self.shell_color.failure_text("[!] 百度API无法连接")
                 config.Enable_api = False
