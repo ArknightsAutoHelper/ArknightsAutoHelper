@@ -16,7 +16,7 @@ os.path.join(os.path.abspath('../'))
 
 
 class ArknightsHelper(object):
-    def __init__(self, current_strength=None, adb_host=None, out_put=0):
+    def __init__(self, current_strength=None, adb_host=None, out_put=0, call_by_gui=False):
         '''
 
         :param current_strength:
@@ -29,6 +29,7 @@ class ArknightsHelper(object):
         self.adb = ADBShell(adb_host=adb_host)
         self.shell_color = ShellColor() if out_put == 0 else BufferColor()
         self.__is_game_active = False
+        self.__call_by_gui = call_by_gui
         self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
             if enable_rebase_to_null else ""
         self.__check_game_active()
@@ -105,6 +106,9 @@ class ArknightsHelper(object):
         self.adb.ch_tools("shell")
         self.adb.ch_abd_command("am force-stop {}".format(ArkNights_PACKAGE_NAME))
         self.adb.run_cmd()
+
+    def destroy(self):
+        self.__del()
 
     def __check_apk_info_active(self):
         """
@@ -323,8 +327,10 @@ class ArknightsHelper(object):
                 self.__wait(120, False)
                 self.__del()
             else:
+                self.shell_color.helper_text("[+] 简略模块结束")
                 return True
         else:
+            self.shell_color.helper_text("[+] 当前任务清单 {} 结束，准备执行下一任务".format(c_id))
             return True
 
     def __check_is_on_setting(self):
@@ -406,9 +412,10 @@ class ArknightsHelper(object):
 
         if flag:
             self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
-            self.__wait(1024)
-            self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
-            self.__del()
+            if not self.__call_by_gui:
+                self.__wait(1024)
+                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.__del()
         else:
             self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
             self.__wait(1024)
