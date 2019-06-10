@@ -40,4 +40,5 @@ SECRET_KEY = '你的 Secret Key'
 # arknights INFO
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"
 ArkNights_ACTIVITY_NAME = "com.u8.sdk.U8UnityContext"
-# 之后请把内容固化到json文件
+
+# 之后请把内容固化到json文件,该文件只用于开发版本
