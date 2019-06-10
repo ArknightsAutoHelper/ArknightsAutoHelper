@@ -4,20 +4,8 @@ import wx.grid
 from threading import Thread
 from wx.lib.pubsub import pub
 import time
-
 # GUI package import
 from GUI.Frames import *
-
-# from GUI.Index import Index
-# from GUI.ScoreManageMent import ScoreManageMent
-# from GUI.StudentChooseClass import StudentChooseClass
-# from GUI.StudentLogin import StudentLogin
-# from GUI.StudentScoreList import StudentScoreList
-# from GUI.MessageDialog import MessageDialog_CANCEL, MessageDialog_OK, MessageDialog_Yes_No
-# from GUI.ScoreAnalyze import ScoreAnalyze
-# from GUI.ManageStudentDetail import ManageStudentDetail
-# from GUI.ManageClassDetail import ManageClassDetail
-
 # Ark package import
 from Arknights.base import ArknightsHelper
 from Arknights.click_location import LIZHI_CONSUME
@@ -94,24 +82,26 @@ class ArkThread(Thread):
         # self._want_abort = 1
         self.ark.destroy()
 
+
 class ArknightsAutoHelperGUI(wx.App):
     def __init__(self):
         self.Index = None
         self.worker = None
         wx.App.__init__(self)
+        self.ark = None
 
         self.__current_active_frame = "Index"
+        # load settings
+        #
+        # loaded
+        self.backend_start_ark()
+        self.backend_buffer_push()
+
+    def __start_ark(self):
         try:
             self.ark = ArknightsHelper(call_by_gui=True, out_put=1)
         except Exception as e:
             self.Index.out_put_ctrl.AppendText(e)
-            self.ark = None
-
-        # load settings
-        #
-        # loaded
-
-        self.backend_buffer_push()
 
     def __restart_ark(self):
         if self.ark is None:
@@ -125,6 +115,9 @@ class ArknightsAutoHelperGUI(wx.App):
                 self.ark = ArknightsHelper(call_by_gui=True, out_put=1)
             except Exception as e:
                 self.Index.out_put_ctrl.AppendText(e)
+
+    def backend_start_ark(self):
+        self.__start_ark()
 
     def backend_buffer_push(self):
         buffer = self.ark.shell_color.get_buffer()
@@ -180,30 +173,11 @@ class ArknightsAutoHelperGUI(wx.App):
 
     def __bind_router(self):
         pass
-        # Index Router
-        # Add Router Here
-        # self.Index.Bind(wx.EVT_CLOSE, self.OnCloseWindow, self.Index)
-        #
-        # self.Bind(wx.EVT_BUTTON,
-        #           lambda event: self.OnRouter_change(event, 'StudentLogin'),
-        #           self.Index.m_button_Index2StudentLogin)
 
     def OnRouter_change(self, event, value='Index'):
         pass
-        # self.__current_active_frame = value
-        # if self.__current_active_frame == "Index":
-        #     self.Index.Show()
-        #     self.StudentLogin.Hide()
-        #     self.StudentChooseClass.Hide()
-        #     self.StudentScoreList.Hide()
-        #     self.ScoreManageMent.Hide()
-        #     self.SetTopWindow(self.Index)
 
 
 def start_app():
     ArknightsAutoHelperGUI().MainLoop()
     wx.Exit()
-
-
-if __name__ == '__main__':
-    start_app()

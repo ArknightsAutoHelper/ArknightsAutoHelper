@@ -1,5 +1,5 @@
 import os
-from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, FLAGS_CLICK_BIAS_TINY
+from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor
 from PIL import Image
 from time import sleep
 from random import randint
@@ -23,7 +23,7 @@ class ADBShell(object):
         self.__adb_command = ""
         self.DEVICE_NAME = self.__adb_device_name_detector()
         self.__command = "adb -s " + self.DEVICE_NAME + " {tools} {command} "
-        self.__adb_connect()
+        # self.__adb_connect()
 
     def __adb_device_name_detector(self):
         self.__command = "adb {tools} {command}"

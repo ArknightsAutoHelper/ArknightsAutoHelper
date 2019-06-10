@@ -40,6 +40,7 @@ setuptools 39.1.0
 soupsieve  1.9.1
 urllib3    1.24.2
 baidu-aip  2.2.13.0
+wxpython
 ```
 
 ### 目前支持的功能
@@ -151,6 +152,7 @@ enable_ocr_check_end = False
 ```
 默认方法为利用子图识别
 
+### wxpython 的
 
 ### 关于后续的想法
 

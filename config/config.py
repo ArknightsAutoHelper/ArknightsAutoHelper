@@ -40,10 +40,4 @@ SECRET_KEY = '你的 Secret Key'
 # arknights INFO
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"
 ArkNights_ACTIVITY_NAME = "com.u8.sdk.U8UnityContext"
-
-# manlike action
-FLAGS_CLICK_BIAS_TINY = (3, 3)
-
-
-# if __name__ == '__main__':
-#     ShellColor().run_test()
+# 之后请把内容固化到json文件

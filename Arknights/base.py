@@ -1,22 +1,20 @@
 import os
-# import mp3play
 from ADBShell import ADBShell
-from config import *
 from time import sleep
 from Arknights.click_location import *
 from collections import OrderedDict
 from random import randint, uniform
-from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
 from Baidu_api import *
 from Arknights.Binarization import binarization_image
+from config import *
 
 os.path.join(os.path.abspath('../'))
 
-
 class ArknightsHelper(object):
-    def __init__(self, current_strength=None, adb_host=None, out_put=0, call_by_gui=False):
+    def __init__(self, current_strength=None, adb_host=None,
+                 out_put=0, call_by_gui=False):
         '''
 
         :param current_strength:
@@ -32,11 +30,14 @@ class ArknightsHelper(object):
         self.__call_by_gui = call_by_gui
         self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
             if enable_rebase_to_null else ""
-        self.__check_game_active()
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
-        self.ocr_active = False
-        self.__is_ocr_active(current_strength)
+        self.ocr_active = True
+        self.is_call_by_gui = call_by_gui
+        # 为了让 GUI 启动快一些，这里关闭了激活ocr的选项以及确认游戏开启的设置
+        if not call_by_gui:
+            self.is_ocr_active(current_strength)
+            self.__check_game_active()
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
         """
@@ -47,14 +48,15 @@ class ArknightsHelper(object):
         :param change_image:是否进行二值化，默认使用二值化
         :return:
         """
+        global enable_api
         if change_image:
             binarization_image(file_path)
-        if config.Enable_api:
+        if enable_api:
             try:
                 ocr(file_path, save_path + ".txt")
             except ConnectionError:
                 self.shell_color.failure_text("[!] 百度API无法连接")
-                config.Enable_api = False
+                enable_api = False
                 self.shell_color.helper_text("继续使用tesseract")
                 if option is not None:
                     option = " " + option
@@ -70,7 +72,7 @@ class ArknightsHelper(object):
             )
             self.__wait(3)
 
-    def __is_ocr_active(self, current_strength):
+    def is_ocr_active(self, current_strength):
         """
         启用ocr判断
         :param current_strength: 当前理智
@@ -86,21 +88,27 @@ class ArknightsHelper(object):
                     self.ocr_active = True
                 else:
                     # 如果启动了api检测失误的话，关闭api
-                    if config.Enable_api:
-                        config.Enable_api = False
+                    if enable_api:
+                        enable_api = False
                     self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
                     if current_strength is not None:
                         self.CURRENT_STRENGTH = current_strength
                     else:
                         self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
-                        exit(0)
+                        if not self.is_call_by_gui:
+                            exit(0)
+                        else:
+                            return False
         except Exception as e:
             self.shell_color.failure_text("[!] OCR 模块未检测...装载初始理智值")
             if current_strength is not None:
                 self.CURRENT_STRENGTH = current_strength
             else:
                 self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
-                exit(0)
+                if not self.is_call_by_gui:
+                    exit(0)
+                else:
+                    return False
 
     def __del(self):
         self.adb.ch_tools("shell")
