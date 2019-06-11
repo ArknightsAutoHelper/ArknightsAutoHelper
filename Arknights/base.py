@@ -1,7 +1,8 @@
+developer = True
 import os
 from ADBShell import ADBShell
 from time import sleep
-from Arknights.click_location import *
+from Arknights.locations import *
 from collections import OrderedDict
 from random import randint, uniform
 from Arknights.BattleSelector import BattleSelector
@@ -424,16 +425,21 @@ class ArknightsHelper(object):
             # flag = self.module_battle_for_test(c_id, count)
 
         if flag:
-            self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
             if not self.__call_by_gui:
+                self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
                 self.__wait(1024)
                 self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
                 self.__del()
+            else:
+                self.shell_color.warning_text("[*] 所有模块执行完毕...！")
         else:
-            self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
-            self.__wait(1024)
-            self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
-            self.__del()
+            if not self.__call_by_gui:
+                self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
+                self.__wait(1024)
+                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.__del()
+            else:
+                self.shell_color.failure_text("[*] 未知模块异常...系统体现结束")
 
     def restart(self):
         """

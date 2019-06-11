@@ -18,7 +18,8 @@ import wx.xrc
 class Index(wx.Frame):
 
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, id=wx.ID_ANY, title="Arknights 辅助 V0.1 beta By shaobaobaoer", pos=wx.DefaultPosition,
+        wx.Frame.__init__(self, parent, id=wx.ID_ANY, title="Arknights Auto Helper GUI V0.1 beta By shaobaobaoer",
+                          pos=wx.DefaultPosition,
                           size=wx.Size(835, 629), style=wx.DEFAULT_FRAME_STYLE | wx.TAB_TRAVERSAL)
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
@@ -227,13 +228,13 @@ class Index(wx.Frame):
 
         self.SetSizer(bSizer2)
         self.Layout()
+        # self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
         self.m_statusBar1 = self.CreateStatusBar(1, wx.STB_SIZEGRIP, wx.ID_ANY)
         self.m_toolBar1 = self.CreateToolBar(wx.TB_HORIZONTAL, wx.ID_ANY)
-        self.m_tool1 = self.m_toolBar1.AddLabelTool(wx.ID_ANY, u"tool",
-                                                    wx.Bitmap(u"GUI/Misc/setting2.png", wx.BITMAP_TYPE_ANY),
-                                                    wx.NullBitmap,
-                                                    wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None)
-
+        self.m_tool1 = self.m_toolBar1.AddTool(wx.ID_ANY, u"tool",
+                                               wx.Bitmap(u"GUI/Misc/setting2.png", wx.BITMAP_TYPE_ANY),
+                                               wx.NullBitmap,
+                                               wx.ITEM_NORMAL, wx.EmptyString, wx.EmptyString, None)
         self.m_toolBar1.Realize()
 
         self.Centre(wx.BOTH)

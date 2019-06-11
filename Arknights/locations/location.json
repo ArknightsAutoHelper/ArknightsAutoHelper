@@ -1,0 +1,393 @@
+{
+  "LOCATION_JSON_NAME": "Arknights Auto Helper 默认位置文件",
+  "WITH_SCREEN": [
+    1280,
+    720
+  ],
+  "CLICK_LOCATION_INFO": "Arknights Auto Helper 默认位置文件 需要分辨率为 1280 * 720",
+  "CLICK_LOCATION": {
+    "CENTER_CLICK": [
+      350,
+      230
+    ],
+    "MAIN_RETURN_INDEX": [
+      16,
+      62
+    ],
+    "LOGIN_QUICK_LOGIN": [
+      640,
+      675
+    ],
+    "LOGIN_START_WAKEUP": [
+      642,
+      507
+    ],
+    "BATTLE_CLICK_IN": [
+      1173,
+      186
+    ],
+    "BATTLE_CLICK_AI_COMMANDER": [
+      1109,
+      588
+    ],
+    "BATTLE_CLICK_START_BATTLE": [
+      1151,
+      658
+    ],
+    "BATTLE_CLICK_ENSURE_TEAM_INFO": [
+      1104,
+      512
+    ],
+    "BATTLE_SELECT_MAIN_TASK": [
+      75,
+      663
+    ],
+    "BATTLE_SELECT_MAIN_TASK_2": [
+      1213,
+      311
+    ],
+    "BATTLE_SELECT_MAIN_TASK_4": [
+      969,
+      362
+    ],
+    "BATTLE_SELECT_MAIN_TASK_2-2": [
+      1265,
+      338
+    ],
+    "BATTLE_SELECT_MAIN_TASK_S2-1": [
+      1054,
+      431
+    ],
+    "BATTLE_SELECT_MAIN_TASK_4-4": [
+      610,
+      339
+    ],
+    "BATTLE_SELECT_MAIN_TASK_4-5": [
+      824,
+      254
+    ],
+    "BATTLE_SELECT_MAIN_TASK_4-6": [
+      1034,
+      340
+    ],
+    "BATTLE_SELECT_MAIN_TASK_4-7": [
+      771,
+      343
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION": [
+      236,
+      658
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_0": [
+      168,
+      375
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_1": [
+      452,
+      375
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_2": [
+      739,
+      375
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_3": [
+      1005,
+      356
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_X-1": [
+      135,
+      570
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_X-2": [
+      135,
+      570
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_X-3": [
+      664,
+      402
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_X-4": [
+      778,
+      293
+    ],
+    "BATTLE_SELECT_MATERIAL_COLLECTION_X-5": [
+      880,
+      167
+    ],
+    "BATTLE_SELECT_CHIP_SEARCH": [
+      387,
+      658
+    ],
+    "BATTLE_SELECT_CHIP_SEARCH_PR-1": [
+      264,
+      367
+    ],
+    "BATTLE_SELECT_CHIP_SEARCH_PR-2": [
+      503,
+      414
+    ],
+    "BATTLE_SELECT_CHIP_SEARCH_PR-3": [
+      762,
+      396
+    ],
+    "BATTLE_SELECT_CHIP_SEARCH_PR-X-1": [
+      324,
+      415
+    ],
+    "BATTLE_SELECT_CHIP_SEARCH_PR-X-2": [
+      767,
+      251
+    ]
+  },
+  "MAP_LOCATION": {
+    "BATTLE_CLICK_AI_COMMANDER": [
+      [
+        1055,
+        580
+      ],
+      [
+        23,
+        23
+      ]
+    ],
+    "BATTLE_INFO_BATTLE_END": [
+      [
+        30,
+        573
+      ],
+      [
+        375,
+        100
+      ]
+    ],
+    "BATTLE_INFO_STRENGTH_REMAIN": [
+      [
+        1128,
+        21
+      ],
+      [
+        152,
+        33
+      ]
+    ],
+    "BATTLE_INFO_LEVEL_UP": [
+      [
+        288,
+        348
+      ],
+      [
+        184,
+        58
+      ]
+    ],
+    "BATTLE_INFO_LEVEL_UP_BLACK": [
+      [
+        827,
+        244
+      ],
+      [
+        136,
+        67
+      ]
+    ],
+    "BATTLE_INFO_EAT_STONE": [
+      [
+        880,
+        520
+      ],
+      [
+        113,
+        37
+      ]
+    ],
+    "BATTLE_DEBUG_WHEN_OCR_ERROR": [
+      [
+        108,
+        122
+      ],
+      [
+        114,
+        53
+      ]
+    ],
+    "INDEX_INFO_IS_SETTING": [
+      [
+        322,
+        164
+      ],
+      [
+        126,
+        32
+      ]
+    ]
+  },
+  "SWIPE_LOCATION": {
+    "BATTLE_TO_MAP_LEFT": [
+      [
+        24,
+        87
+      ],
+      [
+        1200,
+        0
+      ]
+    ],
+    "BATTLE_TO_MAP_RIGHT": [
+      [
+        1023,
+        157
+      ],
+      [
+        -600,
+        0
+      ]
+    ]
+  },
+  "LIZHI_CONSUME": {
+    "CA-1": 10,
+    "CA-2": 15,
+    "CA-3": 20,
+    "CA-4": 25,
+    "CA-5": 30,
+    "CE-3": 20,
+    "CE-2": 15,
+    "CE-1": 10,
+    "CE-4": 25,
+    "CE-5": 30,
+    "LS-1": 10,
+    "LS-2": 15,
+    "LS-3": 20,
+    "LS-4": 25,
+    "LS-5": 30,
+    "SK-1": 10,
+    "SK-2": 15,
+    "SK-3": 20,
+    "SK-4": 25,
+    "SK-5": 30,
+    "AP-1": 10,
+    "AP-2": 15,
+    "AP-3": 20,
+    "AP-4": 25,
+    "AP-5": 30,
+    "PR-A-1": 18,
+    "PR-A-2": 36,
+    "PR-B-1": 18,
+    "PR-B-2": 36,
+    "PR-C-1": 18,
+    "PR-C-2": 36,
+    "PR-D-1": 18,
+    "PR-D-2": 36,
+    "S2-1": 9,
+    "2-1": 9,
+    "2-2": 9,
+    "4-4": 18,
+    "4-5": 18,
+    "4-6": 18,
+    "4-7": 18,
+    "3-8": 18,
+    "S2-12": 15,
+    "4-8": 21,
+    "4-9": 21,
+    "GT-6": 15,
+    "GT-5": 15,
+    "GT-4": 12,
+    "GT-3": 12,
+    "GT-2": 9,
+    "GT-1": 9
+  },
+  "BATTLE_SELECTORS": {
+    "1": "MAIN_TASK",
+    "2": "MATERIAL_COLLECTION",
+    "3": "CHIP_SEARCH",
+    "4": "EXTERMINATE_BATTLE"
+  },
+  "MAIN_TASK_CHAPTER_SWIPE": {
+    "4": 1
+  },
+  "MAIN_TASK_BATTLE_SWIPE": {
+    "4-4": 1,
+    "4-5": 1,
+    "4-6": 1,
+    "4-7": 2,
+    "4-8": 2
+  },
+  "MAIN_TASK_RELOCATE": {
+    "4-7": [
+      494,
+      342
+    ]
+  },
+  "DAILY_LIST": {
+    "3": {
+      "1": {
+        "A": 1,
+        "B": 2
+      },
+      "2": {
+        "B": 1,
+        "D": 2
+      },
+      "3": {
+        "C": 1,
+        "D": 2
+      },
+      "4": {
+        "A": 1,
+        "C": 2
+      },
+      "5": {
+        "A": 1,
+        "B": 2
+      },
+      "6": {
+        "B": 1,
+        "C": 2,
+        "D": 3
+      },
+      "7": {
+        "A": 1,
+        "C": 1,
+        "D": 3
+      }
+    },
+    "2": {
+      "1": {
+        "LS": 0,
+        "AP": 1,
+        "SK": 2
+      },
+      "2": {
+        "LS": 0,
+        "CA": 1,
+        "CE": 2
+      },
+      "3": {
+        "LS": 0,
+        "CA": 1,
+        "SK": 2
+      },
+      "4": {
+        "LS": 0,
+        "AP": 1,
+        "CE": 2
+      },
+      "5": {
+        "LS": 0,
+        "CA": 1,
+        "SK": 2
+      },
+      "6": {
+        "LS": 0,
+        "AP": 1,
+        "SK": 2,
+        "CE": 3
+      },
+      "7": {
+        "LS": 0,
+        "AP": 1,
+        "CA": 2,
+        "CE": 3
+      }
+    }
+  }
+}

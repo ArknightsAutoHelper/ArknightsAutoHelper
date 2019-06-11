@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 CLICK_LOCATION = {
     # 开始页面点击 QS 位置
     'CENTER_CLICK': (350, 230),
