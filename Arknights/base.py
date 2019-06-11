@@ -1,8 +1,6 @@
-developer = True
-import os
 from ADBShell import ADBShell
 from time import sleep
-from Arknights.locations import *
+from Arknights.click_location import *
 from collections import OrderedDict
 from random import randint, uniform
 from Arknights.BattleSelector import BattleSelector
@@ -12,6 +10,7 @@ from Arknights.Binarization import binarization_image
 from config import *
 
 os.path.join(os.path.abspath('../'))
+
 
 class ArknightsHelper(object):
     def __init__(self, current_strength=None, adb_host=None,

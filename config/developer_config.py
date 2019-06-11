@@ -13,9 +13,6 @@ import os
     为啥这些路径我都要写绝对路径呢...因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：
 '''
 ADB_ROOT = r"D:\Program Files\Nox\bin"
-SCREEN_SHOOT_SAVE_PATH = "screen_shoot\\",
-STORAGE_PATH = "storage\\",
-
 # ADB_HOST = "127.0.0.1:62001"  # 如果你不想用多开器的功能，请用此行配置
 ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并手动选择或在启动时自行添加HOST。
 # 另外推荐将这里的ADB_HOST 赋值为空字符串，如果仅有一台设备连接，系统会自动读取到设备名称
@@ -38,7 +35,7 @@ API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 
 # arknights INFO
-ArkNights_PACKAGE_NAME = "com.hypergryph.arknights" # 这个是官服的设置T
+ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"  # 这个是官服的设置T
 ArkNights_ACTIVITY_NAME = "com.u8.sdk.U8UnityContext"
 
 # 之后请把内容固化到json文件,该文件只用于开发版本
