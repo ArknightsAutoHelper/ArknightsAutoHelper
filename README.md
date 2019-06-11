@@ -22,13 +22,6 @@
 
 -  ADB_ROOT 
         这个路径为你 安卓模拟器adb工具的路径 （一般安卓电脑模拟器都有，所以设置成模拟器路径即可）
--  ~~STORAGE_PATH~~
-     ~~也就是目录底下的 storage 文件夹，请确保是绝对路径~~
--  ~~SCREEN_SHOOT_SAVE_PATH~~
-        ~~也就是目录底下的 screen_shoot 文件夹，用来存放一些截图~~
-
-~~有人问我为啥是绝对路径，因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：~~
-
 
 ```python
 ADB_ROOT = r"D:\Program Files\Nox\bin"
