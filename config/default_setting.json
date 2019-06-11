@@ -1,7 +1,5 @@
 {
   "ADB_ROOT": "D:\\Program Files\\Nox\\bin",
-  "SCREEN_SHOOT_SAVE_PATH": "D:\\python_box\\shaobao_adb\\screen_shoot\\",
-  "STORAGE_PATH": "D:\\python_box\\shaobao_adb\\storage\\",
   "ADB_HOST": "",
   "enable_ocr_check_update": true,
   "enable_ocr_check_end": true,

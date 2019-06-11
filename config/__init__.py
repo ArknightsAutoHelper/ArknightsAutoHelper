@@ -3,3 +3,4 @@
 # 为此你需要同步 setting 文件的配置
 from config.shell_color import ShellColor, BufferColor
 from config.load_settings import *
+from config.config import STORAGE_PATH, SCREEN_SHOOT_SAVE_PATH

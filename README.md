@@ -18,23 +18,20 @@
 
 
 **非常重要的路径设置**
-在config.py底下要改三个路径，如下所示
+在config.py底下要改一个路径，如下所示
 
 -  ADB_ROOT 
         这个路径为你 安卓模拟器adb工具的路径 （一般安卓电脑模拟器都有，所以设置成模拟器路径即可）
--  STORAGE_PATH 
-        也就是目录底下的 storage 文件夹，请确保是绝对路径
--  SCREEN_SHOOT_SAVE_PATH
-        也就是目录底下的 screen_shoot 文件夹，用来存放一些截图
+-  ~~STORAGE_PATH~~
+     ~~也就是目录底下的 storage 文件夹，请确保是绝对路径~~
+-  ~~SCREEN_SHOOT_SAVE_PATH~~
+        ~~也就是目录底下的 screen_shoot 文件夹，用来存放一些截图~~
 
-有人问我为啥是绝对路径，因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：
+~~有人问我为啥是绝对路径，因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：~~
 
 
 ```python
 ADB_ROOT = r"D:\Program Files\Nox\bin"
-SCREEN_SHOOT_SAVE_PATH = "D:\\python_box\\shaobao_adb\\screen_shoot\\"
-STORAGE_PATH = "D:\\python_box\\shaobao_adb\\storage\\"
-
 # ADB_HOST = "127.0.0.1:62001"  # 如果你不想用多开器的功能，请用此行配置
 ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并手动选择或在启动时自行添加HOST。
 # 另外推荐将这里的ADB_HOST 赋值为空字符串，如果仅有一台设备连接，系统会自动读取到设备名称
@@ -61,6 +58,7 @@ APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 ```
+**所有的设置可以在`config/default_setting.json`**下修改
 
 #### 依赖包
 
@@ -214,6 +212,8 @@ from config.shell_color import ShellColor, BufferColor
 # from config.load_settings import *
 ```
 不然你会看见你的IDE一片红。这么写的原因是方便GUI来进行设置。
+
+请对所有的类和函数在最外层进行调用。不然路径会出错
 
 
 ## 0x03 关于一些常见的问题
