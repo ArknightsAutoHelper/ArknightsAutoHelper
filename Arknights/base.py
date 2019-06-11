@@ -130,10 +130,11 @@ class ArknightsHelper(object):
 
     def check_game_active(self):
         '''
-        该命令是启动 官服的 明日方舟的
+        该命令是启动 官服的 明日方舟的函数
+        在之后的GUI里调用。启动脚本的时候不调用了。默认你已经打开了
         :return:
         '''
-        self.__check_apk_info_active()
+        # self.__check_apk_info_active()
 
         with open(STORAGE_PATH + "current.txt", 'r', encoding='utf8') as f:
             if ArkNights_PACKAGE_NAME in f.read():
