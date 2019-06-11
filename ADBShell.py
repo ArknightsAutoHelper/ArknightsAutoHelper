@@ -13,6 +13,7 @@ class ADBShell(object):
     '''
 
     def __init__(self, adb_host=ADB_HOST):
+        print(SCREEN_SHOOT_SAVE_PATH)
         self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH)
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = ADB_ROOT
@@ -23,6 +24,8 @@ class ADBShell(object):
         self.__adb_command = ""
         self.DEVICE_NAME = self.__adb_device_name_detector()
         self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" -s " + self.DEVICE_NAME + " {tools} {command} "
+        # 命令格式 "D:\Program Files\Nox\bin\adb.exe" -s 127.0.0.1:62001 shell am start ...
+        # Linux 和 Mac 机器我不太清楚咋整. 不过好像大家目前还没这个需求
         # self.__adb_connect()
 
     def __adb_device_name_detector(self):

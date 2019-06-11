@@ -16,7 +16,6 @@ class ArknightsHelper(object):
     def __init__(self, current_strength=None, adb_host=None,
                  out_put=0, call_by_gui=False):
         '''
-
         :param current_strength:
         :param adb_host:
         :param out_put:  0 default with console
@@ -37,7 +36,7 @@ class ArknightsHelper(object):
         # 为了让 GUI 启动快一些，这里关闭了激活ocr的选项以及确认游戏开启的设置
         if not call_by_gui:
             self.is_ocr_active(current_strength)
-            self.__check_game_active()
+            # self.check_game_active()
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
         """
@@ -78,6 +77,7 @@ class ArknightsHelper(object):
         :param current_strength: 当前理智
         :return:
         """
+        global enable_api
         self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7",
                          change_image=False)
         try:
@@ -128,7 +128,11 @@ class ArknightsHelper(object):
                                 .format(STORAGE_PATH + "package.txt"))
         self.adb.run_cmd(DEBUG_LEVEL=0)
 
-    def __check_game_active(self):
+    def check_game_active(self):
+        '''
+        该命令是启动 官服的 明日方舟的
+        :return:
+        '''
         self.__check_apk_info_active()
 
         with open(STORAGE_PATH + "current.txt", 'r', encoding='utf8') as f:

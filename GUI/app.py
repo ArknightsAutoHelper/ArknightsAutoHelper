@@ -9,6 +9,7 @@ from Arknights.base import ArknightsHelper
 from Arknights.click_location import LIZHI_CONSUME
 # MISC package import
 from collections import OrderedDict
+from GUI.Misc.events import ArkThread
 
 
 class ArknightsAutoHelperGUI(wx.App):
