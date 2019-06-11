@@ -1,4 +1,3 @@
-import os
 from ADBShell import ADBShell
 from time import sleep
 from Arknights.click_location import *
@@ -12,11 +11,11 @@ from config import *
 
 os.path.join(os.path.abspath('../'))
 
+
 class ArknightsHelper(object):
     def __init__(self, current_strength=None, adb_host=None,
                  out_put=0, call_by_gui=False):
         '''
-
         :param current_strength:
         :param adb_host:
         :param out_put:  0 default with console
@@ -37,7 +36,7 @@ class ArknightsHelper(object):
         # 为了让 GUI 启动快一些，这里关闭了激活ocr的选项以及确认游戏开启的设置
         if not call_by_gui:
             self.is_ocr_active(current_strength)
-            self.__check_game_active()
+            # self.check_game_active()
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
         """
@@ -78,6 +77,7 @@ class ArknightsHelper(object):
         :param current_strength: 当前理智
         :return:
         """
+        global enable_api
         self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png", SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7",
                          change_image=False)
         try:
@@ -128,8 +128,13 @@ class ArknightsHelper(object):
                                 .format(STORAGE_PATH + "package.txt"))
         self.adb.run_cmd(DEBUG_LEVEL=0)
 
-    def __check_game_active(self):
-        self.__check_apk_info_active()
+    def check_game_active(self):
+        '''
+        该命令是启动 官服的 明日方舟的函数
+        在之后的GUI里调用。启动脚本的时候不调用了。默认你已经打开了
+        :return:
+        '''
+        # self.__check_apk_info_active()
 
         with open(STORAGE_PATH + "current.txt", 'r', encoding='utf8') as f:
             if ArkNights_PACKAGE_NAME in f.read():
@@ -419,16 +424,21 @@ class ArknightsHelper(object):
             # flag = self.module_battle_for_test(c_id, count)
 
         if flag:
-            self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
             if not self.__call_by_gui:
+                self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
                 self.__wait(1024)
                 self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
                 self.__del()
+            else:
+                self.shell_color.warning_text("[*] 所有模块执行完毕...！")
         else:
-            self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
-            self.__wait(1024)
-            self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
-            self.__del()
+            if not self.__call_by_gui:
+                self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
+                self.__wait(1024)
+                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.__del()
+            else:
+                self.shell_color.failure_text("[*] 未知模块异常...系统体现结束")
 
     def restart(self):
         """

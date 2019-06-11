@@ -1,1 +1,0 @@
-  mCurrentFocus=Window{2c31cff0 u0 com.hypergryph.arknights/com.u8.sdk.U8UnityContext}
