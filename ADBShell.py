@@ -1,5 +1,5 @@
 import os
-from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, FLAGS_CLICK_BIAS_TINY
+from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor
 from PIL import Image
 from time import sleep
 from random import randint
@@ -13,8 +13,8 @@ class ADBShell(object):
     '''
 
     def __init__(self, adb_host=ADB_HOST):
-        self.SCREEN_SHOOT_SAVE_PATH = SCREEN_SHOOT_SAVE_PATH
-        os.chdir(ADB_ROOT)
+        self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH)
+        # os.chdir(ADB_ROOT)
         self.ADB_ROOT = ADB_ROOT
         self.ADB_HOST = adb_host
         self.__buffer = ""
@@ -22,11 +22,11 @@ class ADBShell(object):
         self.__adb_tools = ""
         self.__adb_command = ""
         self.DEVICE_NAME = self.__adb_device_name_detector()
-        self.__command = "adb -s " + self.DEVICE_NAME + " {tools} {command} "
-        self.__adb_connect()
+        self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" -s " + self.DEVICE_NAME + " {tools} {command} "
+        # self.__adb_connect()
 
     def __adb_device_name_detector(self):
-        self.__command = "adb {tools} {command}"
+        self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" {tools} {command}"
         self.__adb_tools = "devices"
         content = self.run_cmd(DEBUG_LEVEL=1).strip().split("\n")
         content.pop(0)
@@ -125,9 +125,8 @@ class ADBShell(object):
                   self.__buffer[0:n])
         return self.__buffer[0:n]
 
-    @staticmethod
-    def get_sub_screen(file_name, screen_range):
-        i = Image.open(SCREEN_SHOOT_SAVE_PATH + file_name)
+    def get_sub_screen(self, file_name, screen_range):
+        i = Image.open(self.SCREEN_SHOOT_SAVE_PATH + file_name)
         i.crop(
             (
                 screen_range[0][0],
@@ -135,7 +134,7 @@ class ADBShell(object):
                 screen_range[0][0] + screen_range[1][0],
                 screen_range[0][1] + screen_range[1][1]
             )
-        ).save(SCREEN_SHOOT_SAVE_PATH + file_name)
+        ).save(self.SCREEN_SHOOT_SAVE_PATH + file_name)
 
     def get_screen_shoot(self, file_name="1.png", screen_range=None):
         sleep(1)

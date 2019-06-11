@@ -1,5 +1,5 @@
 from aip import AipOcr
-from config import *
+from config import APP_ID, API_KEY, SECRET_KEY
 
 client = AipOcr(APP_ID, API_KEY, SECRET_KEY)
 

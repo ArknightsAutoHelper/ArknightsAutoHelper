@@ -1,34 +1,43 @@
 import os
-# import mp3play
 from ADBShell import ADBShell
-from config import *
 from time import sleep
 from Arknights.click_location import *
 from collections import OrderedDict
 from random import randint, uniform
-from math import floor
 from Arknights.BattleSelector import BattleSelector
 from Arknights.flags import *
 from Baidu_api import *
 from Arknights.Binarization import binarization_image
+from config import *
 
 os.path.join(os.path.abspath('../'))
 
-
 class ArknightsHelper(object):
-    def __init__(self, current_strength=None, adb_host=None):
+    def __init__(self, current_strength=None, adb_host=None,
+                 out_put=0, call_by_gui=False):
+        '''
+
+        :param current_strength:
+        :param adb_host:
+        :param out_put:  0 default with console
+                          1 no out put
+        '''
         if adb_host is None:
             adb_host = ADB_HOST
         self.adb = ADBShell(adb_host=adb_host)
-        self.shell_color = ShellColor()
+        self.shell_color = ShellColor() if out_put == 0 else BufferColor()
         self.__is_game_active = False
+        self.__call_by_gui = call_by_gui
         self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
             if enable_rebase_to_null else ""
-        self.__check_game_active()
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
-        self.ocr_active = False
-        self.__is_ocr_active(current_strength)
+        self.ocr_active = True
+        self.is_call_by_gui = call_by_gui
+        # 为了让 GUI 启动快一些，这里关闭了激活ocr的选项以及确认游戏开启的设置
+        if not call_by_gui:
+            self.is_ocr_active(current_strength)
+            self.__check_game_active()
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
         """
@@ -39,15 +48,15 @@ class ArknightsHelper(object):
         :param change_image:是否进行二值化，默认使用二值化
         :return:
         """
+        global enable_api
         if change_image:
             binarization_image(file_path)
-        if config.Enable_api:
+        if enable_api:
             try:
                 ocr(file_path, save_path + ".txt")
-                # Baidu_OCR.ocr(file_path, save_path+".txt")
             except ConnectionError:
                 self.shell_color.failure_text("[!] 百度API无法连接")
-                config.Enable_api = False
+                enable_api = False
                 self.shell_color.helper_text("继续使用tesseract")
                 if option is not None:
                     option = " " + option
@@ -63,7 +72,7 @@ class ArknightsHelper(object):
             )
             self.__wait(3)
 
-    def __is_ocr_active(self, current_strength):
+    def is_ocr_active(self, current_strength):
         """
         启用ocr判断
         :param current_strength: 当前理智
@@ -79,26 +88,35 @@ class ArknightsHelper(object):
                     self.ocr_active = True
                 else:
                     # 如果启动了api检测失误的话，关闭api
-                    if config.Enable_api:
-                        config.Enable_api = False
+                    if enable_api:
+                        enable_api = False
                     self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
                     if current_strength is not None:
                         self.CURRENT_STRENGTH = current_strength
                     else:
                         self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
-                        exit(0)
+                        if not self.is_call_by_gui:
+                            exit(0)
+                        else:
+                            return False
         except Exception as e:
             self.shell_color.failure_text("[!] OCR 模块未检测...装载初始理智值")
             if current_strength is not None:
                 self.CURRENT_STRENGTH = current_strength
             else:
                 self.shell_color.failure_text("[!] 未装载初始理智值，请在初始化Ark nights助手时候赋予初值")
-                exit(0)
+                if not self.is_call_by_gui:
+                    exit(0)
+                else:
+                    return False
 
     def __del(self):
         self.adb.ch_tools("shell")
         self.adb.ch_abd_command("am force-stop {}".format(ArkNights_PACKAGE_NAME))
         self.adb.run_cmd()
+
+    def destroy(self):
+        self.__del()
 
     def __check_apk_info_active(self):
         """
@@ -162,7 +180,6 @@ class ArknightsHelper(object):
             XY=CLICK_LOCATION['LOGIN_START_WAKEUP']
         )
         self.__wait(SECURITY_WAIT)
-        # self.adb.get_screen_shoot("login.png")
 
     def module_battle_slim(self, c_id, set_count=1000, set_ai=False, **kwargs):
         """
@@ -201,7 +218,7 @@ class ArknightsHelper(object):
         if not sub:
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
         if not set_ai:
-            self.set_ai_commander(c_id=c_id, first_battle_signal=True)
+            self.set_ai_commander()
 
         strength_end_signal = False
         count = 0
@@ -318,8 +335,10 @@ class ArknightsHelper(object):
                 self.__wait(120, False)
                 self.__del()
             else:
+                self.shell_color.helper_text("[+] 简略模块结束")
                 return True
         else:
+            self.shell_color.helper_text("[+] 当前任务清单 {} 结束，准备执行下一任务".format(c_id))
             return True
 
     def __check_is_on_setting(self):
@@ -401,9 +420,10 @@ class ArknightsHelper(object):
 
         if flag:
             self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
-            self.__wait(1024)
-            self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
-            self.__del()
+            if not self.__call_by_gui:
+                self.__wait(1024)
+                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.__del()
         else:
             self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
             self.__wait(1024)
@@ -422,19 +442,18 @@ class ArknightsHelper(object):
         self.module_login()
         self.main_handler()
 
-    def set_ai_commander(self, c_id, first_battle_signal=True):
-        if first_battle_signal:
-            self.adb.get_screen_shoot('{}.png'.format(c_id), MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
-            if self.adb.img_difference(
-                    SCREEN_SHOOT_SAVE_PATH + "{}.png".format(c_id),
-                    STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
-            ) <= 0.8:
-                self.shell_color.helper_text("[-] 代理指挥未设置，设置代理指挥")
-                self.adb.get_mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']
-                )
-            else:
-                self.shell_color.helper_text("[+] 代理指挥已设置")
+    def set_ai_commander(self):
+        self.adb.get_screen_shoot('is_ai.png', MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
+        if self.adb.img_difference(
+                SCREEN_SHOOT_SAVE_PATH + "is_ai.png",
+                STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
+        ) <= 0.8:
+            self.shell_color.helper_text("[-] 代理指挥未设置，设置代理指挥")
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']
+            )
+        else:
+            self.shell_color.helper_text("[+] 代理指挥已设置")
 
     def __check_current_strength(self):
         """
