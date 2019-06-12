@@ -9,12 +9,8 @@ from random import randint
 
 
 class ADBShell(object):
-    '''
-    '''
-
     def __init__(self, adb_host=ADB_HOST):
-        print(SCREEN_SHOOT_SAVE_PATH)
-        self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH)
+        self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "\\"
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = ADB_ROOT
         self.ADB_HOST = adb_host
@@ -152,6 +148,7 @@ class ADBShell(object):
         self.__adb_tools = "shell"
         self.__adb_command = "rm /sdcard/screen.png"
         self.run_cmd(1)
+        # print(self.SCREEN_SHOOT_SAVE_PATH + file_name)
         if screen_range.__len__() == 2:
             self.get_sub_screen(file_name, screen_range)
 
