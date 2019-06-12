@@ -414,7 +414,7 @@ class ArknightsHelper(object):
             self.shell_color.failure_text("[!] ⚠ 任务清单为空")
 
         for c_id, count in battle_task_list.items():
-            if c_id not in LIZHI_CONSUME.keys():
+            if c_id not in MAIN_TASK_SUPPORT.keys():
                 raise IndexError("无此关卡")
             self.shell_color.helper_text("[+] 战斗-选择{}...启动！".format(c_id))
             self.selector.id = c_id

@@ -6,7 +6,7 @@ import time
 from GUI.Frames import *
 # Ark package import
 from Arknights.base import ArknightsHelper
-from Arknights.click_location import LIZHI_CONSUME
+from Arknights.click_location import MAIN_TASK_SUPPORT
 # MISC package import
 from collections import OrderedDict
 from GUI.Misc.events import ArkThread, stop_thread
@@ -188,9 +188,9 @@ class ArknightsAutoHelperGUI(wx.App):
                 TASK_LIST[self.Index.task3_battle_name.GetValue()] = int(self.Index.task3_battle_time.GetValue())
             if self.Index.task4_battle_name.GetValue() != "":
                 TASK_LIST[self.Index.task4_battle_name.GetValue()] = int(self.Index.task4_battle_time.GetValue())
-            print(TASK_LIST)
+            # print(TASK_LIST)
             for _ in TASK_LIST.keys():
-                if _ not in LIZHI_CONSUME or "GT" in _:
+                if _ not in MAIN_TASK_SUPPORT:
                     MessageDialog_OK("{} 不在支持的关卡列表中".format(_), "警告")
                     return False
 
