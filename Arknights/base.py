@@ -36,7 +36,6 @@ class ArknightsHelper(object):
         # 为了让 GUI 启动快一些，这里关闭了激活ocr的选项以及确认游戏开启的设置
         if not call_by_gui:
             self.is_ocr_active(current_strength)
-            # self.check_game_active()
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
         """
@@ -134,8 +133,7 @@ class ArknightsHelper(object):
         在之后的GUI里调用。启动脚本的时候不调用了。默认你已经打开了
         :return:
         '''
-        # self.__check_apk_info_active()
-
+        self.__check_apk_info_active()
         with open(STORAGE_PATH + "current.txt", 'r', encoding='utf8') as f:
             if ArkNights_PACKAGE_NAME in f.read():
                 self.__is_game_active = True
@@ -176,15 +174,15 @@ class ArknightsHelper(object):
             pass
 
     def module_login(self):
-        self.__wait(SECURITY_WAIT)
+        # self.__wait(SECURITY_WAIT)
         self.adb.get_mouse_click(
             XY=CLICK_LOCATION['LOGIN_QUICK_LOGIN']
         )
-        self.__wait(SECURITY_WAIT)
+        self.__wait(BIG_WAIT)
         self.adb.get_mouse_click(
             XY=CLICK_LOCATION['LOGIN_START_WAKEUP']
         )
-        self.__wait(SECURITY_WAIT)
+        self.__wait(BIG_WAIT)
 
     def module_battle_slim(self, c_id, set_count=1000, set_ai=False, **kwargs):
         """
@@ -358,7 +356,7 @@ class ArknightsHelper(object):
             self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_setting.png",
                              SCREEN_SHOOT_SAVE_PATH + "1",
                              "--psm 7 -l chi_sim")
-            end_text = "保持"
+            end_text = "设置"
             f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
             tmp = f.readline()
             if end_text in tmp:
