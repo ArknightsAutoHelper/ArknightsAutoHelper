@@ -223,6 +223,9 @@ class ArknightsHelper(object):
         if not set_ai:
             self.set_ai_commander()
 
+        if set_count == 0:
+            return True
+
         strength_end_signal = False
         count = 0
         while not strength_end_signal:
