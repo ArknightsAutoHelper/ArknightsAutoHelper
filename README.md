@@ -1,5 +1,10 @@
 # Arknights Auto Helper GUI版本
 
+## 下载地址
+
+- Google 网盘
+    - https://drive.google.com/file/d/1GJRsXX_aL9Pt546ItxI6Xja9vvAIwTrl/view?usp=sharing
+
 ## 启动
 
 可以下载打包过的 exe 文件后快速启动，由于pyinstaller打包比较坑，现在必然会弹出那个可爱的命令行。
@@ -45,5 +50,6 @@
     - APP_ID;API_KEY;SECRET_KEY
     - 百度API的参数
 - ArkNights_PACKAGE_NAME ： 明日方舟启动的程序名，如果你是b服请改为 com.hypergryph.arknights.bilibili
+
 
   [2]: http://static.zybuluo.com/shaobaobaoer/860t36w2ygsvet6sxn3lv3ty/TIM%E5%9B%BE%E7%89%8720190612102050.png
