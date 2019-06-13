@@ -45,11 +45,14 @@ class ArknightsAutoHelperGUI(wx.App):
             self.Index.m_statusBar1.PushStatusText("初始化完毕")
             self.__is_ark_init = True
         else:
-            self.Index.m_statusBar1.PushStatusText("arknights 后台辅助未初始化，请点击初始化辅助按钮")
+            self.push_status_buffer("arknights 后台辅助未初始化，请点击初始化辅助按钮")
         self.backend_buffer_push()
 
     def push_output_buffer(self, strings):
         self.Index.out_put_ctrl.AppendText(strings.__str__() + "\n")
+
+    def push_status_buffer(self, strings):
+        self.Index.m_statusBar1.PushStatusText(strings.__str__() + "\n")
 
     def start_ark(self, event):
         try:
@@ -136,17 +139,25 @@ class ArknightsAutoHelperGUI(wx.App):
 
     def kill_main(self, event):
         if 'main_battle' in self.worker.keys():
-            stop_thread(self.worker['main_battle'])
-            self.push_output_buffer("主战斗模块线程关闭成功")
-            del self.worker['main_battle']
+            if self.worker['main_battle'].is_alive():
+                stop_thread(self.worker['main_battle'])
+                self.push_output_buffer("主战斗模块线程关闭成功")
+                del self.worker['main_battle']
+            else:
+                self.push_output_buffer("主战斗模块线程已提前关闭")
+                del self.worker['main_battle']
         else:
             self.push_output_buffer("主战斗模块线程未开启")
 
     def kill_slim(self, event):
         if 'slim_battle' in self.worker.keys():
-            stop_thread(self.worker['slim_battle'])
-            self.push_output_buffer("辅助战斗模块线程关闭成功")
-            del self.worker['slim_battle']
+            if self.worker['slim_battle'].is_alive():
+                stop_thread(self.worker['slim_battle'])
+                self.push_output_buffer("简略战斗模块线程关闭成功")
+                del self.worker['slim_battle']
+            else:
+                self.push_output_buffer("简略战斗模块线程已关闭")
+                del self.worker['slim_battle']
         else:
             self.push_output_buffer("辅助战斗模块线程未开启")
 
