@@ -124,3 +124,21 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+.idea/ArknightsAutoHelper.iml
+.idea/inspectionProfiles/
+.idea/misc.xml
+.idea/modules.xml
+.idea/workspace.xml
+Arknights/click_location/location.json.raw
+GUI/Frames/test.py
+GUI/Frames/tmp_code.py
+GUI/Misc/setting.png
+GUI_start.exe
+config/default_setting.json.raw
+screen_shoot/1.txt
+screen_shoot/debug.png
+screen_shoot/debug.txt
+screen_shoot/is_ai.png
+screen_shoot/is_setting.png
+screen_shoot/ocr_test_result.txt
+screen_shoot/strength.png
