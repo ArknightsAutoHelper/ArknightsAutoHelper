@@ -3,8 +3,6 @@ from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor
 from PIL import Image
 from time import sleep
 from random import randint
-
-
 # from numpy import average, dot, linalg
 
 
@@ -154,8 +152,6 @@ class ADBShell(object):
 
     def get_mouse_swipe(self, XY_mXmY=None, FLAG=None):
         sleep(1)
-        assert type(XY_mXmY).__name__ == "tuple"
-        assert XY_mXmY.__len__() == 2
         XY, mXmY = XY_mXmY
         self.__adb_tools = "shell"
         self.__adb_command = "input swipe {X1} {Y1} {X2} {Y2}".format(

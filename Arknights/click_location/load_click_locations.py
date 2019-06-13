@@ -1,5 +1,5 @@
 import json
 
 globals().update(json.load(
-    open("Arknights/click_location/location.json", encoding="utf8"))
+    open("location.json", encoding="utf8"))
 )
