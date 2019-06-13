@@ -254,8 +254,8 @@ class ArknightsHelper(object):
             while not battle_end_signal:
                 # 先打个60S，不检测
                 if t == 0:
-                    self.__wait(60)
-                    t += 60
+                    self.__wait(BATTLE_NONE_DETECT_TIME)
+                    t += BATTLE_NONE_DETECT_TIME
                 else:
                     self.__wait(BATTLE_FINISH_DETECT)
                 t += BATTLE_FINISH_DETECT
