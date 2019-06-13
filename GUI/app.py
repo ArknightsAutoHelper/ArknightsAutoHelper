@@ -222,7 +222,7 @@ class ArknightsAutoHelperGUI(wx.App):
                 TASK_LIST[self.Index.task3_battle_name.GetValue()] = int(self.Index.task3_battle_time.GetValue())
             if self.Index.task4_battle_name.GetValue() != "":
                 TASK_LIST[self.Index.task4_battle_name.GetValue()] = int(self.Index.task4_battle_time.GetValue())
-            # print(TASK_LIST)
+            print(TASK_LIST)
             for _ in TASK_LIST.keys():
                 if _ not in MAIN_TASK_SUPPORT:
                     MessageDialog_OK("{} 不在支持的关卡列表中".format(_), "警告")
