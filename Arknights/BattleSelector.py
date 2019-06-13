@@ -32,11 +32,13 @@ class BattleSelector(object):
 
     @staticmethod
     def get_week():
-        '''
+        """
+        获取中国时区时间，防止跨时区问题
         由于明日方舟的时间更新时间是从 4：00 AM 开始的所以我们把时区往前挪4个小时
         :return:
-        '''
-        return str((datetime.now() - timedelta(hours=4)).weekday() + 1)
+        """
+        chinese_time = datetime.utcnow() + timedelta(hours=8)
+        return str((chinese_time - timedelta(hours=4)).weekday() + 1)
 
 # if __name__ == '__main__':
 #     b = BattleSelector()
