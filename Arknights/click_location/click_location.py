@@ -231,7 +231,7 @@ DAILY_LIST = {
     # 日常位置定位
     # 数据来自于http://wiki.joyme.com/arknights/%E9%A6%96%E9%A1%B5
     # 顺序可能有问题
-    3: {
+    "3": {
         # __import__('datetime').datetime.now().strftime("%w")
         # 关卡名	开放时间	        掉落物资                关卡ID
         # 固若金汤	一、四、五、日	重装、医疗精英化材料     A
@@ -276,7 +276,7 @@ DAILY_LIST = {
                 'D': 3,
             },
     },
-    2: {
+    "2": {
         # 关卡名	开放时间	        掉落物资       关卡ID
         # 战术演习	常驻开放        	作战记录       LS
         # 空中威胁	二、三、五、日	技巧概要       CA
