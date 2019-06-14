@@ -4,6 +4,7 @@
 
 - Google 网盘
     - https://drive.google.com/file/d/1GJRsXX_aL9Pt546ItxI6Xja9vvAIwTrl/view?usp=sharing
+    - 位置文件有更新，如果有需要可以复制该分支下的location.json文件并覆盖原文件
 
 ## 启动
 
@@ -51,5 +52,12 @@
     - 百度API的参数
 - ArkNights_PACKAGE_NAME ： 明日方舟启动的程序名，如果你是b服请改为 com.hypergryph.arknights.bilibili
 
+## 自己编译
+
+如果不方便下载 完整的文件，那么可以自行编译，需要安装pyinstaller 并输入如下命令
+```bash
+$ pyinstaller -F GUI_start.py
+$ mv dist/GUI_start.exe ./
+```
 
   [2]: http://static.zybuluo.com/shaobaobaoer/860t36w2ygsvet6sxn3lv3ty/TIM%E5%9B%BE%E7%89%8720190612102050.png
