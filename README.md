@@ -19,10 +19,11 @@
 设置采用json格式的文件，相关配置在 settings.json 下。关于配置详情请查看主分支下的README.md
 在此只做简略介绍。
 
-由于作者精力有限，暂时不打算做这个GUI，所以请自己修改配置文件
+由于作者精力有限，暂时不打算做这个GUI，所以请自己修改配置文件。以下为事例文件
 
 ```json
-  "ADB_ROOT": "D:\\Program Files\\Nox\\bin", 
+{
+  "ADB_ROOT" : "D:\\Program Files\\Nox\\bin", 
   "ADB_HOST": "",
   "enable_ocr_check_update": true,
   "enable_ocr_check_end": true,
@@ -34,6 +35,7 @@
   "SECRET_KEY": "",
   "ArkNights_PACKAGE_NAME": "com.hypergryph.arknights",
   "ArkNights_ACTIVITY_NAME": "com.u8.sdk.U8UnityContext"
+}
 ```
 
 - ADB_ROOT ： ⚠ 这个配置必须更改，为你模拟器的根路径，不要在最后加 “ \\ ”
@@ -54,7 +56,7 @@
 
 ## 自己编译
 
-如果不方便下载 完整的文件，那么可以自行编译，需要安装pyinstaller 并输入如下命令
+如果不方便下载 完整的文件，那么可以自行编译，需要安装 pyinstaller 并输入如下命令
 ```bash
 $ pyinstaller -F GUI_start.py
 $ mv dist/GUI_start.exe ./
