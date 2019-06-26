@@ -3,7 +3,7 @@
 ## 下载地址
 
 - Google 网盘
-    - https://drive.google.com/file/d/1GJRsXX_aL9Pt546ItxI6Xja9vvAIwTrl/view?usp=sharing
+    - https://drive.google.com/file/d/1f5HO33vHUk53K-wosCs0xdctVcslqk4b/view?usp=sharing
 
 ## 启动
 
