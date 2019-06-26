@@ -16,20 +16,6 @@ from GUI.Settings import *
 global enable_init_ark_on_start
 
 
-#
-# class IsArkActive(object):
-#     def __init__(self, ark=None):
-#         self.is_active = True if ark is None else ark.__is_ark_init
-#
-#     def __call__(self, func):  # 接受函数
-#         def wrapper(*args, **kwargs):
-#             if not self.is_active:
-#                 MessageDialog_OK("请初始化Ark类")
-#             func(*args, **kwargs)
-#
-#         return wrapper  # 返回函数
-
-
 class ArknightsAutoHelperGUI(wx.App):
     def __init__(self):
         # self.Index = None
@@ -168,7 +154,7 @@ class ArknightsAutoHelperGUI(wx.App):
         else:
             setted_lizhi = self.Index.current_lizhi.GetValue()
             if setted_lizhi.isnumeric():
-                self.ark.CURRENT_STRENGTH = setted_lizhi
+                self.ark.CURRENT_STRENGTH = int(setted_lizhi)
                 self.__current_lizhi_onchange_lock = False
                 self.push_output_buffer("赋予理智初值 ..{}".format(setted_lizhi))
             else:
@@ -201,7 +187,7 @@ class ArknightsAutoHelperGUI(wx.App):
                 TASK_LIST[self.Index.task3_battle_name.GetValue()] = int(self.Index.task3_battle_time.GetValue())
             if self.Index.task4_battle_name.GetValue() != "":
                 TASK_LIST[self.Index.task4_battle_name.GetValue()] = int(self.Index.task4_battle_time.GetValue())
-            print(TASK_LIST)
+            # print(TASK_LIST)
             for _ in TASK_LIST.keys():
                 if _ not in MAIN_TASK_SUPPORT:
                     MessageDialog_OK("{} 不在支持的关卡列表中".format(_), "警告")
