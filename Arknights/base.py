@@ -8,6 +8,7 @@ from Arknights.flags import *
 from Baidu_api import *
 from Arknights.Binarization import binarization_image
 from config import *
+import os
 
 os.path.join(os.path.abspath('../'))
 
@@ -606,7 +607,7 @@ class ArknightsHelper(object):
 
         elif mode == 2:
             try:
-                X = DAILY_LIST[mode][self.selector.get_week()][c_id[0:2]]
+                X = DAILY_LIST[str(mode)][self.selector.get_week()][c_id[0:2]]
             except Exception as e:
                 self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
                 X = None
@@ -628,7 +629,7 @@ class ArknightsHelper(object):
                 )
         elif mode == 3:
             try:
-                X = DAILY_LIST[mode][self.selector.get_week()][c_id[3]]
+                X = DAILY_LIST[str(mode)][self.selector.get_week()][c_id[3]]
             except Exception as e:
                 self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
                 X = None

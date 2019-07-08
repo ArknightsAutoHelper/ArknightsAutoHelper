@@ -1,8 +1,8 @@
 # Arknghts Auto Helper
-> 明日方舟辅助脚本，当然只是开发阶段
+> 明日方舟辅助脚本，该主分支为脚本操作，release分支下有GUI版本以及下载地址
 
-## 0x01 ADBShell 
-基于夜神模拟器集成了多种adb操作方法，可以进行安卓辅助开发。当然你要在电脑端跑
+## 0x01 设置相关 
+> 该脚本基于夜神模拟器集成了多种adb操作方法，可以进行安卓辅助开发。当然你要在电脑端跑
 
 ### 运行须知
 
@@ -46,7 +46,6 @@ APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 ```
-**所有的设置可以在`config/default_setting.json`**下修改
 
 #### 依赖包相关
 
@@ -55,8 +54,8 @@ SECRET_KEY = '你的 Secret Key'
 $ pip install -r requirement.txt
 ```
 
-## 0x02 ArknightsHelper
-> 需要安装OCR模块;感谢群友的贡献！
+## 0x02 ArknightsHelper 脚本启动
+> 推荐安装OCR模块;感谢群友的贡献！关于OCR安装的文档可以查看OCR_install.md
 
 ### 快速启动！快乐护肝！
 
@@ -129,30 +128,13 @@ Ark.main_handler(TASK_LIST)
 ```
 
 ## 0x03 ArknightsHelper GUI
-### GUI 启动
 
-目前GUI功能还在测试中，会在之后的时日里日渐完善。现在的样子如下所示.
+目前GUI功能还在测试中，会在之后的时日里日渐完善。关于GUI版本的用法，请转到 release 分支下查看
+
+请注意 release分支下的设置文件全部是json格式的，相关要求和主分支下的config文件相同。
 
 ![TIM图片20190612102050.png-48.6kB][2]
 
-启动方法很简单，执行 GUI_start.py即可
-
-```python
-from GUI import start_app
-start_app()
-```
-
-### 未安装 OCR的初始理智设置方法
-
-在初始化完毕，之后，设置当前理智值。请根据提示输入当前理智即可
-⚠ 这个模块还没有充分测试，请既没有用百度OCR也没有自己装OCR的同学自己测试
-
-### 的相关设置
-
-在 `GUI/Settings/gui_settings.json`下包含了gui的设置。
-
-- enable_init_ark_on_start ： 是否在启动 GUI 的时候同步启动 ark类。
-    - 如果将该选项设置为 true 启动可能会有些短暂的延时
 
 ## 0x03 自定义开发与TODO
 
@@ -173,33 +155,9 @@ start_app()
 欢迎来加好友QQ 2454225341
 
 也可以来加群
+
+
 ![qrcode_1558871927006.jpg-60.7kB][3]
-
-在自定义开发之前，请把`config/__init__.py`改正为
-```python
-from config.shell_color import ShellColor, BufferColor
-# 这行用的是python文件
-from config.developer_config import *
-# 备注:为了开发方便，应该将上面一行注释打开，不然你会看到你的编译器一片冒红
-# 为此你需要同步 setting 文件的配置
-
-# 这行用的是json文件
-# from config.load_settings import *
-from config.common_config import SCREEN_SHOOT_SAVE_PATH, STORAGE_PATH
-```
-把 `Arknights/click_location/__init__.py`改正为
-```python
-# 这行采用的是本地的python文件
-from Arknights.click_location.click_location import *
-# 这行采用的是本地的json文件
-# from Arknights.click_location.load_click_locations import *
-
-# 开发的时候请用Python文件
-```
-由于该版本是开发版本，所以所有的设置都写在python文件中方便调用。
-
-另外，请对所有的类和函数在最外层进行调用。不然路径会出错
-
 
 ## 0x04 关于一些常见的问题
 
