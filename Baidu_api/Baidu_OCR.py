@@ -1,4 +1,5 @@
 from aip import AipOcr
+
 from config import APP_ID, API_KEY, SECRET_KEY
 
 client = AipOcr(APP_ID, API_KEY, SECRET_KEY)
@@ -24,10 +25,11 @@ def ocr(file_path, save_path, line=0):
     # global result
     result = client.basicGeneral(image)
     f = open(save_path, 'w+', encoding="utf8")
-    if result["words_result_num"] is not 0:
-        f.write(result["words_result"][line]["words"])
+    if result["words_result_num"] is None or result["words_result_num"] is 0:
+        f.write("")
+        return
     else:
-        f.write("未检测到文本")
+        f.write(result["words_result"][line]["words"])
     return result["words_result_num"]
 
 
