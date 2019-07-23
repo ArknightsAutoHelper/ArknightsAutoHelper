@@ -196,15 +196,17 @@ class ArknightsAutoHelperGUI(wx.App):
         :return: True：启动
                  False： 需要关闭模块
         """
-        if 'main_battle' in self.worker.keys() or self.worker['main_battle'].is_alive():
+        if 'main_battle' in self.worker.keys():
             if not self.worker['main_battle'].is_alive():
                 del self.worker['main_battle']
+                return self.check_before_start()
             else:
                 MessageDialog_OK("请先关闭主战斗模块模块")
                 return False
-        elif 'slim_battle' in self.worker.keys() or self.worker['slim_battle'].is_alive():
+        elif 'slim_battle' in self.worker.keys():
             if not self.worker['slim_battle'].is_alive():
                 del self.worker['slim_battle']
+                return self.check_before_start()
             else:
                 MessageDialog_OK("请先关闭简易战斗模块模块")
                 return False
