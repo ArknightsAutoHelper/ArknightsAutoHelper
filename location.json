@@ -8,6 +8,10 @@
       16,
       62
     ],
+    "MAIN_TASK_RETURN_BATTLE_SELECT": [
+      59,
+      37
+    ],
     "LOGIN_QUICK_LOGIN": [
       640,
       675
@@ -44,6 +48,10 @@
       969,
       362
     ],
+    "BATTLE_SELECT_MAIN_TASK_5": [
+      1261,
+      362
+    ],
     "BATTLE_SELECT_MAIN_TASK_2-2": [
       1265,
       338
@@ -67,6 +75,30 @@
     "BATTLE_SELECT_MAIN_TASK_4-7": [
       771,
       343
+    ],
+    "BATTLE_SELECT_MAIN_TASK_5-1": [
+      574,
+      408
+    ],
+    "BATTLE_SELECT_MAIN_TASK_5-2": [
+      884,
+      319
+    ],
+    "BATTLE_SELECT_MAIN_TASK_5-3": [
+      372,
+      321
+    ],
+    "BATTLE_SELECT_MAIN_TASK_5-4": [
+      778,
+      390
+    ],
+    "BATTLE_SELECT_MAIN_TASK_5-5": [
+      1007,
+      321
+    ],
+    "BATTLE_SELECT_MAIN_TASK_S5-1": [
+      1061,
+      446
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION": [
       236,
@@ -131,6 +163,38 @@
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-2": [
       767,
       251
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME": [
+      694,
+      653
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-": [
+      1055,
+      336
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-7": [
+      76,
+      329
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-8": [
+      308,
+      446
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F": [
+      953,
+      426
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F1": [
+      172,
+      478
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F2": [
+      400,
+      357
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F3": [
+      720,
+      443
     ]
   },
   "MAP_LOCATION": {
@@ -238,6 +302,11 @@
     ]
   },
   "MAIN_TASK_SUPPORT": {
+    "5-1": 18,
+    "5-2": 18,
+    "5-3": 18,
+    "5-4": 18,
+    "S5-1": 18,
     "4-4": 18,
     "4-5": 18,
     "4-6": 18,
@@ -274,7 +343,12 @@
     "PR-C-1": 18,
     "PR-C-2": 36,
     "PR-D-1": 18,
-    "PR-D-2": 36
+    "PR-D-2": 36,
+    "OF-8": 20,
+    "OF-7": 20,
+    "OF-F3": 8,
+    "OF-F2": 6,
+    "OF-F1": 4
   },
   "LIZHI_CONSUME": {
     "CA-1": 10,
@@ -310,6 +384,22 @@
     "PR-C-2": 36,
     "PR-D-1": 18,
     "PR-D-2": 36,
+    "5-1": 18,
+    "5-2": 18,
+    "5-3": 18,
+    "5-4": 18,
+    "5-5": 18,
+    "5-6": 18,
+    "5-7": 18,
+    "5-8": 18,
+    "5-9": 18,
+    "5-10": 21,
+    "S5-1": 18,
+    "S5-2": 18,
+    "S5-3": 18,
+    "S5-4": 18,
+    "S5-5": 18,
+    "S5-6": 18,
     "4-1": 18,
     "4-2": 18,
     "4-3": 18,
@@ -353,23 +443,11 @@
     "S2-3": 9,
     "S2-2": 9,
     "S2-1": 9,
-    "1-12": 9,
-    "1-10": 9,
-    "1-9": 9,
-    "1-8": 9,
-    "1-7": 6,
-    "1-6": 6,
-    "1-5": 6,
-    "1-4": 6,
-    "1-3": 6,
-    "1-2": 6,
-    "1-1": 6,
-    "GT-6": 15,
-    "GT-5": 15,
-    "GT-4": 12,
-    "GT-3": 12,
-    "GT-2": 9,
-    "GT-1": 9
+    "OF-8": 20,
+    "OF-7": 20,
+    "OF-F3": 8,
+    "OF-F2": 6,
+    "OF-F1": 4
   },
   "BATTLE_SELECTORS": {
     "1": "MAIN_TASK",
@@ -378,14 +456,20 @@
     "4": "EXTERMINATE_BATTLE"
   },
   "MAIN_TASK_CHAPTER_SWIPE": {
-    "4": 1
+    "4": 1,
+    "5": 1
   },
   "MAIN_TASK_BATTLE_SWIPE": {
     "4-4": 1,
     "4-5": 1,
     "4-6": 1,
     "4-7": 2,
-    "4-8": 2
+    "4-8": 2,
+    "5-3": 1,
+    "5-4": 1,
+    "5-5": 1,
+    "OF-8": 2,
+    "OF-7": 2
   },
   "DAILY_LIST": {
     "3": {
@@ -460,7 +544,7 @@
       }
     }
   },
-  "LOCATION_JSON_NAME": "location.json",
+  "LOCATION_JSON_NAME": "location",
   "WITH_SCREEN": [
     "1280",
     "720"

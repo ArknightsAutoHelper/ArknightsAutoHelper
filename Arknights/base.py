@@ -1,14 +1,15 @@
-from ADBShell import ADBShell
-from time import sleep
-from Arknights.click_location import *
+import os
 from collections import OrderedDict
 from random import randint, uniform
+from time import sleep
+
+from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
+from Arknights.Binarization import binarization_image
+from Arknights.click_location import *
 from Arknights.flags import *
 from Baidu_api import *
-from Arknights.Binarization import binarization_image
 from config import *
-import os
 
 os.path.join(os.path.abspath('../'))
 
@@ -16,12 +17,12 @@ os.path.join(os.path.abspath('../'))
 class ArknightsHelper(object):
     def __init__(self, current_strength=None, adb_host=None,
                  out_put=0, call_by_gui=False):
-        '''
+        """
         :param current_strength:
         :param adb_host:
         :param out_put:  0 default with console
                           1 no out put
-        '''
+        """
         if adb_host is None:
             adb_host = ADB_HOST
         self.adb = ADBShell(adb_host=adb_host)
@@ -40,17 +41,17 @@ class ArknightsHelper(object):
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
         """
-        选择百度ocr识别，还是tesseract识别；以及图片二值化是否开启，
+        选择百度ocr识别，还是tesseract识别；以及图片二值化是否开启,但启动api时不开启，目前api比较“聪明”~~不管浇没浇水~~
         :param file_path: ocr识别图片路径
-        :param save_path: ocr结果保存路径，建议使用txt跟tesseract同一
+        :param save_path: ocr结果保存路径，建议使用txt跟tesseract统一
         :param option: 对tesseract的命令传递
         :param change_image:是否进行二值化，默认使用二值化
         :return:
         """
         global enable_api
-        if change_image:
+        if change_image and enable_api is not True:
             binarization_image(file_path)
-        if enable_api:
+        if enable_api and not None:
             try:
                 ocr(file_path, save_path + ".txt")
             except ConnectionError:
@@ -73,7 +74,7 @@ class ArknightsHelper(object):
 
     def is_ocr_active(self, current_strength):
         """
-        启用ocr判断
+        对启用ocr的运行状况进行判断
         :param current_strength: 当前理智
         :return:
         """
@@ -86,10 +87,12 @@ class ArknightsHelper(object):
                 test_1 = int(tmp.split("/")[0])
                 if test_1 == 51:
                     self.ocr_active = True
+                    return True
                 else:
-                    # 如果启动了api检测失误的话，关闭api
+                    # 如果启动了api检测失误的话，关闭api,再来一遍 ****这里还没测试
                     if enable_api:
                         enable_api = False
+                        return self.is_ocr_active(current_strength)
                     self.shell_color.failure_text("[!] OCR 模块识别错误...装载初始理智值")
                     if current_strength is not None:
                         self.CURRENT_STRENGTH = current_strength
@@ -129,11 +132,11 @@ class ArknightsHelper(object):
         self.adb.run_cmd(DEBUG_LEVEL=0)
 
     def check_game_active(self):
-        '''
+        """
         该命令是启动 官服的 明日方舟的函数
         在之后的GUI里调用。启动脚本的时候不调用了。默认你已经打开了
         :return:
-        '''
+        """
         self.__check_apk_info_active()
         with open(STORAGE_PATH + "current.txt", 'r', encoding='utf8') as f:
             if ArkNights_PACKAGE_NAME in f.read():
@@ -306,7 +309,7 @@ class ArknightsHelper(object):
                         self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
                                          SCREEN_SHOOT_SAVE_PATH + "1",
                                          "--psm 7 -l chi_sim")
-                        end_text = "行动结束"
+                        end_text = "结束"
                         f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
                         tmp = f.readline()
                         if end_text in tmp:
@@ -359,7 +362,8 @@ class ArknightsHelper(object):
         if enable_ocr_debugger:
             self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_setting.png",
                              SCREEN_SHOOT_SAVE_PATH + "1",
-                             "--psm 7 -l chi_sim")
+                             "--psm 7 -l chi_sim",
+                             change_image=False)
             end_text = "设置"
             f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
             tmp = f.readline()
@@ -415,7 +419,7 @@ class ArknightsHelper(object):
         self.shell_color.warning_text("[+] 战斗模块...启动！")
         flag = False
         if battle_task_list.__len__() == 0:
-            self.shell_color.failure_text("[!] ⚠ 任务清单为空")
+            self.shell_color.failure_text("[!] ? 任务清单为空")
 
         for c_id, count in battle_task_list.items():
             if c_id not in MAIN_TASK_SUPPORT.keys():
@@ -477,6 +481,7 @@ class ArknightsHelper(object):
         self.adb.get_screen_shoot(
             file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
         )
+
         self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1", "--psm 7")
         with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
             tmp = f.read()  #
@@ -525,6 +530,7 @@ class ArknightsHelper(object):
             self.adb.get_screen_shoot(
                 file_name="strength.png", screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
             )
+
             self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "strength.png", SCREEN_SHOOT_SAVE_PATH + "1", "--psm 7")
             with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8") as f:
                 tmp = f.read()  #
@@ -539,7 +545,7 @@ class ArknightsHelper(object):
                         self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
         else:
             self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
-            self.shell_color.warning_text("[*] OCR 模块为装载，系统将直接计算理智值")
+            self.shell_color.warning_text("[*] OCR 模块未装载，系统将直接计算理智值")
             self.__wait(TINY_WAIT)
             self.shell_color.helper_text("[+] 理智剩余 {}".format(self.CURRENT_STRENGTH))
 
@@ -551,7 +557,7 @@ class ArknightsHelper(object):
             # 理智不够退出战斗
 
     def battle_selector(self, c_id, first_battle_signal=True):
-        mode = self.selector.id_checker()
+        mode = self.selector.id_checker(c_id)
         if mode == 1:
             if first_battle_signal:
                 self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
@@ -596,7 +602,6 @@ class ArknightsHelper(object):
                     self.shell_color.helper_text("[-] 拖动%{}次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        # self.__wait(MEDIUM_WAIT)
                         sleep(5)
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
@@ -648,3 +653,35 @@ class ArknightsHelper(object):
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]
                 )
+        elif mode == 5:
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"]
+            )
+            self.adb.shell_color.helper_text("欢迎来到火蓝之心副本，祝你在黑曜石音乐节上玩的愉快,\n目前主舞台只支持OF-7,OF-8")
+            try:
+                if c_id[-2] == "F":
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F"]
+                    )
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]
+                    )
+                elif c_id[-2] == "-":
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"]
+                    )
+
+                    for x in range(0, 2):
+                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
+                                                 FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
+                        self.__wait(MEDIUM_WAIT)
+
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]
+                    )
+                else:
+                    self.shell_color.failure_text('\tclick_location 文件配置错误')
+                    exit(0)
+            except Exception as e:
+                self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
+                exit(0)
