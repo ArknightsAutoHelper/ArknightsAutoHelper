@@ -15,7 +15,6 @@ from GUI.Settings import *
 
 global enable_init_ark_on_start
 
-
 #
 # class IsArkActive(object):
 #     def __init__(self, ark=None):

@@ -21,5 +21,5 @@ FLAGS_CLICK_BIAS_HUGE = (30, 30)
 
 # 拖动偏移
 # 用于左右拖动的偏移，也就是偏移初始坐标点
-FLAGS_SWIPE_BIAS_TO_LEFT = ((5, 300), (1, 1))
-FLAGS_SWIPE_BIAS_TO_RIGHT = ((5, 300), (1, 1))
+FLAGS_SWIPE_BIAS_TO_LEFT = ((1, 1), (1, 1))
+FLAGS_SWIPE_BIAS_TO_RIGHT = ((1, 1), (1, 1))
