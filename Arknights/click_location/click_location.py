@@ -2,6 +2,7 @@ CLICK_LOCATION = {
     # 开始页面点击 QS 位置
     'CENTER_CLICK': (350, 230),
     'MAIN_RETURN_INDEX': (16, 62),
+    'MAIN_TASK_RETURN_BATTLE_SELECT': (59, 37),
     "LOGIN_QUICK_LOGIN": (640, 675),
     "LOGIN_START_WAKEUP": (642, 507),
     "BATTLE_CLICK_IN": (1173, 186),
@@ -12,6 +13,7 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_MAIN_TASK": (75, 663),
     "BATTLE_SELECT_MAIN_TASK_2": (1213, 311),
     "BATTLE_SELECT_MAIN_TASK_4": (969, 362),
+    "BATTLE_SELECT_MAIN_TASK_5": (1261, 362),
 
     "BATTLE_SELECT_MAIN_TASK_2-2": (1265, 338),
     "BATTLE_SELECT_MAIN_TASK_S2-1": (1054, 431),
@@ -19,6 +21,12 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_MAIN_TASK_4-5": (824, 254),
     "BATTLE_SELECT_MAIN_TASK_4-6": (1034, 340),
     "BATTLE_SELECT_MAIN_TASK_4-7": (771, 343),
+    "BATTLE_SELECT_MAIN_TASK_5-1": (574, 408),
+    "BATTLE_SELECT_MAIN_TASK_5-2": (884, 319),
+    "BATTLE_SELECT_MAIN_TASK_5-3": (372, 321),
+    "BATTLE_SELECT_MAIN_TASK_5-4": (778, 390),
+    "BATTLE_SELECT_MAIN_TASK_5-5": (1007, 321),
+    "BATTLE_SELECT_MAIN_TASK_S5-1": (1061, 446),
 
     "BATTLE_SELECT_MATERIAL_COLLECTION": (236, 658),
     # 预定义部分
@@ -39,12 +47,18 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_CHIP_SEARCH_PR-3": (762, 396),
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-1": (324, 415),
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-2": (767, 251),
+
+    # 火蓝之心副本
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME": (694, 653),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-": (1055, 336),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-7": (76, 329),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-8": (308, 446),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F": (953, 426),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F1": (172, 478),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F2": (400, 357),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F3": (720, 443),
+
 }
-#
-# MAIN_TASK_LOCATION = {
-#     "2-2": (1, 1),
-#     "2-1": (1, 1)
-# }
 
 MAP_LOCATION = {
     # 截图位置 # （X,Y） (DX,DY)
@@ -66,6 +80,14 @@ SWIPE_LOCATION = {
 
 MAIN_TASK_SUPPORT = {
     # 目前主战斗模块支持的关卡
+
+    # 主关卡
+    '5-1': 18,
+    '5-2': 18,
+    '5-3': 18,
+    '5-4': 18,
+    'S5-1': 18,
+
     '4-4': 18,
     '4-5': 18,
     '4-6': 18,
@@ -109,6 +131,13 @@ MAIN_TASK_SUPPORT = {
     'PR-C-2': 36,
     'PR-D-1': 18,
     'PR-D-2': 36,
+    # OF HEART_OF_SURGING_FLAME 副本
+    'OF-8': 20,
+    'OF-7': 20,
+    'OF-F3': 8,
+    'OF-F2': 6,
+    'OF-F1': 4,
+
 }
 
 LIZHI_CONSUME = {
@@ -152,7 +181,24 @@ LIZHI_CONSUME = {
     'PR-C-2': 36,
     'PR-D-1': 18,
     'PR-D-2': 36,
-    # 主关卡
+    # 主关卡 5图
+    '5-1': 18,
+    '5-2': 18,
+    '5-3': 18,
+    '5-4': 18,
+    '5-5': 18,
+    '5-6': 18,
+    '5-7': 18,
+    '5-8': 18,
+    '5-9': 18,
+    '5-10': 21,
+    "S5-1": 18,
+    "S5-2": 18,
+    "S5-3": 18,
+    "S5-4": 18,
+    "S5-5": 18,
+    "S5-6": 18,
+    # 主关卡 4图
     '4-1': 18,
     '4-2': 18,
     '4-3': 18,
@@ -163,6 +209,7 @@ LIZHI_CONSUME = {
     '4-8': 21,
     '4-9': 21,
     '4-10': 21,
+    # 主关卡 3图
     '3-8': 18,
     '3-7': 15,
     '3-6': 15,
@@ -175,6 +222,7 @@ LIZHI_CONSUME = {
     '3-3': 15,
     '3-2': 15,
     '3-1': 15,
+    # 主关卡 2图
     '2-10': 15,
     '2-9': 12,
     '2-8': 12,
@@ -196,14 +244,14 @@ LIZHI_CONSUME = {
     'S2-3': 9,
     'S2-2': 9,
     'S2-1': 9,
-    # 活动关卡
-    # TASK_LIST 功能不支持活动关卡
-    'GT-6': 15,
-    'GT-5': 15,
-    'GT-4': 12,
-    'GT-3': 12,
-    'GT-2': 9,
-    'GT-1': 9,
+    # OF HEART_OF_SURGING_FLAME 副本
+    'OF-8': 20,
+    'OF-7': 20,
+    # ==== 一下为门票消耗
+    'OF-F3': 8,  # 备注在 OF_Fx中，理智消耗会变为门票消耗。 为了保持一致，任然会提示是理智不足而不是门票不足
+    'OF-F2': 6,
+    'OF-F1': 4,
+    #
 }
 
 BATTLE_SELECTORS = {
@@ -218,6 +266,7 @@ BATTLE_SELECTORS = {
 MAIN_TASK_CHAPTER_SWIPE = {
     # 1 代表 1次 BATTLE_TO_MAP_RIGHT
     '4': 1,
+    '5': 1,
 }
 
 MAIN_TASK_BATTLE_SWIPE = {
@@ -227,6 +276,11 @@ MAIN_TASK_BATTLE_SWIPE = {
     '4-6': 1,
     '4-7': 2,
     '4-8': 2,
+    "5-3": 1,
+    '5-4': 1,
+    '5-5': 1,
+    'OF-8': 2,
+    'OF-7': 2,
 }
 
 DAILY_LIST = {

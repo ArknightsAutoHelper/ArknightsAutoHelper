@@ -7,7 +7,8 @@ class BattleSelector(object):
             1: 'MAIN_TASK',  # 主线任务
             2: 'MATERIAL_COLLECTION',  # 物资筹备
             3: 'CHIP_SEARCH',  # 芯片收集
-            4: 'EXTERMINATE_BATTLE'
+            4: 'EXTERMINATE_BATTLE',
+            5: 'HEART_OF_SURGING_FLAME'  # 火蓝之心
         }
         self.id = id
 
@@ -22,8 +23,8 @@ class BattleSelector(object):
             return 2
         elif id[0:2].upper() == "PR":
             return 3
-        # elif id[0].upper() == "E":
-        #     return 4
+        elif id[0:2].upper() == "OF":
+            return 5
         else:
             return False
 

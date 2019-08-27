@@ -362,7 +362,8 @@ class ArknightsHelper(object):
         if enable_ocr_debugger:
             self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_setting.png",
                              SCREEN_SHOOT_SAVE_PATH + "1",
-                             "--psm 7 -l chi_sim")
+                             "--psm 7 -l chi_sim",
+                             change_image=False)
             end_text = "设置"
             f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", 'r', encoding="utf8")
             tmp = f.readline()
@@ -418,7 +419,7 @@ class ArknightsHelper(object):
         self.shell_color.warning_text("[+] 战斗模块...启动！")
         flag = False
         if battle_task_list.__len__() == 0:
-            self.shell_color.failure_text("[!] ⚠ 任务清单为空")
+            self.shell_color.failure_text("[!] ? 任务清单为空")
 
         for c_id, count in battle_task_list.items():
             if c_id not in MAIN_TASK_SUPPORT.keys():
@@ -556,7 +557,7 @@ class ArknightsHelper(object):
             # 理智不够退出战斗
 
     def battle_selector(self, c_id, first_battle_signal=True):
-        mode = self.selector.id_checker()
+        mode = self.selector.id_checker(c_id)
         if mode == 1:
             if first_battle_signal:
                 self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
@@ -601,7 +602,6 @@ class ArknightsHelper(object):
                     self.shell_color.helper_text("[-] 拖动%{}次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        # self.__wait(MEDIUM_WAIT)
                         sleep(5)
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]
@@ -653,3 +653,35 @@ class ArknightsHelper(object):
                 self.adb.get_mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]
                 )
+        elif mode == 5:
+            self.adb.get_mouse_click(
+                XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"]
+            )
+            self.adb.shell_color.helper_text("欢迎来到火蓝之心副本，祝你在黑曜石音乐节上玩的愉快,\n目前主舞台只支持OF-7,OF-8")
+            try:
+                if c_id[-2] == "F":
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F"]
+                    )
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]
+                    )
+                elif c_id[-2] == "-":
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"]
+                    )
+
+                    for x in range(0, 2):
+                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
+                                                 FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
+                        self.__wait(MEDIUM_WAIT)
+
+                    self.adb.get_mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]
+                    )
+                else:
+                    self.shell_color.failure_text('\tclick_location 文件配置错误')
+                    exit(0)
+            except Exception as e:
+                self.shell_color.failure_text(e.__str__() + '\tclick_location 文件配置错误')
+                exit(0)
