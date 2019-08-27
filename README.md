@@ -3,7 +3,7 @@
 ## 下载地址
 
 - Google 网盘
-    - https://drive.google.com/file/d/1GJRsXX_aL9Pt546ItxI6Xja9vvAIwTrl/view?usp=sharing
+    - https://drive.google.com/file/d/1sfoxIyd7DyG27oO585t2Vp86nhpzZPca/view?usp=sharing
     - 位置文件有更新，如果有需要可以复制该分支下的location.json文件并覆盖原文件
 
 ## 启动
@@ -13,6 +13,13 @@
 ![TIM图片20190612102050.png-48.6kB][2]
 
 在启动前请点击初始化辅助，这样会加载相关配置信息。
+
+——————————————————————
+火蓝之心活动更新
+
+目前支持 OF-7 OF-8 OF-F1 OF-F2 OF-F3 活动关卡，可能打包过后的文件启动有些问题。请及时反馈，我这边测试下来没什么问题
+
+祝你在黑曜石音乐节上玩的愉快 ————烧包 2019年8月28日00:07:41
 
 ## 设置
 
