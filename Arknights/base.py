@@ -415,7 +415,7 @@ class ArknightsHelper(object):
         if battle_task_list is None:
             battle_task_list = OrderedDict()
 
-        self.shell_color.warning_text("[*] 装在模块....")
+        self.shell_color.warning_text("[*] 装载模块....")
         self.shell_color.warning_text("[+] 战斗模块...启动！")
         flag = False
         if battle_task_list.__len__() == 0:
