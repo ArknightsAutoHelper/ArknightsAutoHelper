@@ -141,7 +141,7 @@ class ADBShell(object):
         self.__adb_command = "/system/bin/screencap -p /sdcard/screenshot.png"
         self.run_cmd(1)
         self.__adb_tools = "pull"
-        self.__adb_command = "/sdcard/screenshot.png {}".format(self.SCREEN_SHOOT_SAVE_PATH + file_name)
+        self.__adb_command = "/sdcard/screenshot.png \"{}\"".format(self.SCREEN_SHOOT_SAVE_PATH + file_name)
         self.run_cmd(1)
         self.__adb_tools = "shell"
         self.__adb_command = "rm /sdcard/screen.png"
@@ -210,6 +210,6 @@ class ADBShell(object):
     def ch_abd_command(self, command):
         self.__adb_command = command
 
-
-if __name__ == '__main__':
-    a = ADBShell()
+#
+# if __name__ == '__main__':
+#     a = ADBShell()

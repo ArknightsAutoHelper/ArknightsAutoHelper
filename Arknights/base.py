@@ -671,7 +671,7 @@ class ArknightsHelper(object):
                         XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"]
                     )
 
-                    for x in range(0, 2):
+                    for x in range(0, 3):
                         self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
                                                  FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
