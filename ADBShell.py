@@ -3,6 +3,8 @@ from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor
 from PIL import Image
 from time import sleep
 from random import randint
+
+
 # from numpy import average, dot, linalg
 
 
@@ -141,7 +143,7 @@ class ADBShell(object):
         self.__adb_command = "/system/bin/screencap -p /sdcard/screenshot.png"
         self.run_cmd(1)
         self.__adb_tools = "pull"
-        self.__adb_command = "/sdcard/screenshot.png {}".format(self.SCREEN_SHOOT_SAVE_PATH + file_name)
+        self.__adb_command = "/sdcard/screenshot.png \"{}\"".format(self.SCREEN_SHOOT_SAVE_PATH + file_name)
         self.run_cmd(1)
         self.__adb_tools = "shell"
         self.__adb_command = "rm /sdcard/screen.png"
