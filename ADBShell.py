@@ -8,7 +8,6 @@ from random import randint
 
 class ADBShell(object):
     def __init__(self, adb_host=ADB_HOST):
-        self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "\\"
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = ADB_ROOT
         self.ADB_HOST = adb_host
@@ -17,13 +16,21 @@ class ADBShell(object):
         self.__adb_tools = ""
         self.__adb_command = ""
         self.DEVICE_NAME = self.__adb_device_name_detector()
-        self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" -s " + self.DEVICE_NAME + " {tools} {command} "
+        if "win32" in os.sys.platform:
+            self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" -s " + self.DEVICE_NAME + " {tools} {command} "
+            self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "\\"
+        else:
+            self.__command = self.ADB_ROOT + "/adb -s "+ self.DEVICE_NAME + " {tools} {command} "
+            self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "/"
         # 命令格式 "D:\Program Files\Nox\bin\adb.exe" -s 127.0.0.1:62001 shell am start ...
         # Linux 和 Mac 机器我不太清楚咋整. 不过好像大家目前还没这个需求
         # self.__adb_connect()
 
     def __adb_device_name_detector(self):
-        self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" {tools} {command}"
+        if "win32" in os.sys.platform:
+            self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" {tools} {command}"
+        else:
+            self.__command = self.ADB_ROOT + "/adb {tools} {command}"
         self.__adb_tools = "devices"
         content = self.run_cmd(DEBUG_LEVEL=1).strip().split("\n")
         content.pop(0)
