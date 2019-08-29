@@ -20,15 +20,15 @@ ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并
 
 # 注意：以下选项如果要开启的话，请使用前确认已经安装 中文识别 或者 启动百度API
 # 启动ocr来检测关卡后是否升级
-enable_ocr_check_update = True
+enable_ocr_check_update = False
 # 启动ocr来检测关卡是否结束
-enable_ocr_check_end = True
+enable_ocr_check_end = False
 # 启用ocr来DEBUG
 enable_ocr_debugger = True
 # 启用ocr输出
 enable_rebase_to_null = True
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
-enable_api = False
+enable_baidu_api = False
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'

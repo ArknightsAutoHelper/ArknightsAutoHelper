@@ -1,10 +1,18 @@
+'''
+[i] info_text
+[+] helper_text
+[!] warning_text
+[X] failure_text
+plain_text
+'''
+
 class ShellColor(object):
     def __init__(self):
         self.H_HEADER = '\033[95m'
-        self.H_OK_BLUE = '\033[94m'
-        self.H_OK_GREEN = '\033[96m'
-        self.H_WARNING = '\033[93m'
-        self.H_FAIL = '\033[31m'
+        self.H_OK_BLUE = '\033[94m [i] '
+        self.H_OK_GREEN = '\033[96m [+] '
+        self.H_WARNING = '\033[93m [!] '
+        self.H_FAIL = '\033[31m [X] '
         self.E_END = '\033[0m'
         self.E_BOLD = '\033[1m'
         self.E_UNDERLINE = '\033[4m'
@@ -20,6 +28,9 @@ class ShellColor(object):
 
     def helper_text(self, string):
         print(self.H_OK_GREEN + string + self.E_END)
+
+    def plain_text(self, string):
+        print(string)
 
     def run_test(self, string="[*] DEBUG COLOR"):
         self.warning_text(string)

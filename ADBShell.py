@@ -13,7 +13,7 @@ class ADBShell(object):
         self.ADB_ROOT = ADB_ROOT
         self.ADB_HOST = adb_host
         self.__buffer = ""
-        self.shell_color = ShellColor()
+        self.shell_log = ShellColor()
         self.__adb_tools = ""
         self.__adb_command = ""
         self.DEVICE_NAME = self.__adb_device_name_detector()
@@ -30,7 +30,7 @@ class ADBShell(object):
         if content.__len__() == 1:
             device_name = content[0].split("\t")[0]
         else:
-            self.shell_color.helper_text("[!] 检测到多台设备，根据 ADB_HOST 参数将自动选择设备")
+            self.shell_log.helper_text("[!] 检测到多台设备，根据 ADB_HOST 参数将自动选择设备")
             device_name = ""
             for c in range(content.__len__()):
                 print("[*]  " + c.__str__() + "\t" + content[c])
@@ -47,7 +47,7 @@ class ADBShell(object):
                     else:
                         print("输入不合法，请重新输入")
                 device_name = content[int(num)].split("\t")[0]
-        self.shell_color.helper_text("[+] 确认设备名称\t" + device_name)
+        self.shell_log.helper_text("[+] 确认设备名称\t" + device_name)
         return device_name
 
     def __adb_connect(self):
@@ -55,9 +55,9 @@ class ADBShell(object):
         self.__adb_command = self.DEVICE_NAME
         self.run_cmd(DEBUG_LEVEL=1)
         if "device" in self.__buffer or "already connected to {}".format(self.DEVICE_NAME) in self.__buffer:
-            self.shell_color.warning_text("[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
+            self.shell_log.warning_text("[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
         else:
-            self.shell_color.failure_text("[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
+            self.shell_log.failure_text("[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
 
     def run_cmd(self, DEBUG_LEVEL=2):
         """
@@ -69,10 +69,10 @@ class ADBShell(object):
         :return:
         """
         if DEBUG_LEVEL == 3:
-            print(self.shell_color.H_OK_BLUE +
+            print(self.shell_log.H_OK_BLUE +
                   self.__command.format(
                       tools=self.__adb_tools,
-                      command=self.__adb_command) + self.shell_color.E_END
+                      command=self.__adb_command) + self.shell_log.E_END
                   )
 
             self.__buffer = os.popen(self.__command.format(
@@ -81,10 +81,10 @@ class ADBShell(object):
             )).read()
             self.get_buffer()
         elif DEBUG_LEVEL == 2:
-            print(self.shell_color.H_OK_BLUE +
+            print(self.shell_log.H_OK_BLUE +
                   self.__command.format(
                       tools=self.__adb_tools,
-                      command=self.__adb_command) + self.shell_color.E_END
+                      command=self.__adb_command) + self.shell_log.E_END
                   )
             self.__buffer = os.popen(self.__command.format(
                 tools=self.__adb_tools,
@@ -112,13 +112,13 @@ class ADBShell(object):
         :return:
         """
         if BUFFER_OUT_PUT_LEVEL == 1:
-            print(self.shell_color.H_OK_BLUE + "[+] DEBUG INFO " + self.shell_color.E_END + "\n" +
+            print(self.shell_log.H_OK_BLUE + "[+] DEBUG INFO " + self.shell_log.E_END + "\n" +
                   self.__buffer[0:n])
         elif BUFFER_OUT_PUT_LEVEL == -1:
-            print(self.shell_color.H_FAIL + "[+] DEBUG WARNING " + self.shell_color.E_END + "\n" +
+            print(self.shell_log.H_FAIL + "[+] DEBUG WARNING " + self.shell_log.E_END + "\n" +
                   self.__buffer[0:n])
         elif BUFFER_OUT_PUT_LEVEL == 0:
-            print(self.shell_color.H_OK_GREEN + "[+] DEBUG HELPER " + self.shell_color.E_END + "\n" +
+            print(self.shell_log.H_OK_GREEN + "[+] DEBUG HELPER " + self.shell_log.E_END + "\n" +
                   self.__buffer[0:n])
         return self.__buffer[0:n]
 
@@ -164,13 +164,13 @@ class ADBShell(object):
         sleep(0.5)
         self.__adb_tools = "shell"
         if FLAG is not None:
-            # self.shell_color.info_text(XY.__str__())
+            # self.shell_log.info_text(XY.__str__())
             # self.__adb_tools = "shell"
             self.__adb_command = "input tap {} {}".format(XY[0] + randint(-FLAG[0], FLAG[0]),
                                                           XY[1] + randint(-FLAG[1], FLAG[1]))
             # self.run_cmd(DEBUG_LEVEL=0)
         else:
-            # self.shell_color.info_text(XY.__str__())
+            # self.shell_log.info_text(XY.__str__())
             # self.__adb_tools = "shell"
             self.__adb_command = "input tap {} {}".format(XY[0] + randint(-1, 1),
                                                           XY[1] + randint(-1, 1))

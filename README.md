@@ -40,7 +40,7 @@ enable_ocr_debugger = True
 enable_rebase_to_null = True
 
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案（OCR的方案）
-Enable_api = False
+enable_baidu_api = False
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
