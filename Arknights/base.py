@@ -16,7 +16,7 @@ os.path.join(os.path.abspath("../"))
 
 class ArknightsHelper(object):
     def __init__(self,
-                 current_san=None,   # 当前理智
+                 current_strength=None,   # 当前理智
                  adb_host=None,   # 当前绑定到的设备
                  out_put=True,   # 是否有命令行输出
                  call_by_gui=False):  # 是否为从 GUI 程序调用
@@ -30,18 +30,19 @@ class ArknightsHelper(object):
             if "win" in os.sys.platform \
             else " 1>/dev/null 2>/dev/null &" \
                                 if enable_rebase_to_null else ""
-        self.CURRENT_SAN = 100
+        self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
         self.ocr_active = True
         self.is_called_by_gui = call_by_gui
         if not call_by_gui:
-            self.is_ocr_active(current_san)
+            self.is_ocr_active(current_strength)
 
     def __ocr_check(self,
                     file_path,   # 输入文件路径
                     save_path,   # 输出文件路径
                     option=None,   # 附加选项
                     change_image=True):  # 是否预处理图片
+        self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
         if change_image and enable_baidu_api is not True:
             binarization_image(file_path)
@@ -53,15 +54,19 @@ class ArknightsHelper(object):
                 enable_baidu_api = False
                 self.shell_log.info_text("继续使用 tesseract")
         if not enable_baidu_api:
+            self.shell_log.debug_text("使用 tesseract OCR")
             if option is not None:
                 option = " " + option
             os.popen(
                 "tesseract {} {}{}".format(file_path, save_path, option)
                 + self.__rebase_to_null)
             self.__wait(3)
+        else:
+            self.shell_log.debug_text("使用 baidu api")
 
     def is_ocr_active(self,   # 判断 OCR 是否可用
-                      current_san=None):  # 如果不可用时用于初始化的理智值
+                      current_strength=None):  # 如果不可用时用于初始化的理智值
+        self.shell_log.debug_text("base.is_ocr_active")
         global enable_baidu_api
         self.__ocr_check(STORAGE_PATH + "OCR_TEST_1.png",
                          SCREEN_SHOOT_SAVE_PATH + "ocr_test_result", "--psm 7",
@@ -73,16 +78,17 @@ class ArknightsHelper(object):
                 test_1 = int(tmp.split("/")[0])
                 if test_1 == 51:
                     self.ocr_active = True
+                    self.shell_log.debug_text("OCR 模块工作正常")
                     return True
                 else:
                     raise Exception
         except Exception as e:
             if enable_baidu_api:
                 enable_baidu_api = False
-                return self.is_ocr_active(current_san)
+                return self.is_ocr_active(current_strength)
             self.shell_log.failure_text("OCR 模块识别错误, 使用初始理智值")
-            if current_san is not None:
-                self.CURRENT_SAN = current_san
+            if current_strength is not None:
+                self.CURRENT_STRENGTH = current_strength
             else:
                 self.shell_log.failure_text(
                     "未装载初始理智值, 请在初始化 Arknights 助手时赋予初值")
@@ -92,6 +98,7 @@ class ArknightsHelper(object):
                     return False
 
     def __del(self):
+        self.shell_log.debug_text("base.__del")
         self.adb.ch_tools("shell")
         self.adb.ch_abd_command(
             "am force-stop {}".format(ArkNights_PACKAGE_NAME))
@@ -107,15 +114,19 @@ class ArknightsHelper(object):
         self.adb.run_cmd(DEBUG_LEVEL=0)
 
     def check_game_active(self):  # 启动游戏 需要手动调用
+        self.shell_log.debug_text("base.check_game_active")
         self.__check_apk_info_active()
+        self.shell_log.debug_text("正在尝试启动游戏")
         with open(STORAGE_PATH + "current.txt", "r", encoding="utf8") as f:
             if ArkNights_PACKAGE_NAME in f.read():
                 self.__is_game_active = True
+                self.shell_log.debug_text("游戏已启动")
             else:
                 self.adb.ch_tools("shell")
                 self.adb.ch_abd_command(
                     "am start -n {}/{}".format(ArkNights_PACKAGE_NAME, ArkNights_ACTIVITY_NAME))
                 self.adb.run_cmd()
+                self.shell_log.debug_text("成功启动游戏")
                 self.__is_game_active = True
 
     @staticmethod
@@ -128,12 +139,14 @@ class ArknightsHelper(object):
 
     def mouse_click(self,   # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
+        self.shell_log.debug_text("base.mouse_click")
         xx = randint(XY[0][0], XY[1][0])
         yy = randint(XY[0][1], XY[1][1])
         self.adb.get_mouse_click((xx, yy))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
     def module_login(self):
+        self.shell_log.debug_text("base.module_login")
         self.mouse_click(CLICK_LOCATION['LOGIN_QUICK_LOGIN'])
         self.__wait(BIG_WAIT)
         self.mouse_click(CLICK_LOCATION['LOGIN_START_WAKEUP'])
@@ -148,14 +161,15 @@ class ArknightsHelper(object):
         :param sub 是否为子程序 (是否为module_battle所调用)
         :param auto_close 是否自动关闭, 默认为 false
         :param self_fix 是否尝试自动修复, 默认为 false
-        :param MAX_TIME 最大检查轮数, 默认在 config 中设置, 
+        :param MAX_TIME 最大检查轮数, 默认在 config 中设置,
             每隔一段时间进行一轮检查判断战斗是否结束
-            建议自定义该数值以便在出现一定失误, 
+            建议自定义该数值以便在出现一定失误,
             超出最大判断次数后有一定的自我修复能力
         :return:
             True 完成指定次数的战斗
             False 理智不足, 退出战斗
         '''
+        self.shell_log.debug_text("base.module_battle_slim")
         sub = kwargs["sub"] \
             if "sub" in kwargs.keys() else False
         auto_close = kwargs["auto_close"] \
@@ -168,9 +182,9 @@ class ArknightsHelper(object):
             self.set_ai_commander()
         if set_count == 0:
             return True
-        san_end_signal = False
+        strength_end_signal = False
         count = 0
-        while not san_end_signal:
+        while not strength_end_signal:
             # 初始化变量
             battle_end_signal = False
             if "MAX_TIME" in kwargs.keys():
@@ -178,15 +192,15 @@ class ArknightsHelper(object):
             else:
                 battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
             # 查看剩余理智
-            san_end_signal = not self.check_current_san(c_id, self_fix)
-            if san_end_signal:
+            strength_end_signal = not self.check_current_strength(
+                c_id, self_fix)
+            if strength_end_signal:
                 return True
 
             self.shell_log.helper_text("开始战斗")
-            self.mouse_click(XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'])
+            self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'])
             self.__wait(4, False)
-            self.mouse_click(
-                XY=CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO'])
+            self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO'])
             t = 0
 
             while not battle_end_signal:
@@ -267,7 +281,7 @@ class ArknightsHelper(object):
             count += 1
             self.shell_log.info_text("当前战斗次数 {}".format(count))
             if count >= set_count:
-                san_end_signal = True
+                strength_end_signal = True
             self.shell_log.info_text("战斗结束 重新开始")
             self.__wait(10, MANLIKE_FLAG=True)
         if not sub:
@@ -281,3 +295,93 @@ class ArknightsHelper(object):
         else:
             self.shell_log.helper_text("当前任务{}结束，准备进行下一项任务".format(c_id))
             return True
+
+    def __check_is_on_setting(self):  # 检查是否在设置页面，True 为是
+        self.shell_log.debug_text("base.__check_is_on_setting")
+        self.adb.get_screen_shoot(
+            file_name="is_setting.png",
+            screen_range=MAP_LOCATION['INDEX_INFO_IS_SETTING']
+        )
+        if enable_ocr_debugger:
+            self.__ocr_check(
+                SCREEN_SHOOT_SAVE_PATH + "is_setting.png",
+                SCREEN_SHOOT_SAVE_PATH + "1",
+                "--psm 7 -l chi_sim",
+                change_image=False
+            )
+            end_text = "设置"
+            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8")
+            tmp = f.readline()
+            return end_text in tmp
+        else:
+            return self.adb.img_difference(
+                img1=STORAGE_PATH + "INDEX_INFO_IS_SETTING.png",
+                img2=SCREEN_SHOOT_SAVE_PATH + "is_setting.png"
+            ) > .85
+
+    def module_battle(self,  # 完整的战斗模块
+                      c_id,  # 选择的关卡
+                      set_count=1000):  # 作战次数
+        self.shell_log.debug_text("base.module_battle")
+        self.__wait(3, MANLIKE_FLAG=False)
+        self.selector.id = c_id
+        for i in range(3):
+            self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+        if self.__check_is_on_setting():
+            self.shell_log.helper_text("触发设置，返回")
+            self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+        self.shell_log.helper_text("已回到主页")
+        self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
+        self.battle_selector(c_id)  # 选关
+        self.module_battle_slim(c_id,
+                                set_count=set_count,
+                                check_ai=True,
+                                sub=True,
+                                self_fix=self.ocr_active)
+        return True
+    
+    def main_handler(self, battle_task_list=None)
+        if battle_task_list is None:
+            battle_task_list = OrderedDict()
+        
+        self.shell_log.warning_text("装载模块...")
+        self.shell_log.warning_text("战斗模块...启动")
+        flag = False
+        if battle_task_list.__len__() == 0:
+            self.shell_log.failure_text("任务清单为空!")
+        
+        for c_id, count in battle_task_list.items():
+            if c_id not in MAIN_TASK_SUPPORT.keys():
+                raise IndexError("无此关卡!")
+            self.shell_log.helper_text("战斗{} 启动".format(c_id))
+            self.selector.id = c_id
+            flag = self.module_battle(c_id, count)
+
+        if flag:
+            if not self.__call_by_gui:
+                self.shell_log.warning_text("所有模块执行完毕... 60s后退出")
+                self.__wait(60)
+                self.__del()
+            else:
+                self.shell_log.warning_text("所有模块执行完毕")
+        else:
+            if not self.__call_by_gui:
+                self.shell_log.warning_text("发生未知错误... 60s后退出")
+                self.__wait(60)
+                self.__del()
+            else:
+                self.shell_log.warning_text("发生未知错误... 进程已结束")
+
+    def set_ai_commander(self):
+        self.adb.get_screen_shoot(
+            file_name="is_ai.png",
+            screen_range=MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER']
+        )
+        if self.adb.img_difference(
+            SCREEN_SHOOT_SAVE_PATH + "is_ai.png",
+            STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
+        ) <= 0.8:
+            self.shell_log.helper_text("代理指挥未设置，设置代理指挥")
+            self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
+        else:
+            self.shell_log.helper_text("代理指挥已设置")

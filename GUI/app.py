@@ -57,7 +57,7 @@ class ArknightsAutoHelperGUI(wx.App):
         try:
             self.ark = ArknightsHelper(call_by_gui=True, out_put=1)
             if not enable_init_ark_on_start:
-                self.ark.is_ocr_active(self.ark.CURRENT_SAN)
+                self.ark.is_ocr_active(self.ark.CURRENT_STRENGTH)
                 self.Index.m_statusBar1.PushStatusText("初始化完毕") if self.ark.ocr_active \
                     else self.Index.m_statusBar1.PushStatusText("ocr 探针侦测失败，请赋予理智初值")
                 self.ark.check_game_active()
@@ -98,7 +98,7 @@ class ArknightsAutoHelperGUI(wx.App):
             if buffer != "":
                 self.Index.out_put_ctrl.AppendText(buffer)
             if not self.__current_lizhi_onchange_lock:
-                self.Index.current_lizhi.SetValue(self.ark.CURRENT_SAN.__str__())
+                self.Index.current_lizhi.SetValue(self.ark.CURRENT_STRENGTH.__str__())
         wx.CallLater(1500, self.backend_buffer_push)
 
     def OnInit(self):
@@ -167,7 +167,7 @@ class ArknightsAutoHelperGUI(wx.App):
         else:
             setted_lizhi = self.Index.current_lizhi.GetValue()
             if setted_lizhi.isnumeric():
-                self.ark.CURRENT_SAN = setted_lizhi
+                self.ark.CURRENT_STRENGTH = setted_lizhi
                 self.__current_lizhi_onchange_lock = False
                 self.push_output_buffer("赋予理智初值 ..{}".format(setted_lizhi))
             else:
