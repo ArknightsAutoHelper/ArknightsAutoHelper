@@ -25,6 +25,28 @@ class ArknightsHelper(object):
         """
         if adb_host is None:
             adb_host = ADB_HOST
+        if adb_host is None:
+            if "win" in os.sys.platform:
+                # Windows平台下通过注册表读取ADB目录
+                import winreg
+                try: 
+                    key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,r"SOFTWARE\Classes\Nox\shell\open\command")
+                    nox_path, _ = winreg.QueryValueEx(key,'')
+                    nox_path = str(nox_path)
+                    adb_path = nox_path.replace(r"\Nox.exe %1 %2 %3","")
+                    print("通过注册表自动获取到Windows平台下ADB目录为: "+adb_path)
+                    adb_host = adb_path
+                except Exception:
+                    print("未定义ADB目录且自动获取ADB目录失败")
+                    exit(0)
+                finally:
+                    winreg.CloseKey(key)
+            else:
+                # macOS下通过检查/Application目录读取
+                if os.path.exists("/Application/Nox\ App\ Player/"):
+                    adb_path = "/Application/Nox\ App\ Player/Contents/MacOS"
+                else:
+                    exit(0)
         self.adb = ADBShell(adb_host=adb_host)
         self.shell_color = ShellColor() if out_put == 0 else BufferColor()
         self.__is_game_active = False
