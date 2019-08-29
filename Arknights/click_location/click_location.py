@@ -57,6 +57,7 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F1": (172, 478),
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F2": (400, 357),
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F3": (720, 443),
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F4": (952, 312),
 
 }
 
@@ -134,9 +135,10 @@ MAIN_TASK_SUPPORT = {
     # OF HEART_OF_SURGING_FLAME 副本
     'OF-8': 20,
     'OF-7': 20,
-    'OF-F3': 8,
-    'OF-F2': 6,
-    'OF-F1': 4,
+    'OF-F4': 20,
+    'OF-F3': 15,
+    'OF-F2': 10,
+    'OF-F1': 6,
 
 }
 
@@ -248,10 +250,11 @@ LIZHI_CONSUME = {
     'OF-8': 20,
     'OF-7': 20,
     # ==== 一下为门票消耗
-    'OF-F3': 8,  # 备注在 OF_Fx中，理智消耗会变为门票消耗。 为了保持一致，任然会提示是理智不足而不是门票不足
-    'OF-F2': 6,
-    'OF-F1': 4,
-    #
+    # 备注在 OF_Fx中，理智消耗会变为门票消耗。 为了保持一致，任然会提示是理智不足而不是门票不足
+    'OF-F4': 20,
+    'OF-F3': 15,
+    'OF-F2': 10,
+    'OF-F1': 6,
 }
 
 BATTLE_SELECTORS = {

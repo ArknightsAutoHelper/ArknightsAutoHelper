@@ -17,6 +17,7 @@ def binarization_image(filepath, threshold=175):
              变量的方式不知道怎么弄过去，百度OCR倒是可以，但没弄
     """
     # 这里给二值化前的图片留个底，确认二值化异常的原因
+    # TODO 群友查出来这里有个bug 小梦赶紧出来修bug
     if enable_api is False:
         system(
             'copy {} {}'.format(filepath,

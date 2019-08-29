@@ -36,8 +36,35 @@ class ArknightsHelper(object):
         self.ocr_active = True
         self.is_call_by_gui = call_by_gui
         # 为了让 GUI 启动快一些，这里关闭了激活ocr的选项以及确认游戏开启的设置
+        if enable_print_info:
+            self.__print_info()
         if not call_by_gui:
             self.is_ocr_active(current_strength)
+
+    def __print_info(self):
+        self.shell_color.info_text(
+            """当前系统信息:
+
+ADB 路径\t{adb_path}
+ADB 端口\t{adb_host}
+截图路径\t{screen_shoot_path}
+存储路径\t{storage_path}
+            """.format(
+                adb_path=ADB_ROOT, adb_host=ADB_HOST,
+                screen_shoot_path=SCREEN_SHOOT_SAVE_PATH, storage_path=STORAGE_PATH
+            )
+        )
+        if enable_api:
+            self.shell_color.info_text(
+                """百度API配置信息:
+
+APP_ID\t{app_id}
+API_KEY\t{api_key}
+SECRET_KEY\t{secret_key}
+                """.format(
+                    app_id=APP_ID, api_key=API_KEY, secret_key=SECRET_KEY
+                )
+            )
 
     def __ocr_check(self, file_path, save_path, option=None, change_image=True):
         """
@@ -61,14 +88,14 @@ class ArknightsHelper(object):
                 if option is not None:
                     option = " " + option
                 os.popen(
-                    "tesseract {} {}{}".format(file_path, save_path, option) + self.__rebase_to_null
+                    "tesseract \"{}\"  \"{}\" \"{}\"".format(file_path, save_path, option) + self.__rebase_to_null
                 )
                 self.__wait(3)
         else:
             if option is not None:
                 option = " " + option
             os.popen(
-                "tesseract {} {}{}".format(file_path, save_path, option) + self.__rebase_to_null
+                "tesseract \"{}\"  \"{}\" \"{}\"".format(file_path, save_path, option) + self.__rebase_to_null
             )
             self.__wait(3)
 
