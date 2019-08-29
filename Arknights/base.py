@@ -88,14 +88,14 @@ SECRET_KEY\t{secret_key}
                 if option is not None:
                     option = " " + option
                 os.popen(
-                    "tesseract {} {}{}".format(file_path, save_path, option) + self.__rebase_to_null
+                    "tesseract \"{}\" \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
                 )
                 self.__wait(3)
         else:
             if option is not None:
                 option = " " + option
             os.popen(
-                "tesseract {} {}{}".format(file_path, save_path, option) + self.__rebase_to_null
+                "tesseract \"{}\" \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
             )
             self.__wait(3)
 
