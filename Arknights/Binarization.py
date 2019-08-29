@@ -17,11 +17,10 @@ def binarization_image(filepath, threshold=175):
              变量的方式不知道怎么弄过去，百度OCR倒是可以，但没弄
     """
     # 这里给二值化前的图片留个底，确认二值化异常的原因
-    # 下面这一行有bug，会使程序输出“命令语法不正确”，但它不影响使用就先注释了
-    # if enable_api is False:
-    #     system(
-    #         'copy {} {}'.format(filepath,
-    #                             filepath + ".debug backup.png"))
+    if enable_api is False:
+        system(
+            'copy {} {}'.format(filepath,
+                                filepath + "DebugBackup.png"))
     picture = Image.open(filepath)
     _L_form = picture.convert('L')
     table = []
