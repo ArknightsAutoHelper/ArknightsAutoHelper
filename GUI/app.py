@@ -22,10 +22,11 @@ class ArknightsAutoHelperGUI(wx.App):
         self.worker = {}
         wx.App.__init__(self)
         self.ark = None
-
         self.__current_active_frame = "Index"
         self.__current_lizhi_onchange_lock = False  # 理智修改锁 true 代表修改锁
         self.__is_ark_init = False
+        self.__slim_battle_choice = "36理智关卡"
+        self.Index.m_statusBar1.PushStatusText("最近更新: slim模式中的关卡理智消耗宜多不宜少，火蓝之心的门票也算作理智消耗")
         if enable_init_ark_on_start:
             self.start_ark(event=wx.EVT_BUTTON)
             self.Index.m_statusBar1.PushStatusText("初始化完毕")
@@ -111,6 +112,10 @@ class ArknightsAutoHelperGUI(wx.App):
         self.Index.slim_kill.Bind(wx.EVT_BUTTON, self.kill_slim)
         self.Bind(wx.EVT_MENU, self.show_settings, id=self.Index.change_settings.GetId())
         self.Bind(wx.EVT_MENU, self.show_info, id=self.Index.about_me.GetId())
+        self.Bind(wx.EVT_CHOICE, self.get_choice, id=self.Index.slim_battle_name.GetId(), )
+
+    def get_choice(self, event):
+        self.__slim_battle_choice = event.GetString()
 
     def show_settings(self, event):
         MessageDialog_CANCEL(
@@ -172,7 +177,7 @@ class ArknightsAutoHelperGUI(wx.App):
         return True
 
     def reset_slim(self, event):
-        self.Index.slim_battle_name.SetValue("")
+        # self.Index.slim_battle_name.CurrentSelection(0)
         self.Index.slim_battle_time.SetValue(0)
         return True
 
@@ -215,7 +220,7 @@ class ArknightsAutoHelperGUI(wx.App):
 
     def start_slim(self, event):
         if self.__is_ark_init:
-            c_id = self.Index.slim_battle_name.GetValue()
+            c_id = self.Index.slim_battle_id_to_c_id[self.__slim_battle_choice]
             set_count = int(self.Index.slim_battle_time.GetValue())
             if 'main_battle' in self.worker.keys():
                 if not self.worker['main_battle'].is_alive():

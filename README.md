@@ -3,7 +3,7 @@
 ## 下载地址
 
 - Google 网盘
-    - https://drive.google.com/file/d/1sfoxIyd7DyG27oO585t2Vp86nhpzZPca/view?usp=sharing
+    - 待更新
     - 位置文件有更新，如果有需要可以复制该分支下的location.json文件并覆盖原文件
 
 ## 启动
@@ -32,7 +32,7 @@
 
 ```json
 {
-  "ADB_ROOT" : "D:\\Program Files\\Nox\\bin", 
+  "ADB_ROOT": "D:\\Program Files\\Nox\\bin",
   "ADB_HOST": "",
   "enable_ocr_check_update": true,
   "enable_ocr_check_end": true,
@@ -42,12 +42,13 @@
   "APP_ID": "",
   "API_KEY": "",
   "SECRET_KEY": "",
+  "enable_print_info":true,
   "ArkNights_PACKAGE_NAME": "com.hypergryph.arknights",
   "ArkNights_ACTIVITY_NAME": "com.u8.sdk.U8UnityContext"
 }
 ```
 
-- ADB_ROOT ： ⚠ 这个配置必须更改，为你模拟器的根路径，不要在最后加 “ \\ ”
+- ADB_ROOT ： ⚠ 这个配置必须更改，为你模拟器的根路径，不要在最后加 “ \\ ”看清楚是两个斜杠不是一个斜杠
 - ADB_HOST ： ADB 的端口，如果你不想用多开功能可以留空字符串，一般夜神模拟器的第一个设备端口为 `127.0.0.1:60001`
 
 **OCR 高级设置**
@@ -62,6 +63,7 @@
     - APP_ID;API_KEY;SECRET_KEY
     - 百度API的参数
 - ArkNights_PACKAGE_NAME ： 明日方舟启动的程序名，如果你是b服请改为 com.hypergryph.arknights.bilibili
+- enable_print_info ： 在启动的时候是否显示一些路径变量。方便DEBUG与问题反馈。
 
 ## 自己编译
 
@@ -70,5 +72,6 @@
 $ pyinstaller -F GUI_start.py
 $ mv dist/GUI_start.exe ./
 ```
+我已经将该命令写在 make_GUI_start_exe.bat 中，有需要可自行执行。
 
   [2]: http://static.zybuluo.com/shaobaobaoer/860t36w2ygsvet6sxn3lv3ty/TIM%E5%9B%BE%E7%89%8720190612102050.png

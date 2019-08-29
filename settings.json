@@ -9,6 +9,7 @@
   "APP_ID": "",
   "API_KEY": "",
   "SECRET_KEY": "",
+  "enable_print_info":true,
   "ArkNights_PACKAGE_NAME": "com.hypergryph.arknights",
   "ArkNights_ACTIVITY_NAME": "com.u8.sdk.U8UnityContext"
 }

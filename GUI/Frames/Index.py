@@ -234,11 +234,28 @@ class Index(wx.Frame):
 
         fgSizer3.Add(self.m_staticText4312, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL | wx.ALIGN_CENTER_VERTICAL, 5)
 
-        self.slim_battle_name = wx.TextCtrl(self, wx.ID_ANY, u"LS-5", wx.DefaultPosition, wx.DefaultSize, 0)
+        self.slim_battle_id_to_c_id = {
+            "36理智关卡": "PR-B-2",
+            "30理智关卡": "LS-5",
+            "25理智关卡": "CA-4",
+            "21理智关卡": "4-10",
+            "20理智关卡": "CA-3",
+            "18理智关卡": "4-9",
+            "15理智关卡": "CA-2",
+            "12理智关卡": "2-9",
+            "10理智关卡": "CA-1",
+        }
+        m_choice1Choices = [x for x in self.slim_battle_id_to_c_id.keys()]
+        self.slim_battle_name = wx.Choice(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, m_choice1Choices,
+                                          wx.CB_SORT)
+        self.slim_battle_name.SetSelection(self.slim_battle_id_to_c_id.__len__())
+        # self.m_choice1.SetForegroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
+        # self.m_choice1.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
+
         fgSizer3.Add(self.slim_battle_name, 0, wx.ALL, 5)
 
         self.slim_battle_time = wx.SpinCtrl(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize,
-                                            wx.SP_ARROW_KEYS, 0, 100, 1)
+                                            wx.SP_ARROW_KEYS, 0, 100, 99)
         fgSizer3.Add(self.slim_battle_time, 0, wx.ALL | wx.EXPAND, 5)
 
         self.slim_start = wx.Button(self, wx.ID_ANY, u"启动", wx.DefaultPosition, wx.DefaultSize, 0)
