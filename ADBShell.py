@@ -122,7 +122,9 @@ class ADBShell(object):
                   self.__buffer[0:n])
         return self.__buffer[0:n]
 
-    def get_sub_screen(self, file_name, screen_range):
+    def get_sub_screen(self, file_name, screen_range, save_name=None):
+        if save_name is None:
+            save_name = file_name
         i = Image.open(self.SCREEN_SHOOT_SAVE_PATH + file_name)
         i.crop(
             (
@@ -131,7 +133,7 @@ class ADBShell(object):
                 screen_range[0][0] + screen_range[1][0],
                 screen_range[0][1] + screen_range[1][1]
             )
-        ).save(self.SCREEN_SHOOT_SAVE_PATH + file_name)
+        ).save(self.SCREEN_SHOOT_SAVE_PATH + save_name)
 
     def get_screen_shoot(self, file_name="1.png", screen_range=None):
         sleep(1)
