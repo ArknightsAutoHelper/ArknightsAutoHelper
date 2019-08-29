@@ -103,7 +103,6 @@ class ArknightsHelper(object):
                         else:
                             return False
         except Exception as e:
-            print(e)
             self.shell_color.failure_text("[!] OCR 模块未检测...装载初始理智值")
             if current_strength is not None:
                 self.CURRENT_STRENGTH = current_strength
