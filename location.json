@@ -195,6 +195,10 @@
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F3": [
       720,
       443
+    ],
+    "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F4": [
+      952,
+      312
     ]
   },
   "MAP_LOCATION": {
@@ -346,9 +350,10 @@
     "PR-D-2": 36,
     "OF-8": 20,
     "OF-7": 20,
-    "OF-F3": 8,
-    "OF-F2": 6,
-    "OF-F1": 4
+    "OF-F4": 20,
+    "OF-F3": 15,
+    "OF-F2": 10,
+    "OF-F1": 6
   },
   "LIZHI_CONSUME": {
     "CA-1": 10,
@@ -445,9 +450,10 @@
     "S2-1": 9,
     "OF-8": 20,
     "OF-7": 20,
-    "OF-F3": 8,
-    "OF-F2": 6,
-    "OF-F1": 4
+    "OF-F4": 20,
+    "OF-F3": 15,
+    "OF-F2": 10,
+    "OF-F1": 6
   },
   "BATTLE_SELECTORS": {
     "1": "MAIN_TASK",
