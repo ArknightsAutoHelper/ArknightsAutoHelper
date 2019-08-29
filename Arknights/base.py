@@ -29,7 +29,7 @@ class ArknightsHelper(object):
         self.shell_color = ShellColor() if out_put == 0 else BufferColor()
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
-        self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
+        self.__rebase_to_null = " 1>nul 2>nul" if "win32" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
             if enable_rebase_to_null else ""
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
@@ -103,6 +103,7 @@ class ArknightsHelper(object):
                         else:
                             return False
         except Exception as e:
+            print(e)
             self.shell_color.failure_text("[!] OCR 模块未检测...装载初始理智值")
             if current_strength is not None:
                 self.CURRENT_STRENGTH = current_strength
