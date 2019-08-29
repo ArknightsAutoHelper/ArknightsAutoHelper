@@ -415,7 +415,7 @@ class ArknightsHelper(object):
         if battle_task_list is None:
             battle_task_list = OrderedDict()
 
-        self.shell_color.warning_text("[*] 装在模块....")
+        self.shell_color.warning_text("[*] 装载模块....")
         self.shell_color.warning_text("[+] 战斗模块...启动！")
         flag = False
         if battle_task_list.__len__() == 0:
@@ -431,17 +431,15 @@ class ArknightsHelper(object):
 
         if flag:
             if not self.__call_by_gui:
-                self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
-                self.__wait(1024)
-                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.shell_color.warning_text("[*] 所有模块执行完毕...60秒后退出！")
+                self.__wait(60)
                 self.__del()
             else:
                 self.shell_color.warning_text("[*] 所有模块执行完毕...！")
         else:
             if not self.__call_by_gui:
-                self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
-                self.__wait(1024)
-                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.shell_color.failure_text("[*] 未知模块异常...60秒后退出！")
+                self.__wait(60)
                 self.__del()
             else:
                 self.shell_color.failure_text("[*] 未知模块异常...系统体现结束")
@@ -671,7 +669,7 @@ class ArknightsHelper(object):
                         XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"]
                     )
 
-                    for x in range(0, 2):
+                    for x in range(0, 3):
                         self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
                                                  FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
