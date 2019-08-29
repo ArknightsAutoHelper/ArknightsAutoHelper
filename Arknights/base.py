@@ -29,7 +29,7 @@ class ArknightsHelper(object):
         self.shell_color = ShellColor() if out_put == 0 else BufferColor()
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
-        self.__rebase_to_null = " 1>nul 2>nul" if "win" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
+        self.__rebase_to_null = " 1>nul 2>nul" if "win32" in os.sys.platform else " 1>/dev/null 2>/dev/null &" \
             if enable_rebase_to_null else ""
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
@@ -88,14 +88,14 @@ SECRET_KEY\t{secret_key}
                 if option is not None:
                     option = " " + option
                 os.popen(
-                    "tesseract \"{}\" \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
+                    "tesseract \"{}\"  \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
                 )
                 self.__wait(3)
         else:
             if option is not None:
                 option = " " + option
             os.popen(
-                "tesseract \"{}\" \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
+                "tesseract \"{}\"  \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
             )
             self.__wait(3)
 
@@ -442,7 +442,7 @@ SECRET_KEY\t{secret_key}
         if battle_task_list is None:
             battle_task_list = OrderedDict()
 
-        self.shell_color.warning_text("[*] 装在模块....")
+        self.shell_color.warning_text("[*] 装载模块....")
         self.shell_color.warning_text("[+] 战斗模块...启动！")
         flag = False
         if battle_task_list.__len__() == 0:
@@ -458,17 +458,15 @@ SECRET_KEY\t{secret_key}
 
         if flag:
             if not self.__call_by_gui:
-                self.shell_color.warning_text("[*] 所有模块执行完毕...无限休眠启动！")
-                self.__wait(1024)
-                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.shell_color.warning_text("[*] 所有模块执行完毕...60秒后退出！")
+                self.__wait(60)
                 self.__del()
             else:
                 self.shell_color.warning_text("[*] 所有模块执行完毕...！")
         else:
             if not self.__call_by_gui:
-                self.shell_color.failure_text("[*] 未知模块异常...无限休眠启动！")
-                self.__wait(1024)
-                self.shell_color.failure_text("[*] 休眠过度...启动自毁程序！")
+                self.shell_color.failure_text("[*] 未知模块异常...60秒后退出！")
+                self.__wait(60)
                 self.__del()
             else:
                 self.shell_color.failure_text("[*] 未知模块异常...系统体现结束")
