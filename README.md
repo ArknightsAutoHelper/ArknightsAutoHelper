@@ -3,9 +3,8 @@
 ## 下载地址
 
 - Google 网盘
-    - 待更新
-    - 位置文件有更新，如果有需要可以复制该分支下的location.json文件并覆盖原文件
-
+    - 
+    
 ## 启动
 
 可以下载打包过的 exe 文件后快速启动，由于pyinstaller打包比较坑，现在必然会弹出那个可爱的命令行。
@@ -38,11 +37,10 @@
   "enable_ocr_check_end": true,
   "enable_ocr_debugger": true,
   "enable_rebase_to_null": true,
-  "enable_api": false,
+  "enable_baidu_api": false,
   "APP_ID": "",
   "API_KEY": "",
   "SECRET_KEY": "",
-  "enable_print_info":true,
   "ArkNights_PACKAGE_NAME": "com.hypergryph.arknights",
   "ArkNights_ACTIVITY_NAME": "com.u8.sdk.U8UnityContext"
 }
@@ -63,7 +61,6 @@
     - APP_ID;API_KEY;SECRET_KEY
     - 百度API的参数
 - ArkNights_PACKAGE_NAME ： 明日方舟启动的程序名，如果你是b服请改为 com.hypergryph.arknights.bilibili
-- enable_print_info ： 在启动的时候是否显示一些路径变量。方便DEBUG与问题反馈。
 
 ## 自己编译
 

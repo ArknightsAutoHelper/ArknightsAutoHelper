@@ -5,11 +5,10 @@
   "enable_ocr_check_end": true,
   "enable_ocr_debugger": true,
   "enable_rebase_to_null": true,
-  "enable_api": false,
+  "enable_baidu_api": false,
   "APP_ID": "",
   "API_KEY": "",
   "SECRET_KEY": "",
-  "enable_print_info":true,
   "ArkNights_PACKAGE_NAME": "com.hypergryph.arknights",
   "ArkNights_ACTIVITY_NAME": "com.u8.sdk.U8UnityContext"
 }

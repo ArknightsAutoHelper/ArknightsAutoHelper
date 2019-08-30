@@ -22,8 +22,6 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -42,7 +40,6 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
-.nox/
 .coverage
 .coverage.*
 .cache
@@ -77,19 +74,8 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# IPython
-profile_default/
-ipython_config.py
-
 # pyenv
 .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
 
 # celery beat schedule file
 celerybeat-schedule
@@ -118,33 +104,15 @@ venv.bak/
 
 # mypy
 .mypy_cache/
-.dmypy.json
-dmypy.json
 
-# Pyre type checker
-.pyre/
-
-.idea/ArknightsAutoHelper.iml
-.idea/inspectionProfiles/
-.idea/misc.xml
-.idea/modules.xml
-.idea/workspace.xml
-Arknights/click_location/location.json.raw
-GUI/Frames/test.py
-GUI/Frames/tmp_code.py
-GUI/Misc/setting.png
-GUI_start.exe
-config/default_setting.json.raw
+.idea/
+code_bin/
+screen_shoot/*.png
+Arknights/daliy_task_screen
+Arknights/dev_tools
 screen_shoot/1.txt
-screen_shoot/debug.png
-screen_shoot/debug.txt
-screen_shoot/is_ai.png
-screen_shoot/is_setting.png
 screen_shoot/ocr_test_result.txt
-screen_shoot/strength.png
-ArknightsAutoHelper.rar
-screen_shoot/battle_end.png
-screen_shoot/level_up_real_time.png
-test.py
-test.json
-dev/
+start.py
+storage/1.txt
+storage/package.txt
+start2.py

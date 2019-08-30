@@ -1,204 +1,534 @@
 {
   "CLICK_LOCATION": {
     "CENTER_CLICK": [
-      350,
-      230
+      [
+        433,
+        241
+      ],
+      [
+        733,
+        503
+      ]
     ],
     "MAIN_RETURN_INDEX": [
-      16,
-      62
+      [
+        13,
+        12
+      ],
+      [
+        13,
+        61
+      ]
     ],
     "MAIN_TASK_RETURN_BATTLE_SELECT": [
-      59,
-      37
+      [
+        22,
+        17
+      ],
+      [
+        154,
+        59
+      ]
     ],
     "LOGIN_QUICK_LOGIN": [
-      640,
-      675
+      [
+        627,
+        671
+      ],
+      [
+        650,
+        688
+      ]
     ],
     "LOGIN_START_WAKEUP": [
-      642,
-      507
+      [
+        542,
+        478
+      ],
+      [
+        734,
+        540
+      ]
     ],
     "BATTLE_CLICK_IN": [
-      1173,
-      186
+      [
+        910,
+        124
+      ],
+      [
+        1045,
+        262
+      ]
     ],
     "BATTLE_CLICK_AI_COMMANDER": [
-      1109,
-      588
+      [
+        1058,
+        584
+      ],
+      [
+        1227,
+        609
+      ]
     ],
     "BATTLE_CLICK_START_BATTLE": [
-      1151,
-      658
+      [
+        1047,
+        633
+      ],
+      [
+        1225,
+        681
+      ]
     ],
     "BATTLE_CLICK_ENSURE_TEAM_INFO": [
-      1104,
-      512
+      [
+        1049,
+        385
+      ],
+      [
+        1147,
+        620
+      ]
+    ],
+    "TASK_CLICK_IN": [
+      [
+        727,
+        566
+      ],
+      [
+        894,
+        656
+      ]
+    ],
+    "TASK_DAILY_TASK": [
+      [
+        667,
+        16
+      ],
+      [
+        683,
+        56
+      ]
+    ],
+    "TASK_DAILY_TASK_CHECK": [
+      [
+        1013,
+        133
+      ],
+      [
+        1104,
+        158
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK": [
-      75,
-      663
+      [
+        22,
+        636
+      ],
+      [
+        115,
+        684
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_2": [
-      1213,
-      311
+      [
+        1167,
+        224
+      ],
+      [
+        1251,
+        519
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_4": [
-      969,
-      362
+      [
+        296,
+        249
+      ],
+      [
+        604,
+        523
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_5": [
-      1261,
-      362
+      [
+        819,
+        244
+      ],
+      [
+        1076,
+        502
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_2-2": [
-      1265,
-      338
+      [
+        1264,
+        337
+      ],
+      [
+        1266,
+        339
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_S2-1": [
-      1054,
-      431
+      [
+        1053,
+        430
+      ],
+      [
+        1055,
+        432
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_4-4": [
-      610,
-      339
+      [
+        609,
+        338
+      ],
+      [
+        611,
+        340
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_4-5": [
-      824,
-      254
+      [
+        823,
+        253
+      ],
+      [
+        825,
+        255
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_4-6": [
-      1034,
-      340
+      [
+        1033,
+        339
+      ],
+      [
+        1035,
+        341
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_4-7": [
-      771,
-      343
+      [
+        770,
+        342
+      ],
+      [
+        772,
+        344
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_5-1": [
-      574,
-      408
+      [
+        573,
+        407
+      ],
+      [
+        575,
+        409
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_5-2": [
-      884,
-      319
+      [
+        883,
+        318
+      ],
+      [
+        885,
+        320
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_5-3": [
-      372,
-      321
+      [
+        371,
+        320
+      ],
+      [
+        373,
+        322
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_5-4": [
-      778,
-      390
+      [
+        777,
+        389
+      ],
+      [
+        779,
+        391
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_5-5": [
-      1007,
-      321
+      [
+        1006,
+        320
+      ],
+      [
+        1008,
+        322
+      ]
     ],
     "BATTLE_SELECT_MAIN_TASK_S5-1": [
-      1061,
-      446
+      [
+        1060,
+        445
+      ],
+      [
+        1062,
+        447
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION": [
-      236,
-      658
+      [
+        330,
+        629
+      ],
+      [
+        430,
+        682
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_0": [
-      168,
-      375
+      [
+        167,
+        374
+      ],
+      [
+        169,
+        376
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_1": [
-      452,
-      375
+      [
+        451,
+        374
+      ],
+      [
+        453,
+        376
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_2": [
-      739,
-      375
+      [
+        738,
+        374
+      ],
+      [
+        740,
+        376
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_3": [
-      1005,
-      356
+      [
+        1004,
+        355
+      ],
+      [
+        1006,
+        357
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-1": [
-      135,
-      570
+      [
+        134,
+        569
+      ],
+      [
+        136,
+        571
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-2": [
-      135,
-      570
+      [
+        134,
+        569
+      ],
+      [
+        136,
+        571
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-3": [
-      664,
-      402
+      [
+        663,
+        401
+      ],
+      [
+        665,
+        403
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-4": [
-      778,
-      293
+      [
+        777,
+        292
+      ],
+      [
+        779,
+        294
+      ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_X-5": [
-      880,
-      167
+      [
+        879,
+        166
+      ],
+      [
+        881,
+        168
+      ]
     ],
     "BATTLE_SELECT_CHIP_SEARCH": [
-      387,
-      658
+      [
+        322,
+        626
+      ],
+      [
+        442,
+        691
+      ]
     ],
     "BATTLE_SELECT_CHIP_SEARCH_PR-1": [
-      264,
-      367
+      [
+        263,
+        366
+      ],
+      [
+        265,
+        368
+      ]
     ],
     "BATTLE_SELECT_CHIP_SEARCH_PR-2": [
-      503,
-      414
+      [
+        502,
+        413
+      ],
+      [
+        504,
+        415
+      ]
     ],
     "BATTLE_SELECT_CHIP_SEARCH_PR-3": [
-      762,
-      396
+      [
+        761,
+        395
+      ],
+      [
+        763,
+        397
+      ]
     ],
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-1": [
-      324,
-      415
+      [
+        323,
+        414
+      ],
+      [
+        325,
+        416
+      ]
     ],
     "BATTLE_SELECT_CHIP_SEARCH_PR-X-2": [
-      767,
-      251
+      [
+        766,
+        250
+      ],
+      [
+        768,
+        252
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME": [
-      694,
-      653
+      [
+        632,
+        630
+      ],
+      [
+        738,
+        694
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-": [
-      1055,
-      336
+      [
+        945,
+        303
+      ],
+      [
+        1192,
+        356
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-7": [
-      76,
-      329
+      [
+        96,
+        325
+      ],
+      [
+        200,
+        349
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-8": [
-      308,
-      446
+      [
+        315,
+        437
+      ],
+      [
+        429,
+        459
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F": [
-      953,
-      426
+      [
+        921,
+        396
+      ],
+      [
+        1173,
+        444
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F1": [
-      172,
-      478
+      [
+        194,
+        475
+      ],
+      [
+        292,
+        491
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F2": [
-      400,
-      357
+      [
+        423,
+        347
+      ],
+      [
+        524,
+        372
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F3": [
-      720,
-      443
+      [
+        735,
+        436
+      ],
+      [
+        841,
+        458
+      ]
     ],
     "BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F4": [
-      952,
-      312
+      [
+        966,
+        309
+      ],
+      [
+        1072,
+        330
+      ]
     ]
   },
   "MAP_LOCATION": {
@@ -280,6 +610,26 @@
       [
         54,
         32
+      ]
+    ],
+    "TASK_INFO": [
+      [
+        1014,
+        132
+      ],
+      [
+        92,
+        23
+      ]
+    ],
+    "REWARD_GET": [
+      [
+        590,
+        143
+      ],
+      [
+        100,
+        27
       ]
     ]
   },
@@ -462,8 +812,8 @@
     "4": "EXTERMINATE_BATTLE"
   },
   "MAIN_TASK_CHAPTER_SWIPE": {
-    "4": 1,
-    "5": 1
+    "4": 2,
+    "5": 2
   },
   "MAIN_TASK_BATTLE_SWIPE": {
     "4-4": 1,

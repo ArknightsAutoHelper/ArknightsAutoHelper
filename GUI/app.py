@@ -43,7 +43,7 @@ class ArknightsAutoHelperGUI(wx.App):
 
     def start_ark(self, event):
         try:
-            self.ark = ArknightsHelper(call_by_gui=True, out_put=1)
+            self.ark = ArknightsHelper(call_by_gui=True, out_put=False)
             if not enable_init_ark_on_start:
                 self.ark.is_ocr_active(self.ark.CURRENT_STRENGTH)
                 self.Index.m_statusBar1.PushStatusText("初始化完毕") if self.ark.ocr_active \
@@ -64,7 +64,7 @@ class ArknightsAutoHelperGUI(wx.App):
     def restart_ark(self, event):
         if self.ark is None:
             try:
-                self.ark = ArknightsHelper(call_by_gui=True, out_put=1)
+                self.ark = ArknightsHelper(call_by_gui=True, out_put=False)
                 self.ark.check_game_active()
                 self.__is_ark_init = True
             except Exception as e:
@@ -73,7 +73,7 @@ class ArknightsAutoHelperGUI(wx.App):
         else:
             self.ark.destroy()
             try:
-                self.ark = ArknightsHelper(call_by_gui=True, out_put=1)
+                self.ark = ArknightsHelper(call_by_gui=True, out_put=False)
                 self.ark.check_game_active()
                 self.__is_ark_init = True
             except Exception as e:
@@ -82,7 +82,7 @@ class ArknightsAutoHelperGUI(wx.App):
 
     def backend_buffer_push(self):
         if self.__is_ark_init:
-            buffer = self.ark.shell_color.get_buffer()
+            buffer = self.ark.shell_log.get_buffer()
             if buffer != "":
                 self.Index.out_put_ctrl.AppendText(buffer)
             if not self.__current_lizhi_onchange_lock:
