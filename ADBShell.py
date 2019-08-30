@@ -155,7 +155,7 @@ class ADBShell(object):
             self.SCREEN_SHOOT_SAVE_PATH + file_name)
         self.run_cmd(1)
         self.__adb_tools = "shell"
-        self.__adb_command = "rm /sdcard/screen.png"
+        self.__adb_command = "rm /sdcard/screenshot.png"
         self.run_cmd(1)
         # print(self.SCREEN_SHOOT_SAVE_PATH + file_name)
         if screen_range.__len__() == 2:

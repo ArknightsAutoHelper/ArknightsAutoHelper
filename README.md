@@ -33,7 +33,7 @@ ADB_ROOT = r"D:\Program Files\Nox\bin"
 **OCR高级选项设置**
 注意：以下选项如果要开启的话，请使用前确认已经安装 中文识别 或者 启动百度API
 
-```
+```python
 # 启动ocr来检测关卡后是否升级；默认方法为子图识别
 enable_ocr_check_update = True
 # 启动ocr来检测关卡是否结束；默认方法为子图识别
@@ -42,9 +42,16 @@ enable_ocr_check_end = True
 enable_ocr_debugger = True
 # 启用ocr输出，建议重定向到 Null。不然你的命令行输出会非常好看
 enable_rebase_to_null = True
+```
+####启动百度API的方式识别OCR
+**百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，按次计费**
 
-# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案（OCR的方案）
-Enable_api = False
+文档地址：https://cloud.baidu.com/doc/OCR/index.html
+需要安装 ```baidu-api```库，执行```pip install baidu-aip```即可
+启用百度api作为ocr识别方案，需要自行注册百度云
+```python
+# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
+enable_baidu_api = False
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
