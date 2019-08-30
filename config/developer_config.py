@@ -36,7 +36,8 @@ APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 # 是否启动时打印一些系统变量方便DEBUG
-enable_print_info = False
+# 0 为不输出 1 为输出函数调用 2 为输出全部调试信息
+DEBUG_LEVEL = 0
 
 # arknights INFO
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"  # 这个是官服的设置
