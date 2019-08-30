@@ -76,16 +76,22 @@ SECRET_KEY\t{secret_key}
             try:
                 ocr(file_path, save_path + ".txt")
             except ConnectionError:
-                self.shell_log.failure_text("百度API无法连接")
-                enable_baidu_api = False
-                self.shell_log.info_text("继续使用 tesseract")
-        if not enable_baidu_api:
-            self.shell_log.debug_text("使用 tesseract OCR")
+
+                self.shell_color.failure_text("[!] 百度API无法连接")
+                enable_api = False
+                self.shell_color.helper_text("继续使用tesseract")
+                if option is not None:
+                    option = " " + option
+                os.popen(
+                    "tesseract \"{}\"  \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
+                )
+                self.__wait(3)
+        else:
             if option is not None:
                 option = " " + option
             os.popen(
-                'tesseract "{}" "{}" {}'.format(file_path, save_path, option)
-                + self.__rebase_to_null)
+                "tesseract \"{}\"  \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
+            )
             self.__wait(3)
         else:
             self.shell_log.debug_text("使用 baidu api")

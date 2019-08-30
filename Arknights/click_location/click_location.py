@@ -259,7 +259,6 @@ LIZHI_CONSUME = {
     'OF-F3': 15,  # 备注在 OF_Fx中，理智消耗会变为门票消耗。 为了保持一致，任然会提示是理智不足而不是门票不足
     'OF-F2': 10,
     'OF-F1': 6,
-    #
 }
 
 BATTLE_SELECTORS = {

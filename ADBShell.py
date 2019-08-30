@@ -27,6 +27,7 @@ class ADBShell(object):
         if "win32" in os.sys.platform:
             self.__command = "\"" + self.ADB_ROOT + \
                 "\\adb.exe\" {tools} {command}"
+
         else:
             self.__command = self.ADB_ROOT + "/adb {tools} {command}"
         self.__adb_tools = "devices"
