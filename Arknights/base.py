@@ -36,6 +36,7 @@ class ArknightsHelper(object):
         self.is_called_by_gui = call_by_gui
         if not call_by_gui:
             self.is_ocr_active(current_strength)
+        self.shell_log.debug_text("成功初始化模块")
 
     def __ocr_check(self,
                     file_path,   # 输入文件路径
@@ -58,7 +59,7 @@ class ArknightsHelper(object):
             if option is not None:
                 option = " " + option
             os.popen(
-                "tesseract {} {}{}".format(file_path, save_path, option)
+                "tesseract {} {} {}".format(file_path, save_path, option)
                 + self.__rebase_to_null)
             self.__wait(3)
         else:
@@ -227,11 +228,12 @@ class ArknightsHelper(object):
                         SCREEN_SHOOT_SAVE_PATH + "1",
                         "--psm 7 -l chi_sim"
                     )
-                    level_up_text = "等级提升"
+                    level_up_text = "提升"
                     f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
                              "r", encoding="utf8")
                     tmp = f.readline()
-                    tmp.replace(' ', '')
+                    tmp = tmp.replace(' ', '')
+                    self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
                     level_up_signal = level_up_text in tmp
                 else:
                     level_up_signal = self.adb.img_difference(
@@ -263,7 +265,8 @@ class ArknightsHelper(object):
                         f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
                                  "r", encoding="utf8")
                         tmp = f.readline()
-                        tmp.replace(' ', '')
+                        tmp = tmp.replace(' ', '')
+                        self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
                         end_signal = end_text in tmp
                     else:
                         end_signal = self.adb.img_difference(
@@ -312,6 +315,8 @@ class ArknightsHelper(object):
             end_text = "设置"
             f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8")
             tmp = f.readline()
+            tmp = tmp.replace(' ', '')
+            self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
             return end_text in tmp
         else:
             return self.adb.img_difference(
@@ -319,14 +324,16 @@ class ArknightsHelper(object):
                 img2=SCREEN_SHOOT_SAVE_PATH + "is_setting.png"
             ) > .85
 
-    def back_to_main(self): # 回到主页
+    def back_to_main(self):  # 回到主页
         self.shell_log.debug_text("base.back_to_main")
         for i in range(5):
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+            self.__wait(TINY_WAIT, True)
         if self.__check_is_on_setting():
             self.shell_log.helper_text("触发设置，返回")
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
         self.shell_log.helper_text("已回到主页")
+        self.__wait(SMALL_WAIT, True)
 
     def module_battle(self,  # 完整的战斗模块
                       c_id,  # 选择的关卡
@@ -429,10 +436,12 @@ class ArknightsHelper(object):
             self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "debug.png",
                              SCREEN_SHOOT_SAVE_PATH + "debug",
                              "--psm 7 -l chi_sim")
-            end_text = "首次掉落"
+            end_text = "掉落"
             f = open(SCREEN_SHOOT_SAVE_PATH +
                      "debug.txt", 'r', encoding="utf8")
             tmp = f.readline()
+            tmp = tmp.replace(' ', '')
+            self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
             if end_text in tmp:
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 self.adb.get_mouse_click(
@@ -492,7 +501,7 @@ class ArknightsHelper(object):
 
     def battle_selector(self, c_id, first_battle_signal=True):  # 选关
         self.shell_log.debug_text("base.battle_selector")
-        mode = self.selector.id_checker(c_id) # 获取当前关卡所属章节
+        mode = self.selector.id_checker(c_id)  # 获取当前关卡所属章节
         if mode == 1:
             if first_battle_signal:
                 self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK'])
@@ -542,7 +551,8 @@ class ArknightsHelper(object):
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         sleep(5)
-                self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)])
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)])
 
             else:
                 sleep(5)
@@ -618,3 +628,60 @@ class ArknightsHelper(object):
     def clear_daily_task(self):
         self.shell_log.debug_text("base.clear_daily_task")
         self.back_to_main()
+        self.mouse_click(CLICK_LOCATION['TASK_CLICK_IN'])
+        self.__wait(TINY_WAIT, True)
+        self.mouse_click(CLICK_LOCATION['TASK_DAILY_TASK'])
+        self.__wait(TINY_WAIT, True)
+        task_ok_signal = True
+        while task_ok_signal:
+            self.adb.get_screen_shoot(file_name="task_status.png")
+            self.shell_log.helper_text("正在检查任务状况")
+            self.adb.get_sub_screen(
+                file_name="task_status.png",
+                screen_range=MAP_LOCATION['TASK_INFO'],
+                save_name="task_status_1.png"
+            )
+            if enable_ocr_check_task:
+                self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "task_status_1.png",
+                                 SCREEN_SHOOT_SAVE_PATH + "1",
+                                 "--psm 7 -l chi_sim")
+                task_ok_text = "领取"
+                f = open(SCREEN_SHOOT_SAVE_PATH +
+                         "1.txt", "r", encoding="utf8")
+                tmp = f.readline()
+                tmp = tmp.replace(' ', '')
+                self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
+                task_ok_signal = task_ok_text in tmp
+            else:
+                task_ok_signal = self.adb.img_difference(
+                    img1=SCREEN_SHOOT_SAVE_PATH + "task_status_1.png",
+                    img2=STORAGE_PATH + "TASK_COMPLETE.png"
+                ) > .7
+            if not task_ok_signal:  # 检查当前是否在获得物资页面
+                self.shell_log.debug_text("未检测到可领取奖励，检查是否在获得物资页面")
+                self.adb.get_sub_screen(
+                    file_name="task_status.png",
+                    screen_range=MAP_LOCATION['REWARD_GET'],
+                    save_name="task_status_2.png"
+                )
+                if enable_ocr_check_task:
+                    self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "task_status_2.png",
+                                     SCREEN_SHOOT_SAVE_PATH + "1",
+                                     "--psm 7 -l chi_sim")
+                    reward_text = "物资"
+                    f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
+                             "r", encoding="utf8")
+                    tmp = f.readline()
+                    tmp = tmp.replace(' ', '')
+                    self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
+                    task_ok_signal = reward_text in tmp
+                else:
+                    task_ok_signal = self.adb.img_difference(
+                        img1=SCREEN_SHOOT_SAVE_PATH + "task_status_2.png",
+                        img2=STORAGE_PATH + "REWARD_GET.png"
+                    ) > .7
+            if task_ok_signal:
+                self.shell_log.debug_text("当前有可领取奖励")
+                self.mouse_click(CLICK_LOCATION['TASK_DAILY_TASK_CHECK'])
+                self.__wait(2, False)
+        self.shell_log.helper_text("奖励已领取完毕")

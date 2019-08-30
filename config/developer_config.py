@@ -20,9 +20,11 @@ ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并
 
 # 注意：以下选项如果要开启的话，请使用前确认已经安装 中文识别 或者 启动百度API
 # 启动ocr来检测关卡后是否升级
-enable_ocr_check_update = False
+enable_ocr_check_update = True
 # 启动ocr来检测关卡是否结束
-enable_ocr_check_end = False
+enable_ocr_check_end = True
+# 启动ocr来检测任务是否已完成
+enable_ocr_check_task = True
 # 启用ocr来DEBUG
 enable_ocr_debugger = True
 # 启用ocr输出
