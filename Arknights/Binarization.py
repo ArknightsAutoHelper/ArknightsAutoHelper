@@ -20,7 +20,7 @@ def binarization_image(filepath, threshold=175):
     if enable_baidu_api is False:
         system(
             'copy {} {}'.format(filepath,
-                                filepath + ".debug"))
+                                filepath + "DebugBackup.png"))
     picture = Image.open(filepath)
     _L_form = picture.convert('L')
     table = []

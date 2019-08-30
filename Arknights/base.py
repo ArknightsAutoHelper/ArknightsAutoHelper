@@ -27,16 +27,41 @@ class ArknightsHelper(object):
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.__rebase_to_null = " 1>nul 2>nul" \
-            if "win" in os.sys.platform \
+            if "win32" in os.sys.platform \
             else " 1>/dev/null 2>/dev/null &" \
                                 if enable_rebase_to_null else ""
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
         self.ocr_active = True
         self.is_called_by_gui = call_by_gui
+        if DEBUG_LEVEL >= 1:
+            self.__print_info()
         if not call_by_gui:
             self.is_ocr_active(current_strength)
         self.shell_log.debug_text("成功初始化模块")
+
+    def __print_info(self):
+        self.shell_log.info_text(
+            """当前系统信息:
+ADB 路径\t{adb_path}
+ADB 端口\t{adb_host}
+截图路径\t{screen_shoot_path}
+存储路径\t{storage_path}
+            """.format(
+                adb_path=ADB_ROOT, adb_host=ADB_HOST,
+                screen_shoot_path=SCREEN_SHOOT_SAVE_PATH, storage_path=STORAGE_PATH
+            )
+        )
+        if enable_baidu_api:
+            self.shell_log.info_text(
+                """百度API配置信息:
+APP_ID\t{app_id}
+API_KEY\t{api_key}
+SECRET_KEY\t{secret_key}
+                """.format(
+                    app_id=APP_ID, api_key=API_KEY, secret_key=SECRET_KEY
+                )
+            )
 
     def __ocr_check(self,
                     file_path,   # 输入文件路径
@@ -59,7 +84,7 @@ class ArknightsHelper(object):
             if option is not None:
                 option = " " + option
             os.popen(
-                "tesseract {} {} {}".format(file_path, save_path, option)
+                'tesseract "{}" "{}" {}'.format(file_path, save_path, option)
                 + self.__rebase_to_null)
             self.__wait(3)
         else:

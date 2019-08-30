@@ -8,7 +8,6 @@ from random import randint
 
 class ADBShell(object):
     def __init__(self, adb_host=ADB_HOST):
-        self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "\\"
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = ADB_ROOT
         self.ADB_HOST = adb_host
@@ -17,13 +16,19 @@ class ADBShell(object):
         self.__adb_tools = ""
         self.__adb_command = ""
         self.DEVICE_NAME = self.__adb_device_name_detector()
-        self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" -s " + self.DEVICE_NAME + " {tools} {command} "
-        # 命令格式 "D:\Program Files\Nox\bin\adb.exe" -s 127.0.0.1:62001 shell am start ...
-        # Linux 和 Mac 机器我不太清楚咋整. 不过好像大家目前还没这个需求
-        # self.__adb_connect()
+        if "win32" in os.sys.platform:
+            self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" -s " + self.DEVICE_NAME + " {tools} {command} "
+            self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "\\"
+        else:
+            self.__command = self.ADB_ROOT + "/adb -s "+ self.DEVICE_NAME + " {tools} {command} "
+            self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "/"
 
     def __adb_device_name_detector(self):
-        self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" {tools} {command}"
+        if "win32" in os.sys.platform:
+            self.__command = "\"" + self.ADB_ROOT + \
+                "\\adb.exe\" {tools} {command}"
+        else:
+            self.__command = self.ADB_ROOT + "/adb {tools} {command}"
         self.__adb_tools = "devices"
         content = self.run_cmd(DEBUG_LEVEL=1).strip().split("\n")
         content.pop(0)
@@ -55,9 +60,11 @@ class ADBShell(object):
         self.__adb_command = self.DEVICE_NAME
         self.run_cmd(DEBUG_LEVEL=1)
         if "device" in self.__buffer or "already connected to {}".format(self.DEVICE_NAME) in self.__buffer:
-            self.shell_log.warning_text("[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
+            self.shell_log.warning_text(
+                "[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
         else:
-            self.shell_log.failure_text("[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
+            self.shell_log.failure_text(
+                "[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
 
     def run_cmd(self, DEBUG_LEVEL=2):
         """
@@ -143,7 +150,8 @@ class ADBShell(object):
         self.__adb_command = "/system/bin/screencap -p /sdcard/screenshot.png"
         self.run_cmd(1)
         self.__adb_tools = "pull"
-        self.__adb_command = "/sdcard/screenshot.png \"{}\"".format(self.SCREEN_SHOOT_SAVE_PATH + file_name)
+        self.__adb_command = "/sdcard/screenshot.png \"{}\"".format(
+            self.SCREEN_SHOOT_SAVE_PATH + file_name)
         self.run_cmd(1)
         self.__adb_tools = "shell"
         self.__adb_command = "rm /sdcard/screen.png"
@@ -203,7 +211,8 @@ class ADBShell(object):
             if hist1[i] == hist2[i]:
                 sum1 += 1
             else:
-                sum1 += 1 - float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])
+                sum1 += 1 - \
+                    float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])
         return sum1 / len(hist1)
 
     def ch_tools(self, tools):
