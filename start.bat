@@ -1,6 +1,10 @@
 echo ArknightsAutoHelper is going to run in 60 seconds, if you don't need it, close this cmd.
-timeout 60
 @echo off
+timeout 60
+rem 修改ArknightsAutoHelper的路径
+cd E:\Projects\ArknightsAutoHelper
+rem 修改ArknightsAutoHelper的盘符
+E:
 rem 打开夜神模拟器
 start F:\Nox\bin\nox.exe
 timeout 60
@@ -28,7 +32,8 @@ timeout 3
 rem 点击登录
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 640 575
 timeout 10
-python E:\Projects\ArknightsAutoHelper\start.py
+python start.py
+timeout 10
 rem 关闭夜神模拟器
 taskkill /f /im nox.exe
 rem 关闭电脑

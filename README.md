@@ -26,10 +26,6 @@
 ADB_ROOT = r"D:\Program Files\Nox\bin"
 ```
 
-- common_config.py里的路径最好改为全局路径（如果你想使用下文提到的批处理）  
-```SCREEN_SHOOT_SAVE_PATH = "E:\\Projects\\ArknightsAutoHelper\\screen_shoot\\"```
-```STORAGE_PATH = "E:\\Projects\\ArknightsAutoHelper\\storage\\"```
-
 **OCR高级选项设置**
 注意：以下选项如果要开启的话，请使用前确认已经安装 中文识别 或者 启动百度API
 
@@ -185,13 +181,13 @@ Ark.main_handler(TASK_LIST)
 5. 之后会收费么？
 不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。
 
-## 0x05 开机自启动批处理
+## 0x05 开机自启动批处理&一键开启
 
 `start.bat`文件会启动模拟器并自动登录刷本，完成预定任务后关闭电脑，你也可以把它略作修改当做一键启动。如果想要使用这个批处理，需要以下几步：
 
-1. 根据0x01里的内容修改全局路径。
-2. 根据自己设备的情况更改`start.bat`中的内容，每一行的作用我都注释出来了，主要就是改个path和密码。B服的小伙伴需要更改下“启动明日方舟”那行的`com.hypergryph.arknights/com.u8.sdk.U8UnityContext`。另外如果机器性能比较差，Timeout的延时也是需要修改的。
-2. 编写`start.py`（这个文件是gitignore的），并更改`start.bat`里31行的路径。
+1. 根据ArknightsAutoHelper的位置修改第5行和第7行的工作路径和盘符。
+2. 根据自己设备的情况更改`start.bat`中的内容，每一行的作用我都注释出来了，主要就是改个模拟器的路径和密码。B服的小伙伴需要更改下“启动明日方舟”那行的`com.hypergryph.arknights/com.u8.sdk.U8UnityContext`。另外如果机器性能比较差，Timeout的延时也是需要修改的。
+2. 编写`start.py`（这个文件是gitignore的）放到ArknightsAutoHelper里。
 3. 把`start.bat`文件放到系统的“启动”目录下（不懂可以百度）。
 4. 根据自己电脑的情况百度如何定时启动电脑，但你只要做完第三步它就会在每次开机的时候运行了，如果不需要它运行只要在批处理文件运行的前60秒内关掉它即可。
 
