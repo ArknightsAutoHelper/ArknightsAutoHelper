@@ -23,7 +23,7 @@ class ArknightsHelper(object):
         if adb_host is None:
             adb_host = ADB_HOST
         self.adb = ADBShell(adb_host=adb_host)
-        self.shell_log = ShellColor() if out_put else BufferColor()
+        self.shell_log = ShellColor() if out_put else BufferColor(debug_level=DEBUG_LEVEL)
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.__rebase_to_null = " 1>nul 2>nul" \
@@ -71,7 +71,7 @@ SECRET_KEY\t{secret_key}
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
         if change_image and enable_baidu_api is not True:
-            binarization_image(file_path)
+            binarization_image(filepath=file_path, enable_baidu_api=enable_baidu_api)
         if enable_baidu_api:
             try:
                 ocr(file_path, save_path + ".txt")
