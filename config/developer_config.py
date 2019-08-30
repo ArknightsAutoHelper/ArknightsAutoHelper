@@ -12,7 +12,7 @@ import os
     
     为啥这些路径我都要写绝对路径呢...因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：
 '''
-ADB_ROOT = r"D:\Program Files\Nox\bin"
+ADB_ROOT = r"C:\changzhi\dnplayer2"
 # ADB_HOST = "127.0.0.1:62001"  # 如果你不想用多开器的功能，请用此行配置
 ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并手动选择或在启动时自行添加HOST。
 # 另外推荐将这里的ADB_HOST 赋值为空字符串，如果仅有一台设备连接，系统会自动读取到设备名称

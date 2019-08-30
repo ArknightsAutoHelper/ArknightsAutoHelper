@@ -55,7 +55,7 @@ class ArknightsAutoHelperGUI(wx.App):
 
     def start_ark(self, event):
         try:
-            self.ark = ArknightsHelper(call_by_gui=True, out_put=1)
+            self.ark = ArknightsHelper(call_by_gui=True, out_put=False)
             if not enable_init_ark_on_start:
                 self.ark.is_ocr_active(self.ark.CURRENT_STRENGTH)
                 self.Index.m_statusBar1.PushStatusText("初始化完毕") if self.ark.ocr_active \

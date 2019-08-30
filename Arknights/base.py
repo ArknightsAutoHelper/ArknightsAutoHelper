@@ -130,7 +130,7 @@ class ArknightsHelper(object):
                 self.__is_game_active = True
 
     @staticmethod
-    def __wait(mintime=10,   # 等待时间中值
+    def __wait(n=10,   # 等待时间中值
                MANLIKE_FLAG=True):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
@@ -282,7 +282,7 @@ class ArknightsHelper(object):
             self.shell_log.info_text("当前战斗次数 {}".format(count))
             if count >= set_count:
                 strength_end_signal = True
-            self.shell_log.info_text("战斗结束 重新开始")
+            self.shell_log.info_text("战斗结束")
             self.__wait(10, MANLIKE_FLAG=True)
         if not sub:
             if auto_close:
@@ -321,7 +321,7 @@ class ArknightsHelper(object):
 
     def back_to_main(self): # 回到主页
         self.shell_log.debug_text("base.back_to_main")
-        for i in range(3):
+        for i in range(5):
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
         if self.__check_is_on_setting():
             self.shell_log.helper_text("触发设置，返回")
