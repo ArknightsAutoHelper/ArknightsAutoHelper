@@ -16,9 +16,9 @@ os.path.join(os.path.abspath("../"))
 
 class ArknightsHelper(object):
     def __init__(self,
-                 current_strength=None,   # 当前理智
-                 adb_host=None,   # 当前绑定到的设备
-                 out_put=True,   # 是否有命令行输出
+                 current_strength=None,  # 当前理智
+                 adb_host=None,  # 当前绑定到的设备
+                 out_put=True,  # 是否有命令行输出
                  call_by_gui=False):  # 是否为从 GUI 程序调用
         if adb_host is None:
             adb_host = ADB_HOST
@@ -29,7 +29,7 @@ class ArknightsHelper(object):
         self.__rebase_to_null = " 1>nul 2>nul" \
             if "win32" in os.sys.platform \
             else " 1>/dev/null 2>/dev/null &" \
-                                if enable_rebase_to_null else ""
+            if enable_rebase_to_null else ""
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
         self.ocr_active = True
@@ -64,9 +64,9 @@ SECRET_KEY\t{secret_key}
             )
 
     def __ocr_check(self,
-                    file_path,   # 输入文件路径
-                    save_path,   # 输出文件路径
-                    option=None,   # 附加选项
+                    file_path,  # 输入文件路径
+                    save_path,  # 输出文件路径
+                    option=None,  # 附加选项
                     change_image=True):  # 是否预处理图片
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
@@ -76,27 +76,21 @@ SECRET_KEY\t{secret_key}
             try:
                 ocr(file_path, save_path + ".txt")
             except ConnectionError:
-
-                self.shell_color.failure_text("[!] 百度API无法连接")
-                enable_api = False
-                self.shell_color.helper_text("继续使用tesseract")
-                if option is not None:
-                    option = " " + option
-                os.popen(
-                    "tesseract \"{}\"  \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
-                )
-                self.__wait(3)
-        else:
+                self.shell_log.failure_text("[!] 百度API无法连接")
+                enable_baidu_api = False
+                self.shell_log.helper_text("继续使用tesseract")
+        if not enable_baidu_api:
+            self.shell_log.debug_text("使用 tesseract OCR")
             if option is not None:
                 option = " " + option
             os.popen(
-                "tesseract \"{}\"  \"{}\" {}".format(file_path, save_path, option) + self.__rebase_to_null
+                'tesseract "{}"  "{}" {}'.format(file_path, save_path, option) + self.__rebase_to_null
             )
             self.__wait(3)
         else:
             self.shell_log.debug_text("使用 baidu api")
 
-    def is_ocr_active(self,   # 判断 OCR 是否可用
+    def is_ocr_active(self,  # 判断 OCR 是否可用
                       current_strength=None):  # 如果不可用时用于初始化的理智值
         self.shell_log.debug_text("base.is_ocr_active")
         global enable_baidu_api
@@ -162,14 +156,14 @@ SECRET_KEY\t{secret_key}
                 self.__is_game_active = True
 
     @staticmethod
-    def __wait(n=10,   # 等待时间中值
+    def __wait(n=10,  # 等待时间中值
                MANLIKE_FLAG=True):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
         sleep(n)
 
-    def mouse_click(self,   # 点击一个按钮
+    def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
         self.shell_log.debug_text("base.mouse_click")
         xx = randint(XY[0][0], XY[1][0])
@@ -185,10 +179,10 @@ SECRET_KEY\t{secret_key}
         self.__wait(BIG_WAIT)
 
     def module_battle_slim(self,
-                           c_id,   # 待战斗的关卡编号
-                           set_count=1000,   # 战斗次数
-                           check_ai=True,   # 是否检查代理指挥
-                           ** kwargs):  # 扩展参数:
+                           c_id,  # 待战斗的关卡编号
+                           set_count=1000,  # 战斗次数
+                           check_ai=True,  # 是否检查代理指挥
+                           **kwargs):  # 扩展参数:
         '''
         :param sub 是否为子程序 (是否为module_battle所调用)
         :param auto_close 是否自动关闭, 默认为 false
@@ -422,8 +416,8 @@ SECRET_KEY\t{secret_key}
             screen_range=MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER']
         )
         if self.adb.img_difference(
-            SCREEN_SHOOT_SAVE_PATH + "is_ai.png",
-            STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
+                SCREEN_SHOOT_SAVE_PATH + "is_ai.png",
+                STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
         ) <= 0.8:
             self.shell_log.helper_text("代理指挥未设置，设置代理指挥")
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
