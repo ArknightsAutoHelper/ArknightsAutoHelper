@@ -1,5 +1,5 @@
-from os import system
-
+from os import sys
+from shutil import copy
 from PIL import Image
 
 from config.developer_config import enable_baidu_api
@@ -18,9 +18,15 @@ def binarization_image(filepath, threshold=175):
     """
     # 这里给二值化前的图片留个底，确认二值化异常的原因
     if enable_baidu_api is False:
-        system(
-            'copy {} {}'.format(filepath,
-                                filepath + "DebugBackup.png"))
+        try:
+            copy(filepath, filepath + ".DebugBackup.png")
+        except IOError as e:
+            print("Unable to copy file. %s" % e)
+        except:
+            print("Unexpected error:", sys.exc_info())
+        # system(
+        #     'copy {} {}'.format(filepath,
+        #                         filepath + "DebugBackup.png"))
     picture = Image.open(filepath)
     _L_form = picture.convert('L')
     table = []

@@ -268,7 +268,7 @@ SECRET_KEY\t{secret_key}
                 if level_up_signal:
                     battle_end_signal = True
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
-                    self.adb.shell_log.helper_text("检测到升级")
+                    self.shell_log.helper_text("检测到升级")
                     self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
@@ -623,8 +623,8 @@ SECRET_KEY\t{secret_key}
         elif mode == 5:
             self.mouse_click(
                 XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"])
-            self.adb.shell_log.helper_text(
-                "欢迎来到火蓝之心副本，祝你在黑曜石音乐节上玩的愉快,\n目前主舞台只支持OF-7,OF-8")
+            self.shell_log.helper_text(
+                "欢迎来到火蓝之心副本\n祝你在黑曜石音乐节上玩的愉快\n目前主舞台只支持OF-7,OF-8")
             try:
                 if c_id[-2] == "F":
                     self.mouse_click(
