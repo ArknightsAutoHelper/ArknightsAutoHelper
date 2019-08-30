@@ -319,18 +319,22 @@ class ArknightsHelper(object):
                 img2=SCREEN_SHOOT_SAVE_PATH + "is_setting.png"
             ) > .85
 
-    def module_battle(self,  # 完整的战斗模块
-                      c_id,  # 选择的关卡
-                      set_count=1000):  # 作战次数
-        self.shell_log.debug_text("base.module_battle")
-        self.__wait(3, MANLIKE_FLAG=False)
-        self.selector.id = c_id
+    def back_to_main(self): # 回到主页
+        self.shell_log.debug_text("base.back_to_main")
         for i in range(3):
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
         if self.__check_is_on_setting():
             self.shell_log.helper_text("触发设置，返回")
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
         self.shell_log.helper_text("已回到主页")
+
+    def module_battle(self,  # 完整的战斗模块
+                      c_id,  # 选择的关卡
+                      set_count=1000):  # 作战次数
+        self.shell_log.debug_text("base.module_battle")
+        self.back_to_main()
+        self.__wait(3, MANLIKE_FLAG=False)
+        self.selector.id = c_id
         self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
         self.battle_selector(c_id)  # 选关
         self.module_battle_slim(c_id,
@@ -339,17 +343,18 @@ class ArknightsHelper(object):
                                 sub=True,
                                 self_fix=self.ocr_active)
         return True
-    
-    def main_handler(self, battle_task_list=None)
+
+    def main_handler(self, battle_task_list=None):
+        self.shell_log.debug_text("base.main_handler")
         if battle_task_list is None:
             battle_task_list = OrderedDict()
-        
+
         self.shell_log.warning_text("装载模块...")
         self.shell_log.warning_text("战斗模块...启动")
         flag = False
         if battle_task_list.__len__() == 0:
             self.shell_log.failure_text("任务清单为空!")
-        
+
         for c_id, count in battle_task_list.items():
             if c_id not in MAIN_TASK_SUPPORT.keys():
                 raise IndexError("无此关卡!")
@@ -373,6 +378,7 @@ class ArknightsHelper(object):
                 self.shell_log.warning_text("发生未知错误... 进程已结束")
 
     def set_ai_commander(self):
+        self.shell_log.debug_text("base.set_ai_commander")
         self.adb.get_screen_shoot(
             file_name="is_ai.png",
             screen_range=MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER']
@@ -385,3 +391,230 @@ class ArknightsHelper(object):
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
         else:
             self.shell_log.helper_text("代理指挥已设置")
+
+    def __check_current_strength(self):  # 检查当前理智是否足够
+        self.shell_log.debug_text("base.__check_current_strength")
+        assert self.ocr_active
+        self.__wait(SMALL_WAIT, False)
+        self.adb.get_screen_shoot(
+            file_name="strength.png",
+            screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
+        )
+
+        self.__ocr_check(
+            SCREEN_SHOOT_SAVE_PATH + "strength.png",
+            SCREEN_SHOOT_SAVE_PATH + "1",
+            "--psm 7")
+        with open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
+                  'r', encoding="utf8") as f:
+            tmp = f.read()  #
+            try:
+                self.CURRENT_STRENGTH = int(tmp.split("/")[0])
+                self.shell_log.helper_text(
+                    "理智剩余 {}".format(self.CURRENT_STRENGTH))
+                return True
+            except Exception as e:
+                self.shell_log.failure_text("{}".format(e))
+                return False
+
+    def __check_current_strength_debug(self):
+        # 查看是否在素材页面
+        self.shell_log.debug_text("base.__check_current_strength_debug")
+        self.shell_log.helper_text("启动自修复模块,检查是否停留在素材页面")
+        self.adb.get_screen_shoot(
+            file_name="debug.png",
+            screen_range=MAP_LOCATION['BATTLE_DEBUG_WHEN_OCR_ERROR']
+        )
+        if enable_ocr_debugger:
+            self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "debug.png",
+                             SCREEN_SHOOT_SAVE_PATH + "debug",
+                             "--psm 7 -l chi_sim")
+            end_text = "首次掉落"
+            f = open(SCREEN_SHOOT_SAVE_PATH +
+                     "debug.txt", 'r', encoding="utf8")
+            tmp = f.readline()
+            if end_text in tmp:
+                self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
+                self.adb.get_mouse_click(
+                    CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
+                self.__check_current_strength()
+            else:
+                self.shell_log.failure_text("检测 BUG 失败，系统将继续执行任务")
+        else:
+            if self.adb.img_difference(
+                    img1=SCREEN_SHOOT_SAVE_PATH + "debug.png",
+                    img2=STORAGE_PATH + "BATTLE_DEBUG_CHECK_LOCATION_IN_SUCAI.png"
+            ) > 0.75:
+                self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
+                self.adb.get_mouse_click(
+                    CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
+                self.__check_current_strength()
+            else:
+                self.shell_log.failure_text("检测 BUG 失败，系统将继续执行任务")
+
+    def check_current_strength(self, c_id, self_fix=False):
+        self.shell_log.debug_text("base.check_current_strength")
+        if self.ocr_active:
+            self.__wait(SMALL_WAIT, False)
+            self.adb.get_screen_shoot(
+                file_name="strength.png",
+                screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
+            )
+
+            self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "strength.png",
+                             SCREEN_SHOOT_SAVE_PATH + "1",
+                             "--psm 7")
+            with open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
+                      'r', encoding="utf8") as f:
+                tmp = f.read()  #
+                try:
+                    self.CURRENT_STRENGTH = int(tmp.split("/")[0])
+                    self.shell_log.helper_text(
+                        "理智剩余 {}".format(self.CURRENT_STRENGTH))
+                except Exception as e:
+                    self.shell_log.failure_text("{}".format(e))
+                    if self_fix:
+                        self.__check_current_strength_debug()
+                    else:
+                        self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+        else:
+            self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
+            self.shell_log.warning_text("OCR 模块未装载，系统将直接计算理智值")
+            self.__wait(TINY_WAIT)
+            self.shell_log.helper_text(
+                "理智剩余 {}".format(self.CURRENT_STRENGTH))
+
+        if self.CURRENT_STRENGTH - LIZHI_CONSUME[c_id] < 0:
+            self.shell_log.failure_text("理智不足 退出战斗")
+            return False
+        else:
+            return True
+
+    def battle_selector(self, c_id, first_battle_signal=True):  # 选关
+        self.shell_log.debug_text("base.battle_selector")
+        mode = self.selector.id_checker(c_id) # 获取当前关卡所属章节
+        if mode == 1:
+            if first_battle_signal:
+                self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK'])
+                self.adb.get_mouse_swipe(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'],
+                    FLAG=FLAGS_SWIPE_BIAS_TO_LEFT
+                )
+
+                # 拖动到正确的地方
+                if c_id[0] in MAIN_TASK_CHAPTER_SWIPE.keys() or c_id[1] in MAIN_TASK_CHAPTER_SWIPE.keys():
+                    if c_id[0].isnumeric():
+                        x = MAIN_TASK_CHAPTER_SWIPE[c_id[0]]
+                    else:
+                        x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
+                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    for x in range(0, x):
+                        self.adb.get_mouse_swipe(
+                            SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
+                        self.__wait(MEDIUM_WAIT)
+
+                # 章节选择
+                if c_id[0].isnumeric():
+                    self.mouse_click(
+                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[0])])
+                elif c_id[0] == "S":
+                    self.mouse_click(
+                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[1])])
+                else:
+                    raise IndexError("C_ID Error")
+                self.__wait(3)
+                # 章节选择结束
+                # 拖动
+                self.adb.get_mouse_swipe(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
+                sleep(SMALL_WAIT)
+                self.adb.get_mouse_swipe(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
+                sleep(SMALL_WAIT)
+                self.adb.get_mouse_swipe(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
+
+                # 拖动到正确的地方
+                if c_id in MAIN_TASK_BATTLE_SWIPE.keys():
+                    x = MAIN_TASK_BATTLE_SWIPE[c_id]
+                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    for x in range(0, x):
+                        self.adb.get_mouse_swipe(
+                            SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
+                        sleep(5)
+                self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)])
+
+            else:
+                sleep(5)
+
+        elif mode == 2:
+            try:
+                X = DAILY_LIST[str(mode)][self.selector.get_week()][c_id[0:2]]
+            except Exception as e:
+                self.shell_log.failure_text(
+                    e.__str__() + '\tclick_location 文件配置错误')
+                X = None
+                exit(0)
+            if first_battle_signal:
+                self.adb.get_mouse_swipe(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION'])
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(X)])
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])])
+            else:
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])])
+        elif mode == 3:
+            try:
+                X = DAILY_LIST[str(mode)][self.selector.get_week()][c_id[3]]
+            except Exception as e:
+                self.shell_log.failure_text(
+                    e.__str__() + '\tclick_location 文件配置错误')
+                X = None
+                exit(0)
+            if first_battle_signal:
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH'])
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-{}'.format(X)])
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])])
+            else:
+                self.mouse_click(
+                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])])
+        elif mode == 5:
+            self.mouse_click(
+                XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"])
+            self.adb.shell_log.helper_text(
+                "欢迎来到火蓝之心副本，祝你在黑曜石音乐节上玩的愉快,\n目前主舞台只支持OF-7,OF-8")
+            try:
+                if c_id[-2] == "F":
+                    self.mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F"])
+                    self.mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)])
+                elif c_id[-2] == "-":
+                    self.mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"])
+
+                    for x in range(0, 3):
+                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
+                                                 FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
+                        self.__wait(MEDIUM_WAIT)
+
+                    self.mouse_click(
+                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)])
+                else:
+                    self.shell_log.failure_text('click_location 文件配置错误')
+                    exit(0)
+            except Exception as e:
+                self.shell_log.failure_text(
+                    e.__str__() + 'click_location 文件配置错误')
+                exit(0)
+
+    def clear_daily_task(self):
+        self.shell_log.debug_text("base.clear_daily_task")
+        self.back_to_main()

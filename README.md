@@ -9,11 +9,11 @@ Prurite 对于 ArknightsAutoHelper 的 base.py 的一些重构，目标是优化
 [ ] 重构 base.py 的代码，整理变量名
   [x] 整理了已重构部分的变量名
   [x] 前半段**（没有经过测试，不保证没有bug）**
-  [ ] __check_current_san
-  [ ] __check_curreng_san_debug
-  [ ] check_curreng_san
-  [ ] battle_selector
+  [x] __check_current_san
+  [x] __check_curreng_san_debug
+  [x] check_curreng_san
+  [x] battle_selector
 [ ] 将点击操作换为范围操作
   [x] 更新点击函数（现在请使用 Arknights_helper.mouse_click 函数来点击一个按钮）
-  [ ] 更新 click_location 中的参数
+  [x] 更新 click_location 中的参数
 [ ] 加入收获每日任务功能
