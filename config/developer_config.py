@@ -23,18 +23,21 @@ ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并
 enable_ocr_check_update = True
 # 启动ocr来检测关卡是否结束
 enable_ocr_check_end = True
+# 启动ocr来检测任务是否已完成
+enable_ocr_check_task = True
 # 启用ocr来DEBUG
 enable_ocr_debugger = True
 # 启用ocr输出
 enable_rebase_to_null = True
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
-enable_api = False
+enable_baidu_api = False
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 # 是否启动时打印一些系统变量方便DEBUG
-enable_print_info = False
+# 0 为不输出 1 为输出函数调用 2 为输出全部调试信息
+DEBUG_LEVEL = 0
 
 # arknights INFO
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"  # 这个是官服的设置
