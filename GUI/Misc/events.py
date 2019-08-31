@@ -66,4 +66,4 @@ class ArkThread(Thread):
         elif self.func == "login":
             self.thread_type = "login"
             self.ark.module_login()
-        self.ark.shell_color.helper_text("{} 模块执行完毕".format(self.thread_type))
+        self.ark.shell_log.helper_text("{} 模块执行完毕".format(self.thread_type))
