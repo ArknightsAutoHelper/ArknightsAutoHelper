@@ -117,6 +117,14 @@ Ark = ArknightsHelper()
 Ark.main_handler(TASK_LIST)
 ```
 
+### 日常任务清理
+
+只要加上这一行，就会自动领取所有任务清单里的任务！简单快捷！
+
+```python
+Ark.clear_daily_task()
+```
+
 ### 未安装OCR模块的用法
 > ⚠ 由于脚本逐渐完善化以及日趋增加的错误处理能力。在之后的版本中将会逐渐废弃未安装OCR模块的支持。
 为此希望能够自行安装OCR模块或者调用百度API来识别。关于OCR的安装可以看 OCR_install.md
