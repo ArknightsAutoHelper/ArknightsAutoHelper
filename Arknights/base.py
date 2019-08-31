@@ -449,6 +449,54 @@ SECRET_KEY\t{secret_key}
                 self.shell_log.failure_text("{}".format(e))
                 return False
 
+    def check_notice_arise_debug(self):
+        # 查看是否弹出了公告
+        self.shell_log.debug_text("base.__check_notice_arise_debug")
+        self.shell_log.helper_text("启动自修复模块,检查是否弹出公告")
+        self.adb.get_screen_shoot(file_name="notice_arise.png")
+        self.shell_log.helper_text("正在检查是否弹出公告")
+        self.adb.get_sub_screen(
+            file_name="notice_arise.png",
+            screen_range=MAP_LOCATION['NOTICE_ARISE'],
+            save_name="notice_arise_1.png"
+        )
+        is_notice_arise = self.adb.img_difference(
+            img1=SCREEN_SHOOT_SAVE_PATH + "notice_arise_1.png",
+            img2=STORAGE_PATH + "NOTICE_ARISE.png"
+        ) > .8
+        if is_notice_arise:
+            self.shell_log.helper_text("捕捉公告页面成功，正在返回...")
+            self.mouse_click(
+                XY=CLICK_LOCATION["MAIN_NOTICE_ARISE_X"]
+            )
+            self.__wait(TINY_WAIT)
+        # 统一这里返回一下主页面
+        self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+
+    def check_daily_reward_arise_debug(self):
+        # 查看是否弹出了每日奖励
+        self.shell_log.debug_text("base.__check_daily_reward_arise_debug")
+        self.shell_log.helper_text("启动自修复模块,检查是否弹出每日奖励")
+        self.adb.get_screen_shoot(file_name="daily_reward_arise.png")
+        self.shell_log.helper_text("正在检查是否弹出每日奖励")
+        self.adb.get_sub_screen(
+            file_name="daily_reward_arise.png",
+            screen_range=MAP_LOCATION['DAILY_REWARD_ARISE'],
+            save_name="daily_reward_arise_1.png"
+        )
+        is_daily_reward_arise = self.adb.img_difference(
+            img1=SCREEN_SHOOT_SAVE_PATH + "daily_reward_arise_1.png",
+            img2=STORAGE_PATH + "DAILY_REWARD_ARISE.png"
+        ) > .8
+        if is_daily_reward_arise:
+            self.shell_log.helper_text("捕捉每日奖励页面成功，正在返回...")
+            self.mouse_click(
+                XY=CLICK_LOCATION["MAIN_DAILY_REWARD_ARISE_X"]
+            )
+            self.__wait(TINY_WAIT)
+        # 统一这里返回一下主页面
+        self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+
     def __check_current_strength_debug(self):
         # 查看是否在素材页面
         self.shell_log.debug_text("base.__check_current_strength_debug")
@@ -475,7 +523,7 @@ SECRET_KEY\t{secret_key}
             else:
                 self.shell_log.failure_text("检测 BUG 失败，系统将继续执行任务")
         else:
-            if self.adb.img_difference(
+            if self.adb.daily_rewardfference(
                     img1=SCREEN_SHOOT_SAVE_PATH + "debug.png",
                     img2=STORAGE_PATH + "BATTLE_DEBUG_CHECK_LOCATION_IN_SUCAI.png"
             ) > 0.75:

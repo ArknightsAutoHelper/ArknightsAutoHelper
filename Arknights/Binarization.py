@@ -1,4 +1,4 @@
-from os import system
+from os import popen
 
 from PIL import Image
 
@@ -17,7 +17,7 @@ def binarization_image(filepath, enable_baidu_api=False, threshold=175, ):
     """
     # 这里给二值化前的图片留个底，确认二值化异常的原因
     if enable_baidu_api is False:
-        system(
+        popen(
             'copy {} {}'.format(filepath,
                                 filepath + "DebugBackup.png"))
     picture = Image.open(filepath)
