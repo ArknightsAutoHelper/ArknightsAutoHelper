@@ -14,10 +14,12 @@ CLICK_LOCATION = {
     'TASK_DAILY_TASK_CHECK': ((1013, 133), (1104, 158)),
 
     "BATTLE_SELECT_MAIN_TASK": ((22, 636), (115, 684)),
+    "BATTLE_SELECT_MAIN_TASK_1": ((688, 224), (1000, 519)),    
     "BATTLE_SELECT_MAIN_TASK_2": ((1167, 224), (1251, 519)),
     "BATTLE_SELECT_MAIN_TASK_4": ((296, 249), (604, 523)),
     "BATTLE_SELECT_MAIN_TASK_5": ((819, 244), (1076, 502)),
 
+    "BATTLE_SELECT_MAIN_TASK_1-7": ((892, 217), (894, 219)),
     "BATTLE_SELECT_MAIN_TASK_2-2": ((1264, 337), (1266, 339)),
     "BATTLE_SELECT_MAIN_TASK_S2-1": ((1053, 430), (1055, 432)),
     "BATTLE_SELECT_MAIN_TASK_4-4": ((609, 338), (611, 340)),
@@ -98,6 +100,8 @@ MAIN_TASK_SUPPORT = {
     '4-5': 18,
     '4-6': 18,
     '4-7': 18,
+
+    '1-7': 6,
     # CA
     'CA-1': 10,
     'CA-2': 15,
@@ -278,6 +282,7 @@ MAIN_TASK_CHAPTER_SWIPE = {
 
 MAIN_TASK_BATTLE_SWIPE = {
     # 1 代表 1次 BATTLE_TO_MAP_RIGHT
+    '1-7': 1,
     '4-4': 1,
     '4-5': 1,
     '4-6': 1,
