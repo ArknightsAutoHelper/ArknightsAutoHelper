@@ -590,7 +590,7 @@ SECRET_KEY\t{secret_key}
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[0]]
                     else:
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
-                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
@@ -620,7 +620,7 @@ SECRET_KEY\t{secret_key}
                 # 拖动到正确的地方
                 if c_id in MAIN_TASK_BATTLE_SWIPE.keys():
                     x = MAIN_TASK_BATTLE_SWIPE[c_id]
-                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
