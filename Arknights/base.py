@@ -70,7 +70,7 @@ SECRET_KEY\t{secret_key}
                     change_image=True):  # 是否预处理图片
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
-        if change_image and enable_baidu_api is not True:
+        if change_image:
             binarization_image(file_path)
         if enable_baidu_api:
             try:
