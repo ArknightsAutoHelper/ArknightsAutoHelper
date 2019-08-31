@@ -17,16 +17,15 @@ def binarization_image(filepath, threshold=175):
              变量的方式不知道怎么弄过去，百度OCR倒是可以，但没弄
     """
     # 这里给二值化前的图片留个底，确认二值化异常的原因
-    if enable_baidu_api is False:
-        try:
-            copy(filepath, filepath + ".DebugBackup.png")
-        except IOError as e:
-            print("Unable to copy file. %s" % e)
-        except:
-            print("Unexpected error:", sys.exc_info())
-        # system(
-        #     'copy {} {}'.format(filepath,
-        #                         filepath + "DebugBackup.png"))
+    try:
+        copy(filepath, filepath + ".DebugBackup.png")
+    except IOError as e:
+        print("Unable to copy file. %s" % e)
+    except:
+        print("Unexpected error:", sys.exc_info())
+    # system(
+    #     'copy {} {}'.format(filepath,
+    #                         filepath + "DebugBackup.png"))
     picture = Image.open(filepath)
     _L_form = picture.convert('L')
     table = []
