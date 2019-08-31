@@ -349,11 +349,60 @@ SECRET_KEY\t{secret_key}
                 img2=SCREEN_SHOOT_SAVE_PATH + "is_setting.png"
             ) > .85
 
+    def __check_is_on_notice(self): # 检查是否有公告，True为是
+        self.shell_log.debug_text("base.__check_is_on_notice")
+        self.adb.get_screen_shoot(
+            file_name="is_notice.png",
+            screen_range=MAP_LOCATION['INDEX_INFO_IS_NOTICE']
+        )
+        if enable_ocr_debugger:
+            self.__ocr_check(
+                SCREEN_SHOOT_SAVE_PATH + "is_notice.png",
+                SCREEN_SHOOT_SAVE_PATH + "1",
+                "--psm 7 -l chi_sim",
+                change_image=False
+            )
+            end_text = "活动公告"
+            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8")
+            tmp = f.readline()
+            tmp = tmp.replace(' ', '')
+            self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
+            return end_text in tmp
+        else:
+            return self.adb.img_difference(
+                img1=STORAGE_PATH + "INDEX_INFO_IS_NOTICE.png",
+                img2=SCREEN_SHOOT_SAVE_PATH + "is_notice.png"
+            ) > .85
+
     def back_to_main(self):  # 回到主页
         self.shell_log.debug_text("base.back_to_main")
+        self.shell_log.helper_text("返回主页ing...")
+        # 检测是否有公告，如果有就点掉，点掉公告就是在主页
+        if self.__check_is_on_notice():
+            self.shell_log.helper_text("触发公告，点掉公告")
+            self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
+            self.shell_log.helper_text("已回到主页")
+            self.__wait(SMALL_WAIT, True)
+            return
+        # 检测左上角是否有返回标志，有就返回，没有就结束
         for i in range(5):
-            self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
-            self.__wait(TINY_WAIT, True)
+            self.adb.get_screen_shoot(
+                file_name="is_return.png",
+                screen_range=MAP_LOCATION['INDEX_INFO_IS_RETURN']
+            )
+            if self.adb.img_difference(
+                img1=STORAGE_PATH + "INDEX_INFO_IS_RETURN.png",
+                img2=SCREEN_SHOOT_SAVE_PATH + "is_return.png"
+            ) > .75:
+                self.shell_log.helper_text("未回到主页，点击返回")
+                self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+                self.__wait(TINY_WAIT, True)
+                if self.__check_is_on_notice():
+                    self.shell_log.helper_text("触发公告，点掉公告")
+                    self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
+                    break
+            else:
+                break
         if self.__check_is_on_setting():
             self.shell_log.helper_text("触发设置，返回")
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
