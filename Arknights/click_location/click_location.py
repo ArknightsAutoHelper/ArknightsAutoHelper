@@ -14,11 +14,20 @@ CLICK_LOCATION = {
     'TASK_DAILY_TASK_CHECK': ((1013, 133), (1104, 158)),
 
     "BATTLE_SELECT_MAIN_TASK": ((22, 636), (115, 684)),
+    "BATTLE_SELECT_MAIN_TASK_1": ((688, 224), (1000, 519)),
     "BATTLE_SELECT_MAIN_TASK_2": ((1167, 224), (1251, 519)),
+    "BATTLE_SELECT_MAIN_TASK_3": ((301, 213), (555, 500)),
     "BATTLE_SELECT_MAIN_TASK_4": ((296, 249), (604, 523)),
     "BATTLE_SELECT_MAIN_TASK_5": ((819, 244), (1076, 502)),
 
+    "BATTLE_SELECT_MAIN_TASK_1-7": ((892, 217), (894, 219)),
     "BATTLE_SELECT_MAIN_TASK_2-2": ((1264, 337), (1266, 339)),
+    "BATTLE_SELECT_MAIN_TASK_2-4": ((883, 335), (885, 337)),
+    "BATTLE_SELECT_MAIN_TASK_2-6": ((580, 430), (582, 432)),
+    "BATTLE_SELECT_MAIN_TASK_2-10": ((835, 428), (837, 430)),
+    "BATTLE_SELECT_MAIN_TASK_3-1": ((631, 345), (633, 347)),
+    "BATTLE_SELECT_MAIN_TASK_3-2": ((930, 335), (932, 337)),
+    "BATTLE_SELECT_MAIN_TASK_3-4": ((475, 416), (477, 418)),
     "BATTLE_SELECT_MAIN_TASK_S2-1": ((1053, 430), (1055, 432)),
     "BATTLE_SELECT_MAIN_TASK_4-4": ((609, 338), (611, 340)),
     "BATTLE_SELECT_MAIN_TASK_4-5": ((823, 253), (825, 255)),
@@ -30,6 +39,7 @@ CLICK_LOCATION = {
     "BATTLE_SELECT_MAIN_TASK_5-4": ((777, 389), (779, 391)),
     "BATTLE_SELECT_MAIN_TASK_5-5": ((1006, 320), (1008, 322)),
     "BATTLE_SELECT_MAIN_TASK_S5-1": ((1060, 445), (1062, 447)),
+    "BATTLE_SELECT_MAIN_TASK_5-10": ((985, 342), (987, 344)),
 
     "BATTLE_SELECT_MATERIAL_COLLECTION": ((330, 629), (430, 682)),
     # 预定义部分
@@ -93,11 +103,23 @@ MAIN_TASK_SUPPORT = {
     '5-3': 18,
     '5-4': 18,
     'S5-1': 18,
+    '5-10': 21,
 
     '4-4': 18,
     '4-5': 18,
     '4-6': 18,
     '4-7': 18,
+
+    '3-1': 15,
+    '3-2': 15,
+    '3-4': 15,
+
+    '2-2': 9,
+    '2-4': 12,
+    '2-6': 12,
+    '2-10': 15,
+
+    '1-7': 6,
     # CA
     'CA-1': 10,
     'CA-2': 15,
@@ -250,7 +272,8 @@ LIZHI_CONSUME = {
     'S2-4': 9,
     'S2-3': 9,
     'S2-2': 9,
-    'S2-1': 9,
+    # 主关卡 1图
+    '1-7': 6,
     # OF HEART_OF_SURGING_FLAME 副本
     'OF-8': 20,
     'OF-7': 20,
@@ -272,20 +295,27 @@ BATTLE_SELECTORS = {
 # 只更新一些需要刷素材的关卡
 MAIN_TASK_CHAPTER_SWIPE = {
     # 1 代表 1次 BATTLE_TO_MAP_RIGHT
+    '3': 1,
     '4': 2,
     '5': 2,
 }
 
 MAIN_TASK_BATTLE_SWIPE = {
     # 1 代表 1次 BATTLE_TO_MAP_RIGHT
+    '1-7': 1,
+    '2-4': 1,
+    '2-6': 2,
+    '2-10': 3,
+    '3-4': 1,
     '4-4': 1,
     '4-5': 1,
     '4-6': 1,
     '4-7': 2,
     '4-8': 2,
-    "5-3": 1,
+    '5-3': 1,
     '5-4': 1,
     '5-5': 1,
+    '5-10': 2,
     'OF-8': 2,
     'OF-7': 2,
 }
