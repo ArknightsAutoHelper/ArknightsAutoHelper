@@ -39,7 +39,7 @@ enable_ocr_debugger = True
 # 启用ocr输出，建议重定向到 Null。不然你的命令行输出会非常好看
 enable_rebase_to_null = True
 ```
-####启动百度API的方式识别OCR
+#### 启动百度API的方式识别OCR
 **百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，按次计费**
 
 文档地址：https://cloud.baidu.com/doc/OCR/index.html
