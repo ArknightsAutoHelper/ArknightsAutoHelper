@@ -70,7 +70,7 @@ SECRET_KEY\t{secret_key}
                     change_image=True):  # 是否预处理图片
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
-        if change_image and enable_baidu_api is not True:
+        if change_image:
             binarization_image(filepath=file_path, enable_baidu_api=enable_baidu_api)
         if enable_baidu_api:
             try:
@@ -268,7 +268,7 @@ SECRET_KEY\t{secret_key}
                 if level_up_signal:
                     battle_end_signal = True
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
-                    self.adb.shell_log.helper_text("检测到升级")
+                    self.shell_log.helper_text("检测到升级")
                     self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
@@ -349,11 +349,60 @@ SECRET_KEY\t{secret_key}
                 img2=SCREEN_SHOOT_SAVE_PATH + "is_setting.png"
             ) > .85
 
+    def __check_is_on_notice(self):  # 检查是否有公告，True为是
+        self.shell_log.debug_text("base.__check_is_on_notice")
+        self.adb.get_screen_shoot(
+            file_name="is_notice.png",
+            screen_range=MAP_LOCATION['INDEX_INFO_IS_NOTICE']
+        )
+        if enable_ocr_debugger:
+            self.__ocr_check(
+                SCREEN_SHOOT_SAVE_PATH + "is_notice.png",
+                SCREEN_SHOOT_SAVE_PATH + "1",
+                "--psm 7 -l chi_sim",
+                change_image=False
+            )
+            end_text = "活动公告"
+            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8")
+            tmp = f.readline()
+            tmp = tmp.replace(' ', '')
+            self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
+            return end_text in tmp
+        else:
+            return self.adb.img_difference(
+                img1=STORAGE_PATH + "INDEX_INFO_IS_NOTICE.png",
+                img2=SCREEN_SHOOT_SAVE_PATH + "is_notice.png"
+            ) > .85
+
     def back_to_main(self):  # 回到主页
         self.shell_log.debug_text("base.back_to_main")
+        self.shell_log.helper_text("返回主页ing...")
+        # 检测是否有公告，如果有就点掉，点掉公告就是在主页
+        if self.__check_is_on_notice():
+            self.shell_log.helper_text("触发公告，点掉公告")
+            self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
+            self.shell_log.helper_text("已回到主页")
+            self.__wait(SMALL_WAIT, True)
+            return
+        # 检测左上角是否有返回标志，有就返回，没有就结束
         for i in range(5):
-            self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
-            self.__wait(TINY_WAIT, True)
+            self.adb.get_screen_shoot(
+                file_name="is_return.png",
+                screen_range=MAP_LOCATION['INDEX_INFO_IS_RETURN']
+            )
+            if self.adb.img_difference(
+                    img1=STORAGE_PATH + "INDEX_INFO_IS_RETURN.png",
+                    img2=SCREEN_SHOOT_SAVE_PATH + "is_return.png"
+            ) > .75:
+                self.shell_log.helper_text("未回到主页，点击返回")
+                self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+                self.__wait(TINY_WAIT, True)
+                if self.__check_is_on_notice():
+                    self.shell_log.helper_text("触发公告，点掉公告")
+                    self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
+                    break
+            else:
+                break
         if self.__check_is_on_setting():
             self.shell_log.helper_text("触发设置，返回")
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
@@ -449,54 +498,6 @@ SECRET_KEY\t{secret_key}
                 self.shell_log.failure_text("{}".format(e))
                 return False
 
-    def check_notice_arise_debug(self):
-        # 查看是否弹出了公告
-        self.shell_log.debug_text("base.__check_notice_arise_debug")
-        self.shell_log.helper_text("启动自修复模块,检查是否弹出公告")
-        self.adb.get_screen_shoot(file_name="notice_arise.png")
-        self.shell_log.helper_text("正在检查是否弹出公告")
-        self.adb.get_sub_screen(
-            file_name="notice_arise.png",
-            screen_range=MAP_LOCATION['NOTICE_ARISE'],
-            save_name="notice_arise_1.png"
-        )
-        is_notice_arise = self.adb.img_difference(
-            img1=SCREEN_SHOOT_SAVE_PATH + "notice_arise_1.png",
-            img2=STORAGE_PATH + "NOTICE_ARISE.png"
-        ) > .8
-        if is_notice_arise:
-            self.shell_log.helper_text("捕捉公告页面成功，正在返回...")
-            self.mouse_click(
-                XY=CLICK_LOCATION["MAIN_NOTICE_ARISE_X"]
-            )
-            self.__wait(TINY_WAIT)
-        # 统一这里返回一下主页面
-        self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
-
-    def check_daily_reward_arise_debug(self):
-        # 查看是否弹出了每日奖励
-        self.shell_log.debug_text("base.__check_daily_reward_arise_debug")
-        self.shell_log.helper_text("启动自修复模块,检查是否弹出每日奖励")
-        self.adb.get_screen_shoot(file_name="daily_reward_arise.png")
-        self.shell_log.helper_text("正在检查是否弹出每日奖励")
-        self.adb.get_sub_screen(
-            file_name="daily_reward_arise.png",
-            screen_range=MAP_LOCATION['DAILY_REWARD_ARISE'],
-            save_name="daily_reward_arise_1.png"
-        )
-        is_daily_reward_arise = self.adb.img_difference(
-            img1=SCREEN_SHOOT_SAVE_PATH + "daily_reward_arise_1.png",
-            img2=STORAGE_PATH + "DAILY_REWARD_ARISE.png"
-        ) > .8
-        if is_daily_reward_arise:
-            self.shell_log.helper_text("捕捉每日奖励页面成功，正在返回...")
-            self.mouse_click(
-                XY=CLICK_LOCATION["MAIN_DAILY_REWARD_ARISE_X"]
-            )
-            self.__wait(TINY_WAIT)
-        # 统一这里返回一下主页面
-        self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
-
     def __check_current_strength_debug(self):
         # 查看是否在素材页面
         self.shell_log.debug_text("base.__check_current_strength_debug")
@@ -523,7 +524,7 @@ SECRET_KEY\t{secret_key}
             else:
                 self.shell_log.failure_text("检测 BUG 失败，系统将继续执行任务")
         else:
-            if self.adb.daily_rewardfference(
+            if self.adb.img_difference(
                     img1=SCREEN_SHOOT_SAVE_PATH + "debug.png",
                     img2=STORAGE_PATH + "BATTLE_DEBUG_CHECK_LOCATION_IN_SUCAI.png"
             ) > 0.75:
@@ -589,7 +590,7 @@ SECRET_KEY\t{secret_key}
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[0]]
                     else:
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
-                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
@@ -619,7 +620,7 @@ SECRET_KEY\t{secret_key}
                 # 拖动到正确的地方
                 if c_id in MAIN_TASK_BATTLE_SWIPE.keys():
                     x = MAIN_TASK_BATTLE_SWIPE[c_id]
-                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
@@ -671,8 +672,8 @@ SECRET_KEY\t{secret_key}
         elif mode == 5:
             self.mouse_click(
                 XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"])
-            self.adb.shell_log.helper_text(
-                "欢迎来到火蓝之心副本，祝你在黑曜石音乐节上玩的愉快,\n目前主舞台只支持OF-7,OF-8")
+            self.shell_log.helper_text(
+                "欢迎来到火蓝之心副本\n祝你在黑曜石音乐节上玩的愉快\n目前主舞台只支持OF-7,OF-8")
             try:
                 if c_id[-2] == "F":
                     self.mouse_click(
