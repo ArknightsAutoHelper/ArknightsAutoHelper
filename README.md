@@ -48,6 +48,8 @@ enable_rebase_to_null = True
 ```python
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
 enable_baidu_api = False
+# 是否对使用百度ocr的图像进行处理，有可能改善精准度，但也有可能反而导致识别错误；该选项不会影响tesseract
+enable_help_baidu = True
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
