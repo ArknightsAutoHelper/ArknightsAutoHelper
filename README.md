@@ -116,15 +116,8 @@ from collections import OrderedDict
 TASK_LIST = OrderedDict()
 TASK_LIST['LS-4'] = 10
 Ark = ArknightsHelper()
-Ark.main_handler(TASK_LIST)
-```
-
-### 日常任务清理
-
-只要加上这一行，就会自动领取所有任务清单里的任务！简单快捷！
-
-```python
-Ark.clear_daily_task()
+# True代表在任务完成后清理每日任务，False不清理
+Ark.main_handler(True, TASK_LIST)
 ```
 
 ### 未安装OCR模块的用法
@@ -140,7 +133,8 @@ from collections import OrderedDict
 
 TASK_LIST = OrderedDict()
 TASK_LIST['LS-4'] = 10
-Ark = ArknightsHelper(100)# 
+Ark = ArknightsHelper(100)
+# True代表在任务完成后清理每日任务，False不清理 
 Ark.main_handler(TASK_LIST)
 ```
 
