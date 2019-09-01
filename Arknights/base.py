@@ -433,7 +433,7 @@ SECRET_KEY\t{secret_key}
                                 self_fix=self.ocr_active)
         return True
 
-    def main_handler(self, battle_task_list=None):
+    def main_handler(self, clear_tasks, battle_task_list=None):
         self.shell_log.debug_text("base.main_handler")
         if battle_task_list is None:
             battle_task_list = OrderedDict()
@@ -453,6 +453,8 @@ SECRET_KEY\t{secret_key}
 
         if flag:
             if not self.__call_by_gui:
+                if clear_tasks:
+                    self.clear_daily_task()
                 self.shell_log.warning_text("所有模块执行完毕... 60s后退出")
                 self.__wait(60)
                 self.__del()
@@ -713,6 +715,7 @@ SECRET_KEY\t{secret_key}
 
     def clear_daily_task(self):
         self.shell_log.debug_text("base.clear_daily_task")
+        self.shell_log.helper_text("领取每日任务")
         self.back_to_main()
         self.mouse_click(CLICK_LOCATION['TASK_CLICK_IN'])
         self.__wait(TINY_WAIT, True)
