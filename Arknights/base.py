@@ -71,7 +71,13 @@ SECRET_KEY\t{secret_key}
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
         if change_image:
-            binarization_image(filepath=file_path, enable_baidu_api=enable_baidu_api)
+            if enable_baidu_api:
+                if enable_help_baidu:
+                    binarization_image(filepath=file_path, save_backup=True)
+                else:
+                    self.shell_log.info_text("不对百度ocr进行图像处理")
+            else:
+                binarization_image(filepath=file_path, save_backup=True)
         if enable_baidu_api:
             try:
                 ocr(file_path, save_path + ".txt")
