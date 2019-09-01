@@ -7,31 +7,31 @@ rem 修改ArknightsAutoHelper的盘符
 E:
 rem 打开夜神模拟器
 start F:\Nox\bin\nox.exe
-timeout 60
+timeout 120
 rem 打开明日方舟
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell am start -n com.hypergryph.arknights/com.u8.sdk.U8UnityContext
-timeout 30
+timeout 60
 rem 点击展示页
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 932 679
-timeout 10
+timeout 30
 rem 点击账号管理
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 932 679
-timeout 3
+timeout 10
 rem 点击账号登录
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 411 507
-timeout 3
+timeout 10
 rem 点击密码
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 637 482
-timeout 3
+timeout 10
 rem 输入密码
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input text ******
-timeout 3
+timeout 10
 rem 点击密码
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 637 482
-timeout 3
+timeout 10
 rem 点击登录
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 640 575
-timeout 10
+timeout 60
 python start.py
 timeout 10
 rem 关闭夜神模拟器

@@ -228,6 +228,14 @@ SECRET_KEY\t{secret_key}
             # 查看剩余理智
             strength_end_signal = not self.check_current_strength(
                 c_id, self_fix)
+            # 需要重新启动
+            if self.CURRENT_STRENGTH == -1:
+                self.back_to_main()
+                self.__wait(3, MANLIKE_FLAG=False)
+                self.selector.id = c_id
+                self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
+                self.battle_selector(c_id)  # 选关
+                return self.module_battle_slim(c_id, set_count - count, check_ai, **kwargs)
             if strength_end_signal:
                 return True
 
@@ -432,7 +440,7 @@ SECRET_KEY\t{secret_key}
                                 self_fix=self.ocr_active)
         return True
 
-    def main_handler(self, battle_task_list=None):
+    def main_handler(self, clear_tasks, battle_task_list=None):
         self.shell_log.debug_text("base.main_handler")
         if battle_task_list is None:
             battle_task_list = OrderedDict()
@@ -452,6 +460,8 @@ SECRET_KEY\t{secret_key}
 
         if flag:
             if not self.__call_by_gui:
+                if clear_tasks:
+                    self.clear_daily_task()
                 self.shell_log.warning_text("所有模块执行完毕... 60s后退出")
                 self.__wait(60)
                 self.__del()
@@ -539,7 +549,7 @@ SECRET_KEY\t{secret_key}
                 self.shell_log.failure_text("{}".format(e))
                 return False
 
-    def __check_current_strength_debug(self):
+    def __check_current_strength_debug(self, c_id):
         # 查看是否在素材页面
         self.shell_log.debug_text("base.__check_current_strength_debug")
         self.shell_log.helper_text("启动自修复模块,检查是否停留在素材页面")
@@ -563,7 +573,8 @@ SECRET_KEY\t{secret_key}
                     CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
                 self.__check_current_strength()
             else:
-                self.shell_log.failure_text("检测 BUG 失败，系统将继续执行任务")
+                self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")
+                self.CURRENT_STRENGTH = -1 # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
         else:
             if self.adb.img_difference(
                     img1=SCREEN_SHOOT_SAVE_PATH + "debug.png",
@@ -574,7 +585,8 @@ SECRET_KEY\t{secret_key}
                     CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
                 self.__check_current_strength()
             else:
-                self.shell_log.failure_text("检测 BUG 失败，系统将继续执行任务")
+                self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")
+                self.CURRENT_STRENGTH = -1 # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
 
     def check_current_strength(self, c_id, self_fix=False):
         self.shell_log.debug_text("base.check_current_strength")
@@ -598,7 +610,9 @@ SECRET_KEY\t{secret_key}
                 except Exception as e:
                     self.shell_log.failure_text("{}".format(e))
                     if self_fix:
-                        self.__check_current_strength_debug()
+                        self.__check_current_strength_debug(c_id)
+                        if self.CURRENT_STRENGTH == -1:
+                            return False
                     else:
                         self.CURRENT_STRENGTH -= LIZHI_CONSUME[c_id]
         else:
@@ -742,6 +756,7 @@ SECRET_KEY\t{secret_key}
 
     def clear_daily_task(self):
         self.shell_log.debug_text("base.clear_daily_task")
+        self.shell_log.helper_text("领取每日任务")
         self.back_to_main()
         self.mouse_click(CLICK_LOCATION['TASK_CLICK_IN'])
         self.__wait(TINY_WAIT, True)
