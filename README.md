@@ -26,14 +26,10 @@
 ADB_ROOT = r"D:\Program Files\Nox\bin"
 ```
 
-- common_config.py里的路径最好改为全局路径（如果你想使用下文提到的批处理）  
-```SCREEN_SHOOT_SAVE_PATH = "E:\\Projects\\ArknightsAutoHelper\\screen_shoot\\"```
-```STORAGE_PATH = "E:\\Projects\\ArknightsAutoHelper\\storage\\"```
-
 **OCR高级选项设置**
 注意：以下选项如果要开启的话，请使用前确认已经安装 中文识别 或者 启动百度API
 
-```
+```python
 # 启动ocr来检测关卡后是否升级；默认方法为子图识别
 enable_ocr_check_update = True
 # 启动ocr来检测关卡是否结束；默认方法为子图识别
@@ -42,9 +38,18 @@ enable_ocr_check_end = True
 enable_ocr_debugger = True
 # 启用ocr输出，建议重定向到 Null。不然你的命令行输出会非常好看
 enable_rebase_to_null = True
+```
+#### 启动百度API的方式识别OCR
+**百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，按次计费**
 
-# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案（OCR的方案）
-Enable_api = False
+文档地址：https://cloud.baidu.com/doc/OCR/index.html
+需要安装 ```baidu-api```库，执行```pip install baidu-aip```即可
+启用百度api作为ocr识别方案，需要自行注册百度云
+```python
+# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
+enable_baidu_api = False
+# 是否对使用百度ocr的图像进行处理，有可能改善精准度，但也有可能反而导致识别错误；该选项不会影响tesseract
+enable_help_baidu = True
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
@@ -114,6 +119,14 @@ Ark = ArknightsHelper()
 Ark.main_handler(TASK_LIST)
 ```
 
+### 日常任务清理
+
+只要加上这一行，就会自动领取所有任务清单里的任务！简单快捷！
+
+```python
+Ark.clear_daily_task()
+```
+
 ### 未安装OCR模块的用法
 > ⚠ 由于脚本逐渐完善化以及日趋增加的错误处理能力。在之后的版本中将会逐渐废弃未安装OCR模块的支持。
 为此希望能够自行安装OCR模块或者调用百度API来识别。关于OCR的安装可以看 OCR_install.md
@@ -176,15 +189,18 @@ Ark.main_handler(TASK_LIST)
 4. 我不会python|我电脑里没装Python，我能用这个嚒？
 不能。我没有精力去给你整个exe文件。但是你也许可以通过我的代码学习一些Python的小技巧。
 5. 之后会收费么？
-不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。
+不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。欢迎来pull代码以及加群
+6. 关于mumu模拟器的adb在哪里的问题
+mumu模拟器的adb不在模拟器的主路径下，而且它的名字叫adb_server。mumu模拟器自动隐藏了adb端口。
+除非你是专业人士，否则不建议使用mumu模拟器。推荐使用夜神模拟器，群友也有用雷电模拟器的。
 
-## 0x05 开机自启动批处理
+## 0x05 开机自启动批处理&一键开启
 
 `start.bat`文件会启动模拟器并自动登录刷本，完成预定任务后关闭电脑，你也可以把它略作修改当做一键启动。如果想要使用这个批处理，需要以下几步：
 
-1. 根据0x01里的内容修改全局路径。
-2. 根据自己设备的情况更改`start.bat`中的内容，每一行的作用我都注释出来了，主要就是改个path和密码。B服的小伙伴需要更改下“启动明日方舟”那行的`com.hypergryph.arknights/com.u8.sdk.U8UnityContext`。另外如果机器性能比较差，Timeout的延时也是需要修改的。
-2. 编写`start.py`（这个文件是gitignore的），并更改`start.bat`里31行的路径。
+1. 根据ArknightsAutoHelper的位置修改第5行和第7行的工作路径和盘符。
+2. 根据自己设备的情况更改`start.bat`中的内容，每一行的作用我都注释出来了，主要就是改个模拟器的路径和密码。B服的小伙伴需要更改下“启动明日方舟”那行的`com.hypergryph.arknights/com.u8.sdk.U8UnityContext`。另外如果机器性能比较差，Timeout的延时也是需要修改的。
+2. 编写`start.py`（这个文件是gitignore的）放到ArknightsAutoHelper里。
 3. 把`start.bat`文件放到系统的“启动”目录下（不懂可以百度）。
 4. 根据自己电脑的情况百度如何定时启动电脑，但你只要做完第三步它就会在每次开机的时候运行了，如果不需要它运行只要在批处理文件运行的前60秒内关掉它即可。
 
