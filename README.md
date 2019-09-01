@@ -48,6 +48,8 @@ enable_rebase_to_null = True
 ```python
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
 enable_baidu_api = False
+# 是否对使用百度ocr的图像进行处理，有可能改善精准度，但也有可能反而导致识别错误；该选项不会影响tesseract
+enable_help_baidu = True
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
@@ -181,7 +183,10 @@ Ark.main_handler(TASK_LIST)
 4. 我不会python|我电脑里没装Python，我能用这个嚒？
 不能。我没有精力去给你整个exe文件。但是你也许可以通过我的代码学习一些Python的小技巧。
 5. 之后会收费么？
-不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。
+不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。欢迎来pull代码以及加群
+6. 关于mumu模拟器的adb在哪里的问题
+mumu模拟器的adb不在模拟器的主路径下，而且它的名字叫adb_server。mumu模拟器自动隐藏了adb端口。
+除非你是专业人士，否则不建议使用mumu模拟器。推荐使用夜神模拟器，群友也有用雷电模拟器的。
 
 ## 0x05 开机自启动批处理&一键开启
 

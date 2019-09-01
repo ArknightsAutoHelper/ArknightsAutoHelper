@@ -23,7 +23,7 @@ class ArknightsHelper(object):
         if adb_host is None:
             adb_host = ADB_HOST
         self.adb = ADBShell(adb_host=adb_host)
-        self.shell_log = ShellColor() if out_put else BufferColor()
+        self.shell_log = ShellColor() if out_put else BufferColor(debug_level=DEBUG_LEVEL)
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.__rebase_to_null = " 1>nul 2>nul" \
@@ -71,7 +71,13 @@ SECRET_KEY\t{secret_key}
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
         if change_image:
-            binarization_image(file_path)
+            if enable_baidu_api:
+                if enable_help_baidu:
+                    binarization_image(filepath=file_path, save_backup=True)
+                else:
+                    self.shell_log.info_text("不对百度ocr进行图像处理")
+            else:
+                binarization_image(filepath=file_path, save_backup=True)
         if enable_baidu_api:
             try:
                 ocr(file_path, save_path + ".txt")
@@ -357,7 +363,7 @@ SECRET_KEY\t{secret_key}
                 img2=SCREEN_SHOOT_SAVE_PATH + "is_setting.png"
             ) > .85
 
-    def __check_is_on_notice(self): # 检查是否有公告，True为是
+    def __check_is_on_notice(self):  # 检查是否有公告，True为是
         self.shell_log.debug_text("base.__check_is_on_notice")
         self.adb.get_screen_shoot(
             file_name="is_notice.png",
@@ -399,8 +405,8 @@ SECRET_KEY\t{secret_key}
                 screen_range=MAP_LOCATION['INDEX_INFO_IS_RETURN']
             )
             if self.adb.img_difference(
-                img1=STORAGE_PATH + "INDEX_INFO_IS_RETURN.png",
-                img2=SCREEN_SHOOT_SAVE_PATH + "is_return.png"
+                    img1=STORAGE_PATH + "INDEX_INFO_IS_RETURN.png",
+                    img2=SCREEN_SHOOT_SAVE_PATH + "is_return.png"
             ) > .75:
                 self.shell_log.helper_text("未回到主页，点击返回")
                 self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
@@ -604,7 +610,7 @@ SECRET_KEY\t{secret_key}
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[0]]
                     else:
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
-                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
@@ -634,7 +640,7 @@ SECRET_KEY\t{secret_key}
                 # 拖动到正确的地方
                 if c_id in MAIN_TASK_BATTLE_SWIPE.keys():
                     x = MAIN_TASK_BATTLE_SWIPE[c_id]
-                    self.shell_log.helper_text("拖动%{}次".format(x))
+                    self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
