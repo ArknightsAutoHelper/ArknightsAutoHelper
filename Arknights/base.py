@@ -67,17 +67,18 @@ SECRET_KEY\t{secret_key}
                     file_path,  # 输入文件路径
                     save_path,  # 输出文件路径
                     option=None,  # 附加选项
-                    change_image=True):  # 是否预处理图片
+                    change_image=True,  # 是否预处理图片
+                    invert=True):   # 反反色图片
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
         if change_image:
             if enable_baidu_api:
                 if enable_help_baidu:
-                    binarization_image(filepath=file_path, save_backup=True)
+                    binarization_image(filepath=file_path, save_backup=True, invert_image=invert)
                 else:
                     self.shell_log.info_text("不对百度ocr进行图像处理")
             else:
-                binarization_image(filepath=file_path, save_backup=True)
+                binarization_image(filepath=file_path, save_backup=True, invert_image=invert)
         if enable_baidu_api:
             try:
                 ocr(file_path, save_path + ".txt")
@@ -214,7 +215,8 @@ SECRET_KEY\t{secret_key}
             self.set_ai_commander()
         if set_count == 0:
             return True
-        strength_end_signal = False
+        # 下面值如果是False就继续
+        strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page)
         count = 0
         while not strength_end_signal:
             # 初始化变量
@@ -285,7 +287,6 @@ SECRET_KEY\t{secret_key}
                         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END'],
                         save_name="battle_end.png"
                     )
-                    end_signal = False
                     if enable_ocr_check_end:
                         self.__ocr_check(
                             SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
@@ -464,8 +465,42 @@ SECRET_KEY\t{secret_key}
             else:
                 self.shell_log.warning_text("发生未知错误... 进程已结束")
 
+    def task_check(self, enable_ocr_check):
+        # 检测是否在关卡页面
+        self.adb.get_screen_shoot(
+            file_name="is_on_task.png",
+            screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
+        if enable_ocr_check:
+            self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
+                             SCREEN_SHOOT_SAVE_PATH + "1",
+                             "--psm 7 -l chi_sim", change_image=True, invert=False)
+            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
+                     "r", encoding="utf8")
+            tmp = f.readline()
+            tmp = tmp.replace(' ', '')
+            self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
+            task_text = "指挥"
+            continue_run = task_text in tmp
+        else:
+            if self.adb.img_difference(
+                    SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
+                    STORAGE_PATH + "ENSURE_ON_TASK_PAGE.png"
+            ) <= 0.8:
+                self.shell_log.debug_text("相似度对比失败")
+                continue_run = False
+            else:
+                self.shell_log.debug_text("相似度对比成功")
+                continue_run = True
+        if continue_run:
+            self.shell_log.info_text("确认处于关卡页面")
+            return False
+        else:
+            self.shell_log.failure_text("当前未处在关卡页面")
+            return True
+
     def set_ai_commander(self):
         self.shell_log.debug_text("base.set_ai_commander")
+        # 先点击保证图片一致
         self.adb.get_screen_shoot(
             file_name="is_ai.png",
             screen_range=MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER']
