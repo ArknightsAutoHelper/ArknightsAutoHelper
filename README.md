@@ -36,6 +36,8 @@ enable_ocr_check_update = True
 enable_ocr_check_end = True
 # 启用ocr来DEBUG；默认方法为子图识别
 enable_ocr_debugger = True
+# 启用ocr来检测是否在关卡界面
+enable_ocr_check_is_TASK_page = True
 # 启用ocr输出，建议重定向到 Null。不然你的命令行输出会非常好看
 enable_rebase_to_null = True
 ```
@@ -62,6 +64,16 @@ SECRET_KEY = '你的 Secret Key'
 ```python
 $ pip install -r requirement.txt
 ```
+
+#### 日志说明
+
+日志采用```import logging```在主目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
+
+相关配置文件在```config```目录下的**logging.ini**，由于过于复杂 ~~其实也没确定理解的对不对~~ 这里请自行研究，欢迎讨论
+
+配置文件本身支持如字典，YAML等，欢迎找到更有效，更整洁的方式并更换
+
+日志目前是输出所有，且大小不受限制，并没有自动备份功能，但是根据```logging```文档这是可以控制并且暂时关闭的 ~~我不想实验了，加油吧少年~~ 
 
 ## 0x02 ArknightsHelper 脚本启动
 > 推荐安装OCR模块;感谢群友的贡献！关于OCR安装的文档可以查看OCR_install.md

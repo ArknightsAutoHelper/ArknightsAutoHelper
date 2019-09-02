@@ -1,9 +1,17 @@
+import logging.config
 import os
-from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor
-from PIL import Image
-from time import sleep
 from random import randint
+from time import sleep
+
+from PIL import Image
+
+from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH
+
 # from numpy import average, dot, linalg
+
+
+logging.config.fileConfig(CONFIG_PATH + 'logging.ini')
+logger = logging.getLogger('ADBSHell')
 
 
 class ADBShell(object):
@@ -20,13 +28,13 @@ class ADBShell(object):
             self.__command = "\"" + self.ADB_ROOT + "\\adb.exe\" -s " + self.DEVICE_NAME + " {tools} {command} "
             self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "\\"
         else:
-            self.__command = self.ADB_ROOT + "/adb -s "+ self.DEVICE_NAME + " {tools} {command} "
+            self.__command = self.ADB_ROOT + "/adb -s " + self.DEVICE_NAME + " {tools} {command} "
             self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "/"
 
     def __adb_device_name_detector(self):
         if "win32" in os.sys.platform:
             self.__command = "\"" + self.ADB_ROOT + \
-                "\\adb.exe\" {tools} {command}"
+                             "\\adb.exe\" {tools} {command}"
 
         else:
             self.__command = self.ADB_ROOT + "/adb {tools} {command}"
@@ -165,6 +173,7 @@ class ADBShell(object):
         sleep(1)
         XY, mXmY = XY_mXmY
         self.__adb_tools = "shell"
+        logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(XY[0], XY[1], XY[0] + mXmY[0], XY[1] + mXmY[1]))
         self.__adb_command = "input swipe {X1} {Y1} {X2} {Y2}".format(
             X1=XY[0], Y1=XY[1], X2=XY[0] + mXmY[0], Y2=XY[1] + mXmY[1]
         )
@@ -177,17 +186,20 @@ class ADBShell(object):
         if FLAG is not None:
             # self.shell_log.info_text(XY.__str__())
             # self.__adb_tools = "shell"
-            self.__adb_command = "input tap {} {}".format(XY[0] + randint(-FLAG[0], FLAG[0]),
-                                                          XY[1] + randint(-FLAG[1], FLAG[1]))
+            fianal_XY_0 = XY[0] + randint(-FLAG[0], FLAG[0])
+            fianal_XY_1 = XY[1] + randint(-FLAG[1], FLAG[1])
             # self.run_cmd(DEBUG_LEVEL=0)
         else:
             # self.shell_log.info_text(XY.__str__())
             # self.__adb_tools = "shell"
-            self.__adb_command = "input tap {} {}".format(XY[0] + randint(-1, 1),
-                                                          XY[1] + randint(-1, 1))
+            fianal_XY_0 = XY[0] + randint(-1, 1)
+            fianal_XY_1 = XY[1] + randint(-1, 1)
             # self.run_cmd(DEBUG_LEVEL=0)
         # print(self.__adb_command)
         # 如果你遇到了问题，可以把这百年输出并把日志分享到群里。
+        logger.debug("点击坐标:({},{})".format(fianal_XY_0, fianal_XY_1))
+        self.__adb_command = "input tap {} {}".format(fianal_XY_0,
+                                                      fianal_XY_1)
         self.run_cmd(DEBUG_LEVEL=0)
 
     def mv_file(self, file_name, file_path="/sdcard/", RM=False):
@@ -213,7 +225,7 @@ class ADBShell(object):
                 sum1 += 1
             else:
                 sum1 += 1 - \
-                    float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])
+                        float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])
         return sum1 / len(hist1)
 
     def ch_tools(self, tools):
