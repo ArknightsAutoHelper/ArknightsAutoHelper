@@ -1,3 +1,4 @@
+import logging.config
 import os
 from collections import OrderedDict
 from random import randint, uniform
@@ -12,6 +13,8 @@ from Baidu_api import *
 from config import *
 
 os.path.join(os.path.abspath("../"))
+logging.config.fileConfig(CONFIG_PATH + 'logging.ini')
+logger = logging.getLogger('base')
 
 
 class ArknightsHelper(object):
@@ -67,17 +70,18 @@ SECRET_KEY\t{secret_key}
                     file_path,  # 输入文件路径
                     save_path,  # 输出文件路径
                     option=None,  # 附加选项
-                    change_image=True):  # 是否预处理图片
+                    change_image=True,  # 是否预处理图片
+                    invert=True):  # 图片颜色反转
         self.shell_log.debug_text("base.__ocr_check")
         global enable_baidu_api
         if change_image:
             if enable_baidu_api:
                 if enable_help_baidu:
-                    binarization_image(filepath=file_path, save_backup=True)
+                    binarization_image(filepath=file_path, save_backup=True, invert_image=invert)
                 else:
                     self.shell_log.info_text("不对百度ocr进行图像处理")
             else:
-                binarization_image(filepath=file_path, save_backup=True)
+                binarization_image(filepath=file_path, save_backup=True, invert_image=invert)
         if enable_baidu_api:
             try:
                 ocr(file_path, save_path + ".txt")
@@ -174,13 +178,16 @@ SECRET_KEY\t{secret_key}
         self.shell_log.debug_text("base.mouse_click")
         xx = randint(XY[0][0], XY[1][0])
         yy = randint(XY[0][1], XY[1][1])
+        logger.info("接收到点击坐标并传递xx:{}和yy:{}".format(xx, yy))
         self.adb.get_mouse_click((xx, yy))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
     def module_login(self):
         self.shell_log.debug_text("base.module_login")
+        logger.info("发送坐标LOGIN_QUICK_LOGIN: {}".format(CLICK_LOCATION['LOGIN_QUICK_LOGIN']))
         self.mouse_click(CLICK_LOCATION['LOGIN_QUICK_LOGIN'])
         self.__wait(BIG_WAIT)
+        logger.info("发送坐标LOGIN_START_WAKEUP: {}".format(CLICK_LOCATION['LOGIN_START_WAKEUP']))
         self.mouse_click(CLICK_LOCATION['LOGIN_START_WAKEUP'])
         self.__wait(BIG_WAIT)
 
@@ -214,7 +221,8 @@ SECRET_KEY\t{secret_key}
             self.set_ai_commander()
         if set_count == 0:
             return True
-        strength_end_signal = False
+        # 下面值如果是False就继续
+        strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page)
         count = 0
         while not strength_end_signal:
             # 初始化变量
@@ -231,6 +239,7 @@ SECRET_KEY\t{secret_key}
                 self.back_to_main()
                 self.__wait(3, MANLIKE_FLAG=False)
                 self.selector.id = c_id
+                logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
                 self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
                 self.battle_selector(c_id)  # 选关
                 return self.module_battle_slim(c_id, set_count - count, check_ai, **kwargs)
@@ -238,8 +247,10 @@ SECRET_KEY\t{secret_key}
                 return True
 
             self.shell_log.helper_text("开始战斗")
+            logger.info("发送坐标BATTLE_CLICK_START_BATTLE: {}".format(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'])
             self.__wait(4, False)
+            logger.info("发送坐标BATTLE_CLICK_ENSURE_TEAM_INFO: {}".format(CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO'])
             t = 0
 
@@ -283,8 +294,10 @@ SECRET_KEY\t{secret_key}
                     battle_end_signal = True
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.shell_log.helper_text("检测到升级")
+                    logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
                     self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
                     self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                 else:
@@ -293,7 +306,6 @@ SECRET_KEY\t{secret_key}
                         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END'],
                         save_name="battle_end.png"
                     )
-                    end_signal = False
                     if enable_ocr_check_end:
                         self.__ocr_check(
                             SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
@@ -314,6 +326,7 @@ SECRET_KEY\t{secret_key}
                         ) > .7
                     if end_signal:
                         battle_end_signal = True
+                        logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
                         self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
                     else:
                         battle_end_signal_max_execute_time -= 1
@@ -394,6 +407,7 @@ SECRET_KEY\t{secret_key}
         # 检测是否有公告，如果有就点掉，点掉公告就是在主页
         if self.__check_is_on_notice():
             self.shell_log.helper_text("触发公告，点掉公告")
+            logger.info("发送坐标CLOSE_NOTICE: {}".format(CLICK_LOCATION['CLOSE_NOTICE']))
             self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
             self.shell_log.helper_text("已回到主页")
             self.__wait(SMALL_WAIT, True)
@@ -409,16 +423,19 @@ SECRET_KEY\t{secret_key}
                     img2=SCREEN_SHOOT_SAVE_PATH + "is_return.png"
             ) > .75:
                 self.shell_log.helper_text("未回到主页，点击返回")
+                logger.info("发送坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
                 self.__wait(TINY_WAIT, True)
                 if self.__check_is_on_notice():
                     self.shell_log.helper_text("触发公告，点掉公告")
+                    logger.info("发送坐标CLOSE_NOTICE: {}".format(CLICK_LOCATION['CLOSE_NOTICE']))
                     self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
                     break
             else:
                 break
         if self.__check_is_on_setting():
             self.shell_log.helper_text("触发设置，返回")
+            logger.info("发送坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
             self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
         self.shell_log.helper_text("已回到主页")
         self.__wait(SMALL_WAIT, True)
@@ -430,6 +447,7 @@ SECRET_KEY\t{secret_key}
         self.back_to_main()
         self.__wait(3, MANLIKE_FLAG=False)
         self.selector.id = c_id
+        logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
         self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
         self.battle_selector(c_id)  # 选关
         self.module_battle_slim(c_id,
@@ -474,8 +492,42 @@ SECRET_KEY\t{secret_key}
             else:
                 self.shell_log.warning_text("发生未知错误... 进程已结束")
 
+    def task_check(self, enable_ocr_check):
+        # 检测是否在关卡页面
+        self.adb.get_screen_shoot(
+            file_name="is_on_task.png",
+            screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
+        if enable_ocr_check:
+            self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
+                             SCREEN_SHOOT_SAVE_PATH + "1",
+                             "--psm 7 -l chi_sim", change_image=True, invert=False)
+            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
+                     "r", encoding="utf8")
+            tmp = f.readline()
+            tmp = tmp.replace(' ', '')
+            self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
+            task_text = "指挥"
+            continue_run = task_text in tmp
+        else:
+            if self.adb.img_difference(
+                    SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
+                    STORAGE_PATH + "ENSURE_ON_TASK_PAGE.png"
+            ) <= 0.8:
+                self.shell_log.debug_text("相似度对比失败")
+                continue_run = False
+            else:
+                self.shell_log.debug_text("相似度对比成功")
+                continue_run = True
+        if continue_run:
+            self.shell_log.info_text("确认处于关卡页面")
+            return False
+        else:
+            self.shell_log.failure_text("当前未处在关卡页面")
+            return True
+
     def set_ai_commander(self):
         self.shell_log.debug_text("base.set_ai_commander")
+        # 先点击保证图片一致
         self.adb.get_screen_shoot(
             file_name="is_ai.png",
             screen_range=MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER']
@@ -485,6 +537,7 @@ SECRET_KEY\t{secret_key}
                 STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
         ) <= 0.8:
             self.shell_log.helper_text("代理指挥未设置，设置代理指挥")
+            logger.info("发送坐标BATTLE_CLICK_AI_COMMANDER: {}".format(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
         else:
             self.shell_log.helper_text("代理指挥已设置")
@@ -534,24 +587,26 @@ SECRET_KEY\t{secret_key}
             self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
             if end_text in tmp:
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
+                logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.adb.get_mouse_click(
                     CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
                 self.__check_current_strength()
             else:
                 self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")
-                self.CURRENT_STRENGTH = -1 # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
+                self.CURRENT_STRENGTH = -1  # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
         else:
             if self.adb.img_difference(
                     img1=SCREEN_SHOOT_SAVE_PATH + "debug.png",
                     img2=STORAGE_PATH + "BATTLE_DEBUG_CHECK_LOCATION_IN_SUCAI.png"
             ) > 0.75:
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
+                logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.adb.get_mouse_click(
                     CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
                 self.__check_current_strength()
             else:
                 self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")
-                self.CURRENT_STRENGTH = -1 # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
+                self.CURRENT_STRENGTH = -1  # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
 
     def check_current_strength(self, c_id, self_fix=False):
         self.shell_log.debug_text("base.check_current_strength")
@@ -598,7 +653,10 @@ SECRET_KEY\t{secret_key}
         mode = self.selector.id_checker(c_id)  # 获取当前关卡所属章节
         if mode == 1:
             if first_battle_signal:
+                logger.info("发送坐标BATTLE_SELECT_MAIN_TASK: {]".format(CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']))
                 self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK'])
+                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']))
                 self.adb.get_mouse_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'],
                     FLAG=FLAGS_SWIPE_BIAS_TO_LEFT
@@ -612,15 +670,23 @@ SECRET_KEY\t{secret_key}
                         x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
                     self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
+                        logger.info(
+                            "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
+                                SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']
+                            ))
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
 
                 # 章节选择
                 if c_id[0].isnumeric():
+                    logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id[0], CLICK_LOCATION[
+                        'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[0])]))
                     self.mouse_click(
                         XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[0])])
                 elif c_id[0] == "S":
+                    logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id[1], CLICK_LOCATION[
+                        'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[1])]))
                     self.mouse_click(
                         XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[1])])
                 else:
@@ -628,12 +694,21 @@ SECRET_KEY\t{secret_key}
                 self.__wait(3)
                 # 章节选择结束
                 # 拖动
+                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
+                ))
                 self.adb.get_mouse_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 sleep(SMALL_WAIT)
+                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
+                ))
                 self.adb.get_mouse_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 sleep(SMALL_WAIT)
+                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
+                ))
                 self.adb.get_mouse_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
 
@@ -642,9 +717,15 @@ SECRET_KEY\t{secret_key}
                     x = MAIN_TASK_BATTLE_SWIPE[c_id]
                     self.shell_log.helper_text("拖动 {} 次".format(x))
                     for x in range(0, x):
+                        logger.info(
+                            "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
+                                SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']
+                                ))
                         self.adb.get_mouse_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         sleep(5)
+                logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id, CLICK_LOCATION[
+                    'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)])
 
@@ -660,15 +741,25 @@ SECRET_KEY\t{secret_key}
                 X = None
                 exit(0)
             if first_battle_signal:
+                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
+                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']))
                 self.adb.get_mouse_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
+                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION: {}".format(
+                    CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION']))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION'])
+                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION_{}: {}".format(X, CLICK_LOCATION[
+                    'BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(X)]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(X)])
+                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION_X-{}: {}".format(c_id[-1], CLICK_LOCATION[
+                    'BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])])
             else:
+                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION_X-{}: {}".format(c_id[-1], CLICK_LOCATION[
+                    'BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])])
         elif mode == 3:
@@ -680,35 +771,54 @@ SECRET_KEY\t{secret_key}
                 X = None
                 exit(0)
             if first_battle_signal:
+                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH: {}".format(CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH']))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH'])
+                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH_PR-{}: {}".format(X, CLICK_LOCATION[
+                    'BATTLE_SELECT_CHIP_SEARCH_PR-{}'.format(X)]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-{}'.format(X)])
+                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH_PR-X-{}: {}".format(c_id[-1], CLICK_LOCATION[
+                    'BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])])
             else:
+                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH_PR-X-{}: {}".format(c_id[-1], CLICK_LOCATION[
+                    'BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])])
         elif mode == 5:
+            logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME: {}".format(
+                CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"]))
             self.mouse_click(
                 XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"])
             self.shell_log.helper_text(
                 "欢迎来到火蓝之心副本\n祝你在黑曜石音乐节上玩的愉快\n目前主舞台只支持OF-7,OF-8")
             try:
                 if c_id[-2] == "F":
+                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F: {}".format(
+                        CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F"]))
                     self.mouse_click(
                         XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F"])
+                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}: {}".format(c_id, CLICK_LOCATION[
+                        "BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]))
                     self.mouse_click(
                         XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)])
                 elif c_id[-2] == "-":
+                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-: {}".format(
+                        CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"]))
                     self.mouse_click(
                         XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"])
 
                     for x in range(0, 3):
+                        logger.info(
+                            "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
+                                SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']))
                         self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
                                                  FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
-
+                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}: {}".format(c_id, CLICK_LOCATION[
+                        "BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]))
                     self.mouse_click(
                         XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)])
                 else:
@@ -723,8 +833,10 @@ SECRET_KEY\t{secret_key}
         self.shell_log.debug_text("base.clear_daily_task")
         self.shell_log.helper_text("领取每日任务")
         self.back_to_main()
+        logger.info("发送坐标TASK_CLICK_IN: {}".format(CLICK_LOCATION['TASK_CLICK_IN']))
         self.mouse_click(CLICK_LOCATION['TASK_CLICK_IN'])
         self.__wait(TINY_WAIT, True)
+        logger.info("发送坐标TASK_DAILY_TASK: {}".format(CLICK_LOCATION['TASK_DAILY_TASK']))
         self.mouse_click(CLICK_LOCATION['TASK_DAILY_TASK'])
         self.__wait(TINY_WAIT, True)
         task_ok_signal = True
@@ -777,6 +889,7 @@ SECRET_KEY\t{secret_key}
                     ) > .7
             if task_ok_signal:
                 self.shell_log.debug_text("当前有可领取奖励")
+                logger.info("发送坐标TASK_DAILY_TASK_CHECK: {}".format(CLICK_LOCATION['TASK_DAILY_TASK_CHECK']))
                 self.mouse_click(CLICK_LOCATION['TASK_DAILY_TASK_CHECK'])
                 self.__wait(2, False)
         self.shell_log.helper_text("奖励已领取完毕")
