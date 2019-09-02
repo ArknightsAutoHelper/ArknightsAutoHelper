@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from os import sys
 
 from PIL import Image, ImageOps, ImageFilter

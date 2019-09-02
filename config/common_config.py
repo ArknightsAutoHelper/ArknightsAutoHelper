@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import os
 
 if "win32" in os.sys.platform:

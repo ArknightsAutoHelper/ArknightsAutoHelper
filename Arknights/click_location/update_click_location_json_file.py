@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from Arknights.click_location.click_location import *
 
 JSON_PARAMS = ['LOCATION_JSON_NAME', 'WITH_SCREEN', 'CLICK_LOCATION_INFO', 'CLICK_LOCATION', 'MAP_LOCATION',

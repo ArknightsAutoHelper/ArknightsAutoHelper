@@ -1,3 +1,5 @@
+# coding: utf-8
+
 '''
 [i] info_text
 [+] helper_text

@@ -1,3 +1,5 @@
+# coding: utf-8
+
 CLICK_LOCATION = {
     # 开始页面点击 QS 位置
     'CENTER_CLICK': ((433, 241), (733, 503)),

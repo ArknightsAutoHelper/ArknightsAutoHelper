@@ -1,3 +1,5 @@
+# coding: utf-8
+
 TINY_WAIT = 1
 SMALL_WAIT = 3
 MEDIUM_WAIT = 5

@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from aip import AipOcr
 
 from config import APP_ID, API_KEY, SECRET_KEY

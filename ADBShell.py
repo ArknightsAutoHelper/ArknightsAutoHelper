@@ -1,3 +1,5 @@
+# coding: utf-8
+
 import os
 from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor
 from PIL import Image
