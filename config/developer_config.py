@@ -24,6 +24,8 @@ enable_ocr_check_end = True
 enable_ocr_check_task = True
 # 启用ocr来DEBUG
 enable_ocr_debugger = True
+# 启用ocr来检测是否在关卡界面
+enable_ocr_check_is_TASK_page = True
 # 启用ocr输出
 enable_rebase_to_null = True
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
