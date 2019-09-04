@@ -10,7 +10,7 @@ start F:\Nox\bin\nox.exe
 timeout 120
 rem 打开明日方舟
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell am start -n com.hypergryph.arknights/com.u8.sdk.U8UnityContext
-timeout 60
+timeout 120
 rem 点击展示页
 F:\Nox\bin\adb.exe -s 127.0.0.1:62001 shell input tap 932 679
 timeout 30
