@@ -1,8 +1,12 @@
 # Arknghts Auto Helper
-> 明日方舟辅助脚本，该主分支为脚本操作，release分支下有GUI版本以及下载地址
+> 明日方舟辅助脚本，分支说明如下
+
+- master 目前的稳定版本
+- release 目前可以应用的GUI版本
+- dev 目前的开发版本
+- shaobao_adb 经过封装可以移植的ADB方法类
 
 ## 0x01 设置相关 
-> 该脚本基于夜神模拟器集成了多种adb操作方法，可以进行安卓辅助开发。当然你要在电脑端跑
 
 ### 运行须知
 
@@ -17,7 +21,7 @@
 在运行过程中，请不要对模拟器进行缩放，以免造成不必要的麻烦
 
 
-**非常重要的路径设置**
+**☆非常重要的路径设置☆**
 在config.py底下要改一个路径，如下所示
 
 -  ADB_ROOT 
@@ -128,48 +132,21 @@ from collections import OrderedDict
 TASK_LIST = OrderedDict()
 TASK_LIST['LS-4'] = 10
 Ark = ArknightsHelper()
-# True代表在任务完成后清理每日任务，False不清理
-Ark.main_handler(True, TASK_LIST)
+# True代表在任务完成后清理每日任务，False不清理,默认为false
+Ark.main_handler(task_list=TASK_LIST,clear_tasks=True)
 ```
-
-### 未安装OCR模块的用法
-> ⚠ 由于脚本逐渐完善化以及日趋增加的错误处理能力。在之后的版本中将会逐渐废弃未安装OCR模块的支持。
-为此希望能够自行安装OCR模块或者调用百度API来识别。关于OCR的安装可以看 OCR_install.md
-
-如果你没有安装OCR模块，需要在初始化时候赋予初值，该值为你当前的理智。
-由于系统不知道你啥时候升级，所以减好了还需要重新设置。
-
+也可以直接调用 处理每日任务的函数
 ```python
-from Arknights import ArknightsHelper
-from collections import OrderedDict
+# ...
 
-TASK_LIST = OrderedDict()
-TASK_LIST['LS-4'] = 10
-Ark = ArknightsHelper(100)
-# True代表在任务完成后清理每日任务，False不清理 
-Ark.main_handler(TASK_LIST)
+Ark.clear_daily_task()
 ```
 
 ## 0x03 ArknightsHelper GUI
 
-目前GUI功能还在测试中，会在之后的时日里日渐完善。关于GUI版本的用法，请转到 release 分支下查看
-
-请注意 release分支下的设置文件全部是json格式的，相关要求和主分支下的config文件相同。
-
-![TIM图片20190612102050.png-48.6kB][2]
-
+详见 release分支下的文件
 
 ## 0x03 自定义开发与TODO
-
-### 关于后续的想法
-
-- [ ] 利用抓包获取升级等信息
-- [ ] GUI 功能完善化
-- [ ] config 文件设置 GUI化
-- [ ] 更多的主线关卡支持
-- [ ] 自动访问好友基建的支持
-- [ ] 自动1-11支持【提issue的朋友我觉得你可以试试按键精灵】
-- [ ] 坐标相对化
 
 ### 自定义开发与更多功能
 
