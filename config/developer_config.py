@@ -9,7 +9,8 @@
             也就是目录底下的 screen_shoot 文件夹，用来存放一些截图
 
     为啥这些路径我都要写绝对路径呢...因为之后会有 os.chdir()的操作，所以建议全部写成绝对路径，就像如下所示：
-ADB_ROOT = r"D:\Program Files\Nox\bin"
+"""
+ADB_ROOT = r"F:\Nox\bin"
 # ADB_HOST = "127.0.0.1:62001"  # 如果你不想用多开器的功能，请用此行配置
 ADB_HOST = ""  # 如果你想用多开器的功能，请使用此行配置，并手动选择或在启动时自行添加HOST。
 # 另外推荐将这里的ADB_HOST 赋值为空字符串，如果仅有一台设备连接，系统会自动读取到设备名称
@@ -38,7 +39,7 @@ API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 # 是否启动时打印一些系统变量方便DEBUG
 # 0 为不输出 1 为输出函数调用 2 为输出全部调试信息
-DEBUG_LEVEL = 0
+DEBUG_LEVEL = 2
 
 # arknights INFO
 ArkNights_PACKAGE_NAME = "com.hypergryph.arknights"  # 这个是官服的设置

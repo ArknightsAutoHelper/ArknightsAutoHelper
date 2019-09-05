@@ -217,12 +217,21 @@ SECRET_KEY\t{secret_key}
             if "self_fix" in kwargs.keys() else False
         if not sub:
             self.shell_log.helper_text("战斗-选择{}...启动".format(c_id))
-        if check_ai:
-            self.set_ai_commander()
         if set_count == 0:
             return True
-        # 下面值如果是False就继续
+        # 如果当前不在进入战斗前的界面就重启
         strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page)
+        if strength_end_signal:
+            self.back_to_main()
+            self.__wait(3, MANLIKE_FLAG=False)
+            self.selector.id = c_id
+            logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
+            self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
+            self.battle_selector(c_id)  # 选关
+            return self.module_battle_slim(c_id, set_count, check_ai, **kwargs)
+        # 确认代理指挥是否设置
+        if check_ai:
+            self.set_ai_commander()
         count = 0
         while not strength_end_signal:
             # 初始化变量
