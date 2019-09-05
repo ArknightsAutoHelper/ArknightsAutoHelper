@@ -460,18 +460,18 @@ SECRET_KEY\t{secret_key}
                                 self_fix=self.ocr_active)
         return True
 
-    def main_handler(self, clear_tasks, battle_task_list=None):
+    def main_handler(self, task_list=None, clear_tasks=False):
         self.shell_log.debug_text("base.main_handler")
-        if battle_task_list is None:
-            battle_task_list = OrderedDict()
+        if task_list is None:
+            task_list = OrderedDict()
 
         self.shell_log.warning_text("装载模块...")
         self.shell_log.warning_text("战斗模块...启动")
         flag = False
-        if battle_task_list.__len__() == 0:
+        if task_list.__len__() == 0:
             self.shell_log.failure_text("任务清单为空!")
 
-        for c_id, count in battle_task_list.items():
+        for c_id, count in task_list.items():
             if c_id not in MAIN_TASK_SUPPORT.keys():
                 raise IndexError("无此关卡!")
             self.shell_log.helper_text("战斗{} 启动".format(c_id))
