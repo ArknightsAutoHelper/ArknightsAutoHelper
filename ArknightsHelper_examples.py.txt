@@ -24,33 +24,37 @@ import os
 由于该脚本没有做适配，仅仅测试了夜神模拟器，其他模拟器请自行测试。
 另外，请确定夜神模拟器的分辨率是否调整为1280*720
 在运行过程中，请不要对模拟器进行缩放，以免造成不必要的麻烦
-
 '''
-# ADB_HOST = "127.0.0.1:62001"
-
-from Arknights import ArknightsHelper
-from collections import OrderedDict
 
 '''
 main_handler 的启动模式
 '''
+from Arknights import ArknightsHelper
+from collections import OrderedDict
 
 TASK_LIST = OrderedDict()
 TASK_LIST['CE-5'] = 5
 TASK_LIST['4-8'] = 10
 Ark = ArknightsHelper()
-Ark.main_handler(TASK_LIST)
+Ark.main_handler(task_list=TASK_LIST,clear_tasks=True)
+
+# TASK_LIST['战斗章节'] = 战斗次数
+# True代表在任务完成后清理每日任务，False不清理
 
 '''
 main_battle_slim 的启动模式
 '''
+from Arknights import ArknightsHelper
 Ark = ArknightsHelper()
 Ark.module_battle_slim(c_id='CE-5', set_count=14, set_ai=True)
-'''
-如果没有安装OCR模块，请在初始化ArknightsHelper()类时告知系统初值，就像这样子
-'''
+
+# 如果没有安装OCR模块，请在初始化ArknightsHelper()类时告知系统初值，就像这样子
+from Arknights import ArknightsHelper
 Ark = ArknightsHelper(123)
 Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
+
+# c_id 是战斗章节
+# set_count 是战斗次数
 
 '''
 关于多开器的用法
