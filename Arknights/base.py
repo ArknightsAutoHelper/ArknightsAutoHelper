@@ -220,7 +220,7 @@ SECRET_KEY\t{secret_key}
         if set_count == 0:
             return True
         # 如果当前不在进入战斗前的界面就重启
-        strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page)
+        strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
         if strength_end_signal:
             self.back_to_main()
             self.__wait(3, MANLIKE_FLAG=False)
@@ -495,21 +495,23 @@ SECRET_KEY\t{secret_key}
             else:
                 self.shell_log.warning_text("发生未知错误... 进程已结束")
 
-    def task_check(self, enable_ocr_check):
+    def task_check(self, enable_ocr_check, c_id):
         # 检测是否在关卡页面
-        self.adb.get_screen_shoot(
-            file_name="is_on_task.png",
-            screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
         if enable_ocr_check:
+            self.adb.get_screen_shoot(
+                file_name="is_on_task.png",
+                screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE_OCR'])
             self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
                              SCREEN_SHOOT_SAVE_PATH + "1",
-                             "--psm 7 -l chi_sim", change_image=True, invert=False)
+                             "--psm 7", change_image=True, invert=True)
             f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8").readline().replace(' ', '')
             self.shell_log.debug_text("OCR 识别结果: {}".format(f))
             logger.info("OCR 识别关卡界面结果: {}".format(f))
-            task_text = "指挥"
-            continue_run = task_text in f
+            continue_run = c_id in f
         else:
+            self.adb.get_screen_shoot(
+                file_name="is_on_task.png",
+                screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
             if self.adb.img_difference(
                     SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
                     STORAGE_PATH + "ENSURE_ON_TASK_PAGE.png"
