@@ -19,7 +19,10 @@ TASK_LIST = OrderedDict()
 TASK_LIST['CE-5'] = 5
 TASK_LIST['4-8'] = 10
 Ark = ArknightsHelper()
-Ark.main_handler(TASK_LIST)
+Ark.main_handler(task_list=TASK_LIST, clear_tasks=False)
+# TASK_LIST [' 战斗章节 '] = 战斗次数
+# True 代表在任务完成后清理每日任务，False 不清理
+
 ```
 
 ### main_battle_slim
@@ -33,6 +36,8 @@ Ark.main_handler(TASK_LIST)
 ```python
 Ark = ArknightsHelper()
 Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
+# c_id 是战斗章节
+# set_count 是战斗次数
 ```
 
 ### OCR 模块未安装的操作方法
@@ -42,6 +47,7 @@ Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
 ```python
 Ark = ArknightsHelper(123)
 Ark.module_battle_slim(c_id='4-8', set_count=14, set_ai=True)
+# "123" 指当前剩余理智
 ```
 
 ## 目前支持的关卡
