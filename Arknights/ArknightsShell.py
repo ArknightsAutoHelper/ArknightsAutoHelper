@@ -55,7 +55,8 @@ class ArknightsShell():
             parser.error(
                 self.E_BOLD + "[!] Cannot run scripts in both slim and full mode" + self.E_END
             )
-        self.__valid_TASK_LIST(task_list=self.options.task_list)
+        if self.options.task_list != "":
+            self.__valid_TASK_LIST(task_list=self.options.task_list)
         print(self.task_list)
 
     def __valid_TASK_LIST(self, task_list):
