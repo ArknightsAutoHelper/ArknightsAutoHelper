@@ -5,7 +5,7 @@ from time import sleep
 
 from PIL import Image
 
-from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH
+from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect
 
 # from numpy import average, dot, linalg
 
@@ -32,6 +32,8 @@ class ADBShell(object):
             self.SCREEN_SHOOT_SAVE_PATH = os.path.abspath(SCREEN_SHOOT_SAVE_PATH) + "/"
 
     def __adb_device_name_detector(self):
+        if enable_adb_host_auto_detect:
+            return ADB_HOST
         if "win32" in os.sys.platform:
             self.__command = "\"" + self.ADB_ROOT + \
                              "\\adb.exe\" {tools} {command}"
