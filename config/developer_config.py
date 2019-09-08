@@ -1,10 +1,12 @@
 import os, sys
 
-ADB_ROOT = os.path.abspath('./ADB')  # 把 adb.exe 直接包进来，从根本上解决ADB_ROOT需要手动配置的问题
+# 把 adb.exe 直接包进来，从根本上解决ADB_ROOT需要手动配置的问题;考虑到adb.exe比较大之后可能采用扩展包的形式
+# 【如果谁可以贡献一个服务器的话;群主的学生机可能下的很慢.】
+ADB_ROOT = os.path.abspath('./ADB/{platform}'.format(platform=sys.platform))
 ADB_HOST = "127.0.0.1:60001"
 # 对于MUMU模拟器等无法用 adb devices 命令 读取到端口的模拟器，可以开启如下选项，跳过ADB_HOST的自动检测环节
 # 但是必须保证 ADB_HOST 已经正确填写；如果不需要使用多开器，也可以开启如下选项，能够让你启动更快
-enable_adb_host_auto_detect = False
+enable_adb_host_auto_detect = True
 
 # 注意：以下选项如果要开启的话，请使用前确认已经安装 中文识别 或者 启动百度API
 # 启动ocr来检测关卡后是否升级
