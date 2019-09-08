@@ -11,8 +11,8 @@
 ## GUI 下载地址
 
 - 百度 网盘
-    - 链接：https://pan.baidu.com/s/1N5EBCVhdW6XkQdVFcSKa1g  提取码：l4nd 
-    - 版本为 8.31提交的版本
+    - 链接：https://pan.baidu.com/s/1PJRLXYqrWEIfBDUHHa46FA  提取码：jew8 
+    - 版本为 9.8 提交的版本
 
 ## 启动
 
