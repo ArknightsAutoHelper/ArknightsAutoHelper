@@ -24,7 +24,7 @@ class ArknightsShell():
         self.E_END = '\033[0m'
         self.E_BOLD = '\033[1m'
         self.E_UNDERLINE = '\033[4m'
-        self.options = {}
+        self.options = optparse.Values()
         self.task_list = OrderedDict()
 
     def run_shell(self):
@@ -51,13 +51,13 @@ class ArknightsShell():
         parser.add_option("-c", "--clear-daily", action="store_true", default=False, dest="clear_daily",
                           help="Clear daily task if call this option")
         (self.options, _) = parser.parse_args()
+
         if self.options.module_battle_slim & self.options.module_battle:
             parser.error(
                 self.E_BOLD + "[!] Cannot run scripts in both slim and full mode" + self.E_END
             )
         if self.options.task_list != "":
             self.__valid_TASK_LIST(task_list=self.options.task_list)
-        print(self.task_list)
 
     def __valid_TASK_LIST(self, task_list):
         try:
@@ -68,25 +68,26 @@ class ArknightsShell():
                                       " Please change task name or use a same strength consume task if using slim mode".format(
                             x.split(":")[0]) + self.E_END
                     )
-                self.task_list[x.split(":")[0]] = x.split(":")[1]
+                self.task_list[x.split(":")[0]] = int(x.split(":")[1])
 
         except Exception as e:
             print(self.E_BOLD + e.__str__() + self.E_END)
             exit(0)
 
     def handler(self):
-        Ark = ArknightsHelper()
-        if self.options.module_battle_slim:
-            id, count = self.task_list.popitem()
-            Ark.module_battle_slim(
-                c_id=id,
-                set_count=count,
-            )
+        if self.options.module_battle_slim | self.options.module_battle | self.options.clear_daily:
+            Ark = ArknightsHelper()
+            if self.options.module_battle_slim:
+                id, count = self.task_list.popitem()
+                Ark.module_battle_slim(
+                    c_id=id,
+                    set_count=count,
+                )
 
-        if self.options.module_battle:
-            Ark.main_handler(
-                clear_tasks=True,
-                task_list=self.task_list
-            )
-        if self.options.clear_daily:
-            Ark.clear_daily_task()
+            if self.options.module_battle:
+                Ark.main_handler(
+                    clear_tasks=True,
+                    task_list=self.task_list
+                )
+            if self.options.clear_daily:
+                Ark.clear_daily_task()
