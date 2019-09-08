@@ -288,10 +288,11 @@ SECRET_KEY\t{secret_key}
                         "--psm 7 -l chi_sim"
                     )
                     level_up_text = "提升"
-                    f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8").readline().replace(' ', '')
-                    self.shell_log.debug_text("OCR 识别结果: {}".format(f))
-                    logger.info("OCR 识别等级提升结果: {}".format(f))
-                    level_up_signal = level_up_text in f
+                    with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8") as f:
+                        f.readline().replace(' ', '')
+                        self.shell_log.debug_text("OCR 识别结果: {}".format(f))
+                        logger.info("OCR 识别等级提升结果: {}".format(f))
+                        level_up_signal = level_up_text in f
                 else:
                     level_up_signal = self.adb.img_difference(
                         img1=SCREEN_SHOOT_SAVE_PATH + "level_up_real_time.png",
@@ -320,10 +321,11 @@ SECRET_KEY\t{secret_key}
                             "--psm 7 -l chi_sim"
                         )
                         end_text = "结束"
-                        f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8").readline().replace(' ', '')
-                        self.shell_log.debug_text("OCR 识别结果: {}".format(f))
-                        logger.info("OCR 识别关卡结束: {}".format(f))
-                        end_signal = end_text in f
+                        with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8") as f:
+                            f.readline().replace(' ', '')
+                            self.shell_log.debug_text("OCR 识别结果: {}".format(f))
+                            logger.info("OCR 识别关卡结束: {}".format(f))
+                            end_signal = end_text in f
                     else:
                         end_signal = self.adb.img_difference(
                             img1=SCREEN_SHOOT_SAVE_PATH + "battle_end.png",
@@ -370,10 +372,11 @@ SECRET_KEY\t{secret_key}
                 change_image=False
             )
             end_text = "设置"
-            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8").readline().replace(' ', '')
-            self.shell_log.debug_text("OCR 识别结果: {}".format(f))
-            logger.info("OCR 识别设置结果: {}".format(f))
-            return end_text in f
+            with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8") as f:
+                f.readline().replace(' ', '')
+                self.shell_log.debug_text("OCR 识别结果: {}".format(f))
+                logger.info("OCR 识别设置结果: {}".format(f))
+                return end_text in f
         else:
             return self.adb.img_difference(
                 img1=STORAGE_PATH + "INDEX_INFO_IS_SETTING.png",
@@ -394,10 +397,11 @@ SECRET_KEY\t{secret_key}
                 change_image=False
             )
             end_text = "活动公告"
-            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8").readline().replace(' ', '')
-            self.shell_log.debug_text("OCR 识别结果: {}".format(f))
-            logger.info("OCR 识别活动公告结果: {}".format(f))
-            return end_text in f
+            with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8") as f:
+                f.readline().replace(' ', '')
+                self.shell_log.debug_text("OCR 识别结果: {}".format(f))
+                logger.info("OCR 识别活动公告结果: {}".format(f))
+                return end_text in f
         else:
             return self.adb.img_difference(
                 img1=STORAGE_PATH + "INDEX_INFO_IS_NOTICE.png",
@@ -504,11 +508,12 @@ SECRET_KEY\t{secret_key}
             self.__ocr_check(SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
                              SCREEN_SHOOT_SAVE_PATH + "1",
                              "--psm 7 -l chi_sim", change_image=True, invert=False)
-            f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8").readline().replace(' ', '')
-            self.shell_log.debug_text("OCR 识别结果: {}".format(f))
-            logger.info("OCR 识别关卡界面结果: {}".format(f))
-            task_text = "指挥"
-            continue_run = task_text in f
+            with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8") as f:
+                f.readline().replace(' ', '')
+                self.shell_log.debug_text("OCR 识别结果: {}".format(f))
+                logger.info("OCR 识别关卡界面结果: {}".format(f))
+                task_text = "指挥"
+                continue_run = task_text in f
         else:
             if self.adb.img_difference(
                     SCREEN_SHOOT_SAVE_PATH + "is_on_task.png",
@@ -581,9 +586,8 @@ SECRET_KEY\t{secret_key}
                              SCREEN_SHOOT_SAVE_PATH + "debug",
                              "--psm 7 -l chi_sim")
             end_text = "掉落"
-            f = open(SCREEN_SHOOT_SAVE_PATH +
-                     "debug.txt", 'r', encoding="utf8")
-            tmp = f.readline()
+            with open(SCREEN_SHOOT_SAVE_PATH + "debug.txt", 'r', encoding="utf8") as f:
+                tmp = f.readline()
             tmp = tmp.replace(' ', '')
             self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
             if end_text in tmp:
@@ -655,7 +659,7 @@ SECRET_KEY\t{secret_key}
         mode = self.selector.id_checker(c_id)  # 获取当前关卡所属章节
         if mode == 1:
             if first_battle_signal:
-                logger.info("发送坐标BATTLE_SELECT_MAIN_TASK: {]".format(CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']))
+                logger.info("发送坐标BATTLE_SELECT_MAIN_TASK: {}".format(CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']))
                 self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK'])
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']))
@@ -855,9 +859,8 @@ SECRET_KEY\t{secret_key}
                                  SCREEN_SHOOT_SAVE_PATH + "1",
                                  "--psm 7 -l chi_sim")
                 task_ok_text = "领取"
-                f = open(SCREEN_SHOOT_SAVE_PATH +
-                         "1.txt", "r", encoding="utf8")
-                tmp = f.readline()
+                with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8") as f:
+                    tmp = f.readline()
                 tmp = tmp.replace(' ', '')
                 self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
                 logger.info("OCR 每日任务结果: {}".format(tmp))
@@ -879,9 +882,8 @@ SECRET_KEY\t{secret_key}
                                      SCREEN_SHOOT_SAVE_PATH + "1",
                                      "--psm 7 -l chi_sim")
                     reward_text = "物资"
-                    f = open(SCREEN_SHOOT_SAVE_PATH + "1.txt",
-                             "r", encoding="utf8")
-                    tmp = f.readline()
+                    with open(SCREEN_SHOOT_SAVE_PATH + "1.txt", "r", encoding="utf8") as f:
+                        tmp = f.readline()
                     tmp = tmp.replace(' ', '')
                     self.shell_log.debug_text("OCR 识别结果: {}".format(tmp))
                     logger.info("OCR 物资识别结果: {}".format(tmp))
