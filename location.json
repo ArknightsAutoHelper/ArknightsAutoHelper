@@ -82,12 +82,12 @@
     ],
     "BATTLE_CLICK_START_BATTLE": [
       [
-        1047,
-        633
+        1060,
+        642
       ],
       [
         1225,
-        681
+        672
       ]
     ],
     "BATTLE_CLICK_ENSURE_TEAM_INFO": [
@@ -392,12 +392,12 @@
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION": [
       [
-        330,
+        175,
         629
       ],
       [
-        430,
-        682
+        287,
+        694
       ]
     ],
     "BATTLE_SELECT_MATERIAL_COLLECTION_0": [
@@ -650,6 +650,26 @@
       [
         23,
         23
+      ]
+    ],
+    "ENSURE_ON_TASK_PAGE": [
+      [
+        1130,
+        576
+      ],
+      [
+        112,
+        35
+      ]
+    ],
+    "ENSURE_ON_TASK_PAGE_OCR": [
+      [
+        880,
+        82
+      ],
+      [
+        90,
+        33
       ]
     ],
     "BATTLE_INFO_BATTLE_END": [

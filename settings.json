@@ -1,14 +1,18 @@
 {
-  "ADB_ROOT": "D:\\Program Files\\Nox\\bin",
-  "ADB_HOST": "",
+  "ADB_HOST": "127.0.0.1:60001",
+  "enable_adb_host_auto_detect": true,
   "enable_ocr_check_update": true,
   "enable_ocr_check_end": true,
+  "enable_ocr_check_task": true,
   "enable_ocr_debugger": true,
+  "enable_ocr_check_is_TASK_page": true,
   "enable_rebase_to_null": true,
   "enable_baidu_api": false,
-  "APP_ID": "",
-  "API_KEY": "",
-  "SECRET_KEY": "",
+  "enable_help_baidu": true,
+  "APP_ID": " App ID",
+  "API_KEY": " Api Key",
+  "SECRET_KEY": " Secret Key",
+  "DEBUG_LEVEL": 2,
   "ArkNights_PACKAGE_NAME": "com.hypergryph.arknights",
   "ArkNights_ACTIVITY_NAME": "com.u8.sdk.U8UnityContext"
 }
