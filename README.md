@@ -13,8 +13,7 @@
 - 百度 网盘
     - 链接：https://pan.baidu.com/s/1N5EBCVhdW6XkQdVFcSKa1g  提取码：l4nd 
     - 版本为 8.31提交的版本
-    
-    
+
 ## 启动
 
 可以下载打包过的 exe 文件后快速启动，由于pyinstaller打包比较坑，现在必然会弹出那个可爱的命令行。
@@ -53,6 +52,11 @@
 ```
 
 - ADB_HOST ： ADB 的端口，如果你不想用多开功能可以留空字符串，一般夜神模拟器的第一个设备端口为 `127.0.0.1:60001`
+- enable_adb_host_auto_detect : 
+     - 可以设置为 False ，跳过ADB_HOST的自动检测环节
+     - 对于MUMU模拟器等无法用 adb devices 命令 读取到端口的模拟器
+     - 设置为 False 必须保证 ADB_HOST 已经正确填写；如果不需要使用多开器，也可以开启如下选项，能够让你启动更快
+
 
 **OCR 高级设置**
 > 以下设置如果要开启请启用百度API或者安装本地OCR识别环境和中文依赖包。

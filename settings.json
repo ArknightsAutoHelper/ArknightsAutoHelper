@@ -9,9 +9,9 @@
   "enable_rebase_to_null": true,
   "enable_baidu_api": false,
   "enable_help_baidu": true,
-  "APP_ID": " App ID",
-  "API_KEY": " Api Key",
-  "SECRET_KEY": " Secret Key",
+  "APP_ID": "*****",
+  "API_KEY": "*****",
+  "SECRET_KEY": "******",
   "DEBUG_LEVEL": 2,
   "ArkNights_PACKAGE_NAME": "com.hypergryph.arknights",
   "ArkNights_ACTIVITY_NAME": "com.u8.sdk.U8UnityContext"
