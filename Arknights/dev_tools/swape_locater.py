@@ -9,7 +9,7 @@ from time import sleep
 
 ark = ArknightsHelper()
 ark.adb.get_mouse_click(
-    XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'], FLAG=FLAGS_START_BATTLE_BIAS
+    XY=CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'], offsets=FLAGS_START_BATTLE_BIAS
 )
 
 # ark.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'])

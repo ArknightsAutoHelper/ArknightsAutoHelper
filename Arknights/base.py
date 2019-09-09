@@ -134,36 +134,23 @@ SECRET_KEY\t{secret_key}
                     return False
 
     def __del(self):
-        self.shell_log.debug_text("base.__del")
-        self.adb.ch_tools("shell")
-        self.adb.ch_abd_command(
-            "am force-stop {}".format(ArkNights_PACKAGE_NAME))
-        self.adb.run_cmd()
+        self.adb.run_device_cmd("am force-stop {}".format(ArkNights_PACKAGE_NAME))
 
     def destroy(self):
         self.__del()
 
-    def __check_apk_info_active(self):
-        self.adb.ch_tools("shell")
-        self.adb.ch_abd_command("dumpsys window windows | findstr \"Current\" > {}".format(
-            STORAGE_PATH + "package.txt"))
-        self.adb.run_cmd(DEBUG_LEVEL=0)
-
     def check_game_active(self):  # 启动游戏 需要手动调用
         self.shell_log.debug_text("base.check_game_active")
-        self.__check_apk_info_active()
+        current = self.adb.run_device_cmd('dumpsys window windows | grep mCurrentFocus')
         self.shell_log.debug_text("正在尝试启动游戏")
-        with open(STORAGE_PATH + "current.txt", "r", encoding="utf8") as f:
-            if ArkNights_PACKAGE_NAME in f.read():
-                self.__is_game_active = True
-                self.shell_log.debug_text("游戏已启动")
-            else:
-                self.adb.ch_tools("shell")
-                self.adb.ch_abd_command(
-                    "am start -n {}/{}".format(ArkNights_PACKAGE_NAME, ArkNights_ACTIVITY_NAME))
-                self.adb.run_cmd()
-                self.shell_log.debug_text("成功启动游戏")
-                self.__is_game_active = True
+        self.shell_log.debug_text(current)
+        if ArkNights_PACKAGE_NAME in current:
+            self.__is_game_active = True
+            self.shell_log.debug_text("游戏已启动")
+        else:
+            self.adb.run_device_cmd("am start -n {}/{}".format(ArkNights_PACKAGE_NAME, ArkNights_ACTIVITY_NAME))
+            self.shell_log.debug_text("成功启动游戏")
+            self.__is_game_active = True
 
     @staticmethod
     def __wait(n=10,  # 等待时间中值
@@ -601,7 +588,7 @@ SECRET_KEY\t{secret_key}
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.adb.get_mouse_click(
-                    CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
+                    CLICK_LOCATION['MAIN_RETURN_INDEX'], offsets=None)
                 self.__check_current_strength()
             else:
                 self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")
@@ -614,7 +601,7 @@ SECRET_KEY\t{secret_key}
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.adb.get_mouse_click(
-                    CLICK_LOCATION['MAIN_RETURN_INDEX'], FLAG=None)
+                    CLICK_LOCATION['MAIN_RETURN_INDEX'], offsets=None)
                 self.__check_current_strength()
             else:
                 self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")

@@ -1,5 +1,6 @@
 import socket
-
+import struct
+import gzip
 
 def _recvexactly(sock, n):
     buf = sock.recv(n)
@@ -116,7 +117,8 @@ class ADBClientSession:
     def screencap(self):
         """returns (width, height, pixels)
         pixels in RGBA/RGBX format"""
-        data = self.exec('screencap')
+        data = self.exec('screencap|gzip')
+        data = gzip.decompress(data)
         w, h, f = struct.unpack_from('III', data, 0)
         assert(f == 1)
         return (w, h, data[12:])
