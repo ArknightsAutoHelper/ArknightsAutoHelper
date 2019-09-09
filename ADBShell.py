@@ -75,7 +75,7 @@ class ADBShell(object):
     def get_sub_screen(self, file_name, screen_range, save_name=None):
         if save_name is None:
             save_name = file_name
-        i = Image.open(os.path.join(self.SCREEN_SHOOT_SAVE_PATH, file_name))
+        i = Image.open(os.path.join(SCREEN_SHOOT_SAVE_PATH, file_name))
         i.crop(
             (
                 screen_range[0][0],
@@ -83,7 +83,7 @@ class ADBShell(object):
                 screen_range[0][0] + screen_range[1][0],
                 screen_range[0][1] + screen_range[1][1]
             )
-        ).save(os.path.join(self.SCREEN_SHOOT_SAVE_PATH, save_name))
+        ).save(os.path.join(SCREEN_SHOOT_SAVE_PATH, save_name))
 
     def get_screen_shoot(self, file_name="1.png", screen_range=None):
         sleep(1)
@@ -91,7 +91,7 @@ class ADBShell(object):
             screen_range = []
         rawcap = self.device_session_factory().screencap()
         img = _screencap_to_image(rawcap)
-        img.save(os.path.join(self.SCREEN_SHOOT_SAVE_PATH, file_name))
+        img.save(os.path.join(SCREEN_SHOOT_SAVE_PATH, file_name))
         if len(screen_range) == 2:
             self.get_sub_screen(file_name, screen_range)
 
