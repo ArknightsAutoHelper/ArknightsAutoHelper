@@ -105,6 +105,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+.idea/
 code_bin/
 screen_shoot/*.png
 Arknights/daliy_task_screen
