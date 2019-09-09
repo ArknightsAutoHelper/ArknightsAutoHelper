@@ -166,7 +166,7 @@ SECRET_KEY\t{secret_key}
         xx = randint(XY[0][0], XY[1][0])
         yy = randint(XY[0][1], XY[1][1])
         logger.info("接收到点击坐标并传递xx:{}和yy:{}".format(xx, yy))
-        self.adb.get_mouse_click((xx, yy))
+        self.adb.touch_tap((xx, yy))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
     def module_login(self):
@@ -587,7 +587,7 @@ SECRET_KEY\t{secret_key}
             if end_text in tmp:
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
-                self.adb.get_mouse_click(
+                self.adb.touch_tap(
                     CLICK_LOCATION['MAIN_RETURN_INDEX'], offsets=None)
                 self.__check_current_strength()
             else:
@@ -600,7 +600,7 @@ SECRET_KEY\t{secret_key}
             ) > 0.75:
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
-                self.adb.get_mouse_click(
+                self.adb.touch_tap(
                     CLICK_LOCATION['MAIN_RETURN_INDEX'], offsets=None)
                 self.__check_current_strength()
             else:
@@ -657,7 +657,7 @@ SECRET_KEY\t{secret_key}
                 self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK'])
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']))
-                self.adb.get_mouse_swipe(
+                self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'],
                     FLAG=FLAGS_SWIPE_BIAS_TO_LEFT
                 )
@@ -674,7 +674,7 @@ SECRET_KEY\t{secret_key}
                             "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
                                 SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']
                             ))
-                        self.adb.get_mouse_swipe(
+                        self.adb.touch_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
 
@@ -697,19 +697,19 @@ SECRET_KEY\t{secret_key}
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
                 ))
-                self.adb.get_mouse_swipe(
+                self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 sleep(SMALL_WAIT)
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
                 ))
-                self.adb.get_mouse_swipe(
+                self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 sleep(SMALL_WAIT)
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
                 ))
-                self.adb.get_mouse_swipe(
+                self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
 
                 # 拖动到正确的地方
@@ -721,7 +721,7 @@ SECRET_KEY\t{secret_key}
                             "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
                                 SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']
                             ))
-                        self.adb.get_mouse_swipe(
+                        self.adb.touch_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         sleep(5)
                 logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id, CLICK_LOCATION[
@@ -743,7 +743,7 @@ SECRET_KEY\t{secret_key}
             if first_battle_signal:
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']))
-                self.adb.get_mouse_swipe(
+                self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
                 logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION: {}".format(
                     CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION']))
@@ -814,7 +814,7 @@ SECRET_KEY\t{secret_key}
                         logger.info(
                             "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
                                 SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']))
-                        self.adb.get_mouse_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
+                        self.adb.touch_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
                                                  FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
                     logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}: {}".format(c_id, CLICK_LOCATION[

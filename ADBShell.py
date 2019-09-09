@@ -95,7 +95,7 @@ class ADBShell(object):
         if len(screen_range) == 2:
             self.get_sub_screen(file_name, screen_range)
 
-    def get_mouse_swipe(self, XY_mXmY=None, FLAG=None):
+    def touch_swipe(self, XY_mXmY=None, FLAG=None):
         sleep(1)
         XY, mXmY = XY_mXmY
         logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(XY[0], XY[1], XY[0] + mXmY[0], XY[1] + mXmY[1]))
@@ -104,7 +104,7 @@ class ADBShell(object):
         )
         self.run_device_cmd(command)
 
-    def get_mouse_click(self, XY=None, offsets=None):
+    def touch_tap(self, XY=None, offsets=None):
         # sleep(10)
         sleep(0.5)
         if offsets is not None:
