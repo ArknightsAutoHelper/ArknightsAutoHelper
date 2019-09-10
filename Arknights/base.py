@@ -195,6 +195,7 @@ SECRET_KEY\t{secret_key}
                            c_id,  # 待战斗的关卡编号
                            set_count=1000,  # 战斗次数
                            check_ai=True,  # 是否检查代理指挥
+                           sub=False,  # 是否为子程序 (是否为module_battle所调用)
                            **kwargs):  # 扩展参数:
         '''
         :param sub 是否为子程序 (是否为module_battle所调用)
@@ -210,8 +211,6 @@ SECRET_KEY\t{secret_key}
         '''
         self.shell_log.debug_text("base.module_battle_slim")
         self.shell_log.helper_text("战斗-选择{}...启动".format(c_id))
-        sub = kwargs["sub"] \
-            if "sub" in kwargs.keys() else False
         auto_close = kwargs["auto_close"] \
             if "auto_close" in kwargs.keys() else False
         self_fix = kwargs["self_fix"] \
@@ -227,7 +226,7 @@ SECRET_KEY\t{secret_key}
                 logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
                 self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
                 self.battle_selector(c_id)  # 选关
-                return self.module_battle_slim(c_id, set_count, check_ai, sub=sub, **kwargs)
+                return self.module_battle_slim(c_id, set_count, check_ai, sub=True, **kwargs)
         else:  # 否则不检查关卡
             strength_end_signal = False
         if set_count == 0:
@@ -247,14 +246,15 @@ SECRET_KEY\t{secret_key}
             strength_end_signal = not self.check_current_strength(
                 c_id, self_fix)
             # 需要重新启动
-            if self.CURRENT_STRENGTH == -1:
+            if self.CURRENT_STRENGTH == -1 and sub:
                 self.back_to_main()
                 self.__wait(3, MANLIKE_FLAG=False)
                 self.selector.id = c_id
                 logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
                 self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
                 self.battle_selector(c_id)  # 选关
-                return self.module_battle_slim(c_id, set_count - count, check_ai, **kwargs)
+                return self.module_battle_slim(c_id, set_count - count, check_ai, sub=True, **kwargs)
+
             if strength_end_signal:
                 return True
 
