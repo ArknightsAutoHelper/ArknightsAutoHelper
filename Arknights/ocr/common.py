@@ -40,24 +40,30 @@ class Rect:
     def __iter__(self):
         return iter((self.x, self.y, self.right(), self.bottom()))
 
-class _dictrepr:
+class OcrObject:
+    def __init__(self):
+        self.extra = None
+
     def __repr__(self):
         return self.__dict__.__repr__()
 
-class OcrWord(_dictrepr):
+class OcrWord(OcrObject):
     def __init__(self, rect, text):
+        super().__init__()
         self.rect = rect
         self.text = text
 
-class OcrLine(_dictrepr):
+class OcrLine(OcrObject):
     def __init__(self, words):
+        super().__init__()
         self.words = words
         self.merged_words = merge_words(words)
         self.merged_text = ' '.join(x.text for x in self.merged_words)
         self.text = ' '.join(x.text for x in self.words)
 
-class OcrResult(_dictrepr):
+class OcrResult(OcrObject):
     def __init__(self, lines):
+        super().__init__()
         self.lines = lines
         self.text = ' '.join(x.text for x in lines)
 
