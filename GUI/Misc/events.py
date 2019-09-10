@@ -61,7 +61,7 @@ class ArkThread(Thread):
                 self.thread_type = "slim_battle"
                 self.ark.module_battle_slim(
                     c_id=self.c_id, set_count=self.set_count, set_ai=False,
-                    self_fix=self.ark.ocr_active, sub=True
+                    self_fix=self.ark.ocr_active, sub=False
                 )
         elif self.func == "login":
             self.thread_type = "login"
