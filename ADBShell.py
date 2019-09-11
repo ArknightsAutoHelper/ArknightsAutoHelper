@@ -18,6 +18,11 @@ def _screencap_to_image(cap):
     w, h, pixels = cap
     return Image.frombytes('RGBA', (w, h), pixels)
 
+def _ensure_pil_image(imgorfile):
+    if isinstance(imgorfile, Image.Image):
+        return imgorfile
+    return Image.open(imgorfile)
+
 class ADBShell(object):
     def __init__(self, adb_host=ADB_HOST):
         # os.chdir(ADB_ROOT)
@@ -72,28 +77,23 @@ class ADBShell(object):
         logger.debug("output: %s", repr(output))
         
 
-    def get_sub_screen(self, file_name, screen_range, save_name=None):
-        if save_name is None:
-            save_name = file_name
-        i = Image.open(os.path.join(SCREEN_SHOOT_SAVE_PATH, file_name))
-        i.crop(
+    def get_sub_screen(self, iamge, screen_range):
+        return image.crop(
             (
                 screen_range[0][0],
                 screen_range[0][1],
                 screen_range[0][0] + screen_range[1][0],
                 screen_range[0][1] + screen_range[1][1]
             )
-        ).save(os.path.join(SCREEN_SHOOT_SAVE_PATH, save_name))
+        )
 
-    def get_screen_shoot(self, file_name="1.png", screen_range=None):
+    def get_screen_shoot(self, screen_range=None):
         sleep(1)
-        if screen_range is None:
-            screen_range = []
         rawcap = self.device_session_factory().screencap()
         img = _screencap_to_image(rawcap)
-        img.save(os.path.join(SCREEN_SHOOT_SAVE_PATH, file_name))
-        if len(screen_range) == 2:
-            self.get_sub_screen(file_name, screen_range)
+        if screen_range is not None:
+            return self.get_sub_screen(img, screen_range)
+        return img
 
     def touch_swipe(self, XY_mXmY=None, FLAG=None):
         sleep(1)
@@ -121,8 +121,8 @@ class ADBShell(object):
 
     @staticmethod
     def img_difference(img1, img2):
-        img1 = Image.open(img1).convert('1')
-        img2 = Image.open(img2).convert('1')
+        img1 = _ensure_pil_image(img1).convert('1')
+        img2 = _ensure_pil_image(img2).convert('1')
         hist1 = list(img1.getdata())
         hist2 = list(img2.getdata())
         sum1 = 0

@@ -66,6 +66,8 @@ class OcrResult(OcrObject):
         super().__init__()
         self.lines = lines
         self.text = ' '.join(x.text for x in lines)
+    def __contains__(self, text):
+        return text in self.text.replace(' ', '')
 
 def merge_words(words):
     if len(words) == 0:
