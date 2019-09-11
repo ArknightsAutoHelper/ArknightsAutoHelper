@@ -17,7 +17,7 @@ from config import *
 from . import ocr
 
 os.path.join(os.path.abspath("../"))
-logging.config.fileConfig(CONFIG_PATH + 'logging.ini')
+logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('base')
 
 
@@ -221,7 +221,7 @@ SECRET_KEY\t{secret_key}
                 else:
                     level_up_signal = self.adb.img_difference(
                         img1=level_up_real_time,
-                        img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_LEVEL_UP.png"
+                        img2=os.path.join(STORAGE_PATH, "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
                     ) > .7
                 if level_up_signal:
                     battle_end_signal = True
@@ -243,7 +243,7 @@ SECRET_KEY\t{secret_key}
                     else:
                         end_signal = self.adb.img_difference(
                             img1=battle_end,
-                            img2=STORAGE_PATH + "BATTLE_INFO_BATTLE_END_TRUE.png"
+                            img2=os.path.join(STORAGE_PATH, "BATTLE_INFO_BATTLE_END_TRUE.png")
                         ) > .7
                     if end_signal:
                         battle_end_signal = True
@@ -286,7 +286,7 @@ SECRET_KEY\t{secret_key}
             return end_text in result
         else:
             return self.adb.img_difference(
-                img1=STORAGE_PATH + "INDEX_INFO_IS_SETTING.png",
+                img1=os.path.join(STORAGE_PATH, "INDEX_INFO_IS_SETTING.png"),
                 img2=is_setting
             ) > .85
 
@@ -301,7 +301,7 @@ SECRET_KEY\t{secret_key}
             return end_text in ocrresult
         else:
             return self.adb.img_difference(
-                img1=STORAGE_PATH + "INDEX_INFO_IS_NOTICE.png",
+                img1=os.path.join(STORAGE_PATH, "INDEX_INFO_IS_NOTICE.png"),
                 img2=is_notice
             ) > .85
 
@@ -318,13 +318,12 @@ SECRET_KEY\t{secret_key}
             return
         # 检测左上角是否有返回标志，有就返回，没有就结束
         for i in range(5):
-            self.adb.get_screen_shoot(
-                file_name="is_return.png",
+            is_return = self.adb.get_screen_shoot(
                 screen_range=MAP_LOCATION['INDEX_INFO_IS_RETURN']
             )
             if self.adb.img_difference(
-                    img1=STORAGE_PATH + "INDEX_INFO_IS_RETURN.png",
-                    img2=SCREEN_SHOOT_SAVE_PATH + "is_return.png"
+                    img1=os.path.join(STORAGE_PATH, "INDEX_INFO_IS_RETURN.png"),
+                    img2=is_return
             ) > .75:
                 self.shell_log.helper_text("未回到主页，点击返回")
                 logger.info("发送坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
@@ -406,7 +405,7 @@ SECRET_KEY\t{secret_key}
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
             if self.adb.img_difference(
                     is_on_task,
-                    STORAGE_PATH + "ENSURE_ON_TASK_PAGE.png"
+                    os.path.join(STORAGE_PATH, "ENSURE_ON_TASK_PAGE.png")
             ) <= 0.8:
                 self.shell_log.debug_text("相似度对比失败")
                 continue_run = False
@@ -423,13 +422,12 @@ SECRET_KEY\t{secret_key}
     def set_ai_commander(self):
         self.shell_log.debug_text("base.set_ai_commander")
         # 先点击保证图片一致
-        self.adb.get_screen_shoot(
-            file_name="is_ai.png",
+        is_ai = self.adb.get_screen_shoot(
             screen_range=MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER']
         )
         if self.adb.img_difference(
-                SCREEN_SHOOT_SAVE_PATH + "is_ai.png",
-                STORAGE_PATH + "BATTLE_CLICK_AI_COMMANDER_TRUE.png"
+                is_ai,
+                os.path.join(STORAGE_PATH, "BATTLE_CLICK_AI_COMMANDER_TRUE.png")
         ) <= 0.8:
             self.shell_log.helper_text("代理指挥未设置，设置代理指挥")
             logger.info("发送坐标BATTLE_CLICK_AI_COMMANDER: {}".format(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']))
@@ -476,7 +474,7 @@ SECRET_KEY\t{secret_key}
         else:
             if self.adb.img_difference(
                     img1=debug,
-                    img2=STORAGE_PATH + "BATTLE_DEBUG_CHECK_LOCATION_IN_SUCAI.png"
+                    img2=os.path.join(STORAGE_PATH, "BATTLE_DEBUG_CHECK_LOCATION_IN_SUCAI.png")
             ) > 0.75:
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
@@ -722,7 +720,7 @@ SECRET_KEY\t{secret_key}
             else:
                 task_ok_signal = self.adb.img_difference(
                     img1=task_status_1,
-                    img2=STORAGE_PATH + "TASK_COMPLETE.png"
+                    img2=os.path.join(STORAGE_PATH, "TASK_COMPLETE.png")
                 ) > .7
             if not task_ok_signal:  # 检查当前是否在获得物资页面
                 self.shell_log.debug_text("未检测到可领取奖励，检查是否在获得物资页面")
@@ -736,7 +734,7 @@ SECRET_KEY\t{secret_key}
                 else:
                     task_ok_signal = self.adb.img_difference(
                         img1=task_status_2,
-                        img2=STORAGE_PATH + "REWARD_GET.png"
+                        img2=os.path.join(STORAGE_PATH, "REWARD_GET.png")
                     ) > .7
             if task_ok_signal:
                 self.shell_log.debug_text("当前有可领取奖励")
