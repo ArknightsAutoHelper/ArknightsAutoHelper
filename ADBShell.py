@@ -77,7 +77,7 @@ class ADBShell(object):
         logger.debug("output: %s", repr(output))
         
 
-    def get_sub_screen(self, iamge, screen_range):
+    def get_sub_screen(self, image, screen_range):
         return image.crop(
             (
                 screen_range[0][0],

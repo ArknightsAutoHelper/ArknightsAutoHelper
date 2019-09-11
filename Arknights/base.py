@@ -400,7 +400,7 @@ SECRET_KEY\t{secret_key}
         if enable_ocr_check:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE_OCR'])
             thimg = image_threshold(is_on_task, -127)
-            continue_run = c_id in ocr.engine.recognize(thimg, 'en', ocr.OcrHint.SINGLE_LINE)
+            continue_run = c_id in ocr.engine.recognize(thimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         else:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
             if self.adb.img_difference(
