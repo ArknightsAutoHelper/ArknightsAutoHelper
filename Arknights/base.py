@@ -217,6 +217,7 @@ SECRET_KEY\t{secret_key}
                 level_up_signal = False
                 # 检查升级情况
                 if enable_ocr_check_update:
+                    level_up_text = "提升"
                     level_up_signal = level_up_text in ocr.engine.recognize(level_up_real_time, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     level_up_signal = self.adb.img_difference(
