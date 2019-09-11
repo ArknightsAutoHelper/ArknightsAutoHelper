@@ -713,7 +713,7 @@ SECRET_KEY\t{secret_key}
         while task_ok_signal:
             task_status = self.adb.get_screen_shoot()
             self.shell_log.helper_text("正在检查任务状况")
-            task_status_1 = self.adb.get_sub_screen(screen_range=MAP_LOCATION['TASK_INFO'])
+            task_status_1 = self.adb.get_sub_screen(task_status, screen_range=MAP_LOCATION['TASK_INFO'])
             if enable_ocr_check_task:
                 task_ok_text = "领取"
                 task_ok_signal = task_ok_text in ocr.engine.recognize(task_status_1, hints=[ocr.OcrHint.SINGLE_LINE])
