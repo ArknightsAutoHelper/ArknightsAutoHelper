@@ -240,7 +240,7 @@ SECRET_KEY\t{secret_key}
                         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                     )
                     if enable_ocr_check_end:
-                        end_signal = end_text in ocr.engine.recognize(battle_end, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                        end_signal = "结束" in ocr.engine.recognize(battle_end, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
                     else:
                         end_signal = self.adb.img_difference(
                             img1=battle_end,
@@ -298,8 +298,7 @@ SECRET_KEY\t{secret_key}
         )
         if enable_ocr_debugger:
             ocrresult = ocr.engine.recognize(is_notice, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
-            end_text = "活动公告"
-            return end_text in ocrresult
+            return "活动公告" in ocrresult
         else:
             return self.adb.img_difference(
                 img1=os.path.join(STORAGE_PATH, "INDEX_INFO_IS_NOTICE.png"),
