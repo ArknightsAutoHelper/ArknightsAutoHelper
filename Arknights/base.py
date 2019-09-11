@@ -716,7 +716,7 @@ SECRET_KEY\t{secret_key}
             task_status_1 = self.adb.get_sub_screen(task_status, screen_range=MAP_LOCATION['TASK_INFO'])
             if enable_ocr_check_task:
                 task_ok_text = "领取"
-                task_ok_signal = task_ok_text in ocr.engine.recognize(task_status_1, hints=[ocr.OcrHint.SINGLE_LINE])
+                task_ok_signal = task_ok_text in ocr.engine.recognize(task_status_1, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
             else:
                 task_ok_signal = self.adb.img_difference(
                     img1=task_status_1,
@@ -730,7 +730,7 @@ SECRET_KEY\t{secret_key}
                 )
                 if enable_ocr_check_task:
                     reward_text = "物资"
-                    task_ok_signal = reward_text = ocr.engine.recognize(task_status_2, hints=[ocr.OcrHint.SINGLE_LINE])
+                    task_ok_signal = reward_text = ocr.engine.recognize(task_status_2, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     task_ok_signal = self.adb.img_difference(
                         img1=task_status_2,
