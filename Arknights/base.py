@@ -20,6 +20,17 @@ os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('base')
 
+def _logged_ocr(image, *args, **kwargs):
+    from html import escape
+    from io import BytesIO
+    from base64 import b64encode
+    bio = BytesIO()
+    image.save(bio, format='PNG')
+    imgb64 = b64encode(bio.getvalue())
+    ocrresult = ocr.engine.recognize(image, *args, **kwargs)
+    with open('ocrlog.html', 'a', encoding='utf-8') as f:
+        f.write('<hr><img src="data:image/png;base64,%s" /><pre>%s</pre>\n' % (imgb64.decode(), escape(ocrresult.text)))
+    return ocrresult
 
 class ArknightsHelper(object):
     def __init__(self,
@@ -74,7 +85,7 @@ SECRET_KEY\t{secret_key}
         self.shell_log.debug_text("base.is_ocr_active")
         global enable_baidu_api
         testimg = Image.open(os.path.join(STORAGE_PATH, "OCR_TEST_1.png"))
-        result = ocr.engine.recognize(testimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+        result = _logged_ocr(testimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         if '51/120' in result.text.replace(' ', ''):
             self.ocr_active = True
             self.shell_log.debug_text("OCR 模块工作正常")
@@ -218,7 +229,7 @@ SECRET_KEY\t{secret_key}
                 # 检查升级情况
                 if enable_ocr_check_update:
                     level_up_text = "提升"
-                    level_up_signal = level_up_text in ocr.engine.recognize(level_up_real_time, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                    level_up_signal = level_up_text in _logged_ocr(level_up_real_time, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     level_up_signal = self.adb.img_difference(
                         img1=level_up_real_time,
@@ -240,7 +251,7 @@ SECRET_KEY\t{secret_key}
                         screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
                     )
                     if enable_ocr_check_end:
-                        end_signal = "结束" in ocr.engine.recognize(battle_end, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                        end_signal = "结束" in _logged_ocr(battle_end, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
                     else:
                         end_signal = self.adb.img_difference(
                             img1=battle_end,
@@ -279,7 +290,7 @@ SECRET_KEY\t{secret_key}
             screen_range=MAP_LOCATION['INDEX_INFO_IS_SETTING']
         )
         if enable_ocr_debugger:
-            ocrresult = ocr.engine.recognize(is_setting, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+            ocrresult = _logged_ocr(is_setting, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
             result = ocrresult.text.replace(' ', '')
             end_text = "设置"
             self.shell_log.debug_text("OCR 识别结果: {}".format(result))
@@ -297,7 +308,7 @@ SECRET_KEY\t{secret_key}
             screen_range=MAP_LOCATION['INDEX_INFO_IS_NOTICE']
         )
         if enable_ocr_debugger:
-            ocrresult = ocr.engine.recognize(is_notice, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+            ocrresult = _logged_ocr(is_notice, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
             return "活动公告" in ocrresult
         else:
             return self.adb.img_difference(
@@ -400,7 +411,7 @@ SECRET_KEY\t{secret_key}
         if enable_ocr_check:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE_OCR'])
             thimg = image_threshold(is_on_task, -127)
-            continue_run = c_id in ocr.engine.recognize(thimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+            continue_run = c_id in _logged_ocr(thimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         else:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
             if self.adb.img_difference(
@@ -443,7 +454,7 @@ SECRET_KEY\t{secret_key}
             screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
         )
 
-        ocrresult = ocr.engine.recognize(strength, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+        ocrresult = _logged_ocr(image_threshold(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         tmp = ocrresult.text.replace(' ', '')
         try:
             self.CURRENT_STRENGTH = int(tmp.split("/")[0])
@@ -462,7 +473,7 @@ SECRET_KEY\t{secret_key}
         debug = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['BATTLE_DEBUG_WHEN_OCR_ERROR'])
         if enable_ocr_debugger:
             end_text = "掉落"
-            if end_text in ocr.engine.recognize(debug, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]):
+            if end_text in _logged_ocr(image_threshold(debug), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]):
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.adb.touch_tap(
@@ -490,7 +501,7 @@ SECRET_KEY\t{secret_key}
         if self.ocr_active:
             self.__wait(SMALL_WAIT, False)
             strength = self.adb.get_screen_shoot(screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"])
-            ocrresult = ocr.engine.recognize(strength, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+            ocrresult = _logged_ocr(image_threshold(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
             tmp = ocrresult.text.replace(' ', '')
             try:
                 self.CURRENT_STRENGTH = int(tmp.split("/")[0])
@@ -716,7 +727,7 @@ SECRET_KEY\t{secret_key}
             task_status_1 = self.adb.get_sub_screen(task_status, screen_range=MAP_LOCATION['TASK_INFO'])
             if enable_ocr_check_task:
                 task_ok_text = "领取"
-                task_ok_signal = task_ok_text in ocr.engine.recognize(task_status_1, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                task_ok_signal = task_ok_text in _logged_ocr(image_threshold(task_status_1), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
             else:
                 task_ok_signal = self.adb.img_difference(
                     img1=task_status_1,
@@ -730,7 +741,7 @@ SECRET_KEY\t{secret_key}
                 )
                 if enable_ocr_check_task:
                     reward_text = "物资"
-                    task_ok_signal = reward_text = ocr.engine.recognize(task_status_2, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                    task_ok_signal = reward_text = _logged_ocr(image_threshold(task_status_2), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     task_ok_signal = self.adb.img_difference(
                         img1=task_status_2,
