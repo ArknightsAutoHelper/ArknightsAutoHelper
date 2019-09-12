@@ -67,6 +67,8 @@ def recognize(image, lang, *, hints=None):
 
     tslang = _translate_bcp47(lang)
     imgbytesio = BytesIO()
+    if 'RGB' not in image.mode:
+        image = image.convert('RGB')
     image.save(imgbytesio, format='PNG')
     proc = subprocess.run(['tesseract', 'stdin', 'stdout', '-l', tslang, *extras,
                            'hocr'], input=imgbytesio.getvalue(), capture_output=True, check=True)
