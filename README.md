@@ -8,6 +8,10 @@
 | dev |目前的开发版本|
 | shaobao_adb |经过封装可以移植的ADB方法类|
 
+😊 经过pyinstaller打包的可执行文件下载地址
+
+https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases
+
 ## 0x01 运行须知
 
 ###  **环境与分辨率**
@@ -68,6 +72,12 @@ SECRET_KEY = '你的 Secret Key'
 > 推荐安装OCR模块;感谢群友的贡献！关于OCR安装的文档可以查看OCR_install.md
 
 ### 命令行启动说明
+备注，输入-t后字符串序列的时候，别忘了""
+如
+```bash
+$ ArknightsShell.exe -b -t "CE-5:1|LS-5:1" -d
+```
+
 ```bash
 Usage: ArknightsShell.py [options] arg1 arg2 ...
 
