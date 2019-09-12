@@ -20,16 +20,15 @@ def ocr(file_path, save_path, line=0):
     :return: 返回总行数（原打算debug使用，现直接在函数内完成）
     """
     image = get_file_content(file_path)
-
     """ 调用通用文字识别, 图片参数为本地图片 """
     # global result
     result = client.basicGeneral(image)
-    f = open(save_path, 'w+', encoding="utf8")
-    if result["words_result_num"] is None or result["words_result_num"] is 0:
-        f.write("")
-        return
-    else:
-        f.write(result["words_result"][line]["words"])
+    with open(save_path, 'w+', encoding="utf8") as f:
+        if result["words_result_num"] is None or result["words_result_num"] is 0:
+            f.write("")
+            return
+        else:
+            f.write(result["words_result"][line]["words"])
     return result["words_result_num"]
 
 
@@ -49,3 +48,8 @@ def ocr(file_path, save_path, line=0):
     ]
 }
 """
+
+
+def ocr_location(file_path, c_id, save_path):
+    image = get_file_content(file_path)
+    result = client.general(image)
