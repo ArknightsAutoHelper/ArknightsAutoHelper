@@ -63,5 +63,6 @@ def recognize(img, lang, *, hints=None):
 
     lang = Language(lang)
     assert(OcrEngine.is_language_supported(lang))
-    swbmp = _swbmp_from_pil_image(padimg)
+    eng = OcrEngine.try_create_from_language(lang)
+    swbmp = _swbmp_from_pil_image(img)
     return _dump_ocrresult(_blocking_wait(eng.recognize_async(swbmp)))
