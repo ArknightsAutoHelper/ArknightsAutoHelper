@@ -28,7 +28,7 @@ def _logged_ocr(image, *args, **kwargs):
     image.save(bio, format='PNG')
     imgb64 = b64encode(bio.getvalue())
     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
-    with open('ocrlog.html', 'a', encoding='utf-8') as f:
+    with open(os.path.join(SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'), 'a', encoding='utf-8') as f:
         f.write('<hr><img src="data:image/png;base64,%s" /><pre>%s</pre>\n' % (imgb64.decode(), escape(ocrresult.text)))
     return ocrresult
 
