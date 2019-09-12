@@ -4,6 +4,8 @@ import os, sys
 # 【如果谁可以贡献一个服务器的话;群主的学生机可能下的很慢.】
 ADB_ROOT = os.path.abspath('./ADB/{platform}'.format(platform=sys.platform))
 ADB_HOST = "127.0.0.1:60001"
+ADB_SERVER = ('127.0.0.1', 5037)
+# ADB_SERVER_MUMU = ('127.0.0.1', 114514)
 # 对于MUMU模拟器等无法用 adb devices 命令 读取到端口的模拟器，可以开启如下选项，跳过ADB_HOST的自动检测环节
 # 但是必须保证 ADB_HOST 已经正确填写；如果不需要使用多开器，也可以开启如下选项，能够让你启动更快
 enable_adb_host_auto_detect = True
