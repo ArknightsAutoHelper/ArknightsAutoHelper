@@ -3,6 +3,7 @@ from xml.etree import ElementTree
 from io import BytesIO
 from .common import *
 
+is_online = False
 
 def _translate_bcp47(tag):
     subtags = tag.lower().split('-')
@@ -20,12 +21,15 @@ def _translate_bcp47(tag):
 
 def get_version():
     try:
-        return subprocess.run(['tesseract', '--version'], capture_output=True).stdout.decode('utf-8').splitlines()[0]
+        version = subprocess.run(['tesseract', '--version'], capture_output=True).stdout.decode('utf-8').splitlines()[0]
+        global info
+        info = version
+        return version
     except:
-        return False
+        return None
 
 
-check_supported = get_version
+check_supported = lambda: get_version() is not None
 
 
 def _parse_word(xmlword):
@@ -76,4 +80,4 @@ def recognize(image, lang, *, hints=None):
     return parse_hocr(BytesIO(proc.stdout))
 
 
-info = None
+info = "tesseract"

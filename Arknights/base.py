@@ -65,7 +65,7 @@ OCR 引擎\t{ocr_engine}
             """.format(
                 adb_path=ADB_ROOT, adb_host=ADB_HOST,
                 screen_shoot_path=SCREEN_SHOOT_SAVE_PATH, storage_path=STORAGE_PATH,
-                ocr_engine=ocr.engine.__name__
+                ocr_engine=ocr.engine.info
             )
         )
         if enable_baidu_api:
@@ -83,10 +83,16 @@ SECRET_KEY\t{secret_key}
     def is_ocr_active(self,  # 判断 OCR 是否可用
                       current_strength=None):  # 如果不可用时用于初始化的理智值
         self.shell_log.debug_text("base.is_ocr_active")
-        global enable_baidu_api
+        if not ocr.engine.check_supported():
+            self.ocr_active = False
+            return False
+        if ocr.engine.is_online:
+            # 不检查在线 OCR 服务可用性
+            self.ocr_active = True
+            return True
         testimg = Image.open(os.path.join(STORAGE_PATH, "OCR_TEST_1.png"))
         result = _logged_ocr(testimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
-        if '51/120' in result.text.replace(' ', ''):
+        if '51/120' in result:
             self.ocr_active = True
             self.shell_log.debug_text("OCR 模块工作正常")
         else:
