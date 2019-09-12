@@ -46,7 +46,7 @@ def binarization_image(filepath, save_backup=False, invert_image=True, threshold
     bim.save(filepath)
     return bim
 
-def image_threshold(image, threshold):
+def image_threshold(image, threshold=127):
     """
     threshold filter on L channel
     :param threshold: negative value means inverted output
