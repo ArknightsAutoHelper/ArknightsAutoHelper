@@ -1,10 +1,12 @@
 import copy
 
+
 def mult_in(needles, haystack):
     for needle in needles:
         if needle in haystack:
             return True
     return False
+
 
 class OcrHint:
     SINGLE_LINE = 'single_line'
@@ -40,6 +42,7 @@ class Rect:
     def __iter__(self):
         return iter((self.x, self.y, self.right(), self.bottom()))
 
+
 class OcrObject:
     def __init__(self):
         self.extra = None
@@ -47,11 +50,13 @@ class OcrObject:
     def __repr__(self):
         return self.__dict__.__repr__()
 
+
 class OcrWord(OcrObject):
     def __init__(self, rect, text):
         super().__init__()
         self.rect = rect
         self.text = text
+
 
 class OcrLine(OcrObject):
     def __init__(self, words):
@@ -61,13 +66,16 @@ class OcrLine(OcrObject):
         self.merged_text = ' '.join(x.text for x in self.merged_words)
         self.text = ' '.join(x.text for x in self.words)
 
+
 class OcrResult(OcrObject):
     def __init__(self, lines):
         super().__init__()
         self.lines = lines
         self.text = ' '.join(x.text for x in lines)
+
     def __contains__(self, text):
         return text in self.text.replace(' ', '')
+
 
 def merge_words(words):
     if len(words) == 0:
