@@ -1,5 +1,4 @@
 import logging.config
-import os
 from collections import OrderedDict
 from random import randint, uniform
 from time import sleep
@@ -8,17 +7,17 @@ from PIL import Image
 
 from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
-from Arknights.Binarization import binarization_image, image_threshold
+from Arknights.Binarization import binarization_image
 from Arknights.click_location import *
 from Arknights.flags import *
 from Baidu_api import *
 from config import *
-
 from . import ocr
 
 os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('base')
+
 
 def _logged_ocr(image, *args, **kwargs):
     from html import escape
@@ -31,6 +30,7 @@ def _logged_ocr(image, *args, **kwargs):
     with open(os.path.join(SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'), 'a', encoding='utf-8') as f:
         f.write('<hr><img src="data:image/png;base64,%s" /><pre>%s</pre>\n' % (imgb64.decode(), escape(ocrresult.text)))
     return ocrresult
+
 
 class ArknightsHelper(object):
     def __init__(self,
@@ -78,7 +78,6 @@ SECRET_KEY\t{secret_key}
                     app_id=APP_ID, api_key=API_KEY, secret_key=SECRET_KEY
                 )
             )
-
 
     def is_ocr_active(self,  # 判断 OCR 是否可用
                       current_strength=None):  # 如果不可用时用于初始化的理智值
@@ -235,7 +234,8 @@ SECRET_KEY\t{secret_key}
                 # 检查升级情况
                 if enable_ocr_check_update:
                     level_up_text = "提升"
-                    level_up_signal = level_up_text in _logged_ocr(level_up_real_time, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                    level_up_signal = level_up_text in _logged_ocr(level_up_real_time, 'zh-cn',
+                                                                   hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     level_up_signal = self.adb.img_difference(
                         img1=level_up_real_time,
@@ -416,7 +416,7 @@ SECRET_KEY\t{secret_key}
         # 检测是否在关卡页面
         if enable_ocr_check:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE_OCR'])
-            thimg = image_threshold(is_on_task, -127)
+            thimg = binarization_image(is_on_task, invert_image=True)
             continue_run = c_id in _logged_ocr(thimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         else:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
@@ -460,7 +460,7 @@ SECRET_KEY\t{secret_key}
             screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
         )
 
-        ocrresult = _logged_ocr(image_threshold(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+        ocrresult = _logged_ocr(binarization_image(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         tmp = ocrresult.text.replace(' ', '')
         try:
             self.CURRENT_STRENGTH = int(tmp.split("/")[0])
@@ -479,7 +479,7 @@ SECRET_KEY\t{secret_key}
         debug = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['BATTLE_DEBUG_WHEN_OCR_ERROR'])
         if enable_ocr_debugger:
             end_text = "掉落"
-            if end_text in _logged_ocr(image_threshold(debug), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]):
+            if end_text in _logged_ocr(binarization_image(debug), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]):
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.adb.touch_tap(
@@ -507,7 +507,7 @@ SECRET_KEY\t{secret_key}
         if self.ocr_active:
             self.__wait(SMALL_WAIT, False)
             strength = self.adb.get_screen_shoot(screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"])
-            ocrresult = _logged_ocr(image_threshold(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+            ocrresult = _logged_ocr(binarization_image(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
             tmp = ocrresult.text.replace(' ', '')
             try:
                 self.CURRENT_STRENGTH = int(tmp.split("/")[0])
@@ -702,7 +702,7 @@ SECRET_KEY\t{secret_key}
                             "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
                                 SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']))
                         self.adb.touch_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
-                                                 FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
+                                             FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
                     logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}: {}".format(c_id, CLICK_LOCATION[
                         "BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]))
@@ -733,7 +733,8 @@ SECRET_KEY\t{secret_key}
             task_status_1 = self.adb.get_sub_screen(task_status, screen_range=MAP_LOCATION['TASK_INFO'])
             if enable_ocr_check_task:
                 task_ok_text = "领取"
-                task_ok_signal = task_ok_text in _logged_ocr(image_threshold(task_status_1), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                task_ok_signal = task_ok_text in _logged_ocr(binarization_image(task_status_1), 'zh-cn',
+                                                             hints=[ocr.OcrHint.SINGLE_LINE])
             else:
                 task_ok_signal = self.adb.img_difference(
                     img1=task_status_1,
@@ -747,7 +748,8 @@ SECRET_KEY\t{secret_key}
                 )
                 if enable_ocr_check_task:
                     reward_text = "物资"
-                    task_ok_signal = reward_text = _logged_ocr(image_threshold(task_status_2), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                    task_ok_signal = reward_text in _logged_ocr(binarization_image(task_status_2), 'zh-cn',
+                                                                hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     task_ok_signal = self.adb.img_difference(
                         img1=task_status_2,
