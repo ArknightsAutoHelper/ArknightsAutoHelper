@@ -24,18 +24,19 @@
 
 #### Python 依赖
 ```bash
-$ pip install -r requirement.txt
+$ pip install -r requirements.txt
 ```
 
 #### OCR 依赖
 
-该辅助需要安装本地OCR工具或者申请百度OCR
+该辅助需要安装本地OCR工具，window OCR或者申请百度OCR
 
 **关于本地OCR工具安装可查看**
 https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/blob/master/OCR_install.md
 
 **关于百度OCR申请**
-> 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，按次计费。理论上每天次数非常充足
+##目前百度ocr功能无法使用，请等待后续版本恢复
+> 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，根据百度文字识别文档，会暂停使用，建议使用前阅读文档，不保证政策是否改变。理论上每天次数非常充足
 
 文档地址：https://cloud.baidu.com/doc/OCR/index.html
 启用百度api作为ocr识别方案，需要自行注册百度云。之后再config.developer_config中配置
@@ -50,19 +51,25 @@ API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 ```
 
+**关于Window OCR**
+
+跟PATH有关
+
 ### **额外设置**
 
 关于额外设置请移步到 config/README.md中查看
 
 #### **日志说明**
 
-日志采用```import logging```在主目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
+日志采用```import logging```在log目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
 
 相关配置文件在```config```目录下的**logging.ini**，由于过于复杂 ~~其实也没确定理解的对不对~~ 这里请自行研究，欢迎讨论
 
 配置文件本身支持如字典，YAML等，欢迎找到更有效，更整洁的方式并更换
 
-日志目前是输出所有，且大小不受限制，并没有自动备份功能，但是根据```logging```文档这是可以控制并且暂时关闭的 ~~我不想实验了，加油吧少年~~ 
+日志目前启动按照时间自动备份功能，间隔为一天一次，保留最多7份。但根据`logging``模块的相关讨论，启用该功能后在多进程环境会出现无法读写的错误。
+
+可以将```logging.int```中的```class=logging.handlers.TimedRotatingFileHandler```所有项或保留一个，更改为``class=FileHandler`` 这会关闭自动备份功能，保留一个可能会导致部分日志丢失，但仍能启动自动备份功能。目前有更换``logging``
 
 ## 0x02 ArknightsHelper 命令行启动
 > 推荐安装OCR模块;感谢群友的贡献！关于OCR安装的文档可以查看OCR_install.md
