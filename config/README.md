@@ -49,8 +49,12 @@ enable_ocr_check_is_TASK_page = True
 enable_rebase_to_null = True
 ```
 
-## 0x02 百度 OCR 设置相关
-
+## 0x02 OCR 设置相关
+```python
+# 选择OCR引擎，目前支持 windows_media_ocr 和 tesseract
+ocr.engine = ocr.windows_media_ocr
+```
+**百度OCR暂时无法使用**
 ```python
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
 enable_baidu_api = False

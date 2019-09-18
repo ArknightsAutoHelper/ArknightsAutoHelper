@@ -1,4 +1,7 @@
-import os, sys
+import os
+import sys
+
+from Arknights import ocr
 
 # 把 adb.exe 直接包进来，从根本上解决ADB_ROOT需要手动配置的问题;考虑到adb.exe比较大之后可能采用扩展包的形式
 # 【如果谁可以贡献一个服务器的话;群主的学生机可能下的很慢.】
@@ -23,6 +26,9 @@ enable_ocr_debugger = True
 enable_ocr_check_is_TASK_page = True
 # 禁用OCR输出;建议开启，不然你的命令行会非常精彩
 enable_rebase_to_null = True
+
+# 选择OCR引擎，目前支持 windows_media_ocr 和 tesseract
+ocr.engine = ocr.windows_media_ocr
 
 # 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
 enable_baidu_api = False
