@@ -5,6 +5,7 @@ from .common import *
 
 is_online = False
 
+
 def _translate_bcp47(tag):
     subtags = tag.lower().split('-')
 

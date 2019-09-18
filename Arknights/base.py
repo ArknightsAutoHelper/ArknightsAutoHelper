@@ -1,5 +1,4 @@
 import logging.config
-import os
 from collections import OrderedDict
 from random import randint, uniform
 from time import sleep
@@ -8,17 +7,17 @@ from PIL import Image
 
 from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
-from Arknights.Binarization import binarization_image, image_threshold
+from Arknights.Binarization import binarization_image
 from Arknights.click_location import *
 from Arknights.flags import *
 from Baidu_api import *
 from config import *
-
 from . import ocr
 
 os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('base')
+
 
 def _logged_ocr(image, *args, **kwargs):
     from html import escape
@@ -31,6 +30,7 @@ def _logged_ocr(image, *args, **kwargs):
     with open(os.path.join(SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'), 'a', encoding='utf-8') as f:
         f.write('<hr><img src="data:image/png;base64,%s" /><pre>%s</pre>\n' % (imgb64.decode(), escape(ocrresult.text)))
     return ocrresult
+
 
 class ArknightsHelper(object):
     def __init__(self,
@@ -78,7 +78,6 @@ SECRET_KEY\t{secret_key}
                     app_id=APP_ID, api_key=API_KEY, secret_key=SECRET_KEY
                 )
             )
-
 
     def is_ocr_active(self,  # 判断 OCR 是否可用
                       current_strength=None):  # 如果不可用时用于初始化的理智值
@@ -145,7 +144,7 @@ SECRET_KEY\t{secret_key}
         self.__wait(BIG_WAIT)
 
     def module_battle_slim(self,
-                           c_id,  # 待战斗的关卡编号
+                           c_id=None,  # 待战斗的关卡编号
                            set_count=1000,  # 战斗次数
                            check_ai=True,  # 是否检查代理指挥
                            **kwargs):  # 扩展参数:
@@ -168,19 +167,25 @@ SECRET_KEY\t{secret_key}
             if "auto_close" in kwargs.keys() else False
         self_fix = kwargs["self_fix"] \
             if "self_fix" in kwargs.keys() else False
+        self_detect = kwargs["self_detect"] \
+            if "self_detect" in kwargs.keys() else False
         if not sub:
             self.shell_log.helper_text("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
             return True
         # 如果当前不在进入战斗前的界面就重启
-        strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
+        if self_detect:
+            logger.info("自动识别理智消耗，关闭关卡界面检查")
+            strength_end_signal = False
+        else:
+            strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
         if strength_end_signal:
             self.back_to_main()
             self.__wait(3, MANLIKE_FLAG=False)
             self.selector.id = c_id
             logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-            self.battle_selector(c_id)  # 选关
+            self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
             return self.module_battle_slim(c_id, set_count, check_ai, **kwargs)
         # 确认代理指挥是否设置
         if check_ai:
@@ -195,7 +200,7 @@ SECRET_KEY\t{secret_key}
                 battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
             # 查看剩余理智
             strength_end_signal = not self.check_current_strength(
-                c_id, self_fix)
+                c_id, self_fix, self_detect)
             # 需要重新启动
             if self.CURRENT_STRENGTH == -1:
                 self.back_to_main()
@@ -203,7 +208,7 @@ SECRET_KEY\t{secret_key}
                 self.selector.id = c_id
                 logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
                 self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-                self.battle_selector(c_id)  # 选关
+                self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
                 return self.module_battle_slim(c_id, set_count - count, check_ai, **kwargs)
             if strength_end_signal:
                 return True
@@ -231,11 +236,11 @@ SECRET_KEY\t{secret_key}
                     battle_status,
                     screen_range=MAP_LOCATION['BATTLE_INFO_LEVEL_UP']
                 )
-                level_up_signal = False
                 # 检查升级情况
                 if enable_ocr_check_update:
                     level_up_text = "提升"
-                    level_up_signal = level_up_text in _logged_ocr(level_up_real_time, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                    level_up_signal = level_up_text in _logged_ocr(level_up_real_time, 'zh-cn',
+                                                                   hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     level_up_signal = self.adb.img_difference(
                         img1=level_up_real_time,
@@ -416,7 +421,7 @@ SECRET_KEY\t{secret_key}
         # 检测是否在关卡页面
         if enable_ocr_check:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE_OCR'])
-            thimg = image_threshold(is_on_task, -127)
+            thimg = binarization_image(is_on_task, invert_image=True)
             continue_run = c_id in _logged_ocr(thimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         else:
             is_on_task = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['ENSURE_ON_TASK_PAGE'])
@@ -460,7 +465,7 @@ SECRET_KEY\t{secret_key}
             screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"]
         )
 
-        ocrresult = _logged_ocr(image_threshold(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+        ocrresult = _logged_ocr(binarization_image(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         tmp = ocrresult.text.replace(' ', '')
         try:
             self.CURRENT_STRENGTH = int(tmp.split("/")[0])
@@ -479,7 +484,7 @@ SECRET_KEY\t{secret_key}
         debug = self.adb.get_screen_shoot(screen_range=MAP_LOCATION['BATTLE_DEBUG_WHEN_OCR_ERROR'])
         if enable_ocr_debugger:
             end_text = "掉落"
-            if end_text in _logged_ocr(image_threshold(debug), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]):
+            if end_text in _logged_ocr(binarization_image(debug), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]):
                 self.shell_log.helper_text("检测 BUG 成功，系统停留在素材页面，请求返回...")
                 logger.info("传递点击坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
                 self.adb.touch_tap(
@@ -502,12 +507,12 @@ SECRET_KEY\t{secret_key}
                 self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")
                 self.CURRENT_STRENGTH = -1  # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
 
-    def check_current_strength(self, c_id, self_fix=False):
+    def check_current_strength(self, c_id=None, self_fix=False, self_detect=None):
         self.shell_log.debug_text("base.check_current_strength")
         if self.ocr_active:
             self.__wait(SMALL_WAIT, False)
             strength = self.adb.get_screen_shoot(screen_range=MAP_LOCATION["BATTLE_INFO_STRENGTH_REMAIN"])
-            ocrresult = _logged_ocr(image_threshold(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+            ocrresult = _logged_ocr(binarization_image(strength), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
             tmp = ocrresult.text.replace(' ', '')
             try:
                 self.CURRENT_STRENGTH = int(tmp.split("/")[0])
@@ -529,7 +534,18 @@ SECRET_KEY\t{secret_key}
             self.shell_log.helper_text(
                 "理智剩余 {}".format(self.CURRENT_STRENGTH))
 
-        if self.CURRENT_STRENGTH - LIZHI_CONSUME[c_id] < 0:
+        if self_detect:
+            consume_image = self.adb.get_screen_shoot(screen_range=MAP_LOCATION["CONSUME_STRENGTH"])
+            ocrresult = _logged_ocr(binarization_image(consume_image), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+            try:
+                consume = int(ocrresult.text.replace(' ', '').replace('-', ''))
+            except TypeError:
+                logger.warning("无法自动识别理智，模块终止，请输入关卡id")
+                return False
+        else:
+            consume = LIZHI_CONSUME[c_id]
+
+        if self.CURRENT_STRENGTH - consume < 0:
             self.shell_log.failure_text("理智不足 退出战斗")
             return False
         else:
@@ -702,7 +718,7 @@ SECRET_KEY\t{secret_key}
                             "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
                                 SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']))
                         self.adb.touch_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
-                                                 FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
+                                             FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
                         self.__wait(MEDIUM_WAIT)
                     logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}: {}".format(c_id, CLICK_LOCATION[
                         "BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]))
@@ -733,7 +749,8 @@ SECRET_KEY\t{secret_key}
             task_status_1 = self.adb.get_sub_screen(task_status, screen_range=MAP_LOCATION['TASK_INFO'])
             if enable_ocr_check_task:
                 task_ok_text = "领取"
-                task_ok_signal = task_ok_text in _logged_ocr(image_threshold(task_status_1), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                task_ok_signal = task_ok_text in _logged_ocr(binarization_image(task_status_1), 'zh-cn',
+                                                             hints=[ocr.OcrHint.SINGLE_LINE])
             else:
                 task_ok_signal = self.adb.img_difference(
                     img1=task_status_1,
@@ -747,7 +764,8 @@ SECRET_KEY\t{secret_key}
                 )
                 if enable_ocr_check_task:
                     reward_text = "物资"
-                    task_ok_signal = reward_text = _logged_ocr(image_threshold(task_status_2), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+                    task_ok_signal = reward_text in _logged_ocr(binarization_image(task_status_2), 'zh-cn',
+                                                                hints=[ocr.OcrHint.SINGLE_LINE])
                 else:
                     task_ok_signal = self.adb.img_difference(
                         img1=task_status_2,
