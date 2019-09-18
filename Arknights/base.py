@@ -144,7 +144,7 @@ SECRET_KEY\t{secret_key}
         self.__wait(BIG_WAIT)
 
     def module_battle_slim(self,
-                           c_id,  # 待战斗的关卡编号
+                           c_id=None,  # 待战斗的关卡编号
                            set_count=1000,  # 战斗次数
                            check_ai=True,  # 是否检查代理指挥
                            **kwargs):  # 扩展参数:
@@ -167,19 +167,25 @@ SECRET_KEY\t{secret_key}
             if "auto_close" in kwargs.keys() else False
         self_fix = kwargs["self_fix"] \
             if "self_fix" in kwargs.keys() else False
+        self_detect = kwargs["self_detect"] \
+            if "self_detect" in kwargs.keys() else False
         if not sub:
             self.shell_log.helper_text("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
             return True
         # 如果当前不在进入战斗前的界面就重启
-        strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
+        if self_detect:
+            logger.info("自动识别理智消耗，关闭关卡界面检查")
+            strength_end_signal = False
+        else:
+            strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
         if strength_end_signal:
             self.back_to_main()
             self.__wait(3, MANLIKE_FLAG=False)
             self.selector.id = c_id
             logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-            self.battle_selector(c_id)  # 选关
+            self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
             return self.module_battle_slim(c_id, set_count, check_ai, **kwargs)
         # 确认代理指挥是否设置
         if check_ai:
@@ -194,7 +200,7 @@ SECRET_KEY\t{secret_key}
                 battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
             # 查看剩余理智
             strength_end_signal = not self.check_current_strength(
-                c_id, self_fix)
+                c_id, self_fix, self_detect)
             # 需要重新启动
             if self.CURRENT_STRENGTH == -1:
                 self.back_to_main()
@@ -202,7 +208,7 @@ SECRET_KEY\t{secret_key}
                 self.selector.id = c_id
                 logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
                 self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-                self.battle_selector(c_id)  # 选关
+                self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
                 return self.module_battle_slim(c_id, set_count - count, check_ai, **kwargs)
             if strength_end_signal:
                 return True
@@ -230,7 +236,6 @@ SECRET_KEY\t{secret_key}
                     battle_status,
                     screen_range=MAP_LOCATION['BATTLE_INFO_LEVEL_UP']
                 )
-                level_up_signal = False
                 # 检查升级情况
                 if enable_ocr_check_update:
                     level_up_text = "提升"
@@ -502,7 +507,7 @@ SECRET_KEY\t{secret_key}
                 self.shell_log.failure_text("检测 BUG 失败，系统将返回主页重新开始")
                 self.CURRENT_STRENGTH = -1  # CURRENT_STRENGTH = -1 代表需要需要回到主页重来
 
-    def check_current_strength(self, c_id, self_fix=False):
+    def check_current_strength(self, c_id=None, self_fix=False, self_detect=None):
         self.shell_log.debug_text("base.check_current_strength")
         if self.ocr_active:
             self.__wait(SMALL_WAIT, False)
@@ -529,7 +534,18 @@ SECRET_KEY\t{secret_key}
             self.shell_log.helper_text(
                 "理智剩余 {}".format(self.CURRENT_STRENGTH))
 
-        if self.CURRENT_STRENGTH - LIZHI_CONSUME[c_id] < 0:
+        if self_detect:
+            consume_image = self.adb.get_screen_shoot(screen_range=MAP_LOCATION["CONSUME_STRENGTH"])
+            ocrresult = _logged_ocr(binarization_image(consume_image), 'en', hints=[ocr.OcrHint.SINGLE_LINE])
+            try:
+                consume = int(ocrresult.text.replace(' ', '').replace('-', ''))
+            except TypeError:
+                logger.warning("无法自动识别理智，模块终止，请输入关卡id")
+                return False
+        else:
+            consume = LIZHI_CONSUME[c_id]
+
+        if self.CURRENT_STRENGTH - consume < 0:
             self.shell_log.failure_text("理智不足 退出战斗")
             return False
         else:
