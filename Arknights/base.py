@@ -14,21 +14,19 @@ from Baidu_api import *
 from config import *
 from . import ocr
 
+import richlog
+
 os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('base')
 
 
 def _logged_ocr(image, *args, **kwargs):
-    from html import escape
-    from io import BytesIO
-    from base64 import b64encode
-    bio = BytesIO()
-    image.save(bio, format='PNG')
-    imgb64 = b64encode(bio.getvalue())
+    logger = richlog.get_logger(os.path.join(SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
+    logger.loghtml('<hr/>')
+    logger.logimage(image)
     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
-    with open(os.path.join(SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'), 'a', encoding='utf-8') as f:
-        f.write('<hr><img src="data:image/png;base64,%s" /><pre>%s</pre>\n' % (imgb64.decode(), escape(ocrresult.text)))
+    logger.logtext(repr(ocrresult.text))
     return ocrresult
 
 
