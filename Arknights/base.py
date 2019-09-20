@@ -15,6 +15,7 @@ from config import *
 from . import ocr
 
 import richlog
+import imgreco
 
 os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
@@ -160,36 +161,58 @@ SECRET_KEY\t{secret_key}
         '''
         self.shell_log.debug_text("base.module_battle_slim")
         sub = kwargs["sub"] \
-            if "sub" in kwargs.keys() else False
+            if "sub" in kwargs else False
         auto_close = kwargs["auto_close"] \
-            if "auto_close" in kwargs.keys() else False
+            if "auto_close" in kwargs else False
         self_fix = kwargs["self_fix"] \
-            if "self_fix" in kwargs.keys() else False
+            if "self_fix" in kwargs else False
         self_detect = kwargs["self_detect"] \
-            if "self_detect" in kwargs.keys() else False
+            if "self_detect" in kwargs else False
         if not sub:
             self.shell_log.helper_text("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
             return True
         # 如果当前不在进入战斗前的界面就重启
-        if self_detect:
-            logger.info("自动识别理智消耗，关闭关卡界面检查")
-            strength_end_signal = False
-        else:
-            strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
-        if strength_end_signal:
-            self.back_to_main()
-            self.__wait(3, MANLIKE_FLAG=False)
-            self.selector.id = c_id
-            logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
-            self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-            self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
-            return self.module_battle_slim(c_id, set_count, check_ai, **kwargs)
-        # 确认代理指挥是否设置
-        if check_ai:
+
+        not_in_scene = True
+        while not_in_scene:
+            logger.info('检查关卡界面')
+            screenshot = self.adb.get_screen_shoot()
+            recoresult = imgreco.before_operation.recognize(screenshot)
+            not_in_scene = False
+            if not recoresult['AP']:
+                # ASSUMPTION: 只有在战斗前界面才能识别到右上角体力
+                not_in_scene = True
+
+            if (not not_in_scene) and c_id is not None:
+                # 如果传入了关卡 ID，检查识别结果
+                logger.info('当前画面关卡：%s', recoresult['operation'])
+                if recoresult['operation'] != c_id:
+                    not_in_scene = True
+            # if self_detect:
+            #     logger.info("自动识别理智消耗，关闭关卡界面检查")
+            #     strength_end_signal = False
+            # else:
+            #     strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
+            if not_in_scene:
+                logger.info('不在关卡界面，开始选择关卡')
+                self.back_to_main()
+                self.__wait(3, MANLIKE_FLAG=False)
+                self.selector.id = c_id
+                logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
+                self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
+                self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
+            
+
+         # 确认代理指挥是否设置
+        if not recoresult['delegated']:
+            logger.info('设置代理指挥')
             self.set_ai_commander()
+
         count = 0
-        while not strength_end_signal:
+        while True:
+            screenshot = self.adb.get_screen_shoot()
+            recoresult = imgreco.before_operation.recognize(screenshot)
             # 初始化变量
             battle_end_signal = False
             if "MAX_TIME" in kwargs.keys():
@@ -197,20 +220,15 @@ SECRET_KEY\t{secret_key}
             else:
                 battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
             # 查看剩余理智
-            strength_end_signal = not self.check_current_strength(
-                c_id, self_fix, self_detect)
-            # 需要重新启动
-            if self.CURRENT_STRENGTH == -1:
-                self.back_to_main()
-                self.__wait(3, MANLIKE_FLAG=False)
-                self.selector.id = c_id
-                logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
-                self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-                self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
-                return self.module_battle_slim(c_id, set_count - count, check_ai, **kwargs)
+            # strength_end_signal = not self.check_current_strength(
+            #     c_id, self_fix, self_detect)
+            self.CURRENT_STRENGTH = int(recoresult['AP'].split('/')[0])
+            strength_end_signal = self.CURRENT_STRENGTH < recoresult['consume']
+            logger.info('当前理智 %d, 关卡消耗 %d', self.CURRENT_STRENGTH, recoresult['consume'])
             if strength_end_signal:
-                return True
+                break
 
+   
             self.shell_log.helper_text("开始战斗")
             logger.info("发送坐标BATTLE_CLICK_START_BATTLE: {}".format(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'])
@@ -245,15 +263,13 @@ SECRET_KEY\t{secret_key}
                         img2=os.path.join(STORAGE_PATH, "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
                     ) > .7
                 if level_up_signal:
-                    battle_end_signal = True
-                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     self.shell_log.helper_text("检测到升级")
-                    logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
-                    self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
                     self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
                     self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    battle_end_signal = True
+                    screenshot = self.adb.get_screen_shoot()
                 else:
                     battle_end = self.adb.get_sub_screen(
                         battle_status,
@@ -268,19 +284,26 @@ SECRET_KEY\t{secret_key}
                         ) > .7
                     if end_signal:
                         battle_end_signal = True
-                        logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
-                        self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
+                        screenshot = battle_status
                     else:
                         battle_end_signal_max_execute_time -= 1
                     if battle_end_signal_max_execute_time < 1:
                         self.shell_log.failure_text("超过最大战斗时长!")
                         battle_end_signal = True
             count += 1
+            try:
+                # 掉落识别
+                drops = imgreco.end_operation.recognize(screenshot)
+                logger.info('掉落识别结果：%s', repr(drops))
+            except Exception as e:
+                print(e)
+            logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
+            self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
             self.shell_log.info_text("当前战斗次数 {}".format(count))
-            if count >= set_count:
-                strength_end_signal = True
             self.shell_log.info_text("战斗结束")
             self.__wait(10, MANLIKE_FLAG=True)
+            if count >= set_count:
+                break
         if not sub:
             if auto_close:
                 self.shell_log.helper_text("简略模块{}结束，系统准备退出".format(c_id))
@@ -440,20 +463,8 @@ SECRET_KEY\t{secret_key}
             return True
 
     def set_ai_commander(self):
-        self.shell_log.debug_text("base.set_ai_commander")
-        # 先点击保证图片一致
-        is_ai = self.adb.get_screen_shoot(
-            screen_range=MAP_LOCATION['BATTLE_CLICK_AI_COMMANDER']
-        )
-        if self.adb.img_difference(
-                is_ai,
-                os.path.join(STORAGE_PATH, "BATTLE_CLICK_AI_COMMANDER_TRUE.png")
-        ) <= 0.8:
-            self.shell_log.helper_text("代理指挥未设置，设置代理指挥")
-            logger.info("发送坐标BATTLE_CLICK_AI_COMMANDER: {}".format(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']))
-            self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
-        else:
-            self.shell_log.helper_text("代理指挥已设置")
+        logger.info("发送坐标BATTLE_CLICK_AI_COMMANDER: {}".format(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']))
+        self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
 
     def __check_current_strength(self):  # 检查当前理智是否足够
         self.shell_log.debug_text("base.__check_current_strength")
