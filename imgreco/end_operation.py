@@ -5,11 +5,11 @@ import numpy as np
 from PIL import Image, ImageOps
 
 from richlog import get_logger
-import imgops
-import item
-import minireco
-import resources
-from util import any_in
+from . import imgops
+from . import item
+from . import minireco
+from . import resources
+from .util import any_in
 
 LOGFILE = 'log/drop-recognition.html'
 
@@ -70,7 +70,7 @@ def tell_group(groupimg, viewport, bartop, barbottom):
         # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
         itemimg = itemimg.crop((0.093*vh, 0, 19.074*vh, itemimg.height))
         logger.logimage(itemimg)
-        result.append(item.tell_item(itemimg, viewport, logger))
+        result.append(item.tell_item(itemimg))
     return (groupname, result)
 
 

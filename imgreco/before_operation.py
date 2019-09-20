@@ -6,10 +6,10 @@ import numpy as np
 from PIL import Image, ImageOps
 
 from richlog import get_logger
-import imgops
-import item
-import minireco
-import resources
+from . import imgops
+from . import item
+from . import minireco
+from . import resources
 
 LOGFILE = 'log/b4op.html'
 
@@ -58,7 +58,7 @@ def recognize(img):
         'AP': aptext,
         'operation': opidtext,
         'delegated': delegated,
-        'consume': consumetext
+        'consume': int(consumetext)
     }
     # print('consumption:', consumetext)
 

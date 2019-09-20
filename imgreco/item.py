@@ -3,13 +3,12 @@ import pickle
 from functools import lru_cache
 
 import numpy as np
-import imgops
+from . import imgops
 # from skimage.measure import compare_mse
 from PIL import Image
 
-from imgops import compare_mse
-import minireco
-import resources
+from . import minireco
+from . import resources
 from richlog import get_logger
 
 LOGFILE = 'log/item-recognition.html'
@@ -30,9 +29,8 @@ def load_data():
 
 
 
-def tell_item(itemimg, viewport):
+def tell_item(itemimg):
     logger = get_logger(LOGFILE)
-    vw, vh = viewport
     #l, t, r, b = scaledwh(80, 146, 90, 28)
     #print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)
     #numimg = itemimg.crop(scaledwh(80, 146, 90, 28)).convert('L')
@@ -57,7 +55,7 @@ def tell_item(itemimg, viewport):
             mat1 = np.asarray(img4reco.resize(mat2.shape[:2][::-1], Image.NEAREST))
         else:
             mat1 = np.asarray(img4reco)
-        scores.append((name, compare_mse(mat1, mat2)))
+        scores.append((name, imgops.compare_mse(mat1, mat2)))
     
     # minmatch = min(scores, key=lambda x: x[1])
     # maxmatch = max(scores, key=lambda x: x[1])
