@@ -176,7 +176,8 @@ SECRET_KEY\t{secret_key}
             for count in range(set_count):
                 self.operation_once_statemachine(c_id)
                 logger.info("第 %d 次战斗完成", count+1)
-                self.__wait(10, MANLIKE_FLAG=True)
+                if count != set_count-1 :
+                    self.__wait(10, MANLIKE_FLAG=True)
         except StopIteration:
             logger.error('已忽略 %d 次战斗', set_count - count)
         if not sub:
@@ -216,6 +217,7 @@ SECRET_KEY\t{secret_key}
             if not_in_scene:
                 logger.error('不在关卡界面，退出……')
                 smobj.stop = True
+                raise StopIteration()
             
             self.CURRENT_STRENGTH = int(recoresult['AP'].split('/')[0])
             logger.info('当前理智 %d, 关卡消耗 %d', self.CURRENT_STRENGTH, recoresult['consume'])
