@@ -13,7 +13,7 @@ class RichLogger:
         self.f.write(b'<p><img src="data:image/png;base64,%s" /></p>\n' % imgb64)
     
     def logtext(self, text):
-        self.loghtml('<pre>%s</pre>\n' % text.encode())
+        self.loghtml('<pre>%s</pre>\n' % text)
 
     def loghtml(self, html):
         self.f.write(html.encode())
