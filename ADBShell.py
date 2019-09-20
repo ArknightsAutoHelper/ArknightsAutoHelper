@@ -40,14 +40,14 @@ class ADBShell(object):
         if len(devices) == 1:
             device_name = devices[0][0]
         else:
-            self.shell_log.helper_text("[!] 检测到多台设备，根据 ADB_HOST 参数将自动选择设备")
+            logger.info("[!] 检测到多台设备，根据 ADB_HOST 参数将自动选择设备")
             device_name = ""
             for i, device in enumerate(devices):
                 print('[%d]  %s\t%s' % (i, *device))
                 if self.ADB_HOST == device[0]:
                     device_name = self.ADB_HOST
             if device_name == "":
-                print("自动选择设备失败，请根据上述内容自行输入数字并选择")
+                logger.warn("自动选择设备失败，请根据上述内容自行输入数字并选择")
                 input_valid_flag = False
                 num = "0"
                 while not input_valid_flag:
@@ -56,9 +56,9 @@ class ADBShell(object):
                         if 0 <= num < len(devices):
                             input_valid_flag = True
                     except:
-                        print("输入不合法，请重新输入")
+                        logger.error("输入不合法，请重新输入")
                 device_name = devices[num][0]
-        self.shell_log.helper_text("[+] 确认设备名称\t" + device_name)
+        logger.info("[+] 确认设备名称\t" + device_name)
         return device_name
 
     def __adb_connect(self):
