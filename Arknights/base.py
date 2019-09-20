@@ -222,7 +222,6 @@ SECRET_KEY\t{secret_key}
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
                 logger.error('理智不足')
                 smobj.stop = True
-                return
                 raise StopIteration()
 
             logger.info("开始战斗")
