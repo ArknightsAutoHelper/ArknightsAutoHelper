@@ -11,7 +11,7 @@ def get_file_content(filePath):
         return fp.read()
 
 
-def ocr(file_path, save_path, line=0):
+def baidu_ocr(file_path, save_path, line=0):
     """
     调用百度api进行图片识别
     :param file_path: ocr识别图片路径

@@ -16,9 +16,7 @@
 
 ⚠ ` 1280*720` ⚠ 分辨率设置非常重要 ⚠
 
-由于作者精力有限，只做了绝对坐标的，欢迎大家重写模块。建议使用夜神模拟器，记得开启开发者模式和ROOT权限。
-在运行过程中，请不要对模拟器进行缩放，以免造成不必要的麻烦
-
+由于作者精力有限，只做了绝对坐标的，欢迎大家重写模块。建议使用夜神模拟器，记得开启开发者模式。
 
 ### **安装依赖**
 
@@ -29,7 +27,7 @@ $ pip install -r requirements.txt
 
 #### OCR 依赖
 
-该辅助需要安装本地OCR工具，window OCR或者申请百度OCR
+该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文和英文语言包）或者申请百度OCR
 
 **关于本地OCR工具安装可查看**
 https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/blob/master/OCR_install.md
@@ -51,9 +49,19 @@ API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 ```
 
-**关于Window OCR**
+**关于Windows OCR**
 
-跟PATH有关
+需要 Windows 10。
+
+当前默认配置为在 tesseract 无法使用（未安装）时使用。如要强制使用，可在启动文件中加入
+```python
+from Arknights import ocr
+ocr.engine = ocr.windows_media_ocr
+```
+Windows OCR 的语言数据是随语言支持安装的，可能需要在系统语言列表中加入英语（美国）以安装英语 OCR 支持。
+
+
+目前 Windows OCR 无法识别游戏中部分文本，正在考虑使用替代方法。
 
 ### **额外设置**
 
@@ -67,9 +75,7 @@ SECRET_KEY = '你的 Secret Key'
 
 配置文件本身支持如字典，YAML等，欢迎找到更有效，更整洁的方式并更换
 
-日志目前启动按照时间自动备份功能，间隔为一天一次，保留最多7份。但根据`logging``模块的相关讨论，启用该功能后在多进程环境会出现无法读写的错误。
-
-可以将```logging.int```中的```class=logging.handlers.TimedRotatingFileHandler```所有项或保留一个，更改为``class=FileHandler`` 这会关闭自动备份功能，保留一个可能会导致部分日志丢失，但仍能启动自动备份功能。目前有更换``logging``
+日志目前启动按照时间自动备份功能，间隔为一天一次，保留最多7份。
 
 ## 0x02 ArknightsHelper 命令行启动
 > 推荐安装OCR模块;感谢群友的贡献！关于OCR安装的文档可以查看OCR_install.md
