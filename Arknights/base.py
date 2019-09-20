@@ -226,6 +226,7 @@ SECRET_KEY\t{secret_key}
             strength_end_signal = self.CURRENT_STRENGTH < recoresult['consume']
             logger.info('当前理智 %d, 关卡消耗 %d', self.CURRENT_STRENGTH, recoresult['consume'])
             if strength_end_signal:
+                logger.error('理智不足')
                 break
 
    
@@ -301,9 +302,9 @@ SECRET_KEY\t{secret_key}
             self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
             self.shell_log.info_text("当前战斗次数 {}".format(count))
             self.shell_log.info_text("战斗结束")
-            self.__wait(10, MANLIKE_FLAG=True)
             if count >= set_count:
                 break
+            self.__wait(10, MANLIKE_FLAG=True)
         if not sub:
             if auto_close:
                 self.shell_log.helper_text("简略模块{}结束，系统准备退出".format(c_id))
