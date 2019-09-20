@@ -1,7 +1,7 @@
 import logging.config
 from collections import OrderedDict
 from random import randint, uniform
-from time import sleep
+from time import sleep, monotonic
 
 from PIL import Image
 
@@ -173,10 +173,34 @@ SECRET_KEY\t{secret_key}
         if set_count == 0:
             return True
         # 如果当前不在进入战斗前的界面就重启
+        try:
+            for count in range(set_count):
+                self.operation_once_statemachine(c_id)
+                logger.info("第 %d 次战斗完成", count+1)
+                self.__wait(10, MANLIKE_FLAG=True)
+        except StopIteration:
+            logger.error('已忽略 %d 次战斗', set_count - count)
+        if not sub:
+            if auto_close:
+                self.shell_log.helper_text("简略模块{}结束，系统准备退出".format(c_id))
+                self.__wait(120, False)
+                self.__del()
+            else:
+                self.shell_log.helper_text("简略模块{}结束".format(c_id))
+                return True
+        else:
+            self.shell_log.helper_text("当前任务{}结束，准备进行下一项任务".format(c_id))
+            return True
 
-        not_in_scene = True
-        while not_in_scene:
-            logger.info('检查关卡界面')
+    class operation_once_state:
+        state = None
+        stop = None
+        operation_start = None
+
+    def operation_once_statemachine(self, c_id):
+        smobj = ArknightsHelper.operation_once_state()
+        
+        def on_prepare(smobj):
             screenshot = self.adb.get_screen_shoot()
             recoresult = imgreco.before_operation.recognize(screenshot)
             not_in_scene = False
@@ -189,109 +213,78 @@ SECRET_KEY\t{secret_key}
                 logger.info('当前画面关卡：%s', recoresult['operation'])
                 if recoresult['operation'] != c_id:
                     not_in_scene = True
-            # if self_detect:
-            #     logger.info("自动识别理智消耗，关闭关卡界面检查")
-            #     strength_end_signal = False
-            # else:
-            #     strength_end_signal = self.task_check(enable_ocr_check_is_TASK_page, c_id)
-            if not_in_scene:
-                logger.info('不在关卡界面，开始选择关卡')
-                self.back_to_main()
-                self.__wait(3, MANLIKE_FLAG=False)
-                self.selector.id = c_id
-                logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
-                self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-                self.battle_selector(c_id)  # 选关，注意这里的功能必须传递c_id
             
-
-         # 确认代理指挥是否设置
-        if not recoresult['delegated']:
-            logger.info('设置代理指挥')
-            self.set_ai_commander()
-
-        count = 0
-        while True:
-            screenshot = self.adb.get_screen_shoot()
-            recoresult = imgreco.before_operation.recognize(screenshot)
-            # 初始化变量
-            battle_end_signal = False
-            if "MAX_TIME" in kwargs.keys():
-                battle_end_signal_max_execute_time = kwargs["MAX_TIME"]
-            else:
-                battle_end_signal_max_execute_time = BATTLE_END_SIGNAL_MAX_EXECUTE_TIME
-            # 查看剩余理智
-            # strength_end_signal = not self.check_current_strength(
-            #     c_id, self_fix, self_detect)
+            if not_in_scene:
+                logger.error('不在关卡界面，退出……')
+                smobj.stop = True
+            
             self.CURRENT_STRENGTH = int(recoresult['AP'].split('/')[0])
-            strength_end_signal = self.CURRENT_STRENGTH < recoresult['consume']
             logger.info('当前理智 %d, 关卡消耗 %d', self.CURRENT_STRENGTH, recoresult['consume'])
-            if strength_end_signal:
+            if self.CURRENT_STRENGTH < int(recoresult['consume']):
                 logger.error('理智不足')
-                break
+                smobj.stop = True
+                return
+                raise StopIteration()
 
-   
-            self.shell_log.helper_text("开始战斗")
-            logger.info("发送坐标BATTLE_CLICK_START_BATTLE: {}".format(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE']))
+            logger.info("开始战斗")
+            # logger.info("发送坐标BATTLE_CLICK_START_BATTLE: {}".format(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_START_BATTLE'])
             self.__wait(4, False)
+            smobj.state = on_troop
+        def on_troop(smobj):
             logger.info("发送坐标BATTLE_CLICK_ENSURE_TEAM_INFO: {}".format(CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO']))
             self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_ENSURE_TEAM_INFO'])
-            t = 0
-
-            while not battle_end_signal:
-                # 前 60s 不进行检测
-                if t == 0:
-                    self.__wait(BATTLE_NONE_DETECT_TIME)
-                    t += BATTLE_NONE_DETECT_TIME
-                else:
-                    self.__wait(BATTLE_FINISH_DETECT)
-                t += BATTLE_FINISH_DETECT
-                self.shell_log.helper_text("战斗进行{}s 判断是否结束".format(t))
-                # 判断是否升级
-                battle_status = self.adb.get_screen_shoot()
-                level_up_real_time = self.adb.get_sub_screen(
-                    battle_status,
-                    screen_range=MAP_LOCATION['BATTLE_INFO_LEVEL_UP']
-                )
-                # 检查升级情况
-                if enable_ocr_check_update:
-                    level_up_text = "提升"
-                    level_up_signal = level_up_text in _logged_ocr(level_up_real_time, 'zh-cn',
-                                                                   hints=[ocr.OcrHint.SINGLE_LINE])
-                else:
-                    level_up_signal = self.adb.img_difference(
-                        img1=level_up_real_time,
-                        img2=os.path.join(STORAGE_PATH, "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
-                    ) > .7
-                if level_up_signal:
-                    self.shell_log.helper_text("检测到升级")
-                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
-                    logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
-                    self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
-                    self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
-                    battle_end_signal = True
-                    screenshot = self.adb.get_screen_shoot()
-                else:
-                    battle_end = self.adb.get_sub_screen(
-                        battle_status,
-                        screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
-                    )
-                    if enable_ocr_check_end:
-                        end_signal = "结束" in _logged_ocr(battle_end, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
-                    else:
-                        end_signal = self.adb.img_difference(
-                            img1=battle_end,
-                            img2=os.path.join(STORAGE_PATH, "BATTLE_INFO_BATTLE_END_TRUE.png")
-                        ) > .7
-                    if end_signal:
-                        battle_end_signal = True
-                        screenshot = battle_status
-                    else:
-                        battle_end_signal_max_execute_time -= 1
-                    if battle_end_signal_max_execute_time < 1:
-                        self.shell_log.failure_text("超过最大战斗时长!")
-                        battle_end_signal = True
-            count += 1
+            smobj.operation_start = monotonic()
+            smobj.state = on_operation
+        def on_operation(smobj):
+            t = monotonic() - smobj.operation_start
+            if t < BATTLE_NONE_DETECT_TIME:
+                self.__wait(BATTLE_NONE_DETECT_TIME - t)
+                return
+            self.__wait(BATTLE_FINISH_DETECT)
+            logger.info('已进行 %.0f s，判断是否结束', t)
+            
+            battle_status = self.adb.get_screen_shoot()
+            level_up_real_time = self.adb.get_sub_screen(
+                battle_status,
+                screen_range=MAP_LOCATION['BATTLE_INFO_LEVEL_UP']
+            )
+            # 检查升级情况
+            if enable_ocr_check_update:
+                level_up_text = "提升"
+                level_up_signal = level_up_text in _logged_ocr(level_up_real_time, 'zh-cn',
+                                                                hints=[ocr.OcrHint.SINGLE_LINE])
+            else:
+                level_up_signal = self.adb.img_difference(
+                    img1=level_up_real_time,
+                    img2=os.path.join(STORAGE_PATH, "BATTLE_INFO_BATTLE_END_LEVEL_UP.png")
+                ) > .7
+            if level_up_signal:
+                smobj.state = on_level_up_popup
+                return
+            battle_end = self.adb.get_sub_screen(
+                battle_status,
+                screen_range=MAP_LOCATION['BATTLE_INFO_BATTLE_END']
+            )
+            if enable_ocr_check_end:
+                end_signal = "结束" in _logged_ocr(battle_end, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
+            else:
+                end_signal = self.adb.img_difference(
+                    img1=battle_end,
+                    img2=os.path.join(STORAGE_PATH, "BATTLE_INFO_BATTLE_END_TRUE.png")
+                ) > .7
+            if end_signal:
+                self.__wait(SMALL_WAIT)
+                smobj.state = on_end_operation
+        def on_level_up_popup(smobj):
+            self.shell_log.helper_text("检测到升级")
+            self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+            logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
+            self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
+            self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+            smobj.state = on_end_operation
+        def on_end_operation(smobj):
+            screenshot = self.adb.get_screen_shoot()
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
@@ -300,22 +293,15 @@ SECRET_KEY\t{secret_key}
                 print(e)
             logger.info("发送坐标CENTER_CLICK: {}".format(CLICK_LOCATION['CENTER_CLICK']))
             self.mouse_click(CLICK_LOCATION['CENTER_CLICK'])
-            self.shell_log.info_text("当前战斗次数 {}".format(count))
-            self.shell_log.info_text("战斗结束")
-            if count >= set_count:
-                break
-            self.__wait(10, MANLIKE_FLAG=True)
-        if not sub:
-            if auto_close:
-                self.shell_log.helper_text("简略模块{}结束，系统准备退出".format(c_id))
-                self.__wait(120, False)
-                self.__del()
-            else:
-                self.shell_log.helper_text("简略模块{}结束".format(c_id))
-                return True
-        else:
-            self.shell_log.helper_text("当前任务{}结束，准备进行下一项任务".format(c_id))
-            return True
+            smobj.stop = True
+
+        smobj.state = on_prepare
+        smobj.stop = False
+        smobj.operation_start = 0
+
+        while not smobj.stop:
+            smobj.state(smobj)
+
 
     def __check_is_on_setting(self):  # 检查是否在设置页面，True 为是
         self.shell_log.debug_text("base.__check_is_on_setting")
