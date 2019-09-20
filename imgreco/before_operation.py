@@ -58,7 +58,7 @@ def recognize(img):
         'AP': aptext,
         'operation': opidtext,
         'delegated': delegated,
-        'consume': int(consumetext)
+        'consume': int(consumetext) if consumetext.isdigit() else None
     }
     # print('consumption:', consumetext)
 
