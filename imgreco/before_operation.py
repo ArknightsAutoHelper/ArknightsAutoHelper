@@ -62,5 +62,17 @@ def recognize(img):
     }
     # print('consumption:', consumetext)
 
+def get_delegate_rect(viewport):
+    vw, vh = (x/100 for x in viewport)
+    return (100*vw-32.083*vh, 79.907*vh, 100*vw-5.972*vh, 84.444*vh)
+
+def get_start_operation_rect(viewport):
+    vw, vh = (x/100 for x in viewport)
+    return (100*vw-32.083*vh, 87.685*vh, 100*vw-5.972*vh, 95.139*vh)
+
+def get_confirm_troop_rect(viewport):
+    vw, vh = (x/100 for x in viewport)
+    return (50*vw+55.833*vh, 52.963*vh, 50*vw+72.778*vh, 87.361*vh)
+
 if __name__ == "__main__":
     print(recognize(Image.open(sys.argv[-1])))
