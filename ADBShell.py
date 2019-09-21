@@ -88,7 +88,7 @@ class ADBShell(object):
         )
 
     def get_screen_shoot(self, screen_range=None):
-        sleep(1)
+        # sleep(1)
         rawcap = self.device_session_factory().screencap()
         img = _screencap_to_image(rawcap)
         if screen_range is not None:
@@ -96,7 +96,7 @@ class ADBShell(object):
         return img
 
     def touch_swipe(self, XY_mXmY=None, FLAG=None):
-        sleep(1)
+        # sleep(1)
         XY, mXmY = XY_mXmY
         logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(XY[0], XY[1], XY[0] + mXmY[0], XY[1] + mXmY[1]))
         command = "input swipe {X1} {Y1} {X2} {Y2}".format(
@@ -106,7 +106,7 @@ class ADBShell(object):
 
     def touch_tap(self, XY=None, offsets=None):
         # sleep(10)
-        sleep(0.5)
+        # sleep(0.5)
         if offsets is not None:
             final_X = XY[0] + randint(-offsets[0], offsets[0])
             final_Y = XY[1] + randint(-offsets[1], offsets[1])
