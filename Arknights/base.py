@@ -120,6 +120,7 @@ SECRET_KEY\t{secret_key}
 
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
+        assert(self.viewport == (1280, 720))
         logger.debug("base.mouse_click")
         xx = randint(XY[0][0], XY[1][0])
         yy = randint(XY[0][1], XY[1][1])
@@ -291,6 +292,7 @@ SECRET_KEY\t{secret_key}
 
     def __check_is_on_setting(self):  # 检查是否在设置页面，True 为是
         logger.debug("base.__check_is_on_setting")
+        assert(self.viewport == (1280, 720))
         is_setting = self.adb.get_screen_shoot(
             screen_range=MAP_LOCATION['INDEX_INFO_IS_SETTING']
         )
@@ -309,6 +311,7 @@ SECRET_KEY\t{secret_key}
 
     def __check_is_on_notice(self):  # 检查是否有公告，True为是
         logger.debug("base.__check_is_on_notice")
+        assert(self.viewport == (1280, 720))
         is_notice = self.adb.get_screen_shoot(
             screen_range=MAP_LOCATION['INDEX_INFO_IS_NOTICE']
         )
@@ -323,6 +326,7 @@ SECRET_KEY\t{secret_key}
 
     def back_to_main(self):  # 回到主页
         logger.debug("base.back_to_main")
+        assert(self.viewport == (1280, 720))
         logger.info("返回主页ing...")
         # 检测是否有公告，如果有就点掉，点掉公告就是在主页
         if self.__check_is_on_notice():
@@ -363,6 +367,7 @@ SECRET_KEY\t{secret_key}
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("base.module_battle")
+        assert(self.viewport == (1280, 720))
         self.back_to_main()
         self.__wait(3, MANLIKE_FLAG=False)
         self.selector.id = c_id
@@ -411,12 +416,9 @@ SECRET_KEY\t{secret_key}
             else:
                 logger.error("发生未知错误... 进程已结束")
 
-    def set_ai_commander(self):
-        logger.info("发送坐标BATTLE_CLICK_AI_COMMANDER: {}".format(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER']))
-        self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_AI_COMMANDER'])
-
     def battle_selector(self, c_id, first_battle_signal=True):  # 选关
         logger.debug("base.battle_selector")
+        assert(self.viewport == (1280, 720))
         mode = self.selector.id_checker(c_id)  # 获取当前关卡所属章节
         if mode == 1:
             if first_battle_signal:
@@ -595,6 +597,7 @@ SECRET_KEY\t{secret_key}
 
     def clear_daily_task(self):
         logger.debug("base.clear_daily_task")
+        assert(self.viewport == (1280, 720))
         logger.info("领取每日任务")
         self.back_to_main()
         logger.info("发送坐标TASK_CLICK_IN: {}".format(CLICK_LOCATION['TASK_CLICK_IN']))
