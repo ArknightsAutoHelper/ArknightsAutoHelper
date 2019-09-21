@@ -38,7 +38,7 @@ def crop_blackedge(numimg, value_threshold=127):
 def crop_blackedge2(numimg, value_threshold=127):
     thimg = image_threshold(numimg, value_threshold)
     
-    x_threshold = int(numimg.height * 0.6)
+    x_threshold = int(numimg.height * 0.4)
     y_threshold = 16
     mat = np.asarray(thimg)
     right = -1
@@ -91,3 +91,7 @@ def compare_mse(mat1, mat2):
     se = np.sum(diff * diff)
     mse = se / reduce(lambda a, b: a*b, mat1.shape)
     return mse
+
+def scale_to_height(img, height, algo=Image.BILINEAR):
+    scale = height / img.height
+    return img.resize((int(img.width*scale), height), algo)
