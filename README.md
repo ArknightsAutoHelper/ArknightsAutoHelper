@@ -39,10 +39,8 @@ https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/blob/master/OCR_instal
 文档地址：https://cloud.baidu.com/doc/OCR/index.html
 启用百度api作为ocr识别方案，需要自行注册百度云。之后再config.developer_config中配置
 ```python
-# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
+# 是否启用百度api作为ocr识别方案之一，需要自行注册，不启用则使用默认方案，但在engine指定baidu的话该设置无效
 enable_baidu_api = False
-# 是否对使用百度ocr的图像进行处理，有可能改善精准度，但也有可能反而导致识别错误；该选项不会影响tesseract
-enable_help_baidu = True
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
@@ -53,10 +51,9 @@ SECRET_KEY = '你的 Secret Key'
 
 需要 Windows 10。
 
-当前默认配置为在 tesseract 无法使用（未安装）时使用。如要强制使用，可在启动文件中加入
+当前默认配置为在 tesseract 无法使用（未安装）时使用。如要强制使用，请更改如下
 ```python
-from Arknights import ocr
-ocr.engine = ocr.windows_media_ocr
+engine = "windows_media_ocr"
 ```
 Windows OCR 的语言数据是随语言支持安装的，可能需要在系统语言列表中加入英语（美国）以安装英语 OCR 支持。
 
