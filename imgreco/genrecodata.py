@@ -7,7 +7,6 @@ import os
 def charimg(font, char, size, threshold=32):
     mask = font.getmask(char, 'L')
     maskmat = np.asarray(mask).reshape(mask.size[::-1])
-    thmask = (maskmat > threshold)
     thimg = imgops.image_threshold_mat2img(maskmat, threshold)
     left, top, right, bottom = thimg.getbbox()
 
