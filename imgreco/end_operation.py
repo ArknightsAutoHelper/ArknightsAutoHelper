@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image, ImageOps
 
 from richlog import get_logger
+from . import util
 from . import imgops
 from . import item
 from . import minireco
@@ -17,7 +18,7 @@ def tell_stars(starsimg):
     thstars = (np.asarray(starsimg.convert('L')) > 96)
     width, height = thstars.shape[::-1]
     starwidth = width // 3
-    threshold = height * 2
+    threshold = height * (width/12)
     stars = []
     star1 = thstars[:, 0:starwidth]
     stars.append(np.count_nonzero(star1) > threshold)
@@ -61,7 +62,7 @@ def tell_group(groupimg, viewport, bartop, barbottom):
         groupname = '理智返还'
 
     if groupname == '幸运掉落':
-        return (groupname, [('(不进行识别)', 1)])
+        return (groupname, [('(家具)', 1)])
     
     itemcount = roundint(groupimg.width / (20.370*vh))
     result = []
@@ -100,17 +101,34 @@ def roundint(x):
 # scale = 0
 
 
+def check_level_up_popup(img):
+    vw, vh = util.get_vwvh(img.size)
+
+    ap_recovered_img = img.crop((50*vw+8.056*vh, 46.574*vh, 50*vw+24.907*vh, 51.296*vh)) # 理智已恢复
+    ap_recovered_img = imgops.enhance_contrast(ap_recovered_img, 100, 225)
+    ap_recovered_text = recozh.recognize(ap_recovered_img)
+    return '理智' in ap_recovered_text
+
+def check_end_operation(img):
+    vw, vh = util.get_vwvh(img.size)
+
+    operation_end_img = img.crop((4.722*vh, 80.278*vh, 56.389*vh, 93.889*vh))
+    operation_end_img = imgops.image_threshold(operation_end_img, 225).convert('L')
+    operation_end_img = imgops.scale_to_height(operation_end_img, 24)
+    return '结束' in recozh.recognize(operation_end_img)
+
+def get_dismiss_level_up_popup_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return (100*vw-67.315*vh, 16.019*vh, 100*vw-5.185*vh, 71.343*vh)
+
+get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
+
 def recognize(im):
     import time
     t0 = time.monotonic()
-    #im = im.resize((1440, 720), Image.BILINEAR)
-    # global scale
-    # scale = im.height/1080
-    vh = im.height / 100
-    vw = im.width / 100
+    vw, vh = util.get_vwvh(im.size)
     logger = get_logger(LOGFILE)
 
-    # lower = im.crop((0, int(660*scale), im.width, im.height))
     lower = im.crop((0, 61.111*vh, 100*vw, 100*vh))
     logger.logimage(lower)
 
