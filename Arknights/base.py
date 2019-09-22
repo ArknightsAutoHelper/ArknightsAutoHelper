@@ -99,7 +99,7 @@ SECRET_KEY\t{secret_key}
 
     def check_game_active(self):  # 启动游戏 需要手动调用
         logger.debug("base.check_game_active")
-        current = self.adb.run_device_cmd('dumpsys window windows | grep mCurrentFocus')
+        current = self.adb.run_device_cmd('dumpsys window windows | grep mCurrentFocus').decode(errors='ignore')
         logger.debug("正在尝试启动游戏")
         logger.debug(current)
         if ArkNights_PACKAGE_NAME in current:
@@ -210,6 +210,9 @@ SECRET_KEY\t{secret_key}
             not_in_scene = False
             if not recoresult['AP']:
                 # ASSUMPTION: 只有在战斗前界面才能识别到右上角体力
+                not_in_scene = True
+            if not recoresult['consume']:
+                # ASSUMPTION: 所有关卡都显示并能识别体力消耗
                 not_in_scene = True
 
             if (not not_in_scene) and c_id is not None:
