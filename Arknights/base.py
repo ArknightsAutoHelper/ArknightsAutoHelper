@@ -132,16 +132,16 @@ SECRET_KEY\t{secret_key}
         hheight = (rc[3] - rc[1]) / 2
         midx = rc[0] + hwidth
         midy = rc[1] + hheight
-        xdiff = max(-1, min(1, gauss(0, 0.33)))
-        ydiff = max(-1, min(1, gauss(0, 0.33)))
+        xdiff = max(-1, min(1, gauss(0, 0.2)))
+        ydiff = max(-1, min(1, gauss(0, 0.2)))
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
         self.adb.touch_tap((tapx, tapy))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def tap_quadriateral(self, pts):
-        acdiff = max(0, min(2, gauss(1, 0.33)))
-        bddiff = max(0, min(2, gauss(1, 0.33)))
+    def tap_quadrilateral(self, pts):
+        acdiff = max(0, min(2, gauss(1, 0.2)))
+        bddiff = max(0, min(2, gauss(1, 0.2)))
         halfac = (pts[2] - pts[0]) / 2
         m = pts[0] + halfac*acdiff
         pt2 = pts[1] if bddiff > 1 else pts[3]
@@ -188,11 +188,13 @@ SECRET_KEY\t{secret_key}
         # 如果当前不在进入战斗前的界面就重启
         try:
             for count in range(set_count):
+                logger.info("开始第 %d 次战斗", count+1)
                 self.operation_once_statemachine(c_id)
                 logger.info("第 %d 次战斗完成", count+1)
                 if count != set_count-1 :
                     self.__wait(10, MANLIKE_FLAG=True)
         except StopIteration:
+            logger.error('未能进行第 %d 次战斗', count+1)
             logger.error('已忽略余下的 %d 次战斗', set_count - count)
         if not sub:
             if auto_close:
@@ -303,78 +305,47 @@ SECRET_KEY\t{secret_key}
                 logger.debug('state changed to %s', smobj.state.__name__)
 
 
-    def __check_is_on_setting(self):  # 检查是否在设置页面，True 为是
-        logger.debug("base.__check_is_on_setting")
-        assert(self.viewport == (1280, 720))
-        is_setting = self.adb.get_screen_shoot(
-            screen_range=MAP_LOCATION['INDEX_INFO_IS_SETTING']
-        )
-        if enable_ocr_debugger:
-            ocrresult = _logged_ocr(is_setting, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
-            result = ocrresult.text.replace(' ', '')
-            end_text = "设置"
-            logger.debug("OCR 识别结果: {}".format(result))
-            logger.info("OCR 识别设置结果: {}".format(result))
-            return end_text in result
-        else:
-            return self.adb.img_difference(
-                img1=os.path.join(STORAGE_PATH, "INDEX_INFO_IS_SETTING.png"),
-                img2=is_setting
-            ) > .85
-
-    def __check_is_on_notice(self):  # 检查是否有公告，True为是
-        logger.debug("base.__check_is_on_notice")
-        assert(self.viewport == (1280, 720))
-        is_notice = self.adb.get_screen_shoot(
-            screen_range=MAP_LOCATION['INDEX_INFO_IS_NOTICE']
-        )
-        if enable_ocr_debugger:
-            ocrresult = _logged_ocr(is_notice, 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE])
-            return "活动公告" in ocrresult
-        else:
-            return self.adb.img_difference(
-                img1=os.path.join(STORAGE_PATH, "INDEX_INFO_IS_NOTICE.png"),
-                img2=is_notice
-            ) > .85
-
     def back_to_main(self):  # 回到主页
         logger.debug("base.back_to_main")
-        assert(self.viewport == (1280, 720))
-        logger.info("返回主页ing...")
-        # 检测是否有公告，如果有就点掉，点掉公告就是在主页
-        if self.__check_is_on_notice():
-            logger.info("触发公告，点掉公告")
-            logger.info("发送坐标CLOSE_NOTICE: {}".format(CLICK_LOCATION['CLOSE_NOTICE']))
-            self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
-            logger.info("已回到主页")
-            self.__wait(SMALL_WAIT, True)
-            return
-        # 检测左上角是否有返回标志，有就返回，没有就结束
-        for i in range(5):
-            is_return = self.adb.get_screen_shoot(
-                screen_range=MAP_LOCATION['INDEX_INFO_IS_RETURN']
-            )
-            if self.adb.img_difference(
-                    img1=os.path.join(STORAGE_PATH, "INDEX_INFO_IS_RETURN.png"),
-                    img2=is_return
-            ) > .75:
-                logger.info("未回到主页，点击返回")
-                logger.info("发送坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
-                self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
-                self.__wait(TINY_WAIT, True)
-                if self.__check_is_on_notice():
-                    logger.info("触发公告，点掉公告")
-                    logger.info("发送坐标CLOSE_NOTICE: {}".format(CLICK_LOCATION['CLOSE_NOTICE']))
-                    self.mouse_click(CLICK_LOCATION['CLOSE_NOTICE'])
-                    break
-            else:
+        logger.info("返回主页...")
+        while True:
+            screenshot = self.adb.get_screen_shoot()
+
+            if imgreco.main.check_main(screenshot):
                 break
-        if self.__check_is_on_setting():
-            logger.info("触发设置，返回")
-            logger.info("发送坐标MAIN_RETURN_INDEX: {}".format(CLICK_LOCATION['MAIN_RETURN_INDEX']))
-            self.mouse_click(CLICK_LOCATION['MAIN_RETURN_INDEX'])
+
+            # 检查是否有返回按钮
+            if imgreco.common.check_nav_button(screenshot):
+                logger.info('发现返回按钮，点击返回')
+                self.tap_rect(imgreco.common.get_nav_button_back_rect(self.viewport))
+                # FIXME: 检查基建退出提示
+                self.__wait(SMALL_WAIT)
+                # 点击返回按钮之后重新检查
+                continue
+
+            if imgreco.common.check_get_item_popup(screenshot):
+                logger.info('当前为获得物资画面，关闭')
+                self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
+                self.__wait(SMALL_WAIT)
+                continue
+
+            # 检查是否在设置画面
+            if imgreco.common.check_setting_scene(screenshot):
+                logger.info("当前为设置/邮件画面，返回")
+                self.tap_rect(imgreco.common.get_setting_back_rect(self.viewport))
+                self.__wait(SMALL_WAIT)
+                continue
+
+            # 检测是否有关闭按钮
+            rect, confidence = imgreco.common.find_close_button(screenshot)
+            if confidence > 0.9:
+                logger.info("发现关闭按钮")
+                self.tap_rect(rect)
+                self.__wait(SMALL_WAIT)
+                continue
+
+            raise RuntimeError('未知画面')
         logger.info("已回到主页")
-        self.__wait(SMALL_WAIT, True)
 
     def module_battle(self,  # 完整的战斗模块
                       c_id,  # 选择的关卡
@@ -613,7 +584,8 @@ SECRET_KEY\t{secret_key}
         logger.info("领取每日任务")
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
-        self.tap_quadriateral(imgreco.main.get_task_corners(screenshot))
+        logger.info('进入任务界面')
+        self.tap_quadrilateral(imgreco.main.get_task_corners(screenshot))
         self.__wait(SMALL_WAIT)
         screenshot = self.adb.get_screen_shoot()
         while imgreco.task.check_collectable_reward(screenshot):
