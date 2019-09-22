@@ -69,7 +69,7 @@ def get_delegate_rect(viewport):
 
 def get_start_operation_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
-    return (100*vw-32.083*vh, 87.685*vh, 100*vw-5.972*vh, 95.139*vh)
+    return (100*vw-30.972*vh, 88.241*vh, 100*vw-3.611*vh, 95.556*vh)
 
 def get_confirm_troop_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
