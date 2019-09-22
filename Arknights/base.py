@@ -50,7 +50,7 @@ class ArknightsHelper(object):
         if DEBUG_LEVEL >= 1:
             self.__print_info()
         if not call_by_gui:
-            self.is_ocr_active(current_strength)
+            self.is_ocr_active()
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -72,8 +72,7 @@ SECRET_KEY\t{secret_key}
                 )
             )
 
-    def is_ocr_active(self,  # 判断 OCR 是否可用
-                      current_strength=None):  # 如果不可用时用于初始化的理智值
+    def is_ocr_active(self):  # 如果不可用时用于初始化的理智值
         logger.debug("base.is_ocr_active")
         if not ocr.engine.check_supported():
             self.ocr_active = False
@@ -138,6 +137,17 @@ SECRET_KEY\t{secret_key}
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
         self.adb.touch_tap((tapx, tapy))
+        self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
+
+    def tap_quadriateral(self, pts):
+        acdiff = max(0, min(2, gauss(1, 0.33)))
+        bddiff = max(0, min(2, gauss(1, 0.33)))
+        halfac = (pts[2] - pts[0]) / 2
+        m = pts[0] + halfac*acdiff
+        pt2 = pts[1] if bddiff > 1 else pts[3]
+        halfvec = (pt2 - m) / 2
+        finalpt = m + halfvec*bddiff
+        self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
     def module_login(self):
@@ -600,47 +610,23 @@ SECRET_KEY\t{secret_key}
 
     def clear_daily_task(self):
         logger.debug("base.clear_daily_task")
-        assert(self.viewport == (1280, 720))
         logger.info("领取每日任务")
         self.back_to_main()
-        logger.info("发送坐标TASK_CLICK_IN: {}".format(CLICK_LOCATION['TASK_CLICK_IN']))
-        self.mouse_click(CLICK_LOCATION['TASK_CLICK_IN'])
-        self.__wait(TINY_WAIT, True)
-        logger.info("发送坐标TASK_DAILY_TASK: {}".format(CLICK_LOCATION['TASK_DAILY_TASK']))
-        self.mouse_click(CLICK_LOCATION['TASK_DAILY_TASK'])
-        self.__wait(TINY_WAIT, True)
-        task_ok_signal = True
-        while task_ok_signal:
-            task_status = self.adb.get_screen_shoot()
-            logger.info("正在检查任务状况")
-            task_status_1 = self.adb.get_sub_screen(task_status, screen_range=MAP_LOCATION['TASK_INFO'])
-            if enable_ocr_check_task:
-                task_ok_text = "领取"
-                task_ok_signal = task_ok_text in _logged_ocr(binarization_image(task_status_1), 'zh-cn',
-                                                             hints=[ocr.OcrHint.SINGLE_LINE])
-            else:
-                task_ok_signal = self.adb.img_difference(
-                    img1=task_status_1,
-                    img2=os.path.join(STORAGE_PATH, "TASK_COMPLETE.png")
-                ) > .7
-            if not task_ok_signal:  # 检查当前是否在获得物资页面
-                logger.debug("未检测到可领取奖励，检查是否在获得物资页面")
-                task_status_2 = self.adb.get_sub_screen(
-                    task_status,
-                    screen_range=MAP_LOCATION['REWARD_GET']
-                )
-                if enable_ocr_check_task:
-                    reward_text = "物资"
-                    task_ok_signal = reward_text in _logged_ocr(binarization_image(task_status_2), 'zh-cn',
-                                                                hints=[ocr.OcrHint.SINGLE_LINE])
+        screenshot = self.adb.get_screen_shoot()
+        self.tap_quadriateral(imgreco.main.get_task_corners(screenshot))
+        self.__wait(SMALL_WAIT)
+        screenshot = self.adb.get_screen_shoot()
+        while imgreco.task.check_collectable_reward(screenshot):
+            logger.info('完成任务')
+            self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
+            self.__wait(TINY_WAIT)
+            while True:
+                screenshot = self.adb.get_screen_shoot()
+                if imgreco.common.check_get_item_popup(screenshot):
+                    logger.info('领取奖励')
+                    self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
+                    self.__wait(TINY_WAIT)
                 else:
-                    task_ok_signal = self.adb.img_difference(
-                        img1=task_status_2,
-                        img2=os.path.join(STORAGE_PATH, "REWARD_GET.png")
-                    ) > .7
-            if task_ok_signal:
-                logger.debug("当前有可领取奖励")
-                logger.info("发送坐标TASK_DAILY_TASK_CHECK: {}".format(CLICK_LOCATION['TASK_DAILY_TASK_CHECK']))
-                self.mouse_click(CLICK_LOCATION['TASK_DAILY_TASK_CHECK'])
-                self.__wait(2, False)
+                    break
+            screenshot = self.adb.get_screen_shoot()
         logger.info("奖励已领取完毕")
