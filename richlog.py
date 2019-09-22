@@ -1,6 +1,7 @@
 from html import escape
 from io import BytesIO
 from base64 import b64encode
+from functools import lru_cache
 
 class RichLogger:
     def __init__(self, file, overwrite=False):
@@ -18,13 +19,7 @@ class RichLogger:
     def loghtml(self, html):
         self.f.write(html.encode())
 
+@lru_cache(maxsize=None)
 def get_logger(file):
-    if not hasattr(get_logger, 'loggers'):
-        get_logger.loggers = {}
-    loggers = get_logger.loggers
-    if file in loggers:
-        return loggers[file]
-    else:
-        logger = RichLogger(file, True)
-        loggers[file] = logger
-        return logger
+    logger = RichLogger(file, True)
+    return logger

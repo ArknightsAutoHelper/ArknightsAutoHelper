@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image, ImageOps
 
 from richlog import get_logger
+from . import util
 from . import imgops
 from . import item
 from . import minireco
@@ -21,7 +22,7 @@ def load_data():
 
 def recognize(img):
     logger = get_logger(LOGFILE)
-    vw, vh = (x/100 for x in img.size)
+    vw, vh = util.get_vwvh(img.size)
 
     apimg = img.crop((100*vw - 22.917*vh, 2.917*vh, 100*vw, 8.194*vh)).convert('L')
     reco_Noto, reco_Novecento = load_data()
@@ -58,9 +59,21 @@ def recognize(img):
         'AP': aptext,
         'operation': opidtext,
         'delegated': delegated,
-        'consume': int(consumetext)
+        'consume': int(consumetext) if consumetext.isdigit() else None
     }
     # print('consumption:', consumetext)
+
+def get_delegate_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return (100*vw-32.083*vh, 79.907*vh, 100*vw-5.972*vh, 84.444*vh)
+
+def get_start_operation_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return (100*vw-30.972*vh, 88.241*vh, 100*vw-3.611*vh, 95.556*vh)
+
+def get_confirm_troop_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return (50*vw+55.833*vh, 52.963*vh, 50*vw+72.778*vh, 87.361*vh)
 
 if __name__ == "__main__":
     print(recognize(Image.open(sys.argv[-1])))
