@@ -107,12 +107,12 @@ venv.bak/
 
 .idea/
 code_bin/
-screen_shoot/*.png
+screen_shoot/*
 #Arknights/daliy_task_screen
 #Arknights/dev_tools
-screen_shoot/1.txt
-screen_shoot/ocr_test_result.txt
 start.py
 storage/1.txt
 storage/package.txt
 start2.py
+
+log/*
