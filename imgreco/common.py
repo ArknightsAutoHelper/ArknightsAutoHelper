@@ -16,7 +16,7 @@ LOGFILE = 'log/common.html'
 def check_get_item_popup(img):
     vw, vh = util.get_vwvh(img.size)
     icon1 = img.crop((50*vw-6.389*vh, 5.556*vh, 50*vw+8.426*vh, 18.981*vh)).convert('RGB')
-    icon2 = resources.load_image('common/getitem.png').convert('RGB')
+    icon2 = resources.load_image_cached('common/getitem.png', 'RGB')
 
     icon1, icon2 = util.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
@@ -30,10 +30,12 @@ def get_reward_popup_dismiss_rect(viewport):
 def check_nav_button(img):
     vw, vh = util.get_vwvh(img.size)
     icon1 = img.crop((3.194*vh, 2.222*vh, 49.722*vh, 7.917*vh)).convert('RGB')
-    icon2 = resources.load_image('common/navbutton.png').convert('RGB')
+    icon2 = resources.load_image_cached('common/navbutton.png', 'RGB')
 
     icon1, icon2 = util.uniform_size(icon1, icon2)
-    return imgops.compare_mse(np.asarray(icon1), np.asarray(icon2)) < 150
+    mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
+    print(mse)
+    return imgops.compare_mse(np.asarray(icon1), np.asarray(icon2)) < 200
 
 def get_nav_button_back_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
@@ -42,10 +44,10 @@ def get_nav_button_back_rect(viewport):
 def check_setting_scene(img):
     vw, vh = util.get_vwvh(img.size)
     icon1 = img.crop((4.722*vh, 3.750*vh, 19.444*vh, 8.333*vh)).convert('RGB')
-    icon2 = resources.load_image('common/settingback.png').convert('RGB')
+    icon2 = resources.load_image_cached('common/settingback.png', 'RGB')
 
     icon1, icon2 = util.uniform_size(icon1, icon2)
-    return imgops.compare_mse(np.asarray(icon1), np.asarray(icon2)) < 150
+    return imgops.compare_mse(np.asarray(icon1), np.asarray(icon2)) < 200
 
 def get_setting_back_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
@@ -58,7 +60,7 @@ def find_close_button(img):
         scale = img.height / 720
         img = imgops.scale_to_height(img, 720)
     righttopimg = img.crop((img.width // 2, 0, img.width, img.height // 2)).convert('L')
-    template = resources.load_image('common/closebutton.png').convert('L')
+    template = resources.load_image_cached('common/closebutton.png', 'L')
     mtresult = cv.matchTemplate(np.asarray(righttopimg), np.asarray(template), cv.TM_CCOEFF_NORMED)
     maxidx = np.unravel_index(np.argmax(mtresult), mtresult.shape)
     y, x = maxidx
