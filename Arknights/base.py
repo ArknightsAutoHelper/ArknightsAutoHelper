@@ -10,7 +10,6 @@ from Arknights.BattleSelector import BattleSelector
 from Arknights.Binarization import binarization_image
 from Arknights.click_location import *
 from Arknights.flags import *
-from Baidu_api import *
 from config import *
 from . import ocr
 

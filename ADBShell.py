@@ -63,7 +63,7 @@ class ADBShell(object):
 
     def __adb_connect(self):
         try:
-            host_session_factory().service('host:connect:'+self.DEVICE_NAME)
+            self.host_session_factory().service('host:connect:'+self.DEVICE_NAME)
             logger.info(
                 "[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
         except:
@@ -76,7 +76,7 @@ class ADBShell(object):
         logger.debug("command: %s", cmd)
         logger.debug("output: %s", repr(output))
         return output
-        
+
 
     def get_sub_screen(self, image, screen_range):
         return image.crop(

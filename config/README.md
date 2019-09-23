@@ -49,13 +49,14 @@ enable_ocr_check_is_TASK_page = True
 enable_rebase_to_null = True
 ```
 
-## 0x02 百度 OCR 设置相关
-
+## 0x02 OCR 设置相关
 ```python
-# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
+# 选择OCR引擎，非必要，设置为None则使用默认优先循序为1.tesseract, 2.windows_media_ocr 3.baidu
+engine = None
+
+# 是否启用百度api作为ocr识别方案之一，需要自行注册，不启用则使用默认方案，但在engine指定baidu的话该设置无效
 enable_baidu_api = False
-# 是否对使用百度ocr的图像进行处理，有可能改善精准度，但也有可能反而导致识别错误；该选项不会影响tesseract
-enable_help_baidu = True
+""" 你的 APPID AK SK """
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
