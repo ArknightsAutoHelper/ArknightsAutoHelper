@@ -223,7 +223,7 @@ SECRET_KEY\t{secret_key}
             if not recoresult['AP']:
                 # ASSUMPTION: 只有在战斗前界面才能识别到右上角体力
                 not_in_scene = True
-            if not recoresult['consume']:
+            if recoresult['consume'] is None:
                 # ASSUMPTION: 所有关卡都显示并能识别体力消耗
                 not_in_scene = True
 
