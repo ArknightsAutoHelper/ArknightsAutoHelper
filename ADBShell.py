@@ -73,8 +73,9 @@ class ADBShell(object):
 
     def run_device_cmd(self, cmd, DEBUG_LEVEL=2):
         output = self.device_session_factory().exec(cmd)
-        logger.info("command: %s", cmd)
+        logger.debug("command: %s", cmd)
         logger.debug("output: %s", repr(output))
+        return output
         
 
     def get_sub_screen(self, image, screen_range):
