@@ -13,7 +13,7 @@ def check_main(img):
     vw, vh = util.get_vwvh(img.size)
     gear1 = img.crop((3.148*vh, 2.037*vh, 9.907*vh, 8.796*vh)).convert('RGB')
 
-    gear2 = resources.load_image('main/gear.png').convert('RGB')
+    gear2 = resources.load_image_cached('main/gear.png', 'RGB')
 
     if gear1.height < gear2.height:
         gear2 = gear2.resize(gear1.size, Image.BILINEAR)

@@ -6,7 +6,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from config import ADB_ROOT, ADB_HOST, ShellColor, CONFIG_PATH, enable_adb_host_auto_detect, ADB_SERVER
+from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
 from ADBClientSession import ADBClientSession
 # from numpy import average, dot, linalg
 
@@ -14,17 +14,14 @@ from ADBClientSession import ADBClientSession
 logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('ADBShell')
 
-
 def _screencap_to_image(cap):
     w, h, pixels = cap
     return Image.frombytes('RGBA', (w, h), pixels)
-
 
 def _ensure_pil_image(imgorfile):
     if isinstance(imgorfile, Image.Image):
         return imgorfile
     return Image.open(imgorfile)
-
 
 class ADBShell(object):
     def __init__(self, adb_host=ADB_HOST):
@@ -73,10 +70,13 @@ class ADBShell(object):
             logger.error(
                 "[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
 
+
     def run_device_cmd(self, cmd, DEBUG_LEVEL=2):
         output = self.device_session_factory().exec(cmd)
-        logger.info("command: %s", cmd)
+        logger.debug("command: %s", cmd)
         logger.debug("output: %s", repr(output))
+        return output
+
 
     def get_sub_screen(self, image, screen_range):
         return image.crop(
