@@ -587,6 +587,13 @@ SECRET_KEY\t{secret_key}
         self.tap_quadrilateral(imgreco.main.get_task_corners(screenshot))
         self.__wait(SMALL_WAIT)
         screenshot = self.adb.get_screen_shoot()
+
+        hasbeginner = imgreco.task.check_beginners_task(screenshot)
+        if hasbeginner:
+            logger.info('发现见习任务，切换到每日任务')
+            self.tap_rect(imgreco.task.get_daily_task_rect(screenshot, hasbeginner))
+            self.__wait(TINY_WAIT)
+
         while imgreco.task.check_collectable_reward(screenshot):
             logger.info('完成任务')
             self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
