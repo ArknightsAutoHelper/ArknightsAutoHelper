@@ -30,8 +30,10 @@ def tell_stars(starsimg):
     stars.append(np.count_nonzero(star3) > threshold)
     return tuple(stars)
 
+
 recozh = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-Medium.dat'))
 reco_novecento_bold = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Bold.dat'))
+
 
 def tell_group(groupimg, viewport, bartop, barbottom):
     logger = get_logger(LOGFILE)
@@ -108,6 +110,7 @@ def check_level_up_popup(img):
     ap_recovered_img = imgops.enhance_contrast(ap_recovered_img, 100, 225)
     ap_recovered_text = recozh.recognize(ap_recovered_img)
     return '理智' in ap_recovered_text
+
 
 def check_end_operation(img):
     vw, vh = util.get_vwvh(img.size)
