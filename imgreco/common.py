@@ -35,7 +35,7 @@ def check_nav_button(img):
     icon1, icon2 = util.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     print(mse)
-    return imgops.compare_mse(np.asarray(icon1), np.asarray(icon2)) < 200
+    return mse < 200
 
 def get_nav_button_back_rect(viewport):
     vw, vh = util.get_vwvh(viewport)

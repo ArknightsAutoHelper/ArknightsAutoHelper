@@ -1,7 +1,7 @@
 import pickle
 from PIL import Image, ImageFont
 import numpy as np
-import imgops
+from . import imgops
 import os
 
 def charimg(font, char, size, threshold=32):
