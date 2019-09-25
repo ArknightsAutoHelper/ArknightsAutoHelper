@@ -2,6 +2,7 @@ from functools import lru_cache
 from fractions import Fraction
 import numpy as np
 from PIL import Image, ImageOps
+import cv2
 
 from richlog import get_logger
 from . import imgops
@@ -9,21 +10,15 @@ from . import util
 from . import minireco
 from . import resources
 
+
 def check_main(img):
     vw, vh = util.get_vwvh(img.size)
-    gear1 = img.crop((3.148*vh, 2.037*vh, 9.907*vh, 8.796*vh)).convert('RGB')
-
-    gear2 = resources.load_image_cached('main/gear.png', 'RGB')
-
-    if gear1.height < gear2.height:
-        gear2 = gear2.resize(gear1.size, Image.BILINEAR)
-    elif gear1.height > gear2.height:
-        gear1 = gear1.resize(gear2.size, Image.BILINEAR)
-    elif gear1.width != gear2.width:
-        gear1 = gear1.resize(gear2.size, Image.BILINEAR)
-
-    mse = imgops.compare_mse(np.asarray(gear1), np.asarray(gear2))
-    return mse < gear1.width*gear1.height
+    gear1 = img.crop((3.148*vh, 2.037*vh, 9.907*vh, 8.796*vh)).convert('L')
+    gear2 = resources.load_image_cached('main/gear.png', 'L')
+    gear1, gear2 = util.uniform_size(gear1, gear2)
+    result = cv2.matchTemplate(np.asarray(gear1), np.asarray(gear2), cv2.TM_CCOEFF_NORMED)[0, 0]
+    # result = np.corrcoef(np.asarray(gear1).flat, np.asarray(gear2).flat)[0, 1]
+    return result > 0.9
 
 def get_ballte_corners(img):
     """
