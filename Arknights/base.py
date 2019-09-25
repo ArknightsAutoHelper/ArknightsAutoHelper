@@ -196,6 +196,8 @@ SECRET_KEY\t{secret_key}
         except StopIteration:
             logger.error('未能进行第 %d 次战斗', count + 1)
             logger.error('已忽略余下的 %d 次战斗', set_count - count)
+        logger.info("等待返回{}关卡界面".format(c_id))
+        self.__wait(SMALL_WAIT, True)
         if not sub:
             if auto_close:
                 logger.info("简略模块{}结束，系统准备退出".format(c_id))
@@ -205,7 +207,6 @@ SECRET_KEY\t{secret_key}
                 logger.info("简略模块{}结束".format(c_id))
                 return True
         else:
-            self.__wait(MEDIUM_WAIT, False)
             logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
             return True
 
@@ -603,13 +604,13 @@ SECRET_KEY\t{secret_key}
         while imgreco.task.check_collectable_reward(screenshot):
             logger.info('完成任务')
             self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
-            self.__wait(TINY_WAIT)
+            self.__wait(SMALL_WAIT)
             while True:
                 screenshot = self.adb.get_screen_shoot()
                 if imgreco.common.check_get_item_popup(screenshot):
                     logger.info('领取奖励')
                     self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
-                    self.__wait(TINY_WAIT)
+                    self.__wait(SMALL_WAIT)
                 else:
                     break
             screenshot = self.adb.get_screen_shoot()
