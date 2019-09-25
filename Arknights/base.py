@@ -5,16 +5,14 @@ from time import sleep, monotonic
 
 from PIL import Image
 
+import imgreco
+import richlog
 from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
-from Arknights.Binarization import binarization_image
 from Arknights.click_location import *
 from Arknights.flags import *
 from config import *
 from . import ocr
-
-import richlog
-import imgreco
 
 os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
@@ -118,7 +116,7 @@ SECRET_KEY\t{secret_key}
 
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
-        assert(self.viewport == (1280, 720))
+        assert (self.viewport == (1280, 720))
         logger.debug("base.mouse_click")
         xx = randint(XY[0][0], XY[1][0])
         yy = randint(XY[0][1], XY[1][1])
@@ -142,10 +140,10 @@ SECRET_KEY\t{secret_key}
         acdiff = max(0, min(2, gauss(1, 0.2)))
         bddiff = max(0, min(2, gauss(1, 0.2)))
         halfac = (pts[2] - pts[0]) / 2
-        m = pts[0] + halfac*acdiff
+        m = pts[0] + halfac * acdiff
         pt2 = pts[1] if bddiff > 1 else pts[3]
         halfvec = (pt2 - m) / 2
-        finalpt = m + halfvec*bddiff
+        finalpt = m + halfvec * bddiff
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
@@ -185,15 +183,18 @@ SECRET_KEY\t{secret_key}
         if set_count == 0:
             return True
         # 如果当前不在进入战斗前的界面就重启
+        global once_task_time
         try:
             for count in range(set_count):
-                logger.info("开始第 %d 次战斗", count+1)
-                self.operation_once_statemachine(c_id)
-                logger.info("第 %d 次战斗完成", count+1)
-                if count != set_count-1 :
+                if count == 0:
+                    once_task_time = 0
+                logger.info("开始第 %d 次战斗", count + 1)
+                self.operation_once_statemachine(c_id, )
+                logger.info("第 %d 次战斗完成", count + 1)
+                if count != set_count - 1:
                     self.__wait(10, MANLIKE_FLAG=True)
         except StopIteration:
-            logger.error('未能进行第 %d 次战斗', count+1)
+            logger.error('未能进行第 %d 次战斗', count + 1)
             logger.error('已忽略余下的 %d 次战斗', set_count - count)
         if not sub:
             if auto_close:
@@ -204,6 +205,7 @@ SECRET_KEY\t{secret_key}
                 logger.info("简略模块{}结束".format(c_id))
                 return True
         else:
+            self.__wait(MEDIUM_WAIT, False)
             logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
             return True
 
@@ -214,7 +216,7 @@ SECRET_KEY\t{secret_key}
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
-        
+
         def on_prepare(smobj):
             screenshot = self.adb.get_screen_shoot()
             recoresult = imgreco.before_operation.recognize(screenshot)
@@ -231,11 +233,11 @@ SECRET_KEY\t{secret_key}
                 logger.info('当前画面关卡：%s', recoresult['operation'])
                 if recoresult['operation'] != c_id:
                     not_in_scene = True
-            
+
             if not_in_scene:
                 logger.error('不在关卡界面，退出……')
                 raise StopIteration()
-            
+
             self.CURRENT_STRENGTH = int(recoresult['AP'].split('/')[0])
             logger.info('当前理智 %d, 关卡消耗 %d', self.CURRENT_STRENGTH, recoresult['consume'])
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
@@ -249,38 +251,49 @@ SECRET_KEY\t{secret_key}
             logger.info("开始行动")
             self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
             smobj.state = on_troop
+
         def on_troop(smobj):
-            self.__wait(TINY_WAIT, False)
+            self.__wait(SMALL_WAIT, False)
             logger.info('确认编队')
             self.tap_rect(imgreco.before_operation.get_confirm_troop_rect(self.viewport))
             smobj.operation_start = monotonic()
             smobj.state = on_operation
+
         def on_operation(smobj):
+            global once_task_time
+            if once_task_time == 0:
+                detect_time = BATTLE_NONE_DETECT_TIME
+            else:
+                detect_time = once_task_time
             t = monotonic() - smobj.operation_start
-            if t < BATTLE_NONE_DETECT_TIME:
-                self.__wait(BATTLE_NONE_DETECT_TIME - t)
+            if t < detect_time:
+                self.__wait(detect_time - t)
                 t = monotonic() - smobj.operation_start
 
             logger.info('已进行 %.1f s，判断是否结束', t)
-            
+
             screenshot = self.adb.get_screen_shoot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("检测到升级")
                 smobj.state = on_level_up_popup
+                once_task_time = t - 7
                 return
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
                 self.__wait(SMALL_WAIT)
                 smobj.state = on_end_operation
+                once_task_time = t - 7
                 return
             logger.info('战斗未结束')
             self.__wait(BATTLE_FINISH_DETECT)
+
         def on_level_up_popup(smobj):
             self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
             logger.info('关闭升级提示')
             self.tap_rect(imgreco.end_operation.get_dismiss_level_up_popup_rect(self.viewport))
             self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
             smobj.state = on_end_operation
+
         def on_end_operation(smobj):
             screenshot = self.adb.get_screen_shoot()
             try:
@@ -302,7 +315,6 @@ SECRET_KEY\t{secret_key}
             smobj.state(smobj)
             if smobj.state != oldstate:
                 logger.debug('state changed to %s', smobj.state.__name__)
-
 
     def back_to_main(self):  # 回到主页
         logger.debug("base.back_to_main")
@@ -350,7 +362,7 @@ SECRET_KEY\t{secret_key}
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("base.module_battle")
-        assert(self.viewport == (1280, 720))
+        assert (self.viewport == (1280, 720))
         self.back_to_main()
         self.__wait(3, MANLIKE_FLAG=False)
         self.selector.id = c_id
@@ -401,7 +413,7 @@ SECRET_KEY\t{secret_key}
 
     def battle_selector(self, c_id, first_battle_signal=True):  # 选关
         logger.debug("base.battle_selector")
-        assert(self.viewport == (1280, 720))
+        assert (self.viewport == (1280, 720))
         mode = self.selector.id_checker(c_id)  # 获取当前关卡所属章节
         if mode == 1:
             if first_battle_signal:
@@ -584,6 +596,7 @@ SECRET_KEY\t{secret_key}
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
         logger.info('进入任务界面')
+        # FIXME: 没有进入到任务界面，没有点击每日任务的操作
         self.tap_quadrilateral(imgreco.main.get_task_corners(screenshot))
         self.__wait(SMALL_WAIT)
         screenshot = self.adb.get_screen_shoot()
