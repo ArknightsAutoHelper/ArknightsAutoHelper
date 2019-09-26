@@ -169,6 +169,8 @@ MAIN_TASK_SUPPORT = {
     'OF-F3': 15,
     'OF-F2': 10,
     'OF-F1': 6,
+    
+    'slim': 99,
 
 }
 
