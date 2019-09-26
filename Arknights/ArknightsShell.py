@@ -33,7 +33,6 @@ class ArknightsShell():
 
     def parser(self):
         '''
-
         :return:
         '''
         usage = 'Usage: %prog [options] arg1 arg2 ...'
@@ -80,9 +79,9 @@ class ArknightsShell():
             if self.options.module_battle_slim:
                 id, count = self.task_list.popitem()
                 Ark.module_battle_slim(
-                    c_id=id,
+                    c_id=None,
                     set_count=count,
-                )
+                   )
 
             if self.options.module_battle:
                 Ark.main_handler(
