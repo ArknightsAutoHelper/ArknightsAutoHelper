@@ -43,7 +43,7 @@ def check_beginners_task(img):
     icon1 = img.crop((50*vw-24.028*vh, 1.806*vh, 50*vw-17.639*vh, 7.917*vh)).convert('RGB')
     icon2 = resources.load_image_cached('task/beginners.png', 'RGB')
 
-    icon1, icon2 = util.uniform_size(icon1, icon2)
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     return mse < 150
 

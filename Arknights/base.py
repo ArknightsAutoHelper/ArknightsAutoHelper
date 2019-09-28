@@ -3,6 +3,7 @@ from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
+import numpy as np
 from PIL import Image
 
 import imgreco
@@ -137,6 +138,7 @@ SECRET_KEY\t{secret_key}
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
     def tap_quadrilateral(self, pts):
+        pts = np.asarray(pts)
         acdiff = max(0, min(2, gauss(1, 0.2)))
         bddiff = max(0, min(2, gauss(1, 0.2)))
         halfac = (pts[2] - pts[0]) / 2
