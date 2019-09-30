@@ -197,7 +197,9 @@ SECRET_KEY\t{secret_key}
                     self.__wait(10, MANLIKE_FLAG=True)
         except StopIteration:
             logger.error('未能进行第 %d 次战斗', count + 1)
-            logger.error('已忽略余下的 %d 次战斗', set_count - count)
+            remain = set_count - count - 1
+            if remain > 0:
+                logger.error('已忽略余下的 %d 次战斗', remain)
         if not sub:
             if auto_close:
                 logger.info("简略模块{}结束，系统准备退出".format(c_id))
