@@ -1,0 +1,26 @@
+version: 1
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: console
+    level: INFO
+    stream: ext://sys.stdout
+  file:
+    class: logging.handlers.TimedRotatingFileHandler
+    formatter: precise
+    # 读取 config.logfile 中的绝对路径
+    filename: ext://config.logfile
+    level: NOTSET
+    encoding: utf-8
+    when: D
+    interval: 1
+    backupCount: 7
+root:
+  level: DEBUG
+  handlers: [console, file]
+formatters:
+  precise:
+    format: '%(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s ! %(message)s'
+    datefmt: ''
+  console:
+    format: '[%(levelname)s] %(message)s'

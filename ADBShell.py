@@ -6,12 +6,11 @@ from io import BytesIO
 
 from PIL import Image
 
-from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
+# from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
 from ADBClientSession import ADBClientSession
+import config
 # from numpy import average, dot, linalg
 
-
-logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('ADBShell')
 
 def _screencap_to_image(cap):
@@ -24,18 +23,17 @@ def _ensure_pil_image(imgorfile):
     return Image.open(imgorfile)
 
 class ADBShell(object):
-    def __init__(self, adb_host=ADB_HOST):
+    def __init__(self, adb_host=config.ADB_HOST):
         # os.chdir(ADB_ROOT)
-        self.ADB_ROOT = ADB_ROOT
+        self.ADB_ROOT = config.ADB_ROOT
         self.ADB_HOST = adb_host
-        self.shell_log = ShellColor()
-        self.host_session_factory = lambda: ADBClientSession(ADB_SERVER)
+        self.host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
         self.DEVICE_NAME = self.__adb_device_name_detector()
         self.device_session_factory = lambda: self.host_session_factory().device(self.DEVICE_NAME)
 
     def __adb_device_name_detector(self):
-        if not enable_adb_host_auto_detect:
-            return ADB_HOST
+        if not config.enable_adb_host_auto_detect:
+            return config.ADB_HOST
         devices = self.host_session_factory().devices()
         if len(devices) == 1:
             device_name = devices[0][0]
