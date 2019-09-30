@@ -32,9 +32,11 @@ class ADBShell(object):
         self.device_session_factory = lambda: self.host_session_factory().device(self.DEVICE_NAME)
 
     def __adb_device_name_detector(self):
+        devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
         if not config.enable_adb_host_auto_detect:
+            if config.ADB_HOST not in (x[0] for x in devices):
+                self.host_session_factory().connect(config.ADB_HOST)
             return config.ADB_HOST
-        devices = self.host_session_factory().devices()
         if len(devices) == 1:
             device_name = devices[0][0]
         else:
