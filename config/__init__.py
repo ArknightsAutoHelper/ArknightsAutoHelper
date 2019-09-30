@@ -4,6 +4,7 @@
 
 import sys
 import os
+import shutil
 from collections import Mapping
 import logging.config
 import ruamel.yaml
@@ -16,10 +17,14 @@ ADB_ROOT = os.path.join(root, 'ADB', sys.platform)
 SCREEN_SHOOT_SAVE_PATH = os.path.join(root, 'screen_shoot')
 STORAGE_PATH = os.path.join(root, 'storage')
 config_file = os.path.join(CONFIG_PATH, 'config.yaml')
+config_template = os.path.join(CONFIG_PATH, 'config-template.yaml')
 logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
 logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.log')
 
 dirty = False
+
+if not os.path.exists(config_file):
+    shutil.copy(config_template, config_file)
 
 with open(config_file, 'r', encoding='utf-8') as f:
     _ydoc = yaml.load(f)
@@ -96,7 +101,7 @@ ArkNights_PACKAGE_NAME = get('device/package_name', 'com.hypergryph.arknights')
 ArkNights_ACTIVITY_NAME = get('device/activity_name', 'com.u8.sdk.U8UnityContext')
 
 engine = get('ocr/engine', 'auto')
-enable_baidu_api = engine == 'baidu'
+enable_baidu_api = get('ocr/baidu_api/enabled', False)
 APP_ID = get('ocr/baidu_api/app_id', 'AAAZZZ')
 API_KEY = get('ocr/baidu_api/app_key', 'AAAZZZ')
 SECRET_KEY = get('ocr/baidu_api/app_secret', 'AAAZZZ')
