@@ -231,6 +231,9 @@ SECRET_KEY\t{secret_key}
             remain = set_count - count - 1
             if remain > 0:
                 logger.error('已忽略余下的 %d 次战斗', remain)
+        logger.info("等待返回{}关卡界面".format(c_id))
+        self.__wait(SMALL_WAIT, True)
+        
         if not sub:
             if auto_close:
                 logger.info("简略模块{}结束，系统准备退出".format(c_id))
@@ -240,7 +243,6 @@ SECRET_KEY\t{secret_key}
                 logger.info("简略模块{}结束".format(c_id))
                 return True
         else:
-            self.__wait(MEDIUM_WAIT, False)
             logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
             return True
 
@@ -250,6 +252,7 @@ SECRET_KEY\t{secret_key}
             self.stop = False
             self.operation_start = None
             self.first_wait = True
+
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
@@ -415,7 +418,7 @@ SECRET_KEY\t{secret_key}
                                 self_fix=self.ocr_active)
         return True
 
-    def main_handler(self, task_list=None, clear_tasks=False):
+    def main_handler(self, task_list=None, clear_tasks=False, auto_close=True):
         logger.debug("base.main_handler")
         if task_list is None:
             task_list = OrderedDict()
@@ -434,21 +437,22 @@ SECRET_KEY\t{secret_key}
             flag = self.module_battle(c_id, count)
 
         if flag:
-            if not self.__call_by_gui:
+            if self.__call_by_gui or auto_close is False:
+                logger.info("所有模块执行完毕")
+            else:
                 if clear_tasks:
                     self.clear_daily_task()
                 logger.info("所有模块执行完毕... 60s后退出")
                 self.__wait(60)
                 self.__del()
-            else:
-                logger.info("所有模块执行完毕")
         else:
-            if not self.__call_by_gui:
+            if self.__call_by_gui or auto_close is False:
+                logger.error("发生未知错误... 进程已结束")
+            else:
                 logger.error("发生未知错误... 60s后退出")
                 self.__wait(60)
                 self.__del()
-            else:
-                logger.error("发生未知错误... 进程已结束")
+
 
     def battle_selector(self, c_id, first_battle_signal=True):  # 选关
         logger.debug("base.battle_selector")
@@ -502,13 +506,13 @@ SECRET_KEY\t{secret_key}
                 ))
                 self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                sleep(SMALL_WAIT)
+                self.__wait(SMALL_WAIT)
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
                 ))
                 self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                sleep(SMALL_WAIT)
+                self.__wait(SMALL_WAIT)
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
                 ))
@@ -526,14 +530,14 @@ SECRET_KEY\t{secret_key}
                             ))
                         self.adb.touch_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        sleep(5)
+                        self.__wait(MEDIUM_WAIT)
                 logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id, CLICK_LOCATION[
                     'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)])
 
             else:
-                sleep(5)
+                self.__wait(MEDIUM_WAIT)
 
         elif mode == 2:
             try:
@@ -635,7 +639,6 @@ SECRET_KEY\t{secret_key}
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
         logger.info('进入任务界面')
-        # FIXME: 没有进入到任务界面，没有点击每日任务的操作
         self.tap_quadrilateral(imgreco.main.get_task_corners(screenshot))
         self.__wait(SMALL_WAIT)
         screenshot = self.adb.get_screen_shoot()
@@ -649,13 +652,13 @@ SECRET_KEY\t{secret_key}
         while imgreco.task.check_collectable_reward(screenshot):
             logger.info('完成任务')
             self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
-            self.__wait(TINY_WAIT)
+            self.__wait(SMALL_WAIT)
             while True:
                 screenshot = self.adb.get_screen_shoot()
                 if imgreco.common.check_get_item_popup(screenshot):
                     logger.info('领取奖励')
                     self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
-                    self.__wait(TINY_WAIT)
+                    self.__wait(SMALL_WAIT)
                 else:
                     break
             screenshot = self.adb.get_screen_shoot()
