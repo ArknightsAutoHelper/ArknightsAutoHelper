@@ -56,15 +56,15 @@ def tell_item(itemimg, session):
         if templ.size != (48, 48):
             templ = templ.resize((48, 48), Image.BILINEAR)
         scores.append((name, imgops.compare_mse(img4reco, templ)))
-    
-    # minmatch = min(scores, key=lambda x: x[1])
-    # maxmatch = max(scores, key=lambda x: x[1])
+
     scores.sort(key=lambda x: x[1])
+    itemname, score = scores[0]
+    # maxmatch = max(scores, key=lambda x: x[1])
     logger.logtext(repr(scores[:5]))
     diffs = np.diff([a[1] for a in scores])
-    if (diffs > 600).any():
-        logger.logtext('matched %s with mse %f' % scores[0])
-        name = scores[0][0]
+    if score < 800 and np.any(diffs > 600):
+        logger.logtext('matched %s with mse %f' % (itemname, score))
+        name = itemname
     else:
         logger.logtext('no match')
         session.low_confidence = True
