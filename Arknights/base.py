@@ -1,8 +1,10 @@
+import os
 import logging.config
 from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
+import numpy as np
 from PIL import Image
 
 import imgreco
@@ -11,16 +13,15 @@ from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
 from Arknights.click_location import *
 from Arknights.flags import *
-from config import *
+# from config import *
+import config
 from . import ocr
 
-os.path.join(os.path.abspath("../"))
-logging.config.fileConfig(os.path.join(CONFIG_PATH, 'logging.ini'))
 logger = logging.getLogger('base')
 
 
 def _logged_ocr(image, *args, **kwargs):
-    logger = richlog.get_logger(os.path.join(SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
+    logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
     logger.loghtml('<hr/>')
     logger.logimage(image)
     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
@@ -35,7 +36,7 @@ class ArknightsHelper(object):
                  out_put=True,  # 是否有命令行输出
                  call_by_gui=False):  # 是否为从 GUI 程序调用
         if adb_host is None:
-            adb_host = ADB_HOST
+            adb_host = config.ADB_HOST
         self.adb = ADBShell(adb_host=adb_host)
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
@@ -52,20 +53,20 @@ class ArknightsHelper(object):
 
     def __print_info(self):
         logger.info('当前系统信息:')
-        logger.info('ADB 服务器:\t%s:%d', *ADB_SERVER)
+        logger.info('ADB 服务器:\t%s:%d', *config.ADB_SERVER)
         logger.info('分辨率:\t%dx%d', *self.viewport)
         logger.info('OCR 引擎:\t%s', ocr.engine.info)
-        logger.info('截图路径 (legacy):\t%s', SCREEN_SHOOT_SAVE_PATH)
-        logger.info('存储路径 (legacy):\t%s', STORAGE_PATH)
+        logger.info('截图路径 (legacy):\t%s', config.SCREEN_SHOOT_SAVE_PATH)
+        logger.info('存储路径 (legacy):\t%s', config.STORAGE_PATH)
 
-        if enable_baidu_api:
+        if config.enable_baidu_api:
             logger.info('%s', 
                 """百度API配置信息:
 APP_ID\t{app_id}
 API_KEY\t{api_key}
 SECRET_KEY\t{secret_key}
                 """.format(
-                    app_id=APP_ID, api_key=API_KEY, secret_key=SECRET_KEY
+                    app_id=config.APP_ID, api_key=config.API_KEY, secret_key=config.SECRET_KEY
                 )
             )
 
@@ -78,7 +79,7 @@ SECRET_KEY\t{secret_key}
             # 不检查在线 OCR 服务可用性
             self.ocr_active = True
             return True
-        testimg = Image.open(os.path.join(STORAGE_PATH, "OCR_TEST_1.png"))
+        testimg = Image.open(os.path.join(config.STORAGE_PATH, "OCR_TEST_1.png"))
         result = _logged_ocr(testimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
         if '51/120' in result:
             self.ocr_active = True
@@ -88,7 +89,7 @@ SECRET_KEY\t{secret_key}
         return self.ocr_active
 
     def __del(self):
-        self.adb.run_device_cmd("am force-stop {}".format(ArkNights_PACKAGE_NAME))
+        self.adb.run_device_cmd("am force-stop {}".format(config.ArkNights_PACKAGE_NAME))
 
     def destroy(self):
         self.__del()
@@ -98,11 +99,11 @@ SECRET_KEY\t{secret_key}
         current = self.adb.run_device_cmd('dumpsys window windows | grep mCurrentFocus').decode(errors='ignore')
         logger.debug("正在尝试启动游戏")
         logger.debug(current)
-        if ArkNights_PACKAGE_NAME in current:
+        if config.ArkNights_PACKAGE_NAME in current:
             self.__is_game_active = True
             logger.debug("游戏已启动")
         else:
-            self.adb.run_device_cmd("am start -n {}/{}".format(ArkNights_PACKAGE_NAME, ArkNights_ACTIVITY_NAME))
+            self.adb.run_device_cmd("am start -n {}/{}".format(config.ArkNights_PACKAGE_NAME, config.ArkNights_ACTIVITY_NAME))
             logger.debug("成功启动游戏")
             self.__is_game_active = True
 
@@ -137,6 +138,7 @@ SECRET_KEY\t{secret_key}
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
     def tap_quadrilateral(self, pts):
+        pts = np.asarray(pts)
         acdiff = max(0, min(2, gauss(1, 0.2)))
         bddiff = max(0, min(2, gauss(1, 0.2)))
         halfac = (pts[2] - pts[0]) / 2
@@ -195,9 +197,12 @@ SECRET_KEY\t{secret_key}
                     self.__wait(10, MANLIKE_FLAG=True)
         except StopIteration:
             logger.error('未能进行第 %d 次战斗', count + 1)
-            logger.error('已忽略余下的 %d 次战斗', set_count - count)
+            remain = set_count - count - 1
+            if remain > 0:
+                logger.error('已忽略余下的 %d 次战斗', remain)
         logger.info("等待返回{}关卡界面".format(c_id))
         self.__wait(SMALL_WAIT, True)
+        
         if not sub:
             if auto_close:
                 logger.info("简略模块{}结束，系统准备退出".format(c_id))
