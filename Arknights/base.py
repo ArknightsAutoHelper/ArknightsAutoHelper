@@ -15,6 +15,8 @@ from Arknights.click_location import *
 from Arknights.flags import *
 # from config import *
 import config
+import penguin_stats.loader
+import penguin_stats.reporter
 from . import ocr
 
 logger = logging.getLogger('base')
@@ -27,6 +29,37 @@ def _logged_ocr(image, *args, **kwargs):
     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
     logger.logtext(repr(ocrresult.text))
     return ocrresult
+
+
+def _penguin_init():
+    if _penguin_init.ready or _penguin_init.error:
+        return
+    if not config.get('reporting/enabled', False):
+        logger.info('未启用掉落报告')
+        _penguin_init.error = True
+        return
+    try:
+        logger.info('载入企鹅数据资源...')
+        penguin_stats.loader.load_from_service()
+        penguin_stats.loader.user_login()
+        _penguin_init.ready = True
+    except:
+        logger.error('载入企鹅数据资源出错', exc_info=True)
+        _penguin_init.error = True
+
+
+_penguin_init.ready = False
+_penguin_init.error = False
+
+
+def _penguin_report(recoresult):
+    _penguin_init()
+    if not _penguin_init.ready:
+        return
+    logger.info('向企鹅数据汇报掉落...')
+    reportid = penguin_stats.reporter.report(recoresult)
+    if reportid is not None:
+        logger.info('企鹅数据报告 ID: %s', reportid)
 
 
 class ArknightsHelper(object):
@@ -305,6 +338,7 @@ SECRET_KEY\t{secret_key}
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
                 logger.info('掉落识别结果：%s', repr(drops))
+                _penguin_report(drops)
             except Exception as e:
                 logger.error('', exc_info=True)
             logger.info('离开结算画面')
