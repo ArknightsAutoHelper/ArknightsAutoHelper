@@ -13,6 +13,8 @@ from richlog import get_logger
 
 LOGFILE = 'log/item-recognition.html'
 
+itemmask = np.asarray(resources.load_image('common/itemmask.png', '1'))
+
 
 @lru_cache(1)
 def load_data():
@@ -25,7 +27,6 @@ def load_data():
             iconmats[basename] = mat
     reco = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-DemiLight-nums.dat'))
     return (iconmats, reco)
-
 
 
 def tell_item(itemimg, session):
@@ -46,16 +47,15 @@ def tell_item(itemimg, session):
     else:
         amount = None
 
-    scale = 48/itemimg.height
-    img4reco = itemimg.resize((int(itemimg.width*scale), 48), Image.BILINEAR).convert('RGB')
-
+    # scale = 48/itemimg.height
+    img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
+    img4reco[itemmask] = 0
+    
     scores = []
     for name, templ in recodata.items():
-        if img4reco.size != templ.size:
-            img1, img2 = imgops.uniform_size(img4reco, templ)
-        else:
-            img1, img2 = img4reco, templ
-        scores.append((name, imgops.compare_mse(img1, img2)))
+        if templ.size != (48, 48):
+            templ = templ.resize((48, 48), Image.BILINEAR)
+        scores.append((name, imgops.compare_mse(img4reco, templ)))
     
     # minmatch = min(scores, key=lambda x: x[1])
     # maxmatch = max(scores, key=lambda x: x[1])
