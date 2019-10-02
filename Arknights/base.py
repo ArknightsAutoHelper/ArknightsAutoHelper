@@ -214,6 +214,8 @@ SECRET_KEY\t{secret_key}
         state = None
         stop = None
         operation_start = None
+        # TODO Timer
+        timer = {}
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
@@ -377,7 +379,7 @@ SECRET_KEY\t{secret_key}
                                 self_fix=self.ocr_active)
         return True
 
-    def main_handler(self, task_list=None, clear_tasks=False):
+    def main_handler(self, task_list=None, clear_tasks=False, auto_close=True):
         logger.debug("base.main_handler")
         if task_list is None:
             task_list = OrderedDict()
@@ -396,21 +398,22 @@ SECRET_KEY\t{secret_key}
             flag = self.module_battle(c_id, count)
 
         if flag:
-            if not self.__call_by_gui:
+            if self.__call_by_gui or auto_close is False:
+                logger.info("所有模块执行完毕")
+            else:
                 if clear_tasks:
                     self.clear_daily_task()
                 logger.info("所有模块执行完毕... 60s后退出")
                 self.__wait(60)
                 self.__del()
-            else:
-                logger.info("所有模块执行完毕")
         else:
-            if not self.__call_by_gui:
+            if self.__call_by_gui or auto_close is False:
+                logger.error("发生未知错误... 进程已结束")
+            else:
                 logger.error("发生未知错误... 60s后退出")
                 self.__wait(60)
                 self.__del()
-            else:
-                logger.error("发生未知错误... 进程已结束")
+
 
     def battle_selector(self, c_id, first_battle_signal=True):  # 选关
         logger.debug("base.battle_selector")
@@ -464,13 +467,13 @@ SECRET_KEY\t{secret_key}
                 ))
                 self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                sleep(SMALL_WAIT)
+                self.__wait(SMALL_WAIT)
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
                 ))
                 self.adb.touch_swipe(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                sleep(SMALL_WAIT)
+                self.__wait(SMALL_WAIT)
                 logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
                     SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
                 ))
@@ -488,14 +491,14 @@ SECRET_KEY\t{secret_key}
                             ))
                         self.adb.touch_swipe(
                             SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        sleep(5)
+                        self.__wait(MEDIUM_WAIT)
                 logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id, CLICK_LOCATION[
                     'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]))
                 self.mouse_click(
                     XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)])
 
             else:
-                sleep(5)
+                self.__wait(MEDIUM_WAIT)
 
         elif mode == 2:
             try:
@@ -597,7 +600,6 @@ SECRET_KEY\t{secret_key}
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
         logger.info('进入任务界面')
-        # FIXME: 没有进入到任务界面，没有点击每日任务的操作
         self.tap_quadrilateral(imgreco.main.get_task_corners(screenshot))
         self.__wait(SMALL_WAIT)
         screenshot = self.adb.get_screen_shoot()
