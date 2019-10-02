@@ -1,6 +1,6 @@
 from . import tesseract, windows_media_ocr, dummy, baidu
 from .common import OcrHint, OcrLine, OcrResult, OcrWord
-from config import engine
+import config
 
 available_engines = []
 """
@@ -22,8 +22,8 @@ if windows_media_ocr.check_supported():
 if baidu.check_supported():
     available_engines.append(baidu)
 
-if engine is not None:
-    engine = eval(engine)
+if config.engine != 'auto':
+    engine = globals()[config.engine]
 else:
     engine = available_engines[0] if len(available_engines) != 0 else dummy
 # 一个运行时可用的 engine，没有可用 engine 则为 dummy engine

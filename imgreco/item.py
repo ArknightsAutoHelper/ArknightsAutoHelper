@@ -16,30 +16,30 @@ LOGFILE = 'log/item-recognition.html'
 
 @lru_cache(1)
 def load_data():
-    root = os.path.join(os.path.dirname(__file__), 'resources', 'items')
-    _, _, files = next(os.walk(root))
+    _, files = resources.get_entries('items')
     iconmats = {}
     for filename in files:
         if filename.endswith('.png'):
             basename = filename[:-4]
-            mat = np.asarray(Image.open(os.path.join(root, filename)).convert('RGB'))
+            mat = resources.load_image('items/'+filename, 'RGB')
             iconmats[basename] = mat
     reco = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-DemiLight-nums.dat'))
     return (iconmats, reco)
 
 
 
-def tell_item(itemimg):
+def tell_item(itemimg, session):
     logger = get_logger(LOGFILE)
+    logger.logimage(itemimg)
     #l, t, r, b = scaledwh(80, 146, 90, 28)
     #print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)
     #numimg = itemimg.crop(scaledwh(80, 146, 90, 28)).convert('L')
     numimg = imgops.scalecrop(itemimg, 0.39, 0.71, 0.82, 0.84).convert('L')
     numimg = imgops.crop_blackedge2(numimg, 220)
+    recodata, textreco = load_data()
     if numimg is not None:
         numimg = imgops.enhance_contrast(numimg)
         logger.logimage(numimg)
-        recodata, textreco = load_data()
         numtext: str = textreco.recognize(numimg)
         logger.logtext('amount: '+numtext)
         amount = int(numtext) if numtext.isdigit() else None
@@ -50,12 +50,12 @@ def tell_item(itemimg):
     img4reco = itemimg.resize((int(itemimg.width*scale), 48), Image.BILINEAR).convert('RGB')
 
     scores = []
-    for name, mat2 in recodata.items():
-        if img4reco.size != mat2.shape[:2][::-1]:
-            mat1 = np.asarray(img4reco.resize(mat2.shape[:2][::-1], Image.NEAREST))
+    for name, templ in recodata.items():
+        if img4reco.size != templ.size:
+            img1, img2 = imgops.uniform_size(img4reco, templ)
         else:
-            mat1 = np.asarray(img4reco)
-        scores.append((name, imgops.compare_mse(mat1, mat2)))
+            img1, img2 = img4reco, templ
+        scores.append((name, imgops.compare_mse(img1, img2)))
     
     # minmatch = min(scores, key=lambda x: x[1])
     # maxmatch = max(scores, key=lambda x: x[1])
@@ -67,6 +67,7 @@ def tell_item(itemimg):
         name = scores[0][0]
     else:
         logger.logtext('no match')
+        session.low_confidence = True
         name = None
 
     return (name, amount)

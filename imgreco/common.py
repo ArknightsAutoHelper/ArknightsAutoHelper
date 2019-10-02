@@ -18,7 +18,7 @@ def check_get_item_popup(img):
     icon1 = img.crop((50*vw-6.389*vh, 5.556*vh, 50*vw+8.426*vh, 18.981*vh)).convert('RGB')
     icon2 = resources.load_image_cached('common/getitem.png', 'RGB')
 
-    icon1, icon2 = util.uniform_size(icon1, icon2)
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     # print(mse, icon1.size)
     return mse < 2000
@@ -32,7 +32,7 @@ def check_nav_button(img):
     icon1 = img.crop((3.194*vh, 2.222*vh, 49.722*vh, 7.917*vh)).convert('RGB')
     icon2 = resources.load_image_cached('common/navbutton.png', 'RGB')
 
-    icon1, icon2 = util.uniform_size(icon1, icon2)
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     print(mse)
     return mse < 200
@@ -46,7 +46,7 @@ def check_setting_scene(img):
     icon1 = img.crop((4.722*vh, 3.750*vh, 19.444*vh, 8.333*vh)).convert('RGB')
     icon2 = resources.load_image_cached('common/settingback.png', 'RGB')
 
-    icon1, icon2 = util.uniform_size(icon1, icon2)
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
     return imgops.compare_mse(np.asarray(icon1), np.asarray(icon2)) < 200
 
 def get_setting_back_rect(viewport):

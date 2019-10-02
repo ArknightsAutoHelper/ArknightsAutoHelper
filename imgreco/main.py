@@ -15,8 +15,8 @@ def check_main(img):
     vw, vh = util.get_vwvh(img.size)
     gear1 = img.crop((3.148*vh, 2.037*vh, 9.907*vh, 8.796*vh)).convert('L')
     gear2 = resources.load_image_cached('main/gear.png', 'L')
-    gear1, gear2 = util.uniform_size(gear1, gear2)
-    result = cv2.matchTemplate(np.asarray(gear1), np.asarray(gear2), cv2.TM_CCOEFF_NORMED)[0, 0]
+    gear1, gear2 = imgops.uniform_size(gear1, gear2)
+    result = imgops.compare_ccoeff(gear1, gear2)
     # result = np.corrcoef(np.asarray(gear1).flat, np.asarray(gear2).flat)[0, 1]
     return result > 0.9
 
