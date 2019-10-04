@@ -284,13 +284,13 @@ SECRET_KEY\t{secret_key}
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("检测到升级")
                 smobj.state = on_level_up_popup
-                once_task_time = t - 7
+                once_task_time = t*0.95
                 return
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
                 self.__wait(SMALL_WAIT)
                 smobj.state = on_end_operation
-                once_task_time = t - 7
+                once_task_time = t*0.95
                 return
             logger.info('战斗未结束')
             self.__wait(BATTLE_FINISH_DETECT)

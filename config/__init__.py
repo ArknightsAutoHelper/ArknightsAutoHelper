@@ -19,6 +19,9 @@ STORAGE_PATH = os.path.join(root, 'storage')
 config_file = os.path.join(CONFIG_PATH, 'config.yaml')
 config_template = os.path.join(CONFIG_PATH, 'config-template.yaml')
 logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
+logs = os.path.join(root, 'log')
+if not os.path.exists(logs):
+    os.mkdir(logs)
 logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.log')
 
 dirty = False
