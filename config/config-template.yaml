@@ -27,3 +27,12 @@ ocr:
     app_id: STUB
     app_key: STUB
     app_secret: STUB
+
+reporting:
+  # 是否将关卡掉落上传到企鹅数据 (penguin-stats.io)
+  enabled: false
+
+  # 企鹅数据的用户 ID
+  # > 用户 ID 仅用来标记您的上传身份。在不同设备上使用此 ID 登录，可让掉落数据集中于一个账号下，方便管理上传以及查看个人掉落数据。
+  # 如果为 null 或空，则在下一次上传时创建并更新到文件中
+  penguin_stats_uid:

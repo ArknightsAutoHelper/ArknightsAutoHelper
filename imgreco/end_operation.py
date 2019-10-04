@@ -54,7 +54,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
     logger.logimage(groupimg)
     grouptext = groupimg.crop((0, barbottom, groupimg.width, groupimg.height))
 
-    thim = imgops.enhance_contrast(grouptext.convert('L'), 80)
+    thim = imgops.enhance_contrast(grouptext.convert('L'), 60)
     thim = imgops.crop_blackedge(thim)
     logger.logimage(thim)
     # groupname = recozh.recognize(thim)
@@ -83,7 +83,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
     comparsions.sort(key=lambda x: x[1], reverse=True)
     logger.logtext(repr(comparsions))
     groupname = comparsions[0][0]
-    if comparsions[0][1] < 0.65:
+    if comparsions[0][1] < 0.6:
         session.low_confidence = True
     if groupname == '幸运掉落':
         return (groupname, [('(家具)', 1)])
