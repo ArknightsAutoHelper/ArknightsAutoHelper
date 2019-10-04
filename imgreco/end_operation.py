@@ -14,6 +14,13 @@ from .util import any_in
 
 LOGFILE = 'log/drop-recognition.html'
 
+class RecognizeSession:
+    def __init__(self):
+        self.recognized_groups = []
+        self.low_confidence = False
+        self.vh = 0
+        self.vw = 0
+
 def tell_stars(starsimg):
     thstars = (np.asarray(starsimg.convert('L')) > 96)
     width, height = thstars.shape[::-1]
@@ -34,46 +41,61 @@ def tell_stars(starsimg):
 recozh = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-Medium.dat'))
 reco_novecento_bold = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Bold.dat'))
 
+grouptemplates = []
+def _load_data():
+    _, files = resources.get_entries('end_operation')
+    for f in files:
+        if f.endswith('.png'):
+            grouptemplates.append((f[:-4], resources.load_image('end_operation/'+f, 'L')))
 
-def tell_group(groupimg, viewport, bartop, barbottom):
+
+def tell_group(groupimg, session, bartop, barbottom, ):
     logger = get_logger(LOGFILE)
-    vw, vh = viewport
     logger.logimage(groupimg)
     grouptext = groupimg.crop((0, barbottom, groupimg.width, groupimg.height))
 
-    thim = imgops.enhance_contrast(grouptext.convert('L'), 80, 144)
+    thim = imgops.enhance_contrast(grouptext.convert('L'), 80)
+    thim = imgops.crop_blackedge(thim)
     logger.logimage(thim)
-    groupname = recozh.recognize(thim)
-    logger.logtext(recozh.recognize(thim))
+    # groupname = recozh.recognize(thim)
+    # logger.logtext(recozh.recognize(thim))
 
-    if any_in('倍声望&龙门币', groupname):
-        groupname = '声望&龙门币奖励'
-    elif any_in('常规', groupname):
-        groupname = '常规掉落'
-    elif any_in('额外物资', groupname):
-        groupname = '额外物资'
-    elif any_in('特殊', groupname):
-        groupname = '特殊掉落'
-    elif any_in('幸运', groupname):
-        groupname = '幸运掉落'
-    elif any_in('首次', groupname):
-        groupname = '首次掉落'
-    elif any_in('报酬', groupname):
-        groupname = '报酬'
-    elif any_in('理智返还', groupname):
-        groupname = '理智返还'
+    # if len(recognized_groups) == 0 and any_in('首次', groupname):
+    #     groupname = '首次掉落'
+    # elif any_in('声望', groupname) and '声望&龙门币奖励' not in recognized_groups:
+    #     groupname = '声望&龙门币奖励'
+    # elif any_in('常规', groupname) and '常规掉落' not in recognized_groups:
+    #     groupname = '常规掉落'
+    # elif any_in('特殊', groupname) and '特殊掉落' not in recognized_groups:
+    #     groupname = '特殊掉落'
+    # elif any_in('幸运', groupname) and '幸运掉落' not in recognized_groups:
+    #     groupname = '幸运掉落'
+    # elif any_in('额物资', groupname) and '额外物资' not in recognized_groups:
+    #     groupname = '额外物资'
+    # elif any_in('报酬', groupname) and '报酬' not in recognized_groups:
+    #     groupname = '报酬'
+    # elif any_in('理智返还', groupname) and '理智返还' not in recognized_groups:
+    #     groupname = '理智返还'
 
+    comparsions = [(x[0], imgops.compare_ccoeff(*imgops.uniform_size(thim, x[1])))
+                   for x in grouptemplates
+                   if x[0] not in session.recognized_groups]
+    comparsions.sort(key=lambda x: x[1], reverse=True)
+    logger.logtext(repr(comparsions))
+    groupname = comparsions[0][0]
+    if comparsions[0][1] < 0.65:
+        session.low_confidence = True
     if groupname == '幸运掉落':
         return (groupname, [('(家具)', 1)])
-    
+
+    vw, vh = session.vw, session.vh
     itemcount = roundint(groupimg.width / (20.370*vh))
     result = []
     for i in range(itemcount):
         itemimg = groupimg.crop((20.370*vh*i, 0.000*vh, 40.741*vh, 18.981*vh))
         # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
         itemimg = itemimg.crop((0.093*vh, 0, 19.074*vh, itemimg.height))
-        logger.logimage(itemimg)
-        result.append(item.tell_item(itemimg))
+        result.append(item.tell_item(itemimg, session))
     return (groupname, result)
 
 
@@ -180,17 +202,32 @@ def recognize(im):
 
     imggroups = [items.crop((x1, 0, x2, items.height))
                  for x1, x2 in finalgroups]
+    items = []
 
-    items = [tell_group(group, (vw, vh), linetop, linebottom) for group in imggroups]
+    session = RecognizeSession()
+    session.vw = vw
+    session.vh = vh
+
+    for group in imggroups:
+        result = tell_group(group, session, linetop, linebottom)
+        session.recognized_groups.append(result[0])
+        items.append(result)
         
 
     t1 = time.monotonic()
+    if session.low_confidence:
+        logger.logtext('LOW CONFIDENCE')
     logger.logtext('time elapsed: %f' % (t1-t0))
     return {
         'operation': operation_id_str,
         'stars': stars_status,
-        'items': items
+        'items': items,
+        'low_confidence': session.low_confidence
     }
 
+
+_load_data()
+
+
 if __name__ == '__main__':
-    print(recognize(Image.open(sys.argv[-1])))
+    print(globals()[sys.argv[-2]](Image.open(sys.argv[-1])))

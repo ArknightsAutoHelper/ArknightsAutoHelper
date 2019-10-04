@@ -1,0 +1,29 @@
+device:
+  # ADB server 的端口。部分模拟器为避免冲突可能会将 ADB server 开在其他端口，
+  # 此时可以更改此设置以利用模拟器自带的 ADB server。
+  adb_server: 127.0.0.1:5037
+
+  # 如果为 true，则自动选择 `adb devices` 中唯一一个可用的设备，否则将始终尝试选择 `adb_connect` 指定的设备。
+  # 如果 adb devices 中有多个可用设备，则需要在菜单中进行选择。
+  enable_adb_host_auto_detect: true
+
+  # 设备在 `adb devices` 中显示的名称，或 `adb connect` 时的端口。
+  #adb_connect: 127.0.0.1:7555
+
+  package_name: com.hypergryph.arknights
+  # package_name: com.hypergryph.arknights.bilibili
+  activity_name: com.u8.sdk.U8UnityContext
+
+ocr:
+  # 选择 OCR 引擎，非必要
+  # 设置为 auto 则选择下列第一个可用的引擎: tesseract, windows_media_ocr, baidu
+  engine: auto
+
+  # 百度 API 设置，使用 baidu OCR 时需要正确填写
+  baidu_api:
+    # 是否将百度 OCR 标记为可用
+    enabled: false
+    # 百度 API 鉴权数据
+    app_id: STUB
+    app_key: STUB
+    app_secret: STUB

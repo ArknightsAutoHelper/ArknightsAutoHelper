@@ -2,8 +2,12 @@ from functools import reduce
 
 import numpy as np
 from PIL import Image
+import cv2 as cv
 
-def enhance_contrast(img, lower=90, upper=255):
+def enhance_contrast(img, lower=90, upper=None):
+    img = np.asarray(img, dtype=np.uint8)
+    if upper is None:
+        upper = np.max(img)
     lut = np.zeros(256, dtype=np.uint8)
     lut[lower:upper+1] = np.linspace(0, 255, upper-lower+1, endpoint=True, dtype=np.uint8)
     lut[upper+1:] = 255
@@ -86,8 +90,10 @@ def scalecrop(img, left, top, right, bottom):
     return img.crop(rect)
 
 def compare_mse(mat1, mat2):
+    mat1 = np.asarray(mat1)
+    mat2 = np.asarray(mat2)
     assert(mat1.shape == mat2.shape)
-    diff = mat1.astype(np.int32) - mat2.astype(np.int32)
+    diff = mat1.astype(np.float32) - mat2.astype(np.float32)
     se = np.sum(diff * diff)
     mse = se / reduce(lambda a, b: a*b, mat1.shape)
     return mse
@@ -95,3 +101,20 @@ def compare_mse(mat1, mat2):
 def scale_to_height(img, height, algo=Image.BILINEAR):
     scale = height / img.height
     return img.resize((int(img.width*scale), height), algo)
+
+def compare_ccoeff(img1, img2):
+    img1 = np.asarray(img1)
+    img2 = np.asarray(img2)
+    assert(img1.shape == img2.shape)
+    result = cv.matchTemplate(img1, img2, cv.TM_CCOEFF_NORMED)[0, 0]
+    return result
+
+
+def uniform_size(img1, img2):
+    if img1.height < img2.height:
+        img2 = img2.resize(img1.size, Image.BILINEAR)
+    elif img1.height > img2.height:
+        img1 = img1.resize(img2.size, Image.BILINEAR)
+    elif img1.width != img2.width:
+        img1 = img1.resize(img2.size, Image.BILINEAR)
+    return (img1, img2)
