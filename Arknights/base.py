@@ -225,7 +225,11 @@ SECRET_KEY\t{secret_key}
                 self.operation_once_statemachine(c_id, )
                 logger.info("第 %d 次战斗完成", count + 1)
                 if count != set_count - 1:
-                    self.__wait(10, MANLIKE_FLAG=True)
+                    # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
+                    if config.reporter:
+                        self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    else:
+                        self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
         except StopIteration:
             logger.error('未能进行第 %d 次战斗', count + 1)
             remain = set_count - count - 1
@@ -252,7 +256,6 @@ SECRET_KEY\t{secret_key}
             self.stop = False
             self.operation_start = None
             self.first_wait = True
-
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
@@ -294,6 +297,7 @@ SECRET_KEY\t{secret_key}
             smobj.state = on_troop
 
         def on_troop(smobj):
+            # Fixme 明日方舟界面加载有时会卡住，self.__wait()没办法很好的处理
             self.__wait(SMALL_WAIT, False)
             logger.info('确认编队')
             self.tap_rect(imgreco.before_operation.get_confirm_troop_rect(self.viewport))
@@ -337,6 +341,8 @@ SECRET_KEY\t{secret_key}
 
         def on_end_operation(smobj):
             screenshot = self.adb.get_screen_shoot()
+            logger.info('离开结算画面')
+            self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
@@ -344,8 +350,6 @@ SECRET_KEY\t{secret_key}
                 _penguin_report(drops)
             except Exception as e:
                 logger.error('', exc_info=True)
-            logger.info('离开结算画面')
-            self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
             smobj.stop = True
 
         smobj.state = on_prepare
