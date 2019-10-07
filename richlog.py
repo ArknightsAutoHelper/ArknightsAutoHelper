@@ -6,6 +6,8 @@ from functools import lru_cache
 class RichLogger:
     def __init__(self, file, overwrite=False):
         self.f = open(file, 'wb' if overwrite else 'ab')
+        if self.f.tell() == 0:
+            self.loghtml('<html><head><meta charset="utf-8"></head><body>')
 
     def logimage(self, image):
         bio = BytesIO()
