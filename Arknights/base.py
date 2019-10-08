@@ -78,7 +78,7 @@ class ArknightsHelper(object):
         self.ocr_active = True
         self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.get_screen_shoot().size
-        self.last_operation_time = 0
+        self.operation_time = []
         if DEBUG_LEVEL >= 1:
             self.__print_info()
         if not call_by_gui:
@@ -218,7 +218,7 @@ SECRET_KEY\t{secret_key}
             logger.info("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
             return True
-        self.last_operation_time = 0
+        self.operation_time = []
         try:
             for count in range(set_count):
                 logger.info("开始第 %d 次战斗", count + 1)
@@ -306,12 +306,12 @@ SECRET_KEY\t{secret_key}
 
         def on_operation(smobj):
             if smobj.first_wait:
-                if self.last_operation_time == 0:
+                if len(self.operation_time) == 0:
                     wait_time = BATTLE_NONE_DETECT_TIME
                 else:
-                    wait_time = self.last_operation_time
+                    wait_time = sum(self.operation_time)/len(self.operation_time)-7
                 logger.info('等待 %d s' % wait_time)
-                self.__wait(wait_time)
+                self.__wait(wait_time, MANLIKE_FLAG=False)
                 smobj.first_wait = False
             t = monotonic() - smobj.operation_start
 
@@ -320,14 +320,14 @@ SECRET_KEY\t{secret_key}
             screenshot = self.adb.get_screen_shoot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("检测到升级")
+                self.operation_time.append(t)
                 smobj.state = on_level_up_popup
-                self.last_operation_time = t*0.95
                 return
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
+                self.operation_time.append(t)
                 self.__wait(SMALL_WAIT)
                 smobj.state = on_end_operation
-                self.last_operation_time = t*0.95
                 return
             logger.info('战斗未结束')
             self.__wait(BATTLE_FINISH_DETECT)
