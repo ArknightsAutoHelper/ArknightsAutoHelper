@@ -8,6 +8,7 @@ import shutil
 from collections import Mapping
 import logging.config
 import ruamel.yaml
+from .version import version
 yaml = ruamel.yaml.YAML()
 
 
@@ -19,6 +20,9 @@ STORAGE_PATH = os.path.join(root, 'storage')
 config_file = os.path.join(CONFIG_PATH, 'config.yaml')
 config_template = os.path.join(CONFIG_PATH, 'config-template.yaml')
 logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
+logs = os.path.join(root, 'log')
+if not os.path.exists(logs):
+    os.mkdir(logs)
 logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.log')
 
 dirty = False
@@ -106,6 +110,8 @@ APP_ID = get('ocr/baidu_api/app_id', 'AAAZZZ')
 API_KEY = get('ocr/baidu_api/app_key', 'AAAZZZ')
 SECRET_KEY = get('ocr/baidu_api/app_secret', 'AAAZZZ')
 
+reporter = get('reporting/enabled', False)
 
 with open(logging_config_file, 'r', encoding='utf-8') as f:
     logging.config.dictConfig(yaml.load(f))
+del f

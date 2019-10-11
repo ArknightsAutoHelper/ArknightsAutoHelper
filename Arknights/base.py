@@ -15,6 +15,8 @@ from Arknights.click_location import *
 from Arknights.flags import *
 # from config import *
 import config
+import penguin_stats.loader
+import penguin_stats.reporter
 from . import ocr
 
 logger = logging.getLogger('base')
@@ -27,6 +29,37 @@ def _logged_ocr(image, *args, **kwargs):
     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
     logger.logtext(repr(ocrresult.text))
     return ocrresult
+
+
+def _penguin_init():
+    if _penguin_init.ready or _penguin_init.error:
+        return
+    if not config.get('reporting/enabled', False):
+        logger.info('未启用掉落报告')
+        _penguin_init.error = True
+        return
+    try:
+        logger.info('载入企鹅数据资源...')
+        penguin_stats.loader.load_from_service()
+        penguin_stats.loader.user_login()
+        _penguin_init.ready = True
+    except:
+        logger.error('载入企鹅数据资源出错', exc_info=True)
+        _penguin_init.error = True
+
+
+_penguin_init.ready = False
+_penguin_init.error = False
+
+
+def _penguin_report(recoresult):
+    _penguin_init()
+    if not _penguin_init.ready:
+        return
+    logger.info('向企鹅数据汇报掉落...')
+    reportid = penguin_stats.reporter.report(recoresult)
+    if reportid is not None:
+        logger.info('企鹅数据报告 ID: %s', reportid)
 
 
 class ArknightsHelper(object):
@@ -45,6 +78,7 @@ class ArknightsHelper(object):
         self.ocr_active = True
         self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.get_screen_shoot().size
+        self.operation_time = []
         if DEBUG_LEVEL >= 1:
             self.__print_info()
         if not call_by_gui:
@@ -184,17 +218,18 @@ SECRET_KEY\t{secret_key}
             logger.info("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
             return True
-        # 如果当前不在进入战斗前的界面就重启
-        global once_task_time
+        self.operation_time = []
         try:
             for count in range(set_count):
-                if count == 0:
-                    once_task_time = 0
                 logger.info("开始第 %d 次战斗", count + 1)
                 self.operation_once_statemachine(c_id, )
                 logger.info("第 %d 次战斗完成", count + 1)
                 if count != set_count - 1:
-                    self.__wait(10, MANLIKE_FLAG=True)
+                    # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
+                    if config.reporter:
+                        self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                    else:
+                        self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
         except StopIteration:
             logger.error('未能进行第 %d 次战斗', count + 1)
             remain = set_count - count - 1
@@ -216,11 +251,11 @@ SECRET_KEY\t{secret_key}
             return True
 
     class operation_once_state:
-        state = None
-        stop = None
-        operation_start = None
-        # TODO Timer
-        timer = {}
+        def __init__(self):
+            self.state = None
+            self.stop = False
+            self.operation_start = None
+            self.first_wait = True
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
@@ -236,9 +271,10 @@ SECRET_KEY\t{secret_key}
                 # ASSUMPTION: 所有关卡都显示并能识别体力消耗
                 not_in_scene = True
 
+            logger.info('当前画面关卡：%s', recoresult['operation'])
+
             if (not not_in_scene) and c_id is not None:
                 # 如果传入了关卡 ID，检查识别结果
-                logger.info('当前画面关卡：%s', recoresult['operation'])
                 if recoresult['operation'] != c_id:
                     not_in_scene = True
 
@@ -261,6 +297,7 @@ SECRET_KEY\t{secret_key}
             smobj.state = on_troop
 
         def on_troop(smobj):
+            # Fixme 明日方舟界面加载有时会卡住，self.__wait()没办法很好的处理
             self.__wait(SMALL_WAIT, False)
             logger.info('确认编队')
             self.tap_rect(imgreco.before_operation.get_confirm_troop_rect(self.viewport))
@@ -268,29 +305,29 @@ SECRET_KEY\t{secret_key}
             smobj.state = on_operation
 
         def on_operation(smobj):
-            global once_task_time
-            if once_task_time == 0:
-                detect_time = BATTLE_NONE_DETECT_TIME
-            else:
-                detect_time = once_task_time
+            if smobj.first_wait:
+                if len(self.operation_time) == 0:
+                    wait_time = BATTLE_NONE_DETECT_TIME
+                else:
+                    wait_time = sum(self.operation_time)/len(self.operation_time)-7
+                logger.info('等待 %d s' % wait_time)
+                self.__wait(wait_time, MANLIKE_FLAG=False)
+                smobj.first_wait = False
             t = monotonic() - smobj.operation_start
-            if t < detect_time:
-                self.__wait(detect_time - t)
-                t = monotonic() - smobj.operation_start
 
             logger.info('已进行 %.1f s，判断是否结束', t)
 
             screenshot = self.adb.get_screen_shoot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("检测到升级")
+                self.operation_time.append(t)
                 smobj.state = on_level_up_popup
-                once_task_time = t - 7
                 return
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
+                self.operation_time.append(t)
                 self.__wait(SMALL_WAIT)
                 smobj.state = on_end_operation
-                once_task_time = t - 7
                 return
             logger.info('战斗未结束')
             self.__wait(BATTLE_FINISH_DETECT)
@@ -304,14 +341,15 @@ SECRET_KEY\t{secret_key}
 
         def on_end_operation(smobj):
             screenshot = self.adb.get_screen_shoot()
+            logger.info('离开结算画面')
+            self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
                 logger.info('掉落识别结果：%s', repr(drops))
+                _penguin_report(drops)
             except Exception as e:
-                print(e)
-            logger.info('离开结算画面')
-            self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
+                logger.error('', exc_info=True)
             smobj.stop = True
 
         smobj.state = on_prepare

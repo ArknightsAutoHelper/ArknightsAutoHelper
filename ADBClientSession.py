@@ -31,6 +31,8 @@ def _check_okay(sock):
 
 def _read_hexlen(sock):
     textlen = int(_recvexactly(sock, 4), 16)
+    if textlen == 0:
+        return b''
     buf = _recvexactly(sock, textlen)
     return buf
 
