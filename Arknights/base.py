@@ -670,15 +670,15 @@ SECRET_KEY\t{secret_key}
 
     def get_credit(self):
         logger.debug("[D] base.get_credit")
-        logger.info("[i] 领取信赖")
+        logger.info("领取信赖")
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
-        logger.info('[i] 进入好友列表')
+        logger.info('进入好友列表')
         self.tap_quadrilateral(imgreco.main.get_friend_corners(screenshot))
         self.__wait(MEDIUM_WAIT)
         self.tap_quadrilateral(imgreco.main.get_friend_list(screenshot))
         self.__wait(MEDIUM_WAIT)
-        logger.info('[i] 访问好友基建')
+        logger.info('访问好友基建')
         self.tap_quadrilateral(imgreco.main.get_friend_build(screenshot))
         self.__wait(MEDIUM_WAIT)
         building_count = 0
@@ -687,24 +687,24 @@ SECRET_KEY\t{secret_key}
             self.tap_quadrilateral(imgreco.main.get_next_friend_build(screenshot))
             self.__wait(MEDIUM_WAIT)
             building_count = building_count + 1
-        logger.info('[i] 信赖领取完毕')
+        logger.info('信赖领取完毕')
     
     def get_building(self):
-        logger.debug("[D] base.get_building")
-        logger.info("[i] 清空基建")
+        logger.debug("base.get_building")
+        logger.info("清空基建")
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
-        logger.info('[i] 进入我的基建')
+        logger.info('进入我的基建')
         self.tap_quadrilateral(imgreco.main.get_back_my_build(screenshot))
         self.__wait(MEDIUM_WAIT + 3)
         self.tap_quadrilateral(imgreco.main.get_my_build_task(screenshot))
         self.__wait(SMALL_WAIT)
-        logger.info('[i] 收取制造产物')
+        logger.info('收取制造产物')
         self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
         self.__wait(SMALL_WAIT)
-        logger.info('[i] 清理贸易订单')
+        logger.info('清理贸易订单')
         self.tap_quadrilateral(imgreco.main.get_my_sell_task_1(screenshot))
-        self.__wait(SMALL_WAIT)
+        self.__wait(SMALL_WAIT + 1)
         self.tap_quadrilateral(imgreco.main.get_my_sell_tasklist(screenshot))
         self.__wait(SMALL_WAIT)
         sell_count = 0
@@ -722,4 +722,4 @@ SECRET_KEY\t{secret_key}
             self.__wait(SMALL_WAIT - 1)
             sell_count = sell_count + 1
         self.back_to_main()
-        logger.info("[i] 基建领取完毕")
+        logger.info("基建领取完毕")
