@@ -74,9 +74,10 @@ class ArknightsHelper(object):
             self.adb = ADBShell(adb_host=adb_host)
         except ConnectionRefusedError as e:
             logger.error("错误: {}".format(e))
-            logger.info("启动本地adb")
-            os.system(config.ADB_ROOT + "\\adb.exe server")
+            logger.info("尝试启动本地adb")
             try:
+                os.system(config.ADB_ROOT + "\\adb kill-server")
+                os.system(config.ADB_ROOT + "\\adb start-server")
                 self.adb = ADBShell(adb_host=adb_host)
             except Exception as e:
                 logger.error("尝试解决失败，错误: {}".format(e))
