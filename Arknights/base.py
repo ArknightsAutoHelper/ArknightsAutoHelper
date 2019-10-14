@@ -70,7 +70,17 @@ class ArknightsHelper(object):
                  call_by_gui=False):  # 是否为从 GUI 程序调用
         if adb_host is None:
             adb_host = config.ADB_HOST
-        self.adb = ADBShell(adb_host=adb_host)
+        try:
+            self.adb = ADBShell(adb_host=adb_host)
+        except ConnectionRefusedError as e:
+            logger.error("错误: {}".format(e))
+            logger.info("启动本地adb")
+            os.system(config.ADB_ROOT + "\\adb.exe server")
+            try:
+                self.adb = ADBShell(adb_host=adb_host)
+            except Exception as e:
+                logger.error("尝试解决失败，错误: {}".format(e))
+                logger.info("建议检查adb版本夜神模拟器正确的版本为: 1.0.36")
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.CURRENT_STRENGTH = 100
@@ -456,7 +466,6 @@ SECRET_KEY\t{secret_key}
                 logger.error("发生未知错误... 60s后退出")
                 self.__wait(60)
                 self.__del()
-
 
     def battle_selector(self, c_id, first_battle_signal=True):  # 选关
         logger.debug("base.battle_selector")
