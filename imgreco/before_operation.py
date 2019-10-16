@@ -74,6 +74,15 @@ def get_start_operation_rect(viewport):
     return (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
 
 
+def check_confirm_troop_rect(img):
+    vw, vh = util.get_vwvh(img.size)
+    icon1 = img.crop((50 * vw + 57.083 * vh, 64.722 * vh, 50 * vw + 71.389 * vh, 79.167 * vh)).convert('RGB')
+    icon2 = resources.load_image_cached('before_operation/operation_start.png', 'RGB')
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
+    mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
+    return mse < 100
+
+
 def get_confirm_troop_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
     return (50 * vw + 55.833 * vh, 52.963 * vh, 50 * vw + 72.778 * vh, 87.361 * vh)
