@@ -1,8 +1,4 @@
 import logging
-from functools import lru_cache
-
-import requests
-
 
 import config
 from . import loader

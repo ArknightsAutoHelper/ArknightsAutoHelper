@@ -1,10 +1,13 @@
 import numpy as np
 from PIL import Image
+
 from . import imgops
+
+
 # from skimage.measure import compare_ssim
 # from skimage.measure import compare_mse
 
-import richlog
+
 # logger = richlog.get_logger('log/richlog.html', True)
 
 def imgcompare(img, mat):
@@ -12,10 +15,12 @@ def imgcompare(img, mat):
     mat2 = np.asarray(img.resize((width, height), Image.BILINEAR))
     return compare_ssim(mat, mat2)
 
+
 def imgcompare2(img, mat):
     height, width = mat.shape
     mat2 = np.asarray(img.resize((width, height), Image.BILINEAR))
     return -imgops.compare_mse(mat, mat2)
+
 
 def split_chars(textimg, split_threshold=127):
     """requires white chars on black background, grayscale image"""
@@ -39,7 +44,7 @@ def split_chars(textimg, split_threshold=127):
             spaces += 1
             if spaces >= spacing_threshold:
                 inchar = False
-                if left != x :
+                if left != x:
                     chars.append(imgops.crop_blackedge(Image.fromarray(mat[:, left:x])))
         if not inchar and (col > split_threshold).any():
             left = x
@@ -55,7 +60,6 @@ def split_chars(textimg, split_threshold=127):
     return chars
 
 
-
 class MiniRecognizer:
     def __init__(self, model):
         self.model = model['data']
@@ -68,18 +72,17 @@ class MiniRecognizer:
         comparsions = []
         for c, mat in self.model:
             h2, w2 = mat.shape
-            scale = h2/h1
-            w1s = w1*scale
-            ratcomp = abs(w1s-w2)/w1
+            scale = h2 / h1
+            w1s = w1 * scale
+            ratcomp = abs(w1s - w2) / w1
             # print(c, ratcomp)
             # if ratcomp < 0.8:
             score = imgcompare2(image, mat)
             comparsions.append((c, score, ratcomp))
         if len(comparsions):
-            return max(comparsions, key=lambda x: x[1]-x[2]*0.4)[0]
+            return max(comparsions, key=lambda x: x[1] - x[2] * 0.4)[0]
         else:
             return ''
-
 
     def recognize(self, image):
         """requires white chars on black background, grayscale image"""
@@ -87,4 +90,3 @@ class MiniRecognizer:
             image = image.convert('L')
         charimgs = split_chars(image)
         return ''.join(self.recognize_char(charimg) for charimg in charimgs)
-

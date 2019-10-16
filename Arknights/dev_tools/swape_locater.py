@@ -2,10 +2,10 @@
 在这里做一些测试，包括拖动后的点击位置获取操作
 
 '''
+from time import sleep
+
 from Arknights import ArknightsHelper
 from Arknights.click_location import *
-from Arknights.flags import *
-from time import sleep
 
 ark = ArknightsHelper()
 ark.adb.touch_tap(

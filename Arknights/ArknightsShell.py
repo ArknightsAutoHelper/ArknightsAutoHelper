@@ -9,8 +9,9 @@
 
 import optparse
 from collections import OrderedDict
+
+from Arknights.base import ArknightsHelper
 from Arknights.click_location import MAIN_TASK_SUPPORT
-from Arknights import ArknightsHelper
 
 
 class ArknightsShell():
@@ -81,7 +82,7 @@ class ArknightsShell():
                 Ark.module_battle_slim(
                     c_id=None,
                     set_count=count,
-                   )
+                )
 
             if self.options.module_battle:
                 Ark.main_handler(

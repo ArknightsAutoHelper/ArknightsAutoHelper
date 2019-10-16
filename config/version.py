@@ -3,8 +3,8 @@ get version from git working tree
 
 FIXME: replace with hardcoded value for release
 """
-import subprocess
 import os
+import subprocess
 
 _dir = os.path.dirname(__file__)
 branch = subprocess.check_output(('git', 'rev-parse', '--abbrev-ref', 'HEAD'), cwd=_dir).strip()

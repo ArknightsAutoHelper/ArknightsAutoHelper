@@ -6,14 +6,17 @@
 plain_text
 '''
 
-import os
 import logging.config
+import os
+
+from config.common_config import CONFIG_PATH
+
 from Arknights.flags import *
-from config.common_config import SCREEN_SHOOT_SAVE_PATH, STORAGE_PATH, CONFIG_PATH
 
 os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(CONFIG_PATH + 'logging.ini')
 logger = logging.getLogger('base')
+
 
 class ShellColor(object):
     def __init__(self):

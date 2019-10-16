@@ -1,8 +1,11 @@
-import pickle
-from PIL import Image, ImageFont
-import numpy as np
-from . import imgops
 import os
+import pickle
+
+import numpy as np
+from PIL import Image, ImageFont
+
+from . import imgops
+
 
 def charimg(font, char, size, threshold=32):
     mask = font.getmask(char, 'L')
@@ -10,26 +13,30 @@ def charimg(font, char, size, threshold=32):
     thimg = imgops.image_threshold_mat2img(maskmat, threshold)
     left, top, right, bottom = thimg.getbbox()
 
-    height = bottom-top
-    width = right-left
+    height = bottom - top
+    width = right - left
     maskim = Image.new('L', mask.size)
     maskim.putdata(mask)
     scale = size / height
     scaledwidth = int(width * scale)
     return maskim.resize((scaledwidth, size), Image.BICUBIC, (left, top, right, bottom))
 
+
 def charmat(font, char, size, threshold=32):
     return np.asarray(charimg(font, char, size, threshold))
 
+
 def main(fontfile, size, chars, threshold, datafile):
-    fnt = ImageFont.truetype(fontfile, size*8)
+    fnt = ImageFont.truetype(fontfile, size * 8)
     data = [(char, charmat(fnt, char, size, threshold)) for char in chars]
     obj = {'fontfile': os.path.basename(fontfile), 'size': size, 'chars': chars, 'data': data}
     with open(datafile, 'wb') as f:
         pickle.dump(obj, f)
 
+
 if __name__ == '__main__':
     import sys
+
     if len(sys.argv) not in (5, 6):
         print("usage: %s fontfile size chars [crop_threshold] datafile" % sys.argv[0])
         sys.exit(1)

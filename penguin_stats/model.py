@@ -1,12 +1,10 @@
-from collections import namedtuple
-
-
 def struct(*keys):
     class _structBase:
         # __slots__ = keys
         def __init__(self, **kwargs):
             self.__dict__.update((k, None) for k in keys if k not in kwargs)
             self.__dict__.update(kwargs)
+
     return _structBase
 
 

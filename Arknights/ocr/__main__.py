@@ -2,9 +2,9 @@
 
 import sys
 from pprint import pprint
-from PIL import Image
 
 import ocr
+from PIL import Image
 
 if 2 <= len(sys.argv) <= 3:
     lang = 'zh-hans-cn' if len(sys.argv) == 2 else sys.argv[1]
