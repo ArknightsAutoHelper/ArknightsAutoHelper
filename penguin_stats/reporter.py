@@ -14,16 +14,16 @@ REPORT_SOURCE = 'ArknightsAutoHelper'
 
 def report(recoresult):
     if recoresult['stars'] != (True, True, True):
-        logger.info('不汇报非三星过关掉落')
+        logger.error('[x] 不汇报非三星过关掉落')
         return None
     if recoresult['low_confidence']:
-        logger.info('不汇报低置信度识别结果')
+        logger.error('[x] 不汇报低置信度识别结果')
         return None
 
     code = recoresult['operation']
     stage = loader.stages.get_by_code(code)
     if stage is None:
-        logger.info('企鹅数据无此关卡：%s', code)
+        logger.error('[x] 企鹅数据无此关卡：%s', code)
         return None
 
     flattenitems = {}
@@ -31,7 +31,7 @@ def report(recoresult):
     furncount = 0
     for groupname, items in recoresult['items']:
         if groupname == '首次掉落':
-            logger.info('不汇报首次掉落')
+            logger.error('[x] 不汇报首次掉落')
             return None
         if '声望&龙门币奖励' in groupname:
             continue
@@ -40,7 +40,12 @@ def report(recoresult):
             furncount += 1
             continue
         for name, qty in items:
-            itemid = loader.items.get_by_name(name).id
+            try:
+                itemid = loader.items.get_by_name(name).id
+            except AttributeError:
+                logger.error("[x] {} 不在企鹅物流的汇报列表里".format(name))
+                groupcount -= 1
+                continue
             if itemid not in flattenitems:
                 flattenitems[itemid] = qty
             else:
@@ -48,13 +53,13 @@ def report(recoresult):
 
     validator = loader.constraints.get_validator_for_stage(stage)
     if not validator.validate_group_count(groupcount):
-        logger.error('物品分组数量不符合企鹅数据验证规则')
+        logger.error('[x] 物品分组数量不符合企鹅数据验证规则')
         return None
 
     for itemid in flattenitems:
         qty = flattenitems[itemid]
         if not validator.validate_item_quantity(itemid, qty):
-            logger.error('物品 %s 数量不符合企鹅数据验证规则', repr(loader.items.get_by_id(itemid)))
+            logger.error('[x] 物品 %s 数量不符合企鹅数据验证规则', repr(loader.items.get_by_id(itemid)))
             return None
 
     jobj = {

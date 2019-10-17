@@ -51,6 +51,8 @@ class ArknightsShell():
                           help="Clear daily task if call this option")
         parser.add_option("-r", "--get-credit", action="store_true", default=False, dest="get_credit",
                           help="Get credit if call this option")
+        parser.add_option("-u", "--get-building", action="store_true", default=False, dest="get_building",
+                          help="Clear building if call this option")
         (self.options, _) = parser.parse_args()
 
         if self.options.module_battle_slim & self.options.module_battle:
@@ -76,7 +78,7 @@ class ArknightsShell():
             exit(0)
 
     def handler(self):
-        if self.options.module_battle_slim | self.options.module_battle | self.options.clear_daily | self.options.get_credit:
+        if self.options.module_battle_slim | self.options.module_battle | self.options.clear_daily | self.options.get_credit | self.options.get_building:
             Ark = ArknightsHelper()
             if self.options.module_battle_slim:
                 id, count = self.task_list.popitem()
@@ -97,3 +99,5 @@ class ArknightsShell():
             if self.options.get_credit:
                 Ark.get_credit()
                 
+            if self.options.get_building:
+                Ark.get_building()

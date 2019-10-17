@@ -223,7 +223,7 @@ def recognize(im):
         'stars': stars_status,
         'items': items,
         'low_confidence': session.low_confidence
-    }
+    }, items
 
 
 _load_data()

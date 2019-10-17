@@ -110,8 +110,6 @@ APP_ID = get('ocr/baidu_api/app_id', 'AAAZZZ')
 API_KEY = get('ocr/baidu_api/app_key', 'AAAZZZ')
 SECRET_KEY = get('ocr/baidu_api/app_secret', 'AAAZZZ')
 
-reporter = get('reporting/enabled', False)
-
 with open(logging_config_file, 'r', encoding='utf-8') as f:
     logging.config.dictConfig(yaml.load(f))
 del f
