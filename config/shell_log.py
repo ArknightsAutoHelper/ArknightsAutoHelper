@@ -6,14 +6,17 @@
 plain_text
 '''
 
-import os
 import logging.config
+import os
+
+from config.common_config import CONFIG_PATH
+
 from Arknights.flags import *
-from config.common_config import SCREEN_SHOOT_SAVE_PATH, STORAGE_PATH, CONFIG_PATH
 
 os.path.join(os.path.abspath("../"))
 logging.config.fileConfig(CONFIG_PATH + 'logging.ini')
 logger = logging.getLogger('base')
+
 
 class ShellColor(object):
     def __init__(self):
@@ -28,28 +31,21 @@ class ShellColor(object):
         self.E_UNDERLINE = '\033[4m'
 
     def warning_text(self, string):
-        print(self.H_WARNING + string + self.E_END)
-        logger.info(self.H_WARNING + string + self.E_END)
+        logger.warning(self.H_WARNING + string + self.E_END)
 
     def info_text(self, string):
-        print(self.H_OK_BLUE + string + self.E_END)
         logger.info(self.H_OK_BLUE + string + self.E_END)
 
     def failure_text(self, string):
-        print(self.H_FAIL + string + self.E_END)
-        logger.info(self.H_FAIL + string + self.E_END)
+        logger.error(self.H_FAIL + string + self.E_END)
 
     def helper_text(self, string):
-        print(self.H_OK_GREEN + string + self.E_END)
         logger.info(self.H_OK_GREEN + string + self.E_END)
 
     def debug_text(self, string, level=1):
-        if DEBUG_LEVEL >= level:
-            print(self.H_DEBUG + string + self.E_END)
-            logger.info(self.H_DEBUG + string + self.E_END)
+        logger.debug(self.H_DEBUG + string + self.E_END)
 
     def plain_text(self, string):
-        print(string)
         logger.info(string)
 
     def run_test(self, string="[*] DEBUG COLOR"):

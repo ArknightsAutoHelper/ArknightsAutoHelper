@@ -24,7 +24,10 @@ main_battle_slim 的启动模式
 '''
 from Arknights import ArknightsHelper
 Ark = ArknightsHelper()
+# 传递c_id可以确保页面正确
 Ark.module_battle_slim(c_id='CE-5', set_count=14, set_ai=True)
+# 不传递c_id可以自动检测消耗，本功能暂不支持Shell
+Ark.module_battle_slim(set_count=7, self_detect=True)
 
 # 如果没有安装OCR模块，请在初始化ArknightsHelper()类时告知系统初值，就像这样子
 from Arknights import ArknightsHelper

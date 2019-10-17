@@ -8,10 +8,6 @@
 | dev |目前的开发版本|
 | shaobao_adb |经过封装可以移植的ADB方法类|
 
-😊 经过pyinstaller打包的可执行文件下载地址
-
-https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases
-
 ## 0x01 运行须知
 
 ###  **环境与分辨率**
@@ -20,39 +16,51 @@ https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases
 
 ⚠ ` 1280*720` ⚠ 分辨率设置非常重要 ⚠
 
-由于作者精力有限，只做了绝对坐标的，欢迎大家重写模块。建议使用夜神模拟器，记得开启开发者模式和ROOT权限。
-在运行过程中，请不要对模拟器进行缩放，以免造成不必要的麻烦
+由于作者精力有限，只做了绝对坐标的，欢迎大家重写模块。建议使用夜神模拟器，记得开启开发者模式。
 
+\* 部分模块已经可以自适应分辨率和宽高比，作者测试过的分辨率有 1280x720、1440x720、1920x1080、2160x1080。
 
 ### **安装依赖**
 
 #### Python 依赖
 ```bash
-$ pip install -r requirement.txt
+$ pip install -r requirements.txt
 ```
 
 #### OCR 依赖
 
-该辅助需要安装本地OCR工具或者申请百度OCR
+该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文和英文语言包）或者申请百度OCR
 
 **关于本地OCR工具安装可查看**
 https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/blob/master/OCR_install.md
 
 **关于百度OCR申请**
-> 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，按次计费。理论上每天次数非常充足
+##目前百度ocr功能无法使用，请等待后续版本恢复
+> 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，根据百度文字识别文档，会暂停使用，建议使用前阅读文档，不保证政策是否改变。理论上每天次数非常充足
 
 文档地址：https://cloud.baidu.com/doc/OCR/index.html
 启用百度api作为ocr识别方案，需要自行注册百度云。之后再config.developer_config中配置
 ```python
-# 是否启用百度api作为ocr识别方案，需要自行注册，不启用则使用默认方案
+# 是否启用百度api作为ocr识别方案之一，需要自行注册，不启用则使用默认方案，但在engine指定baidu的话该设置无效
 enable_baidu_api = False
-# 是否对使用百度ocr的图像进行处理，有可能改善精准度，但也有可能反而导致识别错误；该选项不会影响tesseract
-enable_help_baidu = True
 """ 你的 APPID AK SK """
 APP_ID = '你的 App ID'
 API_KEY = '你的 Api Key'
 SECRET_KEY = '你的 Secret Key'
 ```
+
+**关于Windows OCR**
+
+需要 Windows 10。
+
+当前默认配置为在 tesseract 无法使用（未安装）时使用。如要强制使用，请更改如下
+```python
+engine = "windows_media_ocr"
+```
+Windows OCR 的语言数据是随语言支持安装的，可能需要在系统语言列表中加入英语（美国）以安装英语 OCR 支持。
+
+
+目前 Windows OCR 无法识别游戏中部分文本，正在考虑使用替代方法。
 
 ### **额外设置**
 
@@ -60,24 +68,18 @@ SECRET_KEY = '你的 Secret Key'
 
 #### **日志说明**
 
-日志采用```import logging```在主目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
+日志采用```import logging```在log目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
 
 相关配置文件在```config```目录下的**logging.ini**，由于过于复杂 ~~其实也没确定理解的对不对~~ 这里请自行研究，欢迎讨论
 
 配置文件本身支持如字典，YAML等，欢迎找到更有效，更整洁的方式并更换
 
-日志目前是输出所有，且大小不受限制，并没有自动备份功能，但是根据```logging```文档这是可以控制并且暂时关闭的 ~~我不想实验了，加油吧少年~~ 
+日志目前启动按照时间自动备份功能，间隔为一天一次，保留最多7份。
 
 ## 0x02 ArknightsHelper 命令行启动
 > 推荐安装OCR模块;感谢群友的贡献！关于OCR安装的文档可以查看OCR_install.md
 
 ### 命令行启动说明
-备注，输入-t后字符串序列的时候，别忘了""
-如
-```bash
-$ ArknightsShell.exe -b -t "CE-5:1|LS-5:1" -d
-```
-
 ```bash
 Usage: ArknightsShell.py [options] arg1 arg2 ...
 
@@ -99,6 +101,8 @@ Options:
 ### 简略战斗模块
 
 快速启动模块需要手动选关。到如下画面，活动关卡你也可以这么刷。
+
+\* 该模块可以自适应分辨率
 
 ![TIM截图20190513101009.png-1013.8kB][1]
 

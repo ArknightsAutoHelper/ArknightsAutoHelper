@@ -9,8 +9,9 @@
 
 import optparse
 from collections import OrderedDict
+
+from Arknights.base import ArknightsHelper
 from Arknights.click_location import MAIN_TASK_SUPPORT
-from Arknights import ArknightsHelper
 
 
 class ArknightsShell():
@@ -33,7 +34,6 @@ class ArknightsShell():
 
     def parser(self):
         '''
-
         :return:
         '''
         usage = 'Usage: %prog [options] arg1 arg2 ...'
@@ -80,7 +80,7 @@ class ArknightsShell():
             if self.options.module_battle_slim:
                 id, count = self.task_list.popitem()
                 Ark.module_battle_slim(
-                    c_id=id,
+                    c_id=None,
                     set_count=count,
                 )
 
