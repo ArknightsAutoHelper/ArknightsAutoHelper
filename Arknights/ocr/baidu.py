@@ -1,14 +1,15 @@
-from aip import AipOcr
 from io import BytesIO
-from .common import *
+
+from aip import AipOcr
+
 from config import enable_baidu_api, APP_ID, API_KEY, SECRET_KEY
+from .common import *
 
 is_online = True
 info = "baidu"
 
 
 def check_supported():
-
     if enable_baidu_api:
         return True
     else:

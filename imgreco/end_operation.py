@@ -1,18 +1,17 @@
 import sys
-import pickle
 
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image
 
 from richlog import get_logger
-from . import util
 from . import imgops
 from . import item
 from . import minireco
 from . import resources
-from .util import any_in
+from . import util
 
 LOGFILE = 'log/drop-recognition.html'
+
 
 class RecognizeSession:
     def __init__(self):
@@ -21,19 +20,20 @@ class RecognizeSession:
         self.vh = 0
         self.vw = 0
 
+
 def tell_stars(starsimg):
     thstars = (np.asarray(starsimg.convert('L')) > 96)
     width, height = thstars.shape[::-1]
     starwidth = width // 3
-    threshold = height * (width/12)
+    threshold = height * (width / 12)
     stars = []
     star1 = thstars[:, 0:starwidth]
     stars.append(np.count_nonzero(star1) > threshold)
 
-    star2 = thstars[:, starwidth:starwidth*2]
+    star2 = thstars[:, starwidth:starwidth * 2]
     stars.append(np.count_nonzero(star2) > threshold)
 
-    star3 = thstars[:, starwidth*2:]
+    star3 = thstars[:, starwidth * 2:]
     stars.append(np.count_nonzero(star3) > threshold)
     return tuple(stars)
 
@@ -42,11 +42,13 @@ recozh = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-M
 reco_novecento_bold = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Bold.dat'))
 
 grouptemplates = []
+
+
 def _load_data():
     _, files = resources.get_entries('end_operation')
     for f in files:
         if f.endswith('.png'):
-            grouptemplates.append((f[:-4], resources.load_image('end_operation/'+f, 'L')))
+            grouptemplates.append((f[:-4], resources.load_image('end_operation/' + f, 'L')))
 
 
 def tell_group(groupimg, session, bartop, barbottom, ):
@@ -89,12 +91,12 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         return (groupname, [('(家具)', 1)])
 
     vw, vh = session.vw, session.vh
-    itemcount = roundint(groupimg.width / (20.370*vh))
+    itemcount = roundint(groupimg.width / (20.370 * vh))
     result = []
     for i in range(itemcount):
-        itemimg = groupimg.crop((20.370*vh*i, 0.000*vh, 40.741*vh, 18.981*vh))
+        itemimg = groupimg.crop((20.370 * vh * i, 0.000 * vh, 40.741 * vh, 18.981 * vh))
         # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
-        itemimg = itemimg.crop((0.093*vh, 0, 19.074*vh, itemimg.height))
+        itemimg = itemimg.crop((0.093 * vh, 0, 19.074 * vh, itemimg.height))
         result.append(item.tell_item(itemimg, session))
     return (groupname, result)
 
@@ -115,12 +117,13 @@ def find_jumping(ary, threshold):
     pts = []
     for group in groups:
         pts.append(int(np.average(
-            tuple(x[0] for x in group), weights=tuple(abs(x[1]) for x in group)))+1)
+            tuple(x[0] for x in group), weights=tuple(abs(x[1]) for x in group))) + 1)
     return pts
 
 
-def roundint(x): 
+def roundint(x):
     return int(round(x))
+
 
 # scale = 0
 
@@ -128,7 +131,7 @@ def roundint(x):
 def check_level_up_popup(img):
     vw, vh = util.get_vwvh(img.size)
 
-    ap_recovered_img = img.crop((50*vw+8.056*vh, 46.574*vh, 50*vw+24.907*vh, 51.296*vh)) # 理智已恢复
+    ap_recovered_img = img.crop((50 * vw + 8.056 * vh, 46.574 * vh, 50 * vw + 24.907 * vh, 51.296 * vh))  # 理智已恢复
     ap_recovered_img = imgops.enhance_contrast(ap_recovered_img, 100, 225)
     ap_recovered_text = recozh.recognize(ap_recovered_img)
     return '理智' in ap_recovered_text
@@ -137,16 +140,19 @@ def check_level_up_popup(img):
 def check_end_operation(img):
     vw, vh = util.get_vwvh(img.size)
 
-    operation_end_img = img.crop((4.722*vh, 80.278*vh, 56.389*vh, 93.889*vh))
+    operation_end_img = img.crop((4.722 * vh, 80.278 * vh, 56.389 * vh, 93.889 * vh))
     operation_end_img = imgops.image_threshold(operation_end_img, 225).convert('L')
     operation_end_img = imgops.scale_to_height(operation_end_img, 24)
     return '结束' in recozh.recognize(operation_end_img)
 
+
 def get_dismiss_level_up_popup_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
-    return (100*vw-67.315*vh, 16.019*vh, 100*vw-5.185*vh, 71.343*vh)
+    return (100 * vw - 67.315 * vh, 16.019 * vh, 100 * vw - 5.185 * vh, 71.343 * vh)
+
 
 get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
+
 
 def recognize(im):
     import time
@@ -154,10 +160,10 @@ def recognize(im):
     vw, vh = util.get_vwvh(im.size)
     logger = get_logger(LOGFILE)
 
-    lower = im.crop((0, 61.111*vh, 100*vw, 100*vh))
+    lower = im.crop((0, 61.111 * vh, 100 * vw, 100 * vh))
     logger.logimage(lower)
 
-    operation_id = lower.crop((0, 4.444*vh, 23.611*vh, 11.388*vh)).convert('L')
+    operation_id = lower.crop((0, 4.444 * vh, 23.611 * vh, 11.388 * vh)).convert('L')
     logger.logimage(operation_id)
     operation_id = imgops.enhance_contrast(imgops.crop_blackedge(operation_id), 80, 220)
     logger.logimage(operation_id)
@@ -169,20 +175,20 @@ def recognize(im):
     # operation_name = imgops.enhance_contrast(imgops.crop_blackedge(operation_name))
     # logger.logimage(operation_name)
 
-    stars = lower.crop((23.611*vh, 6.759*vh, 53.241*vh, 16.944*vh))
+    stars = lower.crop((23.611 * vh, 6.759 * vh, 53.241 * vh, 16.944 * vh))
     logger.logimage(stars)
     stars_status = tell_stars(stars)
 
-    level = lower.crop((63.148*vh, 4.444*vh, 73.333*vh, 8.611*vh))
+    level = lower.crop((63.148 * vh, 4.444 * vh, 73.333 * vh, 8.611 * vh))
     logger.logimage(level)
-    exp = lower.crop((76.852*vh, 5.556*vh, 94.074*vh, 7.963*vh))
+    exp = lower.crop((76.852 * vh, 5.556 * vh, 94.074 * vh, 7.963 * vh))
     logger.logimage(exp)
 
-    items = lower.crop((68.241*vh, 10.926*vh, lower.width, 35.000*vh))
+    items = lower.crop((68.241 * vh, 10.926 * vh, lower.width, 35.000 * vh))
     logger.logimage(items)
 
-    x, y = 6.667*vh, 18.519*vh
-    linedet = items.crop((x, y, x+1, items.height)).convert('L')
+    x, y = 6.667 * vh, 18.519 * vh
+    linedet = items.crop((x, y, x + 1, items.height)).convert('L')
     d = np.asarray(linedet)
     linetop, linebottom, *_ = find_jumping(d.reshape(linedet.height), 32)
     linetop += y
@@ -196,8 +202,8 @@ def recognize(im):
 
     d = np.array(grouping, dtype=np.int16)[0]
     points = [0, *find_jumping(d, 32)]
-    assert(len(points) % 2 == 0)
-    finalgroups = list(zip(*[iter(points)]*2))  # each_slice(2)
+    assert (len(points) % 2 == 0)
+    finalgroups = list(zip(*[iter(points)] * 2))  # each_slice(2)
     logger.logtext(repr(finalgroups))
 
     imggroups = [items.crop((x1, 0, x2, items.height))
@@ -212,12 +218,11 @@ def recognize(im):
         result = tell_group(group, session, linetop, linebottom)
         session.recognized_groups.append(result[0])
         items.append(result)
-        
 
     t1 = time.monotonic()
     if session.low_confidence:
         logger.logtext('LOW CONFIDENCE')
-    logger.logtext('time elapsed: %f' % (t1-t0))
+    logger.logtext('time elapsed: %f' % (t1 - t0))
     return {
         'operation': operation_id_str,
         'stars': stars_status,
@@ -227,7 +232,6 @@ def recognize(im):
 
 
 _load_data()
-
 
 if __name__ == '__main__':
     print(globals()[sys.argv[-2]](Image.open(sys.argv[-1])))

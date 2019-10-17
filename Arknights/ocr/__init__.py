@@ -1,6 +1,6 @@
+import config
 from . import tesseract, windows_media_ocr, dummy, baidu
 from .common import OcrHint, OcrLine, OcrResult, OcrWord
-import config
 
 available_engines = []
 """
@@ -27,4 +27,3 @@ if config.engine != 'auto':
 else:
     engine = available_engines[0] if len(available_engines) != 0 else dummy
 # 一个运行时可用的 engine，没有可用 engine 则为 dummy engine
-

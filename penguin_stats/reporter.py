@@ -1,8 +1,4 @@
 import logging
-from functools import lru_cache
-
-import requests
-
 
 import config
 from . import loader
@@ -40,7 +36,12 @@ def report(recoresult):
             furncount += 1
             continue
         for name, qty in items:
-            itemid = loader.items.get_by_name(name).id
+            try:
+                itemid = loader.items.get_by_name(name).id
+            except AttributeError:
+                logger.warning("{} 不在企鹅物流的汇报列表里".format(name))
+                groupcount -= 1
+                continue
             if itemid not in flattenitems:
                 flattenitems[itemid] = qty
             else:

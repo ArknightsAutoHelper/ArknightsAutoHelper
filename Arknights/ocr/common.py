@@ -38,7 +38,7 @@ class Rect:
 
     def set_bottom(self, value):
         self.height = value - self.y
-    
+
     def __iter__(self):
         return iter((self.x, self.y, self.right(), self.bottom()))
 

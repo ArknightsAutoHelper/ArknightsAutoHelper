@@ -1,6 +1,7 @@
 import subprocess
-from xml.etree import ElementTree
 from io import BytesIO
+from xml.etree import ElementTree
+
 from .common import *
 
 is_online = False

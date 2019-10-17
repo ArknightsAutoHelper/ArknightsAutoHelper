@@ -1,5 +1,5 @@
-import os
 import logging.config
+import os
 from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
@@ -7,16 +7,16 @@ from time import sleep, monotonic
 import numpy as np
 from PIL import Image
 
+# from config import *
+import config
 import imgreco
+import penguin_stats.loader
+import penguin_stats.reporter
 import richlog
 from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
 from Arknights.click_location import *
 from Arknights.flags import *
-# from config import *
-import config
-import penguin_stats.loader
-import penguin_stats.reporter
 from . import ocr
 
 logger = logging.getLogger('base')
@@ -70,7 +70,18 @@ class ArknightsHelper(object):
                  call_by_gui=False):  # 是否为从 GUI 程序调用
         if adb_host is None:
             adb_host = config.ADB_HOST
-        self.adb = ADBShell(adb_host=adb_host)
+        try:
+            self.adb = ADBShell(adb_host=adb_host)
+        except ConnectionRefusedError as e:
+            logger.error("错误: {}".format(e))
+            logger.info("尝试启动本地adb")
+            try:
+                os.system(config.ADB_ROOT + "\\adb kill-server")
+                os.system(config.ADB_ROOT + "\\adb start-server")
+                self.adb = ADBShell(adb_host=adb_host)
+            except Exception as e:
+                logger.error("尝试解决失败，错误: {}".format(e))
+                logger.info("建议检查adb版本夜神模拟器正确的版本为: 1.0.36")
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.CURRENT_STRENGTH = 100
@@ -94,15 +105,15 @@ class ArknightsHelper(object):
         logger.info('存储路径 (legacy):\t%s', config.STORAGE_PATH)
 
         if config.enable_baidu_api:
-            logger.info('%s', 
-                """百度API配置信息:
-APP_ID\t{app_id}
-API_KEY\t{api_key}
-SECRET_KEY\t{secret_key}
-                """.format(
-                    app_id=config.APP_ID, api_key=config.API_KEY, secret_key=config.SECRET_KEY
-                )
-            )
+            logger.info('%s',
+                        """百度API配置信息:
+        APP_ID\t{app_id}
+        API_KEY\t{api_key}
+        SECRET_KEY\t{secret_key}
+                        """.format(
+                            app_id=config.APP_ID, api_key=config.API_KEY, secret_key=config.SECRET_KEY
+                        )
+                        )
 
     def is_ocr_active(self):  # 如果不可用时用于初始化的理智值
         logger.debug("base.is_ocr_active")
@@ -137,7 +148,8 @@ SECRET_KEY\t{secret_key}
             self.__is_game_active = True
             logger.debug("游戏已启动")
         else:
-            self.adb.run_device_cmd("am start -n {}/{}".format(config.ArkNights_PACKAGE_NAME, config.ArkNights_ACTIVITY_NAME))
+            self.adb.run_device_cmd(
+                "am start -n {}/{}".format(config.ArkNights_PACKAGE_NAME, config.ArkNights_ACTIVITY_NAME))
             logger.debug("成功启动游戏")
             self.__is_game_active = True
 
@@ -237,7 +249,7 @@ SECRET_KEY\t{secret_key}
                 logger.error('已忽略余下的 %d 次战斗', remain)
         logger.info("等待返回{}关卡界面".format(c_id))
         self.__wait(SMALL_WAIT, True)
-        
+
         if not sub:
             if auto_close:
                 logger.info("简略模块{}结束，系统准备退出".format(c_id))
@@ -261,26 +273,36 @@ SECRET_KEY\t{secret_key}
         smobj = ArknightsHelper.operation_once_state()
 
         def on_prepare(smobj):
-            screenshot = self.adb.get_screen_shoot()
-            recoresult = imgreco.before_operation.recognize(screenshot)
-            not_in_scene = False
-            if not recoresult['AP']:
-                # ASSUMPTION: 只有在战斗前界面才能识别到右上角体力
-                not_in_scene = True
-            if recoresult['consume'] is None:
-                # ASSUMPTION: 所有关卡都显示并能识别体力消耗
-                not_in_scene = True
-
-            logger.info('当前画面关卡：%s', recoresult['operation'])
-
-            if (not not_in_scene) and c_id is not None:
-                # 如果传入了关卡 ID，检查识别结果
-                if recoresult['operation'] != c_id:
+            count_times = 0
+            while True:
+                screenshot = self.adb.get_screen_shoot()
+                recoresult = imgreco.before_operation.recognize(screenshot)
+                not_in_scene = False
+                if not recoresult['AP']:
+                    # ASSUMPTION: 只有在战斗前界面才能识别到右上角体力
+                    not_in_scene = True
+                if recoresult['consume'] is None:
+                    # ASSUMPTION: 所有关卡都显示并能识别体力消耗
                     not_in_scene = True
 
-            if not_in_scene:
-                logger.error('不在关卡界面，退出……')
-                raise StopIteration()
+                logger.info('当前画面关卡：%s', recoresult['operation'])
+
+                if (not not_in_scene) and c_id is not None:
+                    # 如果传入了关卡 ID，检查识别结果
+                    if recoresult['operation'] != c_id:
+                        not_in_scene = True
+
+                if not_in_scene:
+                    count_times += 1
+                    if count_times <= 7:
+                        logger.warning('不在关卡界面，继续等待……')
+                        self.__wait(TINY_WAIT, False)
+                        continue
+                    else:
+                        logger.error('{}次检测后都不再关卡界面，退出进程'.format(count_times))
+                        raise StopIteration()
+                else:
+                    break
 
             self.CURRENT_STRENGTH = int(recoresult['AP'].split('/')[0])
             logger.info('当前理智 %d, 关卡消耗 %d', self.CURRENT_STRENGTH, recoresult['consume'])
@@ -297,9 +319,22 @@ SECRET_KEY\t{secret_key}
             smobj.state = on_troop
 
         def on_troop(smobj):
-            # Fixme 明日方舟界面加载有时会卡住，self.__wait()没办法很好的处理
-            self.__wait(SMALL_WAIT, False)
-            logger.info('确认编队')
+            count_times = 0
+            while True:
+                self.__wait(TINY_WAIT, False)
+                screenshot = self.adb.get_screen_shoot()
+                recoresult = imgreco.before_operation.check_confirm_troop_rect(screenshot)
+                if recoresult:
+                    logger.info('确认编队')
+                    break
+                else:
+                    count_times += 1
+                    if count_times <= 7:
+                        logger.warning('等待确认编队')
+                        continue
+                    else:
+                        logger.error('{}次检测后不再确认编队界面'.format(count_times))
+                        raise StopIteration()
             self.tap_rect(imgreco.before_operation.get_confirm_troop_rect(self.viewport))
             smobj.operation_start = monotonic()
             smobj.state = on_operation
@@ -309,7 +344,7 @@ SECRET_KEY\t{secret_key}
                 if len(self.operation_time) == 0:
                     wait_time = BATTLE_NONE_DETECT_TIME
                 else:
-                    wait_time = sum(self.operation_time)/len(self.operation_time)-7
+                    wait_time = sum(self.operation_time) / len(self.operation_time) - 7
                 logger.info('等待 %d s' % wait_time)
                 self.__wait(wait_time, MANLIKE_FLAG=False)
                 smobj.first_wait = False
@@ -456,7 +491,6 @@ SECRET_KEY\t{secret_key}
                 logger.error("发生未知错误... 60s后退出")
                 self.__wait(60)
                 self.__del()
-
 
     def battle_selector(self, c_id, first_battle_signal=True):  # 选关
         logger.debug("base.battle_selector")

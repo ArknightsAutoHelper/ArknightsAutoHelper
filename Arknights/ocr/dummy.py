@@ -3,6 +3,8 @@ is_online = True
 
 
 info = "Dummy OCR Engine"
+
+
 # 模块说明，用于在 log 中显示
 
 def check_supported():
@@ -37,4 +39,3 @@ def recognize(img, lang, *, hints=None):
     """
     from .common import OcrResult
     return OcrResult(tuple())
-

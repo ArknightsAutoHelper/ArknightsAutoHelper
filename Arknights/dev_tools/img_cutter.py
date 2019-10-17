@@ -1,10 +1,9 @@
 '''
 在这里做一些测试，包括图像的匹配度算法操作
 '''
-from config import *
 from PIL import Image
-import hashlib
-from Arknights.click_location import *
+
+from config import *
 
 i1 = Image.open(SCREEN_SHOOT_SAVE_PATH + "2-2_0.png")
 

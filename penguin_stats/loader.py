@@ -5,7 +5,6 @@ import requests
 import config
 from . import model
 
-
 logger = logging.getLogger('PenguinReporter')
 
 stages = model.StageModel(())
@@ -13,6 +12,7 @@ items = model.ItemModel(())
 constraints = model.ValidationModel(())
 
 session = requests.Session()
+
 
 def load_from_service():
     global stages, items, constraints
@@ -28,6 +28,7 @@ def load_from_service():
     resp = session.get('https://penguin-stats.io/PenguinStats/api/limitations')
     resp.raise_for_status()
     constraints = model.ValidationModel(resp.json())
+
 
 def user_login():
     uid = config.get('reporting/penguin_stats_uid', None)

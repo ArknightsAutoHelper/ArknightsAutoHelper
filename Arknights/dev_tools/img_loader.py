@@ -1,4 +1,3 @@
-from Arknights.click_location import MAP_LOCATION
 from Arknights.base import ArknightsHelper
 from config import *
 

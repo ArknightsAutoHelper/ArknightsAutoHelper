@@ -1,26 +1,27 @@
 import logging.config
-import os
 from random import randint
-from time import sleep
-from io import BytesIO
 
 from PIL import Image
 
+import config
 # from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
 from ADBClientSession import ADBClientSession
-import config
+
 # from numpy import average, dot, linalg
 
 logger = logging.getLogger('ADBShell')
+
 
 def _screencap_to_image(cap):
     w, h, pixels = cap
     return Image.frombytes('RGBA', (w, h), pixels)
 
+
 def _ensure_pil_image(imgorfile):
     if isinstance(imgorfile, Image.Image):
         return imgorfile
     return Image.open(imgorfile)
+
 
 class ADBShell(object):
     def __init__(self, adb_host=config.ADB_HOST):
@@ -63,20 +64,18 @@ class ADBShell(object):
 
     def __adb_connect(self):
         try:
-            self.host_session_factory().service('host:connect:'+self.DEVICE_NAME)
+            self.host_session_factory().service('host:connect:' + self.DEVICE_NAME)
             logger.info(
                 "[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
         except:
             logger.error(
                 "[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
 
-
     def run_device_cmd(self, cmd, DEBUG_LEVEL=2):
         output = self.device_session_factory().exec(cmd)
         logger.debug("command: %s", cmd)
         logger.debug("output: %s", repr(output))
         return output
-
 
     def get_sub_screen(self, image, screen_range):
         return image.crop(
@@ -117,7 +116,7 @@ class ADBShell(object):
         # 如果你遇到了问题，可以把这百年输出并把日志分享到群里。
         logger.debug("点击坐标:({},{})".format(final_X, final_Y))
         command = "input tap {} {}".format(final_X,
-                                                      final_Y)
+                                           final_Y)
         self.run_device_cmd(command)
 
     @staticmethod

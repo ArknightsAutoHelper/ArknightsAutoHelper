@@ -1,15 +1,13 @@
-import os
-import pickle
 from functools import lru_cache
 
 import numpy as np
-from . import imgops
 # from skimage.measure import compare_mse
 from PIL import Image
 
+from richlog import get_logger
+from . import imgops
 from . import minireco
 from . import resources
-from richlog import get_logger
 
 LOGFILE = 'log/item-recognition.html'
 
@@ -23,7 +21,7 @@ def load_data():
     for filename in files:
         if filename.endswith('.png'):
             basename = filename[:-4]
-            mat = resources.load_image('items/'+filename, 'RGB')
+            mat = resources.load_image('items/' + filename, 'RGB')
             iconmats[basename] = mat
     reco = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-DemiLight-nums.dat'))
     return (iconmats, reco)
@@ -32,9 +30,9 @@ def load_data():
 def tell_item(itemimg, session):
     logger = get_logger(LOGFILE)
     logger.logimage(itemimg)
-    #l, t, r, b = scaledwh(80, 146, 90, 28)
-    #print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)
-    #numimg = itemimg.crop(scaledwh(80, 146, 90, 28)).convert('L')
+    # l, t, r, b = scaledwh(80, 146, 90, 28)
+    # print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)
+    # numimg = itemimg.crop(scaledwh(80, 146, 90, 28)).convert('L')
     numimg = imgops.scalecrop(itemimg, 0.39, 0.71, 0.82, 0.84).convert('L')
     numimg = imgops.crop_blackedge2(numimg, 220)
     recodata, textreco = load_data()
@@ -42,7 +40,7 @@ def tell_item(itemimg, session):
         numimg = imgops.enhance_contrast(numimg)
         logger.logimage(numimg)
         numtext: str = textreco.recognize(numimg)
-        logger.logtext('amount: '+numtext)
+        logger.logtext('amount: ' + numtext)
         amount = int(numtext) if numtext.isdigit() else None
     else:
         amount = None
@@ -50,7 +48,7 @@ def tell_item(itemimg, session):
     # scale = 48/itemimg.height
     img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
     img4reco[itemmask] = 0
-    
+
     scores = []
     for name, templ in recodata.items():
         if templ.size != (48, 48):

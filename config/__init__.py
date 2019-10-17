@@ -2,15 +2,17 @@
 # from config.developer_config import *
 # from config.common_config import SCREEN_SHOOT_SAVE_PATH, STORAGE_PATH, CONFIG_PATH
 
-import sys
+import logging.config
 import os
 import shutil
+import sys
 from collections import Mapping
-import logging.config
-import ruamel.yaml
-from .version import version
-yaml = ruamel.yaml.YAML()
 
+import ruamel.yaml
+
+from .version import version
+
+yaml = ruamel.yaml.YAML()
 
 CONFIG_PATH = os.path.realpath(os.path.dirname(__file__))
 root = os.path.realpath(os.path.join(CONFIG_PATH, '..'))

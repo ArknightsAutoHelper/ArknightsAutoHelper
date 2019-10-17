@@ -1,14 +1,12 @@
-import sys
 import asyncio
 import base64
-import copy
 
-# pip3 install winrt
-from winrt.windows.media.ocr import OcrEngine
+from PIL import ImageOps
 from winrt.windows.globalization import Language
 from winrt.windows.graphics.imaging import SoftwareBitmap, BitmapAlphaMode, BitmapPixelFormat
+# pip3 install winrt
+from winrt.windows.media.ocr import OcrEngine
 from winrt.windows.security.cryptography import CryptographicBuffer
-from PIL import Image, ImageOps
 
 from .common import *
 
@@ -44,7 +42,8 @@ def _swbmp_from_pil_image(img):
         img = img.convert("RGBA")
     pybuf = img.tobytes()
     rtbuf = _ibuffer(pybuf)
-    return SoftwareBitmap.create_copy_from_buffer(rtbuf, BitmapPixelFormat.RGBA8, img.width, img.height, BitmapAlphaMode.STRAIGHT)
+    return SoftwareBitmap.create_copy_from_buffer(rtbuf, BitmapPixelFormat.RGBA8, img.width, img.height,
+                                                  BitmapAlphaMode.STRAIGHT)
 
 
 async def _ensure_coroutine(awaitable):
@@ -62,7 +61,7 @@ def recognize(img, lang, *, hints=None):
         img = ImageOps.expand(img, 32, fill=img.getpixel((0, 0)))
 
     lang = Language(lang)
-    assert(OcrEngine.is_language_supported(lang))
+    assert (OcrEngine.is_language_supported(lang))
     eng = OcrEngine.try_create_from_language(lang)
     swbmp = _swbmp_from_pil_image(img)
     return _dump_ocrresult(_blocking_wait(eng.recognize_async(swbmp)))

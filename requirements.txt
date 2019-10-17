@@ -4,9 +4,9 @@ chardet==3.0.4
 idna==2.8
 numpy==1.17.2
 opencv-python==4.1.1.26
-Pillow==6.1.0
+Pillow==6.2.0
 requests==2.22.0
 ruamel.yaml==0.16.5
 ruamel.yaml.clib==0.2.0
-urllib3==1.25.5
+urllib3==1.25.6
 winrt==1.0.19128.1
