@@ -1,7 +1,7 @@
 import sys
 
 # we need Python 3.4+ for __del__ to work with circular references
-assert sys.hexversion > 0x03040000
+assert sys.hexversion >= 0x03040000
 
 from .idldsl import define_winrt_com_method, funcwrap, _new_rtobj
 from .winstring import HSTRING
