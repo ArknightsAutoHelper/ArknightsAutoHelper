@@ -9,7 +9,7 @@ from . import imgops
 from . import minireco
 from . import resources
 
-LOGFILE = 'log/item-recognition.html'
+LOGFILE = 'item-recognition.html'
 
 itemmask = np.asarray(resources.load_image('common/itemmask.png', '1'))
 

@@ -6,7 +6,7 @@ from . import imgops
 from . import resources
 from . import util
 
-LOGFILE = 'log/common.html'
+LOGFILE = 'common.html'
 
 
 def check_get_item_popup(img):

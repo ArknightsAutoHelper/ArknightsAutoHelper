@@ -10,7 +10,7 @@ from . import minireco
 from . import resources
 from . import util
 
-LOGFILE = 'log/b4op.html'
+LOGFILE = 'b4op.html'
 
 
 @lru_cache(1)
