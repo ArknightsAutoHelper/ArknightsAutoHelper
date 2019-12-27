@@ -21,7 +21,11 @@ def load_data():
     for filename in files:
         if filename.endswith('.png'):
             basename = filename[:-4]
-            mat = resources.load_image('items/' + filename, 'RGB')
+            img = resources.load_image('items/' + filename, 'RGB')
+            if img.size != (48, 48):
+                img = img.resize((48, 48), Image.BILINEAR)
+            mat = np.array(img)
+            mat[itemmask] = 0
             iconmats[basename] = mat
     reco = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-DemiLight-nums.dat'))
     return (iconmats, reco)
@@ -51,8 +55,6 @@ def tell_item(itemimg, session):
 
     scores = []
     for name, templ in recodata.items():
-        if templ.size != (48, 48):
-            templ = templ.resize((48, 48), Image.BILINEAR)
         scores.append((name, imgops.compare_mse(img4reco, templ)))
 
     scores.sort(key=lambda x: x[1])
