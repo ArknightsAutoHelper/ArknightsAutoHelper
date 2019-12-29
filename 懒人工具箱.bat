@@ -1,61 +1,61 @@
 @echo off
-rem ÇÐ»»ÖÁ ArknightsAutoHelper ËùÔÚÎ»ÖÃ
+rem åˆ‡æ¢è‡³ ArknightsAutoHelper æ‰€åœ¨ä½ç½®
 :path
 cd>nul 2>nul /D %~dp0
 
-rem Ö÷ÒªÑ­»·½Ú
+rem ä¸»è¦å¾ªçŽ¯èŠ‚
 :main
-echo [92m[+] :)»¶Ó­Ê¹ÓÃ ArknightsAutoHelper [0m
-echo [92m[+] ÊäÈë '1' ¿ìËÙÆô¶¯(SlimÄ£Ê½)[0m
-echo [92m[+] ÊäÈë '2' ×Ô¶¯Ñ°¹Ø(HanderÄ£Ê½)[0m
-echo [92m[+] ÊäÈë '3' ÈÎÎñÁìÈ¡[0m
-echo [92m[+] ÊäÈë '4' ÍË³ö¹¤¾ßÏä[0m
+echo [92m[+] :)æ¬¢è¿Žä½¿ç”¨ ArknightsAutoHelper [0m
+echo [92m[+] è¾“å…¥ '1' å¿«é€Ÿå¯åŠ¨(Slimæ¨¡å¼)[0m
+echo [92m[+] è¾“å…¥ '2' è‡ªåŠ¨å¯»å…³(Handeræ¨¡å¼)[0m
+echo [92m[+] è¾“å…¥ '3' ä»»åŠ¡é¢†å–[0m
+echo [92m[+] è¾“å…¥ '4' é€€å‡ºå·¥å…·ç®±[0m
 :input
-set /p a="[92m[+] ÇëÑ¡ÔñÐèÒªµÄ¹¦ÄÜ£º[0m"
+set /p a="[92m[+] è¯·é€‰æ‹©éœ€è¦çš„åŠŸèƒ½ï¼š[0m"
 if /i '%a%'=='1' goto slim
 if /i '%a%'=='2' goto as
 if /i '%a%'=='3' goto task
 if /i '%a%'=='4' goto end
-echo [31m[x] ÊäÈëÓÐÎó£¬ÇëÖØÐÂÊäÈë£º[0m & goto input
+echo [31m[x] è¾“å…¥æœ‰è¯¯ï¼Œè¯·é‡æ–°è¾“å…¥ï¼š[0m & goto input
 
-rem ¼±ËÙ»¤¸Î
+rem æ€¥é€ŸæŠ¤è‚
 :slim
-echo [93m[!] ÕýÔÚ»½Æð ArknightsAutoHelper [1m
-set /p slim="[94m[i] ÊäÈëÔ¤ÆÚÕ½¶·´ÎÊý£º[0m"
+echo [93m[!] æ­£åœ¨å”¤èµ· ArknightsAutoHelper [1m
+set /p slim="[94m[i] è¾“å…¥é¢„æœŸæˆ˜æ–—æ¬¡æ•°ï¼š[0m"
 python ArknightsShell.py -s -t slim:%slim%
 
-rem È·ÈÏÊÇ·ñÖØÐÂÔËÐÐ
-set /p aah1="[92m[+] ÊäÈë '1' Ç°ÍùÇ©µ½ | ÊäÈë '2' ÖúÊÖÏÂ°à | ÈÎÒâ¼ü¼ÌÐø¼Ó°à£º[0m"
+rem ç¡®è®¤æ˜¯å¦é‡æ–°è¿è¡Œ
+set /p aah1="[92m[+] è¾“å…¥ '1' å‰å¾€ç­¾åˆ° | è¾“å…¥ '2' åŠ©æ‰‹ä¸‹ç­ | ä»»æ„é”®ç»§ç»­åŠ ç­ï¼š[0m"
 if not '%aah1%'=='' set choice=%aah1:~0,1%
 if '%aah1%'=='1' goto task
 if '%aah1%'=='2' goto end
 goto :slim
 
-rem À­¸öÇåµ¥
+rem æ‹‰ä¸ªæ¸…å•
 :as
-echo [93m[!] ÕýÔÚ»½Æð ArknightsAutoHelper [1m
-set /p hander="[94m[i] ÊäÈëÇåµ¥ ÀýÈç CE-5:1|LS-5:1 :[0m"
+echo [93m[!] æ­£åœ¨å”¤èµ· ArknightsAutoHelper [1m
+set /p hander="[94m[i] è¾“å…¥æ¸…å• ä¾‹å¦‚ CE-5:1|LS-5:1 :[0m"
 python ArknightsShell.py -b -t "%hander%"
 
-rem È·ÈÏÊÇ·ñÖØÐÂÔËÐÐ
-set /p aah1="[92m[+] ÊäÈë '1' Ç°ÍùÇ©µ½ | ÊäÈë '2' ÖúÊÖÏÂ°à | ÈÎÒâ¼ü¼ÌÐø¼Ó°à£º[0m"
+rem ç¡®è®¤æ˜¯å¦é‡æ–°è¿è¡Œ
+set /p aah1="[92m[+] è¾“å…¥ '1' å‰å¾€ç­¾åˆ° | è¾“å…¥ '2' åŠ©æ‰‹ä¸‹ç­ | ä»»æ„é”®ç»§ç»­åŠ ç­ï¼š[0m"
 if not '%aah1%'=='' set choice=%aah1:~0,1%
 if '%aah1%'=='1' goto task
 if '%aah1%'=='2' goto end
 goto as
 
-rem ÈÎÎñÁìÈ¡
+rem ä»»åŠ¡é¢†å–
 :task
-echo [93m[!] ÕýÔÚ×¼±¸Ìá¹©·þÎñ[1m
+echo [93m[!] æ­£åœ¨å‡†å¤‡æä¾›æœåŠ¡[1m
 python ArknightsShell.py -c
 
-rem È·ÈÏÊÇ·ñÖØÐÂÔËÐÐ
-set /p task1="[92m[+] ÊäÈë '1' ¼ÌÐø»¤¸Î | ÈÎÒâ¼üÖúÊÖÏÂ°à£º[0m"
+rem ç¡®è®¤æ˜¯å¦é‡æ–°è¿è¡Œ
+set /p task1="[92m[+] è¾“å…¥ '1' ç»§ç»­æŠ¤è‚ | ä»»æ„é”®åŠ©æ‰‹ä¸‹ç­ï¼š[0m"
 if not '%task1%'=='' set choice=%ctask1:~0,1%
 if '%task1%'=='1' goto main
 goto end
 
 :end
-echo [93m[!] °Ý°ÝàÏÄú£¨3ÃëºóÏÂ°à£©[1m
+echo [93m[!] æ‹œæ‹œå˜žæ‚¨ï¼ˆ3ç§’åŽä¸‹ç­ï¼‰[1m
 TIMEOUT>nul 2>nul /T 3
 @exit

@@ -21,3 +21,4 @@ rem 结束进程
 echo [93m[!] 拜拜嘞您[1m
 TIMEOUT>nul 2>nul /T 3
 @exit
+

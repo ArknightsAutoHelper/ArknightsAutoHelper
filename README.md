@@ -1,4 +1,5 @@
-# Arknghts Auto Helper
+# Arknights Auto Helper
+
 > 明日方舟辅助脚本，分支说明如下
 
 | 分支    | 说明    |
