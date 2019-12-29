@@ -10,7 +10,7 @@ from . import minireco
 from . import resources
 from . import util
 
-LOGFILE = 'log/drop-recognition.html'
+LOGFILE = 'drop-recognition.html'
 
 
 class RecognizeSession:

@@ -1,7 +1,9 @@
+import os
 from base64 import b64encode
 from functools import lru_cache
 from io import BytesIO
 
+import config
 
 class RichLogger:
     def __init__(self, file, overwrite=False):
@@ -24,5 +26,5 @@ class RichLogger:
 
 @lru_cache(maxsize=None)
 def get_logger(file):
-    logger = RichLogger(file, True)
+    logger = RichLogger(os.path.join(config.logs, file), True)
     return logger

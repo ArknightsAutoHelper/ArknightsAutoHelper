@@ -92,8 +92,6 @@ class ArknightsHelper(object):
         self.operation_time = []
         if DEBUG_LEVEL >= 1:
             self.__print_info()
-        if not call_by_gui:
-            self.is_ocr_active()
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -114,24 +112,6 @@ class ArknightsHelper(object):
                             app_id=config.APP_ID, api_key=config.API_KEY, secret_key=config.SECRET_KEY
                         )
                         )
-
-    def is_ocr_active(self):  # 如果不可用时用于初始化的理智值
-        logger.debug("base.is_ocr_active")
-        if not ocr.engine.check_supported():
-            self.ocr_active = False
-            return False
-        if ocr.engine.is_online:
-            # 不检查在线 OCR 服务可用性
-            self.ocr_active = True
-            return True
-        testimg = Image.open(os.path.join(config.STORAGE_PATH, "OCR_TEST_1.png"))
-        result = _logged_ocr(testimg, 'en', hints=[ocr.OcrHint.SINGLE_LINE])
-        if '51/120' in result:
-            self.ocr_active = True
-            logger.debug("OCR 模块工作正常")
-        else:
-            self.ocr_active = False
-        return self.ocr_active
 
     def __del(self):
         self.adb.run_device_cmd("am force-stop {}".format(config.ArkNights_PACKAGE_NAME))
@@ -453,8 +433,7 @@ class ArknightsHelper(object):
         self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
-                                sub=True,
-                                self_fix=self.ocr_active)
+                                sub=True)
         return True
 
     def main_handler(self, task_list=None, clear_tasks=False, auto_close=True):
