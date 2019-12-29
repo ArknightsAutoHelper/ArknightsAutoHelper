@@ -10,7 +10,7 @@ from . import minireco
 from . import resources
 from . import util
 
-LOGFILE = 'log/b4op.html'
+LOGFILE = 'b4op.html'
 
 
 @lru_cache(1)
@@ -79,8 +79,9 @@ def check_confirm_troop_rect(img):
     icon1 = img.crop((50 * vw + 57.083 * vh, 64.722 * vh, 50 * vw + 71.389 * vh, 79.167 * vh)).convert('RGB')
     icon2 = resources.load_image_cached('before_operation/operation_start.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
-    mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
-    return mse < 100
+    mse = imgops.compare_ccoeff(np.asarray(icon1), np.asarray(icon2))
+    print(mse)
+    return mse > 0.9
 
 
 def get_confirm_troop_rect(viewport):

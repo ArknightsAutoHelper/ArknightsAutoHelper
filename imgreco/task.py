@@ -8,7 +8,7 @@ from . import minireco
 from . import resources
 from . import util
 
-LOGFILE = 'log/task.html'
+LOGFILE = 'task.html'
 
 
 @lru_cache(1)
