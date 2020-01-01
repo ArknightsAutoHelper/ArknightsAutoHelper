@@ -48,15 +48,24 @@ def report(recoresult):
                 flattenitems[itemid] += qty
 
     validator = loader.constraints.get_validator_for_stage(stage)
-    if not validator.validate_group_count(groupcount):
-        logger.error('物品分组数量不符合企鹅数据验证规则')
-        return None
+
+    use_hotfix = False
 
     for itemid in flattenitems:
         qty = flattenitems[itemid]
+        if itemid in ('randomMaterial_1', 'ap_supply_lt_010'):
+            if qty != 1:
+                logger.error('物品 %s 数量不符合企鹅数据验证规则', repr(loader.items.get_by_id(itemid)))
+                return None
+            use_hotfix = True
+            continue
         if not validator.validate_item_quantity(itemid, qty):
             logger.error('物品 %s 数量不符合企鹅数据验证规则', repr(loader.items.get_by_id(itemid)))
             return None
+
+    if not use_hotfix and not validator.validate_group_count(groupcount):
+        logger.error('物品分组数量不符合企鹅数据验证规则')
+        return None
 
     jobj = {
         'stageId': stage.id,
