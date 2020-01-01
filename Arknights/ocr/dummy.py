@@ -22,12 +22,12 @@ def recognize(img, lang, *, hints=None):
     :returns: OcrResult
 
     OcrResult = {
-        lines: Tuple[OcrLine],
+        lines: List[OcrLine],
         extra: Any # 引擎返回的额外信息
     }
 
     OcrLine = {
-        words: Tuple[OcrWord],
+        words: List[OcrWord],
         extra: Any
     }
 
@@ -38,4 +38,4 @@ def recognize(img, lang, *, hints=None):
     }
     """
     from .common import OcrResult
-    return OcrResult(tuple())
+    return OcrResult([])

@@ -63,5 +63,5 @@ def recognize(image, lang, *, hints=None):
     image.save(imgbytesio, format='JPEG', quality=95)
     result = _basicGeneral(imgbytesio.getvalue(), _options(lang))
     line = OcrLine([OcrWord(Rect(0, 0), x['words']) for x in result['words_result']])
-    result = OcrResult((line,))
+    result = OcrResult([line])
     return result
