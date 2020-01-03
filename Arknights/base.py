@@ -10,6 +10,7 @@ from PIL import Image
 # from config import *
 import config
 import imgreco
+import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
 import richlog
@@ -174,6 +175,20 @@ class ArknightsHelper(object):
         finalpt = m + halfvec * bddiff
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
+
+    def wait_for_still_image(self, screen_range=None):
+        screenshot = self.adb.get_screen_shoot(screen_range)
+        for n in range(60):
+            self.__wait(1)
+            screenshot2 = self.adb.get_screen_shoot(screen_range)
+            mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
+            if mse <= 1:
+                return
+            screenshot = screenshot2
+            n += 1
+            if n == 9:
+                logger.info("等待画面静止")
+        raise RuntimeError("60秒内画面未静止")
 
     def module_login(self):
         logger.debug("base.module_login")
@@ -341,7 +356,7 @@ class ArknightsHelper(object):
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
                 self.operation_time.append(t)
-                self.__wait(SMALL_WAIT)
+                self.wait_for_still_image()
                 smobj.state = on_end_operation
                 return
             logger.info('战斗未结束')
@@ -351,7 +366,7 @@ class ArknightsHelper(object):
             self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
             logger.info('关闭升级提示')
             self.tap_rect(imgreco.end_operation.get_dismiss_level_up_popup_rect(self.viewport))
-            self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+            self.wait_for_still_image()
             smobj.state = on_end_operation
 
         def on_end_operation(smobj):
