@@ -1,5 +1,6 @@
 import logging.config
 import os
+import time
 from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
@@ -61,6 +62,7 @@ def _penguin_report(recoresult):
     reportid = penguin_stats.reporter.report(recoresult)
     if reportid is not None:
         logger.info('企鹅数据报告 ID: %s', reportid)
+    return reportid
 
 
 class ArknightsHelper(object):
@@ -100,8 +102,7 @@ class ArknightsHelper(object):
         logger.info('ADB 服务器:\t%s:%d', *config.ADB_SERVER)
         logger.info('分辨率:\t%dx%d', *self.viewport)
         logger.info('OCR 引擎:\t%s', ocr.engine.info)
-        logger.info('截图路径 (legacy):\t%s', config.SCREEN_SHOOT_SAVE_PATH)
-        logger.info('存储路径 (legacy):\t%s', config.STORAGE_PATH)
+        logger.info('截图路径:\t%s', config.SCREEN_SHOOT_SAVE_PATH)
 
         if config.enable_baidu_api:
             logger.info('%s',
@@ -373,13 +374,19 @@ class ArknightsHelper(object):
             screenshot = self.adb.get_screen_shoot()
             logger.info('离开结算画面')
             self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
+            reportid = None
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
                 logger.info('掉落识别结果：%s', repr(drops))
-                _penguin_report(drops)
+                reportid = _penguin_report(drops)
             except Exception as e:
                 logger.error('', exc_info=True)
+            if reportid is None:
+                filename = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '未上报掉落-%d.png' % time.time())
+                with open(filename, 'wb') as f:
+                    screenshot.save(f, format='PNG')
+                logger.error('截图已保存到 %s', filename)
             smobj.stop = True
 
         smobj.state = on_prepare
