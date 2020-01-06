@@ -20,7 +20,7 @@ def report(recoresult):
     stage = loader.stages.get_by_code(code)
     if stage is None:
         logger.info('企鹅数据无此关卡：%s', code)
-        return None
+        return False
 
     flattenitems = {}
     groupcount = 0
