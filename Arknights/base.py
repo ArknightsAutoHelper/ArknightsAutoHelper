@@ -60,7 +60,7 @@ def _penguin_report(recoresult):
         return
     logger.info('向企鹅数据汇报掉落...')
     reportid = penguin_stats.reporter.report(recoresult)
-    if reportid is not None:
+    if bool(reportid):
         logger.info('企鹅数据报告 ID: %s', reportid)
     return reportid
 
