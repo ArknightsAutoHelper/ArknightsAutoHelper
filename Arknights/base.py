@@ -1,5 +1,6 @@
 import logging.config
 import os
+import time
 from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
@@ -10,6 +11,7 @@ from PIL import Image
 # from config import *
 import config
 import imgreco
+import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
 import richlog
@@ -60,6 +62,7 @@ def _penguin_report(recoresult):
     reportid = penguin_stats.reporter.report(recoresult)
     if reportid is not None:
         logger.info('企鹅数据报告 ID: %s', reportid)
+    return reportid
 
 
 class ArknightsHelper(object):
@@ -99,8 +102,7 @@ class ArknightsHelper(object):
         logger.info('ADB 服务器:\t%s:%d', *config.ADB_SERVER)
         logger.info('分辨率:\t%dx%d', *self.viewport)
         logger.info('OCR 引擎:\t%s', ocr.engine.info)
-        logger.info('截图路径 (legacy):\t%s', config.SCREEN_SHOOT_SAVE_PATH)
-        logger.info('存储路径 (legacy):\t%s', config.STORAGE_PATH)
+        logger.info('截图路径:\t%s', config.SCREEN_SHOOT_SAVE_PATH)
 
         if config.enable_baidu_api:
             logger.info('%s',
@@ -174,6 +176,20 @@ class ArknightsHelper(object):
         finalpt = m + halfvec * bddiff
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
+
+    def wait_for_still_image(self, screen_range=None):
+        screenshot = self.adb.get_screen_shoot(screen_range)
+        for n in range(60):
+            self.__wait(1)
+            screenshot2 = self.adb.get_screen_shoot(screen_range)
+            mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
+            if mse <= 1:
+                return
+            screenshot = screenshot2
+            n += 1
+            if n == 9:
+                logger.info("等待画面静止")
+        raise RuntimeError("60秒内画面未静止")
 
     def module_login(self):
         logger.debug("base.module_login")
@@ -341,7 +357,7 @@ class ArknightsHelper(object):
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
                 self.operation_time.append(t)
-                self.__wait(SMALL_WAIT)
+                self.wait_for_still_image()
                 smobj.state = on_end_operation
                 return
             logger.info('战斗未结束')
@@ -351,20 +367,26 @@ class ArknightsHelper(object):
             self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
             logger.info('关闭升级提示')
             self.tap_rect(imgreco.end_operation.get_dismiss_level_up_popup_rect(self.viewport))
-            self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+            self.wait_for_still_image()
             smobj.state = on_end_operation
 
         def on_end_operation(smobj):
             screenshot = self.adb.get_screen_shoot()
             logger.info('离开结算画面')
             self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
+            reportid = None
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
                 logger.info('掉落识别结果：%s', repr(drops))
-                _penguin_report(drops)
+                reportid = _penguin_report(drops)
             except Exception as e:
                 logger.error('', exc_info=True)
+            if reportid is None:
+                filename = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '未上报掉落-%d.png' % time.time())
+                with open(filename, 'wb') as f:
+                    screenshot.save(f, format='PNG')
+                logger.error('截图已保存到 %s', filename)
             smobj.stop = True
 
         smobj.state = on_prepare

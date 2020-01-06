@@ -1,7 +1,9 @@
+import base64
+from functools import lru_cache
 from io import BytesIO
 
-from aip import AipOcr
-
+#from aip import AipOcr
+import requests
 from config import enable_baidu_api, APP_ID, API_KEY, SECRET_KEY
 from .common import *
 
@@ -25,41 +27,41 @@ def _options(option):
         options["language_type"] = "CHN_ENG"
     return options
 
+@lru_cache()
+def _get_token():
+    resp = requests.request('POST', 'https://aip.baidubce.com/oauth/2.0/token',
+                     params={'grant_type': 'client_credentials', 'client_id': API_KEY, 'client_secret': SECRET_KEY})
+    resp.raise_for_status()
+    resp = resp.json()
+    return resp['access_token']
 
-def baidu_ocr(img, options, line=0):
-    """
-    调用百度api进行图片识别
-    :param options: 百度ocr选项
-    :param img: 获取图片
-    :param line: 选择行数，暂时没有用途，以防万一留下这个变量，默认为第一行
-    :return: 返回识别结果
-    """
-    client = AipOcr(APP_ID, API_KEY, SECRET_KEY)
-    image = img
-    """ 调用通用文字识别, 图片参数为本地图片 """
-    result = client.basicGeneral(image, _options(options))
 
-    if result["words_result_num"] > 1 or line >= 1:
-        # TODO
-        raise NotImplementedError
-    elif result["words_result_num"] == 1:
-        return result["words_result"][line]["words"]
-    else:
-        return ""
+def _basicGeneral(image, options):
+    data = {}
+    data['image'] = base64.b64encode(image).decode()
+    data.update(options)
+    resp = requests.post('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic', data=data, params={'access_token': _get_token()})
+    resp.raise_for_status()
+    resp = resp.json()
+    if 'error_code' in resp:
+        raise resp['error_msg']
+    return resp
 
 
 def recognize(image, lang, *, hints=None):
-    if hints is None:
-        hints = []
-    if OcrHint.SINGLE_LINE in hints:
-        line = 0
-    elif OcrHint.SPARSE in hints:
-        # TODO
-        line = 1
+    # line = 0
+    # if hints is None:
+    #     hints = []
+    # if OcrHint.SINGLE_LINE in hints:
+    #     line = 0
+    # elif OcrHint.SPARSE in hints:
+    #     # TODO
+    #     line = 1
     imgbytesio = BytesIO()
-    if 'RGB' not in image.mode:
+    if image.mode != 'RGB':
         image = image.convert('RGB')
-    image.save(imgbytesio, format='PNG')
-    result = OcrResult(())
-    result.text = baidu_ocr(imgbytesio.getvalue(), lang, line)
+    image.save(imgbytesio, format='JPEG', quality=95)
+    result = _basicGeneral(imgbytesio.getvalue(), _options(lang))
+    line = OcrLine([OcrWord(Rect(0, 0), x['words']) for x in result['words_result']])
+    result = OcrResult([line])
     return result

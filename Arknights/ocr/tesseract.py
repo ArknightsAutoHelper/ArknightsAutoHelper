@@ -45,7 +45,7 @@ def _parse_word(xmlword):
 
 
 def _parse_line(xmlline):
-    words = tuple(
+    words = list(
         map(_parse_word, xmlline.findall('.//*[@class="ocrx_word"]')))
     attrs = dict(attrstr.split(' ', 1)
                  for attrstr in xmlline.attrib['title'].split('; '))
@@ -58,7 +58,7 @@ def parse_hocr(file):
     tree = ElementTree.parse(file)
     root = tree.getroot()
     lines = root.findall('.//*[@class="ocr_line"]')
-    ocrlines = tuple(map(_parse_line, lines))
+    ocrlines = list(map(_parse_line, lines))
     return OcrResult(ocrlines)
 
 
