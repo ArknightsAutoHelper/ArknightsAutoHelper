@@ -39,6 +39,7 @@ reporting:
 
 behavior:
   # 理智不足时自动使用理智回复道具
+  # 免责声明：可能存在识别错误导致碎石，开发者对此不负任何责任
   refill_ap_with_item: false
 
   # 理智不足时自动碎石
