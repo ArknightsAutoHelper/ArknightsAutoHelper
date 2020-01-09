@@ -2,10 +2,18 @@ import logging
 
 import config
 from . import loader
+from . import event
 
 logger = logging.getLogger('PenguinReporter')
 
 REPORT_SOURCE = 'ArknightsAutoHelper'
+
+
+def _object_in(collection, obj):
+    for x in collection:
+        if obj is x:
+            return True
+    return False
 
 
 def report(recoresult):
@@ -25,7 +33,16 @@ def report(recoresult):
     flattenitems = {}
     groupcount = 0
     furncount = 0
-    for groupname, items in recoresult['items']:
+    itemgroups = recoresult['items']
+    exclude_from_validation = []
+    flattenitems4validate = {}
+    try:
+        itemgroups = event.event_preprocess(recoresult['operation'], itemgroups, exclude_from_validation)
+    except:
+        logger.error('处理活动道具时出错', exc_info=True)
+        return None
+
+    for groupname, items in itemgroups:
         if groupname == '首次掉落':
             logger.info('不汇报首次掉落')
             return None
@@ -35,35 +52,26 @@ def report(recoresult):
         if groupname == '幸运掉落':
             furncount += 1
             continue
-        for name, qty in items:
-            try:
-                itemid = loader.items.get_by_name(name).id
-            except AttributeError:
-                logger.warning("{} 不在企鹅物流的汇报列表里".format(name))
-                groupcount -= 1
-                continue
-            if itemid not in flattenitems:
-                flattenitems[itemid] = qty
-            else:
-                flattenitems[itemid] += qty
+        for tup in items:
+            name, qty = tup
+            item = loader.items.get_by_name(name)
+            if item is None:
+                logger.warning("%s 不在企鹅数据物品列表内", name)
+                return None
+            itemid = item.id
+            flattenitems[itemid] = flattenitems.get(itemid, 0) + qty
+            if not _object_in(exclude_from_validation, tup):
+                flattenitems4validate[itemid] = flattenitems4validate.get(itemid, 0) + qty
 
     validator = loader.constraints.get_validator_for_stage(stage)
 
-    use_hotfix = False
-
-    for itemid in flattenitems:
-        qty = flattenitems[itemid]
-        if itemid in ('randomMaterial_1', 'ap_supply_lt_010'):
-            if qty != 1:
-                logger.error('物品 %s 数量不符合企鹅数据验证规则', repr(loader.items.get_by_id(itemid)))
-                return None
-            use_hotfix = True
-            continue
+    for itemid in flattenitems4validate:
+        qty = flattenitems4validate[itemid]
         if not validator.validate_item_quantity(itemid, qty):
             logger.error('物品 %s 数量不符合企鹅数据验证规则', repr(loader.items.get_by_id(itemid)))
             return None
 
-    if not use_hotfix and not validator.validate_group_count(groupcount):
+    if not validator.validate_group_count(groupcount):
         logger.error('物品分组数量不符合企鹅数据验证规则')
         return None
 
