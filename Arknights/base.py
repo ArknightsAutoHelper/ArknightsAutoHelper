@@ -184,7 +184,7 @@ class ArknightsHelper(object):
             screenshot2 = self.adb.get_screen_shoot(screen_range)
             mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
             if mse <= 1:
-                return
+                return screenshot
             screenshot = screenshot2
             n += 1
             if n == 9:
@@ -267,7 +267,9 @@ class ArknightsHelper(object):
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
-
+        refill_with_item = config.get('behavior/refill_ap_with_item', False)
+        refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
+        use_refill = refill_with_item or refill_with_originium
         def on_prepare(smobj):
             count_times = 0
             while True:
@@ -301,9 +303,30 @@ class ArknightsHelper(object):
                     break
 
             self.CURRENT_STRENGTH = int(recoresult['AP'].split('/')[0])
-            logger.info('当前理智 %d, 关卡消耗 %d', self.CURRENT_STRENGTH, recoresult['consume'])
+            ap_text = '理智' if recoresult['consume_ap'] else '门票'
+            logger.info('当前%s %d, 关卡消耗 %d', ap_text, self.CURRENT_STRENGTH, recoresult['consume'])
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
-                logger.error('理智不足')
+                logger.error(ap_text + '不足')
+                if use_refill:
+                    logger.info('尝试回复理智')
+                    self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
+                    self.__wait(SMALL_WAIT)
+                    screenshot = self.adb.get_screen_shoot()
+                    refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
+                    confirm_refill = False
+                    if refill_type == 'item' and refill_with_item:
+                        logger.info('使用道具回复理智')
+                        confirm_refill = True
+                    if refill_type == 'originium' and refill_with_originium:
+                        logger.info('碎石回复理智')
+                        confirm_refill = True
+                    # FIXME: 1. 道具回复量不足时也会尝试使用
+                    # FIXME: 2. 缺少没有道具和源石时的情况
+                    if confirm_refill:
+                        self.tap_rect(imgreco.before_operation.get_ap_refill_confirm_rect(self.viewport))
+                        self.__wait(MEDIUM_WAIT)
+                        return  # to on_prepare state
+                    logger.error('未能回复理智')
                 raise StopIteration()
 
             if not recoresult['delegated']:

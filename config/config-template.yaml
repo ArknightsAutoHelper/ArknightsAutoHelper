@@ -36,3 +36,11 @@ reporting:
   # > 用户 ID 仅用来标记您的上传身份。在不同设备上使用此 ID 登录，可让掉落数据集中于一个账号下，方便管理上传以及查看个人掉落数据。
   # 如果为 null 或空，则在下一次上传时创建并更新到文件中
   penguin_stats_uid:
+
+behavior:
+  # 理智不足时自动使用理智回复道具
+  refill_ap_with_item: false
+
+  # 理智不足时自动碎石
+  # 如需使用，请将大写字母改为小写
+  REFILL_AP_WITH_ORIGINIUM: false

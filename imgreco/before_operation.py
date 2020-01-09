@@ -24,6 +24,12 @@ def recognize(img):
     logger = get_logger(LOGFILE)
     vw, vh = util.get_vwvh(img.size)
 
+    apicon1 = img.crop((50*vw+70.278*vh, 2.130*vh, 50*vw+77.407*vh, 8.519*vh)).convert('RGB')
+    apicon2 = resources.load_image_cached('before_operation/ap_icon.png', 'RGB')
+    apicon1, apicon2 = imgops.uniform_size(apicon1, apicon2)
+    coef = imgops.compare_ccoeff(apicon1, apicon2)
+    consume_ap = coef > 0.9
+
     apimg = img.crop((100 * vw - 22.917 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)).convert('L')
     reco_Noto, reco_Novecento = load_data()
     apimg = imgops.enhance_contrast(apimg, 80, 255)
@@ -57,6 +63,7 @@ def recognize(img):
 
     return {
         'AP': aptext,
+        'consume_ap': consume_ap,
         'operation': opidtext,
         'delegated': delegated,
         'consume': int(consumetext) if consumetext.isdigit() else None
@@ -79,14 +86,38 @@ def check_confirm_troop_rect(img):
     icon1 = img.crop((50 * vw + 57.083 * vh, 64.722 * vh, 50 * vw + 71.389 * vh, 79.167 * vh)).convert('RGB')
     icon2 = resources.load_image_cached('before_operation/operation_start.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
-    mse = imgops.compare_ccoeff(np.asarray(icon1), np.asarray(icon2))
-    print(mse)
-    return mse > 0.9
+    coef = imgops.compare_ccoeff(np.asarray(icon1), np.asarray(icon2))
+    return coef > 0.9
 
 
 def get_confirm_troop_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
     return (50 * vw + 55.833 * vh, 52.963 * vh, 50 * vw + 72.778 * vh, 87.361 * vh)
+
+
+def check_ap_refill_type(img):
+    vw, vh = util.get_vwvh(img.size)
+    icon1 = img.crop((50*vw-3.241*vh, 11.481*vh, 50*vw+42.685*vh, 17.130*vh)).convert('RGB')
+    icon2 = resources.load_image_cached('before_operation/refill_with_item.png', 'RGB')
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
+    mse1 = imgops.compare_mse(icon1, icon2)
+
+    icon1 = img.crop((50*vw+41.574*vh, 11.481*vh, 50*vw+87.315*vh, 17.130*vh)).convert('RGB')
+    icon2 = resources.load_image_cached('before_operation/refill_with_originium.png', 'RGB')
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
+    mse2 = imgops.compare_mse(icon1, icon2)
+    print((mse1, mse2))
+    if min(mse1, mse2) > 1500:
+        return None
+    if mse1 < mse2:
+        return 'item'
+    else:
+        return 'originium'
+
+
+def get_ap_refill_confirm_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return (50*vw+49.537*vh, 77.222*vh, 50*vw+74.352*vh, 84.815*vh)
 
 
 if __name__ == "__main__":
