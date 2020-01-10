@@ -116,3 +116,5 @@ storage/package.txt
 start2.py
 
 log/*
+
+config/config.yaml
