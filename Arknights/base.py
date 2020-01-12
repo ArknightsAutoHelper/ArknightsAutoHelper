@@ -19,7 +19,7 @@ from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
 from Arknights.click_location import *
 from Arknights.flags import *
-from . import ocr
+# from . import ocr
 
 logger = logging.getLogger('base')
 
@@ -57,7 +57,7 @@ _penguin_init.error = False
 def _penguin_report(recoresult):
     _penguin_init()
     if not _penguin_init.ready:
-        return
+        return False
     logger.info('向企鹅数据汇报掉落...')
     reportid = penguin_stats.reporter.report(recoresult)
     if bool(reportid):
@@ -89,7 +89,6 @@ class ArknightsHelper(object):
         self.__call_by_gui = call_by_gui
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
-        self.ocr_active = True
         self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.get_screen_shoot().size
         self.operation_time = []
@@ -101,7 +100,7 @@ class ArknightsHelper(object):
         logger.info('当前系统信息:')
         logger.info('ADB 服务器:\t%s:%d', *config.ADB_SERVER)
         logger.info('分辨率:\t%dx%d', *self.viewport)
-        logger.info('OCR 引擎:\t%s', ocr.engine.info)
+        # logger.info('OCR 引擎:\t%s', ocr.engine.info)
         logger.info('截图路径:\t%s', config.SCREEN_SHOOT_SAVE_PATH)
 
         if config.enable_baidu_api:
