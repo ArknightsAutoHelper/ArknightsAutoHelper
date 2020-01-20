@@ -1,12 +1,11 @@
-import logging.config
 import os
 import time
+import logging
 from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
 import numpy as np
-from PIL import Image
 
 # from config import *
 import config
@@ -92,8 +91,12 @@ class ArknightsHelper(object):
         self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.get_screen_shoot().size
         self.operation_time = []
+        self.delay_impl = sleep
         if DEBUG_LEVEL >= 1:
             self.__print_info()
+        self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
+        self.refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
+        self.use_refill = self.refill_with_item or self.refill_with_originium
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -134,13 +137,12 @@ class ArknightsHelper(object):
             logger.debug("成功启动游戏")
             self.__is_game_active = True
 
-    @staticmethod
-    def __wait(n=10,  # 等待时间中值
+    def __wait(self, n=10,  # 等待时间中值
                MANLIKE_FLAG=True):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
-        sleep(n)
+        self.delay_impl(n)
 
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
@@ -226,6 +228,7 @@ class ArknightsHelper(object):
         if set_count == 0:
             return True
         self.operation_time = []
+        count = 0
         try:
             for count in range(set_count):
                 logger.info("开始第 %d 次战斗", count + 1)
@@ -266,9 +269,6 @@ class ArknightsHelper(object):
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
-        refill_with_item = config.get('behavior/refill_ap_with_item', False)
-        refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
-        use_refill = refill_with_item or refill_with_originium
         def on_prepare(smobj):
             count_times = 0
             while True:
@@ -306,17 +306,17 @@ class ArknightsHelper(object):
             logger.info('当前%s %d, 关卡消耗 %d', ap_text, self.CURRENT_STRENGTH, recoresult['consume'])
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
                 logger.error(ap_text + '不足')
-                if use_refill:
+                if self.use_refill:
                     logger.info('尝试回复理智')
                     self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
                     self.__wait(SMALL_WAIT)
                     screenshot = self.adb.get_screen_shoot()
                     refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
                     confirm_refill = False
-                    if refill_type == 'item' and refill_with_item:
+                    if refill_type == 'item' and self.refill_with_item:
                         logger.info('使用道具回复理智')
                         confirm_refill = True
-                    if refill_type == 'originium' and refill_with_originium:
+                    if refill_type == 'originium' and self.refill_with_originium:
                         logger.info('碎石回复理智')
                         confirm_refill = True
                     # FIXME: 1. 道具回复量不足时也会尝试使用
