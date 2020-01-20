@@ -25,7 +25,7 @@
 
 虽然脚本不依赖 `adb` 工具进行操作，但是依然需要 ADB server 连接到模拟器/设备，请确认 `adb devices` 中列出了目标模拟器/设备。如何连接 ADB 请参考各模拟器的文档、论坛等资源。
 
-如果 `adb devices` 中列出了目标模拟器/设备，但脚本不能正常连接，请尝试使用[最新的 ADB 工具](https://developer.android.google.cn/studio/releases/platform-tools)。
+如果 `adb devices` 中列出了目标模拟器/设备，但脚本不能正常连接，或遇到其他问题，请尝试使用[最新的 ADB 工具](https://developer.android.google.cn/studio/releases/platform-tools)。
 
 目前暂不考虑直接连接到模拟器/设备的 ADB over TCP/IP 或 USB 端口，因为 ADB daemon 不支持同时存在多个连接，需要 ADB server 进行复用。
 
@@ -95,6 +95,25 @@ Windows OCR 的语言数据是随语言支持安装的，可能需要在系统�
 ## 0x02 ArknightsHelper 命令行启动
 
 ### 命令行启动说明
+
+```
+$ python3 akhelper.py
+usage: akhelper.py command [command args]
+commands:
+    quick [n]
+        重复挑战当前画面关卡特定次数或直到理智不足
+    auto stage1 count1 [stage2 count2] ...
+        按顺序挑战指定关卡特定次数直到理智不足
+    collect
+        收集每日任务奖励
+    recruit
+        公开招募识别
+    help
+        输出本段消息
+```
+
+<details><summary>旧版命令行接口</summary>
+
 ```bash
 Usage: ArknightsShell.py [options] arg1 arg2 ...
 
@@ -113,6 +132,9 @@ Options:
 
 ```
 
+**致各位贡献者**：新功能请优先加到新命令行接口
+</details>
+
 ### 简略战斗模块
 
 快速启动模块需要手动选关。到如下画面，活动关卡你也可以这么刷。
@@ -122,9 +144,18 @@ Options:
 ![TIM截图20190513101009.png-1013.8kB][1]
 
 ```bash
+python3 akhelper.py quick 99
+# 重复刷当前画面关卡 99 次，也可以不指定次数
+```
+
+<details><summary>旧版命令行接口</summary>
+
+```bash
 $ python ArknightsShell.py -s -t slim:99
 # 由于是快速启动模式，所以只会执行第一项任务清单，额外输入的任务序列会被忽略。
 ```
+
+</details>
 
 *注意*
 
@@ -139,8 +170,17 @@ $ python ArknightsShell.py -s -t slim:99
 \* 该模块支持关卡有限，且仅支持 1280x720 分辨率，请等待后续更新
 
 ```bash
+python3 akhelper.py   5-1 2   5-2 3
+# 按顺序刷 5-1 关卡 2 次，5-2 关卡 3 次
+```
+
+<details><summary>旧版命令行接口</summary>
+
+```bash
 $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 ```
+
+</details>
 
 ## 0x03 ArknightsHelper 自定义脚本启动
 
