@@ -1,8 +1,10 @@
+import sys
 from .fancycli import fancywait
 
 
 def skipcallback(handler):
     raise StopIteration
+
 
 def delay_impl_factory(helper, statusline, show_toggle):
     togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if helper.use_refill else 'OFF')
@@ -23,6 +25,7 @@ def delay_impl_factory(helper, statusline, show_toggle):
 
     return delay_impl
 
+
 def _create_helper(show_toggle=False):
     from Arknights.base import ArknightsHelper
     helper = ArknightsHelper()
@@ -34,6 +37,7 @@ def _create_helper(show_toggle=False):
     helper._shellng_with = line
     helper.delay_impl = delay_impl_factory(helper, line, show_toggle)
     return helper
+
 
 def quick(argv):
     """
@@ -60,6 +64,7 @@ class ItemsWrapper:
         return len(self.obj)
     def items(self):
         return self.obj
+
 
 def auto(argv):
     """
