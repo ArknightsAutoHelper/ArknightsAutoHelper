@@ -7,29 +7,27 @@ from time import sleep, monotonic
 
 import numpy as np
 
-# from config import *
 import config
 import imgreco
 import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
-import richlog
 from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
 from Arknights.click_location import *
 from Arknights.flags import *
-# from . import ocr
 
 logger = logging.getLogger('base')
 
-
-def _logged_ocr(image, *args, **kwargs):
-    logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
-    logger.loghtml('<hr/>')
-    logger.logimage(image)
-    ocrresult = ocr.engine.recognize(image, *args, **kwargs)
-    logger.logtext(repr(ocrresult.text))
-    return ocrresult
+# import richlog
+# from . import ocr
+# def _logged_ocr(image, *args, **kwargs):
+#     logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
+#     logger.loghtml('<hr/>')
+#     logger.logimage(image)
+#     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
+#     logger.logtext(repr(ocrresult.text))
+#     return ocrresult
 
 
 def _penguin_init():
@@ -306,7 +304,7 @@ class ArknightsHelper(object):
             logger.info('当前%s %d, 关卡消耗 %d', ap_text, self.CURRENT_STRENGTH, recoresult['consume'])
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
                 logger.error(ap_text + '不足')
-                if self.use_refill:
+                if recoresult['consume_ap'] and self.use_refill:
                     logger.info('尝试回复理智')
                     self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
                     self.__wait(SMALL_WAIT)
