@@ -24,7 +24,7 @@ def recognize(img):
     logger = get_logger(LOGFILE)
     vw, vh = util.get_vwvh(img.size)
 
-    apicon1 = img.crop((50*vw+70.278*vh, 2.130*vh, 50*vw+77.407*vh, 8.519*vh)).convert('RGB')
+    apicon1 = img.crop((100*vw-29.722*vh, 2.130*vh, 100*vw-22.593*vh, 8.519*vh)).convert('RGB')
     apicon2 = resources.load_image_cached('before_operation/ap_icon.png', 'RGB')
     apicon1, apicon2 = imgops.uniform_size(apicon1, apicon2)
     coef = imgops.compare_ccoeff(apicon1, apicon2)
