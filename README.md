@@ -19,7 +19,15 @@
 
 由于作者精力有限，只做了绝对坐标的，欢迎大家重写模块。建议使用夜神模拟器，记得开启开发者模式。
 
-\* 部分模块已经可以自适应分辨率和宽高比，作者测试过的分辨率有 1280x720、1440x720、1920x1080、2160x1080。
+\* 部分模块已经可以自适应分辨率和宽高比（大于 16:9），作者测试过的分辨率有 1280x720、1440x720、1920x1080、2160x1080。
+
+### **ADB 连接**
+
+虽然脚本不依赖 `adb` 工具进行操作，但是依然需要 ADB server 连接到模拟器/设备，请确认 `adb devices` 中列出了目标模拟器/设备。如何连接 ADB 请参考各模拟器的文档、论坛等资源。
+
+如果 `adb devices` 中列出了目标模拟器/设备，但脚本不能正常连接，或遇到其他问题，请尝试使用[最新的 ADB 工具](https://developer.android.google.cn/studio/releases/platform-tools)。
+
+目前暂不考虑直接连接到模拟器/设备的 ADB over TCP/IP 或 USB 端口，因为 ADB daemon 不支持同时存在多个连接，需要 ADB server 进行复用。
 
 ### **安装依赖**
 
@@ -29,6 +37,7 @@ $ pip install -r requirements.txt
 ```
 
 #### OCR 依赖
+<details><summary>当前不需要使用外部 OCR</summary>
 
 该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文和英文语言包）或者申请百度OCR
 
@@ -36,18 +45,24 @@ $ pip install -r requirements.txt
 https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/blob/master/OCR_install.md
 
 **关于百度OCR申请**
-##目前百度ocr功能无法使用，请等待后续版本恢复
+
 > 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，根据百度文字识别文档，会暂停使用，建议使用前阅读文档，不保证政策是否改变。理论上每天次数非常充足
 
 文档地址：https://cloud.baidu.com/doc/OCR/index.html
-启用百度api作为ocr识别方案，需要自行注册百度云。之后再config.developer_config中配置
-```python
-# 是否启用百度api作为ocr识别方案之一，需要自行注册，不启用则使用默认方案，但在engine指定baidu的话该设置无效
-enable_baidu_api = False
-""" 你的 APPID AK SK """
-APP_ID = '你的 App ID'
-API_KEY = '你的 Api Key'
-SECRET_KEY = '你的 Secret Key'
+启用百度api作为ocr识别方案，需要自行注册百度云。并在 `config.yaml` 中配置
+```yaml
+ocr:
+  # 选择 OCR 引擎，非必要
+  # 设置为 auto 则选择下列第一个可用的引擎: tesseract, windows_media_ocr, baidu
+  engine: baidu
+  # 百度 API 设置，使用 baidu OCR 时需要正确填写
+  baidu_api:
+    # 是否将百度 OCR 标记为可用
+    enabled: true
+    # 百度 API 鉴权数据
+    app_id: '你的 App ID'
+    app_key: '你的 Api Key'
+    app_secret: '你的 Secret Key'
 ```
 
 **关于Windows OCR**
@@ -55,13 +70,15 @@ SECRET_KEY = '你的 Secret Key'
 需要 Windows 10。
 
 当前默认配置为在 tesseract 无法使用（未安装）时使用。如要强制使用，请更改如下
-```python
-engine = "windows_media_ocr"
+```yaml
+ocr:
+  engine: windows_media_ocr
 ```
 Windows OCR 的语言数据是随语言支持安装的，可能需要在系统语言列表中加入英语（美国）以安装英语 OCR 支持。
 
 
 目前 Windows OCR 无法识别游戏中部分文本，正在考虑使用替代方法。
+</details>
 
 ### **额外设置**
 
@@ -71,16 +88,32 @@ Windows OCR 的语言数据是随语言支持安装的，可能需要在系统�
 
 日志采用```import logging```在log目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
 
-相关配置文件在```config```目录下的**logging.ini**，由于过于复杂 ~~其实也没确定理解的对不对~~ 这里请自行研究，欢迎讨论
-
-配置文件本身支持如字典，YAML等，欢迎找到更有效，更整洁的方式并更换
+相关配置文件在```config```目录下的**logging.yaml**，由于过于复杂 ~~其实也没确定理解的对不对~~ 这里请自行研究，欢迎讨论
 
 日志目前启动按照时间自动备份功能，间隔为一天一次，保留最多7份。
 
 ## 0x02 ArknightsHelper 命令行启动
-> 推荐安装OCR模块;感谢群友的贡献！关于OCR安装的文档可以查看OCR_install.md
 
 ### 命令行启动说明
+
+```
+$ python3 akhelper.py
+usage: akhelper.py command [command args]
+commands:
+    quick [n]
+        重复挑战当前画面关卡特定次数或直到理智不足
+    auto stage1 count1 [stage2 count2] ...
+        按顺序挑战指定关卡特定次数直到理智不足
+    collect
+        收集每日任务奖励
+    recruit
+        公开招募识别
+    help
+        输出本段消息
+```
+
+<details><summary>旧版命令行接口</summary>
+
 ```bash
 Usage: ArknightsShell.py [options] arg1 arg2 ...
 
@@ -99,6 +132,9 @@ Options:
 
 ```
 
+**致各位贡献者**：新功能请优先加到新命令行接口
+</details>
+
 ### 简略战斗模块
 
 快速启动模块需要手动选关。到如下画面，活动关卡你也可以这么刷。
@@ -108,24 +144,43 @@ Options:
 ![TIM截图20190513101009.png-1013.8kB][1]
 
 ```bash
-$ python ArknightsShell.py -s -t CE-5:99
+python3 akhelper.py quick 99
+# 重复刷当前画面关卡 99 次，也可以不指定次数
+```
+
+<details><summary>旧版命令行接口</summary>
+
+```bash
+$ python ArknightsShell.py -s -t slim:99
 # 由于是快速启动模式，所以只会执行第一项任务清单，额外输入的任务序列会被忽略。
 ```
 
+</details>
+
 *注意*
 
-> 传入的关卡名只要理智消耗比当前关卡高即可。比如你想刷 CE-4 （理智消耗25点） 那带入的关卡可以是任何理智消耗大于等于 25点的关卡
-> 理论上该模块比完整的模块稳定并且不容易被系统检测。并且该模块所有的点击序列都是随机化的，不容易被检测
+* 该模块会识别当前理智和关卡理智消耗，理智不足时会自动停止或补充理智（需在配置中启用）
+* 理论上该模块比完整的模块稳定并且不容易被系统检测。并且该模块所有的点击序列都是随机化的，不容易被检测
 
 
 ### 主战斗模块
 
 主战斗模块可以从几乎任何位置（理论上有返回键的页面）开始任务序列。
 
+\* 该模块支持关卡有限，且仅支持 1280x720 分辨率，请等待后续更新
+
+```bash
+python3 akhelper.py   5-1 2   5-2 3
+# 按顺序刷 5-1 关卡 2 次，5-2 关卡 3 次
+```
+
+<details><summary>旧版命令行接口</summary>
+
 ```bash
 $ python ArknightsShell.py -b -t 5-1:2|5-2:3
-# 由于是快速启动模式，所以只会执行第一项任务清单，额外输入的任务序列会被忽略。
 ```
+
+</details>
 
 ## 0x03 ArknightsHelper 自定义脚本启动
 
@@ -163,7 +218,7 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 可以，请下载release分支下经过PyInstaller 打包后的exe 文件。如果有问题欢迎来群里提问
 5. 之后会收费么？
 不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。欢迎来pull代码以及加群
-~~6. 关于mumu模拟器的adb在哪里的问题~~【目前已经解决】
+6. ~~关于mumu模拟器的adb在哪里的问题~~【目前已经解决】
 mumu模拟器的adb不在模拟器的主路径下，而且它的名字叫adb_server。mumu模拟器自动隐藏了adb端口。
 除非你是专业人士，否则不建议使用mumu模拟器。推荐使用夜神模拟器，群友也有用雷电模拟器的。
 

@@ -1,36 +1,33 @@
-import logging.config
 import os
 import time
+import logging
 from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
 import numpy as np
-from PIL import Image
 
-# from config import *
 import config
 import imgreco
 import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
-import richlog
 from ADBShell import ADBShell
 from Arknights.BattleSelector import BattleSelector
 from Arknights.click_location import *
 from Arknights.flags import *
-from . import ocr
 
 logger = logging.getLogger('base')
 
-
-def _logged_ocr(image, *args, **kwargs):
-    logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
-    logger.loghtml('<hr/>')
-    logger.logimage(image)
-    ocrresult = ocr.engine.recognize(image, *args, **kwargs)
-    logger.logtext(repr(ocrresult.text))
-    return ocrresult
+# import richlog
+# from . import ocr
+# def _logged_ocr(image, *args, **kwargs):
+#     logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
+#     logger.loghtml('<hr/>')
+#     logger.logimage(image)
+#     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
+#     logger.logtext(repr(ocrresult.text))
+#     return ocrresult
 
 
 def _penguin_init():
@@ -57,7 +54,7 @@ _penguin_init.error = False
 def _penguin_report(recoresult):
     _penguin_init()
     if not _penguin_init.ready:
-        return
+        return False
     logger.info('向企鹅数据汇报掉落...')
     reportid = penguin_stats.reporter.report(recoresult)
     if bool(reportid):
@@ -89,19 +86,22 @@ class ArknightsHelper(object):
         self.__call_by_gui = call_by_gui
         self.CURRENT_STRENGTH = 100
         self.selector = BattleSelector()
-        self.ocr_active = True
         self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.get_screen_shoot().size
         self.operation_time = []
+        self.delay_impl = sleep
         if DEBUG_LEVEL >= 1:
             self.__print_info()
+        self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
+        self.refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
+        self.use_refill = self.refill_with_item or self.refill_with_originium
         logger.debug("成功初始化模块")
 
     def __print_info(self):
         logger.info('当前系统信息:')
         logger.info('ADB 服务器:\t%s:%d', *config.ADB_SERVER)
         logger.info('分辨率:\t%dx%d', *self.viewport)
-        logger.info('OCR 引擎:\t%s', ocr.engine.info)
+        # logger.info('OCR 引擎:\t%s', ocr.engine.info)
         logger.info('截图路径:\t%s', config.SCREEN_SHOOT_SAVE_PATH)
 
         if config.enable_baidu_api:
@@ -135,13 +135,12 @@ class ArknightsHelper(object):
             logger.debug("成功启动游戏")
             self.__is_game_active = True
 
-    @staticmethod
-    def __wait(n=10,  # 等待时间中值
+    def __wait(self, n=10,  # 等待时间中值
                MANLIKE_FLAG=True):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
-        sleep(n)
+        self.delay_impl(n)
 
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
@@ -227,6 +226,7 @@ class ArknightsHelper(object):
         if set_count == 0:
             return True
         self.operation_time = []
+        count = 0
         try:
             for count in range(set_count):
                 logger.info("开始第 %d 次战斗", count + 1)
@@ -267,9 +267,6 @@ class ArknightsHelper(object):
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
-        refill_with_item = config.get('behavior/refill_ap_with_item', False)
-        refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
-        use_refill = refill_with_item or refill_with_originium
         def on_prepare(smobj):
             count_times = 0
             while True:
@@ -307,17 +304,17 @@ class ArknightsHelper(object):
             logger.info('当前%s %d, 关卡消耗 %d', ap_text, self.CURRENT_STRENGTH, recoresult['consume'])
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
                 logger.error(ap_text + '不足')
-                if use_refill:
+                if recoresult['consume_ap'] and self.use_refill:
                     logger.info('尝试回复理智')
                     self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
                     self.__wait(SMALL_WAIT)
                     screenshot = self.adb.get_screen_shoot()
                     refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
                     confirm_refill = False
-                    if refill_type == 'item' and refill_with_item:
+                    if refill_type == 'item' and self.refill_with_item:
                         logger.info('使用道具回复理智')
                         confirm_refill = True
-                    if refill_type == 'originium' and refill_with_originium:
+                    if refill_type == 'originium' and self.refill_with_originium:
                         logger.info('碎石回复理智')
                         confirm_refill = True
                     # FIXME: 1. 道具回复量不足时也会尝试使用
