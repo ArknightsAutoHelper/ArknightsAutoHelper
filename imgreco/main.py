@@ -3,10 +3,13 @@ from fractions import Fraction
 import numpy as np
 from PIL import Image
 
+from richlog import get_logger
 from . import imgops
 from . import resources
 from . import util
 
+LOGFILE = 'main.html'
+logger = get_logger(LOGFILE)
 
 def check_main(img):
     vw, vh = util.get_vwvh(img.size)
@@ -15,6 +18,8 @@ def check_main(img):
     gear1, gear2 = imgops.uniform_size(gear1, gear2)
     result = imgops.compare_ccoeff(gear1, gear2)
     # result = np.corrcoef(np.asarray(gear1).flat, np.asarray(gear2).flat)[0, 1]
+    logger.logimage(gear1)
+    logger.logtext('ccoeff=%f' % result)
     return result > 0.9
 
 
