@@ -21,7 +21,7 @@ def get_recruit_tags(img):
         img.crop((50*vw-13.241*vh, 60.278*vh, 50*vw+6.111*vh, 66.019*vh)).convert('L')
     ]
 
-    tags = [ocr.engine.recognize(imgops.invert_color(img), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]).text.replace(' ', '') for img in tagimgs]
+    tags = [ocr.get_config_engine().recognize(imgops.invert_color(img), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]).text.replace(' ', '') for img in tagimgs]
 
     for tagimg, tagtext in zip(tagimgs, tags):
         logger.logimage(tagimg)
