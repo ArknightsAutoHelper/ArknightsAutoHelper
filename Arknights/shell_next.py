@@ -121,7 +121,7 @@ def recruit(argv):
         print('要素过多')
         return 1
 
-    colors = ['\033[36m', '\033[90m', '\033[39m', '\033[95m', '\033[93m', '\033[91m']
+    colors = ['\033[36m', '\033[90m', '\033[37m', '\033[32m', '\033[93m', '\033[91m']
     reset = '\033[39m'
     for tags, operators, rank in result:
         taglist = ','.join(tags)
