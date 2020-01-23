@@ -7,8 +7,11 @@ from .recruit_database import recruit_database
 def _rank(operators):
     if any(x[1] == 2 for x in operators):  # 组合中有三星干员
         return 0
-    min_rarity = min(x[1] for x in operators if x[1] > 0)  # 一星干员不参与评级
-    return min_rarity - 2
+    try:
+        min_rarity = min(x[1] for x in operators if x[1] > 0)  # 一星干员不参与评级
+        return min_rarity - 2
+    except ValueError:
+        return 0.5
 
 
 def calculate(tags):
