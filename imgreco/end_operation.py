@@ -131,10 +131,10 @@ def roundint(x):
 def check_level_up_popup(img):
     vw, vh = util.get_vwvh(img.size)
 
-    ap_recovered_img = img.crop((50 * vw + 8.056 * vh, 46.574 * vh, 50 * vw + 24.907 * vh, 51.296 * vh))  # 理智已恢复
-    ap_recovered_img = imgops.enhance_contrast(ap_recovered_img, 100, 225)
-    ap_recovered_text = recozh.recognize(ap_recovered_img)
-    return '理智' in ap_recovered_text
+    lvl_up_img = img.crop((50*vw-48.796*vh, 47.685*vh, 50*vw-23.148*vh, 56.019*vh)).convert('L')  # 等级提升
+    lvl_up_img = imgops.enhance_contrast(lvl_up_img, 216, 255)
+    lvl_up_text = recozh.recognize(lvl_up_img)
+    return minireco.check_charseq(lvl_up_text, '提升')
 
 
 def check_end_operation(img):

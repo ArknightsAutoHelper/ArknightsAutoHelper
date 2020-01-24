@@ -90,3 +90,16 @@ class MiniRecognizer:
             image = image.convert('L')
         charimgs = split_chars(image)
         return ''.join(self.recognize_char(charimg) for charimg in charimgs)
+
+
+def check_charseq(string, seq):
+    lastindex = -1
+    for ch in seq:
+        try:
+            index = string.index(ch)
+        except ValueError:
+            return False
+        if index < lastindex:
+            return False
+        lastindex = index
+    return True
