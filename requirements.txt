@@ -1,3 +1,4 @@
+coloredlogs==10.0
 numpy==1.18.0
 opencv-python==4.1.2.30
 Pillow==6.2.1

@@ -9,7 +9,7 @@ goto end
 
 :history
 @echo --------------------------------->>物品掉落.txt
-@findstr "掉落识别结果" log\ArknightsAutoHelper.log>>物品掉落.txt
+@findstr "stars" log\ArknightsAutoHelper.log>>物品掉落.txt
 @del log\*.log*
 echo [94m[i] 已将掉落信息添加至 物品掉落.txt 文件[0m
 
