@@ -54,9 +54,9 @@ class ADBShell(object):
                 while not input_valid_flag:
                     try:
                         num = int(input(">"))
-                        if 0 <= num < len(devices):
-                            input_valid_flag = True
-                    except:
+                        if not 0 <= num < len(devices):
+                            raise ValueError()
+                    except ValueError:
                         logger.error("输入不合法，请重新输入")
                 device_name = devices[num][0]
         logger.info("[+] 确认设备名称\t" + device_name)
