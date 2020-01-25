@@ -8,7 +8,7 @@ cd>nul 2>nul /D %~dp0
 rem 主任务
 :aah_slim
 set /p slim="[94m[i] 输入预期战斗次数：[0m "
-python ArknightsShell.py -s -t slim:%slim%
+python akhelper.py quick %slim%
 
 rem 确认是否重新运行
 set /p choice="[94m[i] 输入 'y' 重新运行 | 任意键退出：[0m"

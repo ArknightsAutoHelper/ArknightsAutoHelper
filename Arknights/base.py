@@ -5,6 +5,7 @@ from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
+import coloredlogs
 import numpy as np
 
 import config
@@ -18,8 +19,12 @@ from Arknights.click_location import *
 from Arknights.flags import *
 
 logger = logging.getLogger('base')
-
-# import richlog
+coloredlogs.install(
+    fmt=' Ξ %(message)s',
+    #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
+    datefmt='%H:%M:%S',
+    level_styles={'info': {'color': 'blue'}, 'warning': {'color': 'green'}, 'error': {'color': 'red'}},
+    level='INFO')
 # from . import ocr
 # def _logged_ocr(image, *args, **kwargs):
 #     logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
@@ -188,7 +193,7 @@ class ArknightsHelper(object):
             n += 1
             if n == 9:
                 logger.info("等待画面静止")
-        raise RuntimeError("60秒内画面未静止")
+        raise RuntimeError("60 秒内画面未静止")
 
     def module_login(self):
         logger.debug("base.module_login")
@@ -209,12 +214,12 @@ class ArknightsHelper(object):
         :param auto_close 是否自动关闭, 默认为 false
         :param self_fix 是否尝试自动修复, 默认为 false
         :param MAX_TIME 最大检查轮数, 默认在 config 中设置,
-            每隔一段时间进行一轮检查判断战斗是否结束
+            每隔一段时间进行一轮检查判断作战是否结束
             建议自定义该数值以便在出现一定失误,
             超出最大判断次数后有一定的自我修复能力
         :return:
-            True 完成指定次数的战斗
-            False 理智不足, 退出战斗
+            True 完成指定次数的作战
+            False 理智不足, 退出作战
         '''
         logger.debug("base.module_battle_slim")
         sub = kwargs["sub"] \
@@ -229,9 +234,9 @@ class ArknightsHelper(object):
         count = 0
         try:
             for count in range(set_count):
-                logger.info("开始第 %d 次战斗", count + 1)
+                # logger.info("开始第 %d 次战斗", count + 1)
                 self.operation_once_statemachine(c_id, )
-                logger.info("第 %d 次战斗完成", count + 1)
+                logger.info("第 %d 次作战完成", count + 1)
                 if count != set_count - 1:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
@@ -239,7 +244,7 @@ class ArknightsHelper(object):
                     else:
                         self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
         except StopIteration:
-            logger.error('未能进行第 %d 次战斗', count + 1)
+            logger.error('未能进行第 %d 次作战', count + 1)
             remain = set_count - count - 1
             if remain > 0:
                 logger.error('已忽略余下的 %d 次战斗', remain)
@@ -280,7 +285,7 @@ class ArknightsHelper(object):
                     # ASSUMPTION: 所有关卡都显示并能识别体力消耗
                     not_in_scene = True
 
-                logger.info('当前画面关卡：%s', recoresult['operation'])
+                logger.debug('当前画面关卡：%s', recoresult['operation'])
 
                 if (not not_in_scene) and c_id is not None:
                     # 如果传入了关卡 ID，检查识别结果
@@ -290,7 +295,7 @@ class ArknightsHelper(object):
                 if not_in_scene:
                     count_times += 1
                     if count_times <= 7:
-                        logger.warning('不在关卡界面，继续等待……')
+                        logger.warning('不在关卡界面')
                         self.__wait(TINY_WAIT, False)
                         continue
                     else:
@@ -303,7 +308,7 @@ class ArknightsHelper(object):
             ap_text = '理智' if recoresult['consume_ap'] else '门票'
             logger.info('当前%s %d, 关卡消耗 %d', ap_text, self.CURRENT_STRENGTH, recoresult['consume'])
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
-                logger.error(ap_text + '不足')
+                logger.error(ap_text + '不足 无法继续')
                 if recoresult['consume_ap'] and self.use_refill:
                     logger.info('尝试回复理智')
                     self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
@@ -330,7 +335,7 @@ class ArknightsHelper(object):
                 logger.info('设置代理指挥')
                 self.tap_rect(imgreco.before_operation.get_delegate_rect(self.viewport))
 
-            logger.info("开始行动")
+            logger.info("理智充足 开始行动")
             self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
             smobj.state = on_troop
 
@@ -349,7 +354,7 @@ class ArknightsHelper(object):
                         logger.warning('等待确认编队')
                         continue
                     else:
-                        logger.error('{}次检测后不再确认编队界面'.format(count_times))
+                        logger.error('{} 次检测后不再确认编队界面'.format(count_times))
                         raise StopIteration()
             self.tap_rect(imgreco.before_operation.get_confirm_troop_rect(self.viewport))
             smobj.operation_start = monotonic()
@@ -370,14 +375,13 @@ class ArknightsHelper(object):
 
             screenshot = self.adb.get_screen_shoot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
-                logger.info("检测到升级")
+                logger.info("等级提升")
                 self.operation_time.append(t)
                 smobj.state = on_level_up_popup
                 return
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
-                self.operation_time.append(t)
-                self.wait_for_still_image()
+                self.__wait(SMALL_WAIT)
                 smobj.state = on_end_operation
                 return
             logger.info('战斗未结束')
@@ -397,8 +401,10 @@ class ArknightsHelper(object):
             reportid = None
             try:
                 # 掉落识别
-                drops = imgreco.end_operation.recognize(screenshot)
-                logger.info('掉落识别结果：%s', repr(drops))
+                drops= imgreco.end_operation.recognize(screenshot) 
+                logger.info('掉落识别结果：') 
+                logger.info('%s', repr(drops.get('items'))) 
+                logger.debug('%s', repr(drops)) 
                 reportid = _penguin_report(drops)
             except Exception as e:
                 logger.error('', exc_info=True)
@@ -406,7 +412,7 @@ class ArknightsHelper(object):
                 filename = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '未上报掉落-%d.png' % time.time())
                 with open(filename, 'wb') as f:
                     screenshot.save(f, format='PNG')
-                logger.error('截图已保存到 %s', filename)
+                logger.error('未上报掉落截图已保存到 %s', filename)
             smobj.stop = True
 
         smobj.state = on_prepare
@@ -421,7 +427,7 @@ class ArknightsHelper(object):
 
     def back_to_main(self):  # 回到主页
         logger.debug("base.back_to_main")
-        logger.info("返回主页...")
+        logger.info("正在返回主页")
         while True:
             screenshot = self.adb.get_screen_shoot()
 
@@ -722,3 +728,60 @@ class ArknightsHelper(object):
                     break
             screenshot = self.adb.get_screen_shoot()
         logger.info("奖励已领取完毕")
+        
+    def get_credit(self):
+        logger.debug("base.get_credit")
+        logger.info("领取信赖")
+        self.back_to_main()
+        screenshot = self.adb.get_screen_shoot()
+        logger.info('进入好友列表')
+        self.tap_quadrilateral(imgreco.main.get_friend_corners(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_friend_list(screenshot))
+        self.__wait(SMALL_WAIT)
+        logger.info('访问好友基建')
+        self.tap_quadrilateral(imgreco.main.get_friend_build(screenshot))
+        self.__wait(MEDIUM_WAIT)
+        building_count = 0
+        while building_count <= 11:
+            screenshot = self.adb.get_screen_shoot()
+            self.tap_quadrilateral(imgreco.main.get_next_friend_build(screenshot))
+            self.__wait(MEDIUM_WAIT)
+            building_count = building_count + 1
+            logger.info('访问第 %s 位好友', building_count)
+        logger.info('信赖领取完毕')
+    
+    def get_building(self):
+        logger.debug("base.get_building")
+        logger.info("清空基建")
+        self.back_to_main()
+        screenshot = self.adb.get_screen_shoot()
+        logger.info('进入我的基建')
+        self.tap_quadrilateral(imgreco.main.get_back_my_build(screenshot))
+        self.__wait(MEDIUM_WAIT + 3)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task(screenshot))
+        self.__wait(SMALL_WAIT)
+        logger.info('收取制造产物')
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+        self.__wait(SMALL_WAIT)
+        logger.info('清理贸易订单')
+        self.tap_quadrilateral(imgreco.main.get_my_sell_task_1(screenshot))
+        self.__wait(SMALL_WAIT + 1)
+        self.tap_quadrilateral(imgreco.main.get_my_sell_tasklist(screenshot))
+        self.__wait(SMALL_WAIT -1 )
+        sell_count = 0
+        while sell_count <= 6:
+            screenshot = self.adb.get_screen_shoot()
+            self.tap_quadrilateral(imgreco.main.get_my_sell_task_main(screenshot))
+            self.__wait(TINY_WAIT)
+            sell_count = sell_count + 1
+        self.tap_quadrilateral(imgreco.main.get_my_sell_task_2(screenshot))
+        self.__wait(SMALL_WAIT - 1)
+        sell_count = 0
+        while sell_count <= 6:
+            screenshot = self.adb.get_screen_shoot()
+            self.tap_quadrilateral(imgreco.main.get_my_sell_task_main(screenshot))
+            self.__wait(TINY_WAIT)
+            sell_count = sell_count + 1
+        self.back_to_main()
+        logger.info("基建领取完毕")
