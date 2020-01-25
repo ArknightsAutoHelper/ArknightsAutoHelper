@@ -2,12 +2,13 @@ import cv2 as cv
 import numpy as np
 from PIL import Image
 
+from richlog import get_logger
 from . import imgops
 from . import resources
 from . import util
 
 LOGFILE = 'common.html'
-
+logger = get_logger(LOGFILE)
 
 def check_get_item_popup(img):
     vw, vh = util.get_vwvh(img.size)
@@ -17,6 +18,8 @@ def check_get_item_popup(img):
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     # print(mse, icon1.size)
+    logger.logimage(icon1)
+    logger.logtext('mse=%f' % mse)
     return mse < 2000
 
 
@@ -32,7 +35,8 @@ def check_nav_button(img):
 
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
-    print(mse)
+    logger.logimage(icon1)
+    logger.logtext('mse=%f' % mse)
     return mse < 200
 
 
@@ -47,8 +51,10 @@ def check_setting_scene(img):
     icon2 = resources.load_image_cached('common/settingback.png', 'RGB')
 
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
-    return imgops.compare_mse(np.asarray(icon1), np.asarray(icon2)) < 200
-
+    mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
+    logger.logimage(icon1)
+    logger.logtext('mse=%f' % mse)
+    return mse < 200
 
 def get_setting_back_rect(viewport):
     vw, vh = util.get_vwvh(viewport)

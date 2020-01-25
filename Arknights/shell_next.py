@@ -1,3 +1,4 @@
+import itertools
 import sys
 from .fancycli import fancywait
 
@@ -104,10 +105,29 @@ def collect(argv):
 
 def recruit(argv):
     """
-    recruit
-        公开招募识别
+    recruit [tags ...]
+        公开招募识别/计算，不指定标签则从截图中识别
     """
-    raise NotImplementedError()
+    from . import recruit_calc
+
+    if 2 <= len(argv) <= 6:
+        tags = argv[1:]
+        result = recruit_calc.calculate(tags)
+    elif len(argv) == 1:
+        helper = _create_helper()
+        with helper._shellng_with:
+            result = helper.recruit()
+    else:
+        print('要素过多')
+        return 1
+
+    colors = ['\033[36m', '\033[90m', '\033[37m', '\033[32m', '\033[93m', '\033[91m']
+    reset = '\033[39m'
+    for tags, operators, rank in result:
+        taglist = ','.join(tags)
+        if rank >= 1:
+            taglist = '\033[96m' + taglist + '\033[39m'
+        print("%s: %s" % (taglist, ' '.join(colors[op[1]] + op[0] + reset for op in operators)))
 
 
 def help(argv):

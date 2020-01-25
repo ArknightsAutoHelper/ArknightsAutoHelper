@@ -1,4 +1,5 @@
 import base64
+import time
 from functools import lru_cache
 from io import BytesIO
 
@@ -40,13 +41,20 @@ def _basicGeneral(image, options):
     data = {}
     data['image'] = base64.b64encode(image).decode()
     data.update(options)
+    t = time.monotonic()
+    tdiff = t - _basicGeneral.last_call
+    if tdiff < 0.3:
+        # QPS limit
+        time.sleep(0.3 - tdiff)
     resp = requests.post('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic', data=data, params={'access_token': _get_token()})
     resp.raise_for_status()
     resp = resp.json()
     if 'error_code' in resp:
-        raise resp['error_msg']
+        raise RuntimeError(resp['error_msg'])
+    _basicGeneral.last_call = time.monotonic()
     return resp
 
+_basicGeneral.last_call = 0
 
 def recognize(image, lang, *, hints=None):
     # line = 0

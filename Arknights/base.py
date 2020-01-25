@@ -728,6 +728,17 @@ class ArknightsHelper(object):
                     break
             screenshot = self.adb.get_screen_shoot()
         logger.info("奖励已领取完毕")
+
+
+    def recruit(self):
+        from . import recruit_calc
+        logger.info('识别招募标签')
+        tags = imgreco.recruit.get_recruit_tags(self.adb.get_screen_shoot())
+        logger.info('可选标签：%s', ' '.join(tags))
+        result = recruit_calc.calculate(tags)
+        logger.debug('计算结果：%s', repr(result))
+        return result
+
         
     def get_credit(self):
         logger.debug("base.get_credit")
@@ -785,3 +796,5 @@ class ArknightsHelper(object):
             sell_count = sell_count + 1
         self.back_to_main()
         logger.info("基建领取完毕")
+
+        

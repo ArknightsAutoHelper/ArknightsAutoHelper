@@ -37,7 +37,7 @@ $ pip install -r requirements.txt
 ```
 
 #### OCR 依赖
-<details><summary>当前不需要使用外部 OCR</summary>
+<details><summary>目前仅公开招募识别依赖外部 OCR，展开查看</summary>
 
 该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文和英文语言包）或者申请百度OCR
 
@@ -107,7 +107,7 @@ commands:
     collect
         收集每日任务奖励
     recruit
-        公开招募识别
+        公开招募识别/计算，不指定标签则从截图中识别
     help
         输出本段消息
 ```
@@ -170,7 +170,7 @@ $ python ArknightsShell.py -s -t slim:99
 \* 该模块支持关卡有限，且仅支持 1280x720 分辨率，请等待后续更新
 
 ```bash
-python3 akhelper.py   5-1 2   5-2 3
+python3 akhelper.py auto   5-1 2   5-2 3
 # 按顺序刷 5-1 关卡 2 次，5-2 关卡 3 次
 ```
 

@@ -11,7 +11,7 @@ from . import resources
 from . import util
 
 LOGFILE = 'b4op.html'
-
+logger = get_logger(LOGFILE)
 
 @lru_cache(1)
 def load_data():
@@ -21,13 +21,15 @@ def load_data():
 
 
 def recognize(img):
-    logger = get_logger(LOGFILE)
     vw, vh = util.get_vwvh(img.size)
 
-    apicon1 = img.crop((50*vw+59.444*vh, 2.130*vh, 50*vw+65.926*vh, 8.519*vh)).convert('RGB')
+    apicon1 = img.crop((100*vw-29.722*vh, 2.130*vh, 100*vw-22.593*vh, 8.519*vh)).convert('RGB')
+
     apicon2 = resources.load_image_cached('before_operation/ap_icon.png', 'RGB')
     apicon1, apicon2 = imgops.uniform_size(apicon1, apicon2)
     coef = imgops.compare_ccoeff(apicon1, apicon2)
+    logger.logimage(apicon1)
+    logger.logtext('ccoeff=%f' % coef)
     consume_ap = coef > 0.9
 
     apimg = img.crop((100 * vw - 22.917 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)).convert('L')
@@ -87,6 +89,8 @@ def check_confirm_troop_rect(img):
     icon2 = resources.load_image_cached('before_operation/operation_start.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     coef = imgops.compare_ccoeff(np.asarray(icon1), np.asarray(icon2))
+    logger.logimage(icon1)
+    logger.logtext('ccoeff=%f' % coef)
     return coef > 0.9
 
 
@@ -101,12 +105,16 @@ def check_ap_refill_type(img):
     icon2 = resources.load_image_cached('before_operation/refill_with_item.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse1 = imgops.compare_mse(icon1, icon2)
+    logger.logimage(icon1)
 
     icon1 = img.crop((50*vw+41.574*vh, 11.481*vh, 50*vw+87.315*vh, 17.130*vh)).convert('RGB')
     icon2 = resources.load_image_cached('before_operation/refill_with_originium.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse2 = imgops.compare_mse(icon1, icon2)
-    print((mse1, mse2))
+
+    logger.logimage(icon1)
+    logger.logtext('mse1=%f, mse2=%f' % (mse1, mse2))
+
     if min(mse1, mse2) > 1500:
         return None
     if mse1 < mse2:

@@ -5,6 +5,8 @@ import numpy as np
 from PIL import Image
 
 
+
+
 def enhance_contrast(img, lower=90, upper=None):
     img = np.asarray(img, dtype=np.uint8)
     if upper is None:
@@ -127,3 +129,10 @@ def uniform_size(img1, img2):
     elif img1.width != img2.width:
         img1 = img1.resize(img2.size, Image.BILINEAR)
     return (img1, img2)
+
+
+def invert_color(img):
+    mat = np.asarray(img)
+    lut = np.linspace(255, 0, 256, dtype=np.uint8)
+    resultmat = lut[mat]
+    return Image.fromarray(resultmat, img.mode)
