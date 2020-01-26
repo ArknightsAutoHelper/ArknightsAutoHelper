@@ -35,6 +35,17 @@ def initialize():
     stage_maps['episodes'] = episodes
     map_anchors['episodes'] = ['ep00', 'ep02', 'ep04', 'ep05']
 
+
+    # partition "ep01"
+    ep01 = {}
+    ep01['1-1'] = vec(0, 0)
+    ep01['1-5'] = ep01['1-1'] + vec(1067, 105)
+    ep01['1-7'] = ep01['1-5'] + vec(982, -226)
+    ep01['1-10'] = ep01['1-7'] + vec(1041, 232)
+    stage_maps['ep01'] = ep01
+    map_anchors['ep01'] = ['1-1', '1-5', '1-7', '1-10']
+
+
     # partition "ep04"
     ep04 = {}
     ep04['4-1'] = vec(0, 0)  # anchor
@@ -59,6 +70,25 @@ def initialize():
     ep04['4-10'] = ep04['S4-9'] + vec(521, 96)  # anchor
     stage_maps['ep04'] = ep04
     map_anchors['ep04'] = ['4-1', '4-4', '4-6', '4-7', 'S4-7', '4-10']
+
+
+    # materials
+    material1 = vec(0, 0)
+    material2 = material1 + vec(277, -50)
+    material3 = material1 + vec(477, -165)
+    material4 = material1 + vec(643, -279)
+    material5 = material1 + vec(743, -394)
+    for prefix in ['LS', 'AP', 'CA', 'CE', 'SK']:
+        stage_maps[prefix] = {prefix + '-1': material1, prefix + '-2': material2, prefix + '-3': material3,
+                              prefix + '-4': material4, prefix + '-5': material5}
+        map_anchors[prefix] = [prefix + '-1']
+
+    # socs
+    soc1 = vec(0, 0)
+    soc2 = soc1 + vec(445, -154)
+    for infix in 'ABCD':
+        stage_maps['PR-' + infix] = {'PR-%s-1' % infix: soc1, 'PR-%s-2' % infix: soc2}
+        map_anchors['PR-' + infix] = ['PR-%s-1' % infix]
 
 
 initialize()

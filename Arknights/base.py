@@ -547,7 +547,6 @@ class ArknightsHelper(object):
 
 
     def find_and_tap(self, partition, target):
-        import imgreco.map
         lastpos = None
         while True:
             screenshot = self.adb.get_screen_shoot()
@@ -559,7 +558,7 @@ class ArknightsHelper(object):
             if target in recoresult:
                 pos = recoresult[target]
                 logger.info('目标 %s 坐标: %s', target, pos)
-                if pos == lastpos:
+                if lastpos is not None and tuple(pos) == tuple(lastpos):
                     logger.error('拖动后坐标未改变')
                     raise RuntimeError('拖动后坐标未改变')
                 if 0 < pos[0] < self.viewport[0]:
@@ -592,6 +591,25 @@ class ArknightsHelper(object):
             else:
                 raise KeyError((target, partition))
 
+    def find_and_tap_daily(self, partition, target, *, recursion=0):
+        screenshot = self.adb.get_screen_shoot()
+        recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
+        if target in recoresult:
+            pos, conf = recoresult[target]
+            logger.info('目标 %s 坐标=%s 置信度=%f', target, pos, conf)
+            offset = self.viewport[1] * 0.12  ## 24vh * 24vh range
+            self.tap_rect((*(pos - offset), *(pos + offset)))
+        else:
+            if recursion == 0:
+                logger.info('目标可能在可视区域右侧，向左拖动')
+                originX = self.viewport[0] // 2 + randint(-100, 100)
+                originY = self.viewport[1] // 2 + randint(-100, 100)
+                self.adb.touch_swipe2((originX, originY), (-self.viewport[0] * 0.2, 0), 400)
+                self.__wait(2)
+                self.find_and_tap_daily(partition, target, recursion=recursion+1)
+            else:
+                logger.error('未找到目标，是否未开放关卡？')
+
     def goto_stage(self, stage):
         if not stage_path.is_stage_supported(stage):
             logger.error('不支持的关卡：%s', stage)
@@ -605,6 +623,11 @@ class ArknightsHelper(object):
             self.find_and_tap('episodes', path[1])
             self.find_and_tap(path[1], path[2])
         if path[0] == 'material' or path[0] == 'soc':
+            logger.info('选择类别')
+            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
+            self.find_and_tap_daily(path[0], path[1])
+            self.find_and_tap(path[1], path[2])
+        else:
             raise NotImplementedError()
 
     def get_credit(self):
