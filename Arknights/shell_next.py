@@ -87,7 +87,8 @@ def auto(argv):
     with helper._shellng_with:
         helper.main_handler(
             clear_tasks=False,
-            task_list=tasks
+            task_list=tasks,
+            auto_close=False
         )
     return 0
 
@@ -135,16 +136,18 @@ def help(argv):
     help
         输出本段消息
     """
-    print("usage: %s command [command args]" % argv[0])
+    print("usage: %s command [command args]" % help.argv0)
     print("commands:")
     for cmd in cmds:
         print("    " + str(cmd.__doc__.strip()))
 
+help.argv0 = 'placeholder'
 
 cmds = [quick, auto, collect, recruit, help]
 
 
 def main(argv):
+    help.argv0 = argv[0]
     if len(argv) < 2:
         help(argv)
         return 1

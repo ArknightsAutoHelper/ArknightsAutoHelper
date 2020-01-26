@@ -18,11 +18,11 @@ def is_stage_supported(stage):
     path = get_stage_path(stage)
     if path is None:
         return False
-    if path[0] == 'story':
+    if path[0] == 'main':
         partition = path[1]
         import imgreco.resources.map_vectors as map_vectors
         if partition in map_vectors.stage_maps:
-            return path[3] in map_vectors.stage_maps[partition]
+            return path[2] in map_vectors.stage_maps[partition]
         return False
     else:
         # FIXME: support for material and soc stages

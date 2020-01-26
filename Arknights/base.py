@@ -1,7 +1,6 @@
 import os
 import time
 import logging
-from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
@@ -14,8 +13,7 @@ import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
 from ADBShell import ADBShell
-from Arknights import stage_path
-from Arknights.BattleSelector import BattleSelector
+from . import stage_path
 from Arknights.click_location import *
 from Arknights.flags import *
 
@@ -26,15 +24,6 @@ coloredlogs.install(
     datefmt='%H:%M:%S',
     level_styles={'info': {'color': 'blue'}, 'warning': {'color': 'green'}, 'error': {'color': 'red'}},
     level='INFO')
-# from . import ocr
-# def _logged_ocr(image, *args, **kwargs):
-#     logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
-#     logger.loghtml('<hr/>')
-#     logger.logimage(image)
-#     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
-#     logger.logtext(repr(ocrresult.text))
-#     return ocrresult
-
 
 def _penguin_init():
     if _penguin_init.ready or _penguin_init.error:
@@ -90,8 +79,6 @@ class ArknightsHelper(object):
                 logger.info("建议检查adb版本夜神模拟器正确的版本为: 1.0.36")
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
-        self.CURRENT_STRENGTH = 100
-        self.selector = BattleSelector()
         self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.get_screen_shoot().size
         self.operation_time = []
@@ -410,7 +397,7 @@ class ArknightsHelper(object):
             reportid = None
             try:
                 # 掉落识别
-                drops= imgreco.end_operation.recognize(screenshot) 
+                drops = imgreco.end_operation.recognize(screenshot)
                 logger.info('掉落识别结果：') 
                 logger.info('%s', repr(drops.get('items'))) 
                 logger.debug('%s', repr(drops)) 
@@ -561,45 +548,55 @@ class ArknightsHelper(object):
 
     def find_and_tap(self, partition, target):
         import imgreco.map
+        lastpos = None
         while True:
             screenshot = self.adb.get_screen_shoot()
             recoresult = imgreco.map.recognize_map(screenshot, partition)
             if recoresult is None:
+                # TODO: retry
+                logger.error('未能定位关卡地图')
                 raise RuntimeError('recognition failed')
             if target in recoresult:
                 pos = recoresult[target]
                 logger.info('目标 %s 坐标: %s', target, pos)
-                if pos[0] < 0:  # target in left of viewport
-                    logger.info('目标在可视区域左侧，向右拖动')
-                    # swipe right
-                    diff = -pos[0]
-                    if abs(diff) < 100:
-                        diff = 120
-                    self.adb.touch_swipe2((self.viewport[0] // 2, self.viewport[1] // 2), (diff * 0.7 * uniform(0.8, 1.2), 0), 250)
+                if pos == lastpos:
+                    logger.error('拖动后坐标未改变')
+                    raise RuntimeError('拖动后坐标未改变')
+                if 0 < pos[0] < self.viewport[0]:
+                    logger.info('目标在可视区域内，点击')
+                    self.adb.touch_tap(pos, offsets=(5, 5))
+                    self.__wait(3)
+                    break
+                else:
+                    lastpos = pos
+                    originX = self.viewport[0] // 2 + randint(-100, 100)
+                    originY = self.viewport[1] // 2 + randint(-100, 100)
+                    if pos[0] < 0:  # target in left of viewport
+                        logger.info('目标在可视区域左侧，向右拖动')
+                        # swipe right
+                        diff = -pos[0]
+                        if abs(diff) < 100:
+                            diff = 120
+                        diff = min(diff, self.viewport[0] - originX)
+                    elif pos[0] > self.viewport[0]:  # target in right of viewport
+                        logger.info('目标在可视区域右侧，向左拖动')
+                        # swipe left
+                        diff = self.viewport[0] - pos[0]
+                        if abs(diff) < 100:
+                            diff = -120
+                        diff = max(diff, -originX)
+                    self.adb.touch_swipe2((originX, originY), (diff * 0.7 * uniform(0.8, 1.2), 0), max(250, diff / 2))
                     self.__wait(5)
                     continue
-                elif pos[0] > self.viewport[0]:  # target in right of viewport
-                    logger.info('目标在可视区域右侧，向左拖动')
-                    # swipe left
-                    diff = self.viewport[0] - pos[0]
-                    if abs(diff) < 100:
-                        diff = -120
-                    self.adb.touch_swipe2((self.viewport[0] // 2, self.viewport[1] // 2), (diff * 0.7 * uniform(0.8, 1.2), 0), 250)
-                    self.__wait(5)
-                    continue
-                logger.info('目标在可视区域内，点击')
-                self.adb.touch_tap(pos, offsets=(5, 5))
-                self.__wait(3)
-                break
+
             else:
                 raise KeyError((target, partition))
 
     def goto_stage(self, stage):
-        from .stage_path import get_stage_path
-        path = get_stage_path(stage)
-        if path is None:
+        if not stage_path.is_stage_supported(stage):
             logger.error('不支持的关卡：%s', stage)
             raise ValueError(stage)
+        path = stage_path.get_stage_path(stage)
         self.back_to_main()
         logger.info('进入作战')
         self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.get_screen_shoot()))
