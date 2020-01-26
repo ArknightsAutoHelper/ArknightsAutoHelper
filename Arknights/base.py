@@ -622,7 +622,7 @@ class ArknightsHelper(object):
         if path[0] == 'main':
             self.find_and_tap('episodes', path[1])
             self.find_and_tap(path[1], path[2])
-        if path[0] == 'material' or path[0] == 'soc':
+        elif path[0] == 'material' or path[0] == 'soc':
             logger.info('选择类别')
             self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
             self.find_and_tap_daily(path[0], path[1])
