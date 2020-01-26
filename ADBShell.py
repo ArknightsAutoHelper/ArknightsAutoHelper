@@ -104,6 +104,16 @@ class ADBShell(object):
         )
         self.run_device_cmd(command)
 
+    def touch_swipe2(self, origin, movement, duration=None):
+        # sleep(1)
+        x1, y1, x2, y2 = origin[0], origin[1], origin[0] + movement[0], origin[1] + movement[1]
+
+        logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(*origin, *movement))
+        command = "input swipe {} {} {} {} ".format(x1, y1, x2, y2)
+        if duration is not None:
+            command += str(duration)
+        self.run_device_cmd(command)
+
     def touch_tap(self, XY=None, offsets=None):
         # sleep(10)
         # sleep(0.5)

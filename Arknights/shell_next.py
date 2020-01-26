@@ -79,10 +79,10 @@ def auto(argv):
         return 1
     it = iter(arglist)
     tasks = [(stage, int(counts)) for stage, counts in zip(it, it)]
-    for stage, count in tasks:
-        if stage not in MAIN_TASK_SUPPORT:
-            print('stage %s not supported' % stage)
-            return 1
+    # for stage, count in tasks:
+    #     if stage not in MAIN_TASK_SUPPORT:
+    #         print('stage %s not supported' % stage)
+    #         return 1
     helper = _create_helper(True)
     with helper._shellng_with:
         helper.main_handler(

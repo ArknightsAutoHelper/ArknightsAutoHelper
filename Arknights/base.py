@@ -474,20 +474,20 @@ class ArknightsHelper(object):
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("base.module_battle")
-        assert (self.viewport == (1280, 720))
         self.back_to_main()
         self.__wait(3, MANLIKE_FLAG=False)
         self.selector.id = c_id
-        logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
-        self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-        self.battle_selector(c_id)  # 选关
+        # logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
+        # self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
+        # self.battle_selector(c_id)  # 选关
+        self.goto_stage(c_id)
         self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
                                 sub=True)
         return True
 
-    def main_handler(self, task_list=None, clear_tasks=False, auto_close=True):
+    def main_handler(self, task_list, clear_tasks=False, auto_close=True):
         logger.debug("base.main_handler")
         if task_list is None:
             task_list = OrderedDict()
@@ -495,12 +495,12 @@ class ArknightsHelper(object):
         logger.info("装载模块...")
         logger.info("战斗模块...启动")
         flag = False
-        if task_list.__len__() == 0:
+        if len(task_list) == 0:
             logger.fatal("任务清单为空!")
 
         for c_id, count in task_list.items():
-            if c_id not in MAIN_TASK_SUPPORT.keys():
-                raise IndexError("无此关卡!")
+            # if c_id not in MAIN_TASK_SUPPORT.keys():
+            #     raise IndexError("无此关卡!")
             logger.info("战斗{} 启动".format(c_id))
             self.selector.id = c_id
             flag = self.module_battle(c_id, count)
@@ -740,3 +740,48 @@ class ArknightsHelper(object):
         result = recruit_calc.calculate(tags)
         logger.debug('计算结果：%s', repr(result))
         return result
+
+
+    def find_and_tap(self, partition, target):
+        import imgreco.map
+        while True:
+            screenshot = self.adb.get_screen_shoot()
+            recoresult = imgreco.map.recognize_map(screenshot, partition)
+            if target in recoresult:
+                pos = recoresult[target]
+                logger.info('目标 %s 坐标: %s', target, pos)
+                if pos[0] < 0:  # target in left of viewport
+                    logger.info('目标在可视区域左侧，向右拖动')
+                    # swipe right
+                    self.adb.touch_swipe2((self.viewport[0] // 2, self.viewport[1] // 2), (-pos[0] * 0.7 + randint(-100, 100), 0), 250)
+                    self.__wait(5)
+                    continue
+                elif pos[0] > self.viewport[0]:  # target in right of viewport
+                    logger.info('目标在可视区域右侧，向左拖动')
+                    # swipe left
+                    self.adb.touch_swipe2((self.viewport[0] // 2, self.viewport[1] // 2), ((pos[0] - self.viewport[0]) * 0.7 + randint(-100, -100), 0), 250)
+                    self.__wait(5)
+                    continue
+                logger.info('目标在可视区域内，点击')
+                self.adb.touch_tap(pos, offsets=(5, 5))
+                self.__wait(3)
+                break
+            else:
+                raise KeyError((target, partition))
+
+    def goto_stage(self, stage):
+        from .stage_path import get_stage_path
+        path = get_stage_path(stage)
+        if path is None:
+            logger.error('不支持的关卡：%s', stage)
+            raise ValueError(stage)
+        self.back_to_main()
+
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.get_screen_shoot()))
+        self.__wait(3)
+        if path[0] == 'main':
+            self.find_and_tap('episodes', path[1])
+            self.find_and_tap(path[1], path[2])
+        if path[0] == 'material' or path[0] == 'soc':
+            raise NotImplementedError()
+
