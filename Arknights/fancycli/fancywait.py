@@ -44,6 +44,7 @@ class StatusLineFancy(StatusLineBase):
     def __init__(self, io):
         self.op = TermOp(fd)
         self.io = io
+        check_control_code()
 
     def update(self, text):
         with self.op.keep_cursor():
@@ -99,7 +100,7 @@ if has_tty_input:
     def fancy_delay(timeout, status=None, key_handlers=None):
         t0 = time.monotonic()
         timeout0 = timeout
-
+        check_control_code()
         if status is None:
             status = StatusLine(fd)
 

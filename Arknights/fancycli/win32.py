@@ -4,7 +4,6 @@ import os
 import struct
 import sys
 import time
-from functools import lru_cache
 
 k32 = ctypes.windll.kernel32
 STD_INPUT_HANDLE = -10
@@ -81,9 +80,8 @@ def isatty(io):
     # return io.isatty() and (not is_cygwin_pty(io))
 
 
-@lru_cache()
 def check_control_code():
-    if not sys.stdout.isatty():
+    if not isatty(sys.stdout):
         return False
 
     hout = GetStdHandle(STD_OUTPUT_HANDLE)
