@@ -86,8 +86,8 @@ def auto(argv):
     helper = _create_helper(True)
     with helper._shellng_with:
         helper.main_handler(
-            clear_tasks=True,
-            task_list=ItemsWrapper(tasks)
+            clear_tasks=False,
+            task_list=tasks
         )
     return 0
 

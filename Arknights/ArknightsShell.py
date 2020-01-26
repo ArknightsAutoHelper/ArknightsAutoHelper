@@ -87,7 +87,7 @@ class ArknightsShell():
             if self.options.module_battle:
                 Ark.main_handler(
                     clear_tasks=True,
-                    task_list=self.task_list
+                    task_list=self.task_list.items()
                 )
             if self.options.clear_daily:
                 Ark.clear_daily_task()
