@@ -84,11 +84,13 @@ def initialize():
         map_anchors[prefix] = [prefix + '-1']
 
     # socs
-    soc1 = vec(0, 0)
-    soc2 = soc1 + vec(445, -154)
     for infix in 'ABCD':
-        stage_maps['PR-' + infix] = {'PR-%s-1' % infix: soc1, 'PR-%s-2' % infix: soc2}
         map_anchors['PR-' + infix] = ['PR-%s-1' % infix]
+    vec0 = vec(0, 0)
+    stage_maps['PR-A'] = {'PR-A-1': vec0, 'PR-A-2': vec(401, -188)}
+    stage_maps['PR-B'] = {'PR-B-1': vec0, 'PR-B-2': vec(456, -197)}
+    stage_maps['PR-C'] = {'PR-C-1': vec0, 'PR-C-2': vec(445, -154)}
+    stage_maps['PR-D'] = {'PR-D-1': vec0, 'PR-D-2': vec(426, -173)}
 
 
 initialize()
