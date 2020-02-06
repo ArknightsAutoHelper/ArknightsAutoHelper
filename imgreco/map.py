@@ -4,24 +4,12 @@ import cv2 as cv
 import numpy as np
 from PIL import Image
 
-from richlog import get_logger
 from . import imgops, util
 from . import resources
 
 from .resources import map_vectors
 
 logger = logging.getLogger('imgreco.map')
-
-def match_template(img, template, method=cv.TM_CCOEFF_NORMED):
-    templatemat = np.asarray(template)
-    mtresult = cv.matchTemplate(np.asarray(img), templatemat, method)
-    if method == cv.TM_SQDIFF_NORMED or method == cv.TM_SQDIFF:
-        selector = np.argmin
-    else:
-        selector = np.argmax
-    maxidx = np.unravel_index(selector(mtresult), mtresult.shape)
-    y, x = maxidx
-    return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), mtresult[maxidx]
 
 
 def recognize_map(img, partition):
@@ -30,7 +18,7 @@ def recognize_map(img, partition):
     scale = img.height / 720
     img = imgops.scale_to_height(img.convert('RGB'), 720)
     imgmat = np.asarray(img)
-    match_results = [(anchor, *match_template(imgmat, resources.load_image_cached('maps/%s/%s.png' % (partition, anchor), 'RGB')))
+    match_results = [(anchor, *imgops.match_template(imgmat, resources.load_image_cached('maps/%s/%s.png' % (partition, anchor), 'RGB')))
                      for anchor in anchors]
     logger.debug('anchor match results: %s', repr(match_results))
     use_anchor = max(match_results, key=lambda x: x[2])
@@ -49,7 +37,7 @@ def recognize_daily_menu(img, partition):
     scale = img.height / 720
     img = imgops.scale_to_height(img.convert('RGB'), 720)
     imgmat = np.asarray(img)
-    match_results = [(name, *match_template(imgmat, resources.load_image_cached('maps/%s/%s.png' % (partition, name), 'RGB'), method=cv.TM_SQDIFF_NORMED))
+    match_results = [(name, *imgops.match_template(imgmat, resources.load_image_cached('maps/%s/%s.png' % (partition, name), 'RGB'), method=cv.TM_SQDIFF_NORMED))
                      for name in names]
     logger.debug('%s', match_results)
     result = {name: (np.asarray(pos) * scale, conf) for name, pos, conf in match_results if conf < 0.08}
