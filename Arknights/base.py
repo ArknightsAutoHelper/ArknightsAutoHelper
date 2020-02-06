@@ -88,6 +88,7 @@ class ArknightsHelper(object):
         self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
         self.refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
         self.use_refill = self.refill_with_item or self.refill_with_originium
+        self.loots = {}
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -398,9 +399,16 @@ class ArknightsHelper(object):
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
-                logger.info('掉落识别结果：') 
-                logger.info('%s', repr(drops.get('items'))) 
-                logger.debug('%s', repr(drops)) 
+                logger.info('掉落识别结果：[%s] %s', drops['operation'],
+                            '; '.join('%s: %s' % (grpname, ', '.join('%sx%d' % itemtup for itemtup in grpcont))
+                                      for grpname, grpcont in drops['items']))
+                logger.debug('%s', repr(drops))
+                log_total = len(self.loots)
+                for _, group in drops['items']:
+                    for name, qty in group:
+                        self.loots[name] = self.loots.get(name, 0) + qty
+                if log_total:
+                    self.log_total_loots()
                 reportid = _penguin_report(drops)
             except Exception as e:
                 logger.error('', exc_info=True)
@@ -596,7 +604,7 @@ class ArknightsHelper(object):
         recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
         if target in recoresult:
             pos, conf = recoresult[target]
-            logger.info('目标 %s 坐标=%s 置信度=%f', target, pos, conf)
+            logger.info('目标 %s 坐标=%s 差异=%f', target, pos, conf)
             offset = self.viewport[1] * 0.12  ## 24vh * 24vh range
             self.tap_rect((*(pos - offset), *(pos + offset)))
         else:
@@ -687,3 +695,5 @@ class ArknightsHelper(object):
         self.back_to_main()
         logger.info("基建领取完毕")
 
+    def log_total_loots(self):
+        logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
