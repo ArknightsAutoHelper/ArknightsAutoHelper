@@ -12,10 +12,14 @@ from .resources import map_vectors
 
 logger = logging.getLogger('imgreco.map')
 
-def match_template(img, template):
+def match_template(img, template, method=cv.TM_CCOEFF_NORMED):
     templatemat = np.asarray(template)
-    mtresult = cv.matchTemplate(np.asarray(img), templatemat, cv.TM_CCOEFF_NORMED)
-    maxidx = np.unravel_index(np.argmax(mtresult), mtresult.shape)
+    mtresult = cv.matchTemplate(np.asarray(img), templatemat, method)
+    if method == cv.TM_SQDIFF_NORMED or method == cv.TM_SQDIFF:
+        selector = np.argmin
+    else:
+        selector = np.argmax
+    maxidx = np.unravel_index(selector(mtresult), mtresult.shape)
     y, x = maxidx
     return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), mtresult[maxidx]
 
@@ -45,9 +49,10 @@ def recognize_daily_menu(img, partition):
     scale = img.height / 720
     img = imgops.scale_to_height(img.convert('RGB'), 720)
     imgmat = np.asarray(img)
-    match_results = [(name, *match_template(imgmat, resources.load_image_cached('maps/%s/%s.png' % (partition, name), 'RGB')))
+    match_results = [(name, *match_template(imgmat, resources.load_image_cached('maps/%s/%s.png' % (partition, name), 'RGB'), method=cv.TM_SQDIFF_NORMED))
                      for name in names]
-    result = {name: (np.asarray(pos) * scale, conf) for name, pos, conf in match_results if conf > 0.85}
+    logger.debug('%s', match_results)
+    result = {name: (np.asarray(pos) * scale, conf) for name, pos, conf in match_results if conf < 0.08}
     return result
 
 
