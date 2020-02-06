@@ -45,3 +45,10 @@ behavior:
   # 理智不足时自动碎石
   # 如需使用，请将大写字母改为小写
   REFILL_AP_WITH_ORIGINIUM: false
+
+  # 代理指挥出现失误的处理
+  mistaken_delegation:
+    # 是否以 2 星结算关卡
+    settle: false
+    # 结算/放弃后，是否跳过失误关卡
+    skip: true

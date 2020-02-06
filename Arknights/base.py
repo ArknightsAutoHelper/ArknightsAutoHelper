@@ -265,6 +265,7 @@ class ArknightsHelper(object):
             self.stop = False
             self.operation_start = None
             self.first_wait = True
+            self.mistaken_delegation = False
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
@@ -381,6 +382,31 @@ class ArknightsHelper(object):
                 if self.wait_for_still_image(timeout=15, raise_for_timeout=True):
                     smobj.state = on_end_operation
                 return
+            dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
+            if dlgtype is not None:
+                if dlgtype == 'yesno' and '代理指挥' in ocrresult:
+                    logger.warning('代理指挥出现失误')
+                    smobj.mistaken_delegation = True
+                    if config.get('behavior/mistaken_delegation/settle', False):
+                        logger.info('以 2 星结算关卡')
+                        self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
+                        self.__wait(2)
+                        return
+                    else:
+                        logger.info('放弃关卡')
+                        self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                        self.__wait(1)
+                        # 关闭失败提示
+                        self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
+                        self.__wait(1)
+                        return
+                elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
+                    logger.info('发现放弃行动提示，关闭')
+                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                else:
+                    logger.error('未处理的对话框：[%s] %s', dlgtype, ocrresult)
+                    raise RuntimeError('unhandled dialog')
+
             logger.info('战斗未结束')
             self.__wait(BATTLE_FINISH_DETECT)
 
@@ -429,6 +455,10 @@ class ArknightsHelper(object):
             if smobj.state != oldstate:
                 logger.debug('state changed to %s', smobj.state.__name__)
 
+        if smobj.mistaken_delegation and config.get('behavior/mistaken_delegation/skip', True):
+            raise StopIteration()
+
+
     def back_to_main(self):  # 回到主页
         logger.info("正在返回主页")
         while True:
@@ -465,6 +495,23 @@ class ArknightsHelper(object):
                 logger.info("发现关闭按钮")
                 self.tap_rect(rect)
                 self.__wait(SMALL_WAIT)
+                continue
+
+            dlgtype, ocr = imgreco.common.check_dialog(screenshot)
+            if dlgtype == 'yesno':
+                if '基建' in ocr or '停止招募' in ocr:
+                    self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
+                    self.__wait(1)
+                    continue
+                elif '招募干员' in ocr or '加急' in ocr:
+                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                    self.__wait(1)
+                    continue
+                else:
+                    raise RuntimeError('未适配的对话框')
+            elif dlgtype == 'ok':
+                self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
+                self.__wait(1)
                 continue
 
             raise RuntimeError('未知画面')
