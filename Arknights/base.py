@@ -471,7 +471,6 @@ class ArknightsHelper(object):
             if imgreco.common.check_nav_button(screenshot):
                 logger.info('发现返回按钮，点击返回')
                 self.tap_rect(imgreco.common.get_nav_button_back_rect(self.viewport))
-                # FIXME: 检查基建退出提示
                 self.__wait(SMALL_WAIT)
                 # 点击返回按钮之后重新检查
                 continue
@@ -497,15 +496,15 @@ class ArknightsHelper(object):
                 self.__wait(SMALL_WAIT)
                 continue
 
-            dlgtype, ocr = imgreco.common.check_dialog(screenshot)
+            dlgtype, ocr = imgreco.common.recognize_dialog(screenshot)
             if dlgtype == 'yesno':
                 if '基建' in ocr or '停止招募' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
-                    self.__wait(1)
+                    self.__wait(3)
                     continue
                 elif '招募干员' in ocr or '加急' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
-                    self.__wait(1)
+                    self.__wait(3)
                     continue
                 else:
                     raise RuntimeError('未适配的对话框')
