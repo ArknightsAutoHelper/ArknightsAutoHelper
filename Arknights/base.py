@@ -22,7 +22,7 @@ coloredlogs.install(
     fmt=' Ξ %(message)s',
     #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
     datefmt='%H:%M:%S',
-    level_styles={'info': {'color': 'blue'}, 'warning': {'color': 'green'}, 'error': {'color': 'red'}},
+    level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
     level='INFO')
 
 def _penguin_init():
