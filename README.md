@@ -37,7 +37,10 @@ $ pip install -r requirements.txt
 ```
 
 #### OCR 依赖
-<details><summary>目前仅公开招募识别依赖外部 OCR，展开查看</summary>
+目前 OCR 用于：
+* 公开招募识别、计算
+* 对话框内容识别（如基建退出提示）
+<details><summary>展开查看</summary>
 
 该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文和英文语言包）或者申请百度OCR
 
@@ -74,10 +77,8 @@ ocr:
 ocr:
   engine: windows_media_ocr
 ```
-Windows OCR 的语言数据是随语言支持安装的，可能需要在系统语言列表中加入英语（美国）以安装英语 OCR 支持。
+Windows OCR 的语言数据是随语言支持安装的，非简体中文系统需要安装简体中文语言包。
 
-
-目前 Windows OCR 无法识别游戏中部分文本，正在考虑使用替代方法。
 </details>
 
 ### **额外设置**
@@ -167,7 +168,7 @@ $ python ArknightsShell.py -s -t slim:99
 
 主战斗模块可以从几乎任何位置（理论上有返回键的页面）开始任务序列。
 
-\* 该模块支持关卡有限，且仅支持 1280x720 分辨率，请等待后续更新
+\* 该模块支持关卡有限，请等待后续更新
 
 ```bash
 python3 akhelper.py auto   5-1 2   5-2 3
