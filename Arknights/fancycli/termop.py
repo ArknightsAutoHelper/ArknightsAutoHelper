@@ -34,7 +34,7 @@ class TermOp:
         self.scroll = rows
         # scroll up a bit to avoid visual glitch when the screen area shrinks by one row
         if rows > 0:
-            self.fd.write(b"\033[%dS" % rows)
+            self.fd.write(b"\n" * rows)
         # save cursor
         self.save_cursor()
         # set scroll region (this will place the cursor in the top left)

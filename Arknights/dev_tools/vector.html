@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>向量工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        .bottombar {
+            padding: 8px;
+        }
+
+        .upperpanel {
+            user-select: none;
+        }
+
+
+        .imgbox {
+            position: relative;
+            width: -moz-fit-content;
+            width: fit-content;
+        }
+
+        #imgelt {
+            image-rendering: optimizespeed;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            
+        }
+        
+        .cross {
+            background: red;
+            height: 15px;
+            position: absolute;
+            width: 1px;
+            left: 0;
+            top: 0;
+            transform: translateY(-7px);
+            color: rgba(0, 0, 0, 0.6);
+            pointer-events: none;
+        }
+        .cross:after {
+            background: red;
+            content: "";
+            height: 1px;
+            left: -7px;
+            position: absolute;
+            top: 7px;
+            width: 15px;
+        }
+    
+        #vec.cross, #vec.cross:after {
+            background: blue;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bottombar">
+        <input type="file" id="filechooser" accept="image/*" />
+
+        <button id="resetbtn">reset</button>
+        <p>Ctrl-Click to set origin. Click to set destination.</p>
+
+        <pre>dest = origin + vec(<span id="vecX">40</span>, <span id="vecY">40</span>)</pre>
+    </div>
+    <div class="upperpanel">
+        <div class="imgbox">
+            <div class="cross" id="origin">Origin</div>
+            <div class="cross" id="vec" style="left: 40px; top: 40px">Dest</div>
+            <img id="imgelt" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAGQCAMAAAAJLSEXAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAA1BMVEXDw8PWKQJEAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAB3RJTUUH4wkWABUPg2xSOwAAAQ9JREFUeNrtwQENAAAAwqD3T20PBxQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE8G6b0AAYcvFu4AAAAldEVYdGRhdGU6Y3JlYXRlADIwMTktMDktMjFUMTY6NTc6MzYrMDg6MDD2jxIiAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE5LTA5LTIxVDE2OjIxOjE1KzA4OjAw0DrSugAAAABJRU5ErkJggg==" draggable="false" crossorigin="anonymous" />
+        </div>
+    </div>
+    <script>
+        let $ = (x) => document.querySelector(x)
+        let $$ = (x) => document.querySelectorAll(x)
+        let origin_pos = [0, 0]
+        let dest_pos = [40, 40]
+
+        let updateVector = function() {
+            $('#vecX').innerText = (dest_pos[0] - origin_pos[0]).toString()
+            $('#vecY').innerText = (dest_pos[1] - origin_pos[1]).toString()
+        }
+
+        $('#filechooser').addEventListener('filechanged', function () {
+            changefile()
+        })
+
+
+        $('#imgelt').addEventListener('click', function(event) {
+            console.log(event)
+            elt = event.ctrlKey ? $('#origin') : $('#vec')
+            pos = [event.offsetX, event.offsetY]
+            elt.style.left = event.offsetX + 'px'
+            elt.style.top = event.offsetY + 'px'
+            if (event.ctrlKey) {
+                origin_pos = pos
+            } else {
+                dest_pos = pos
+            }
+            updateVector()
+        })
+
+        let loadImage = function(file) {
+            if($('#imgelt').src) {
+                URL.revokeObjectURL($('#imgelt').src)
+            }
+            $('#imgelt').src = URL.createObjectURL(file)
+        }
+
+        $('#filechooser').addEventListener('change', function(e) {
+            loadImage(e.target.files[0])
+        })
+
+    </script>
+</body>
+
+</html>

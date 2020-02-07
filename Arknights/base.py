@@ -1,7 +1,6 @@
 import os
 import time
 import logging
-from collections import OrderedDict
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
@@ -14,7 +13,7 @@ import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
 from ADBShell import ADBShell
-from Arknights.BattleSelector import BattleSelector
+from . import stage_path
 from Arknights.click_location import *
 from Arknights.flags import *
 
@@ -23,17 +22,8 @@ coloredlogs.install(
     fmt=' Ξ %(message)s',
     #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
     datefmt='%H:%M:%S',
-    level_styles={'info': {'color': 'blue'}, 'warning': {'color': 'green'}, 'error': {'color': 'red'}},
+    level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
     level='INFO')
-# from . import ocr
-# def _logged_ocr(image, *args, **kwargs):
-#     logger = richlog.get_logger(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'ocrlog.html'))
-#     logger.loghtml('<hr/>')
-#     logger.logimage(image)
-#     ocrresult = ocr.engine.recognize(image, *args, **kwargs)
-#     logger.logtext(repr(ocrresult.text))
-#     return ocrresult
-
 
 def _penguin_init():
     if _penguin_init.ready or _penguin_init.error:
@@ -89,8 +79,6 @@ class ArknightsHelper(object):
                 logger.info("建议检查adb版本夜神模拟器正确的版本为: 1.0.36")
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
-        self.CURRENT_STRENGTH = 100
-        self.selector = BattleSelector()
         self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.get_screen_shoot().size
         self.operation_time = []
@@ -100,6 +88,7 @@ class ArknightsHelper(object):
         self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
         self.refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
         self.use_refill = self.refill_with_item or self.refill_with_originium
+        self.loots = {}
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -181,19 +170,28 @@ class ArknightsHelper(object):
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def wait_for_still_image(self, screen_range=None):
-        screenshot = self.adb.get_screen_shoot(screen_range)
-        for n in range(60):
+    def wait_for_still_image(self, crop=None, timeout=60, raise_for_timeout=True):
+        if crop is None:
+            shooter = lambda: self.adb.get_screen_shoot()
+        else:
+            shooter = lambda: self.adb.get_screen_shoot().crop(crop)
+        screenshot = shooter()
+        t0 = time.monotonic()
+        ts = t0 + timeout
+        n = 0
+        while time.monotonic() < ts:
             self.__wait(1)
-            screenshot2 = self.adb.get_screen_shoot(screen_range)
+            screenshot2 = shooter()
             mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
             if mse <= 1:
-                return screenshot
+                return screenshot2
             screenshot = screenshot2
             n += 1
             if n == 9:
                 logger.info("等待画面静止")
-        raise RuntimeError("60 秒内画面未静止")
+        if raise_for_timeout:
+            raise RuntimeError("%d 秒内画面未静止" % timeout)
+        return None
 
     def module_login(self):
         logger.debug("base.module_login")
@@ -248,8 +246,6 @@ class ArknightsHelper(object):
             remain = set_count - count - 1
             if remain > 0:
                 logger.error('已忽略余下的 %d 次战斗', remain)
-        logger.info("等待返回{}关卡界面".format(c_id))
-        self.__wait(SMALL_WAIT, True)
 
         if not sub:
             if auto_close:
@@ -269,6 +265,7 @@ class ArknightsHelper(object):
             self.stop = False
             self.operation_start = None
             self.first_wait = True
+            self.mistaken_delegation = False
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
@@ -381,9 +378,35 @@ class ArknightsHelper(object):
                 return
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
-                self.__wait(SMALL_WAIT)
-                smobj.state = on_end_operation
+                self.operation_time.append(t)
+                if self.wait_for_still_image(timeout=15, raise_for_timeout=True):
+                    smobj.state = on_end_operation
                 return
+            dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
+            if dlgtype is not None:
+                if dlgtype == 'yesno' and '代理指挥' in ocrresult:
+                    logger.warning('代理指挥出现失误')
+                    smobj.mistaken_delegation = True
+                    if config.get('behavior/mistaken_delegation/settle', False):
+                        logger.info('以 2 星结算关卡')
+                        self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
+                        self.__wait(2)
+                        return
+                    else:
+                        logger.info('放弃关卡')
+                        self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                        self.__wait(1)
+                        # 关闭失败提示
+                        self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
+                        self.__wait(1)
+                        return
+                elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
+                    logger.info('发现放弃行动提示，关闭')
+                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                else:
+                    logger.error('未处理的对话框：[%s] %s', dlgtype, ocrresult)
+                    raise RuntimeError('unhandled dialog')
+
             logger.info('战斗未结束')
             self.__wait(BATTLE_FINISH_DETECT)
 
@@ -401,10 +424,17 @@ class ArknightsHelper(object):
             reportid = None
             try:
                 # 掉落识别
-                drops= imgreco.end_operation.recognize(screenshot) 
-                logger.info('掉落识别结果：') 
-                logger.info('%s', repr(drops.get('items'))) 
-                logger.debug('%s', repr(drops)) 
+                drops = imgreco.end_operation.recognize(screenshot)
+                logger.info('掉落识别结果：[%s] %s', drops['operation'],
+                            '; '.join('%s: %s' % (grpname, ', '.join('%sx%d' % itemtup for itemtup in grpcont))
+                                      for grpname, grpcont in drops['items']))
+                logger.debug('%s', repr(drops))
+                log_total = len(self.loots)
+                for _, group in drops['items']:
+                    for name, qty in group:
+                        self.loots[name] = self.loots.get(name, 0) + qty
+                if log_total:
+                    self.log_total_loots()
                 reportid = _penguin_report(drops)
             except Exception as e:
                 logger.error('', exc_info=True)
@@ -425,8 +455,11 @@ class ArknightsHelper(object):
             if smobj.state != oldstate:
                 logger.debug('state changed to %s', smobj.state.__name__)
 
+        if smobj.mistaken_delegation and config.get('behavior/mistaken_delegation/skip', True):
+            raise StopIteration()
+
+
     def back_to_main(self):  # 回到主页
-        logger.debug("base.back_to_main")
         logger.info("正在返回主页")
         while True:
             screenshot = self.adb.get_screen_shoot()
@@ -438,7 +471,6 @@ class ArknightsHelper(object):
             if imgreco.common.check_nav_button(screenshot):
                 logger.info('发现返回按钮，点击返回')
                 self.tap_rect(imgreco.common.get_nav_button_back_rect(self.viewport))
-                # FIXME: 检查基建退出提示
                 self.__wait(SMALL_WAIT)
                 # 点击返回按钮之后重新检查
                 continue
@@ -464,6 +496,23 @@ class ArknightsHelper(object):
                 self.__wait(SMALL_WAIT)
                 continue
 
+            dlgtype, ocr = imgreco.common.recognize_dialog(screenshot)
+            if dlgtype == 'yesno':
+                if '基建' in ocr or '停止招募' in ocr:
+                    self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
+                    self.__wait(3)
+                    continue
+                elif '招募干员' in ocr or '加急' in ocr:
+                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                    self.__wait(3)
+                    continue
+                else:
+                    raise RuntimeError('未适配的对话框')
+            elif dlgtype == 'ok':
+                self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
+                self.__wait(1)
+                continue
+
             raise RuntimeError('未知画面')
         logger.info("已回到主页")
 
@@ -471,35 +520,25 @@ class ArknightsHelper(object):
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("base.module_battle")
-        assert (self.viewport == (1280, 720))
-        self.back_to_main()
-        self.__wait(3, MANLIKE_FLAG=False)
-        self.selector.id = c_id
-        logger.info("发送坐标BATTLE_CLICK_IN: {}".format(CLICK_LOCATION['BATTLE_CLICK_IN']))
-        self.mouse_click(CLICK_LOCATION['BATTLE_CLICK_IN'])
-        self.battle_selector(c_id)  # 选关
+        self.goto_stage(c_id)
         self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
                                 sub=True)
         return True
 
-    def main_handler(self, task_list=None, clear_tasks=False, auto_close=True):
-        logger.debug("base.main_handler")
-        if task_list is None:
-            task_list = OrderedDict()
+    def main_handler(self, task_list, clear_tasks=False, auto_close=True):
 
         logger.info("装载模块...")
         logger.info("战斗模块...启动")
         flag = False
-        if task_list.__len__() == 0:
+        if len(task_list) == 0:
             logger.fatal("任务清单为空!")
 
-        for c_id, count in task_list.items():
-            if c_id not in MAIN_TASK_SUPPORT.keys():
-                raise IndexError("无此关卡!")
-            logger.info("战斗{} 启动".format(c_id))
-            self.selector.id = c_id
+        for c_id, count in task_list:
+            if not stage_path.is_stage_supported(c_id):
+                raise ValueError(c_id)
+            logger.info("开始 %s", c_id)
             flag = self.module_battle(c_id, count)
 
         if flag:
@@ -518,185 +557,6 @@ class ArknightsHelper(object):
                 logger.error("发生未知错误... 60s后退出")
                 self.__wait(60)
                 self.__del()
-
-    def battle_selector(self, c_id, first_battle_signal=True):  # 选关
-        logger.debug("base.battle_selector")
-        assert (self.viewport == (1280, 720))
-        mode = self.selector.id_checker(c_id)  # 获取当前关卡所属章节
-        if mode == 1:
-            if first_battle_signal:
-                logger.info("发送坐标BATTLE_SELECT_MAIN_TASK: {}".format(CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK']))
-                self.mouse_click(XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK'])
-                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']))
-                self.adb.touch_swipe(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'],
-                    FLAG=FLAGS_SWIPE_BIAS_TO_LEFT
-                )
-
-                # 拖动到正确的地方
-                if c_id[0] in MAIN_TASK_CHAPTER_SWIPE.keys() or c_id[1] in MAIN_TASK_CHAPTER_SWIPE.keys():
-                    if c_id[0].isnumeric():
-                        x = MAIN_TASK_CHAPTER_SWIPE[c_id[0]]
-                    else:
-                        x = MAIN_TASK_CHAPTER_SWIPE[c_id[1]]
-                    logger.info("拖动 {} 次".format(x))
-                    for x in range(0, x):
-                        logger.info(
-                            "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
-                                SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']
-                            ))
-                        self.adb.touch_swipe(
-                            SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        self.__wait(MEDIUM_WAIT)
-
-                # 章节选择
-                if c_id[0].isnumeric():
-                    logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id[0], CLICK_LOCATION[
-                        'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[0])]))
-                    self.mouse_click(
-                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[0])])
-                elif c_id[0] == "S":
-                    logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id[1], CLICK_LOCATION[
-                        'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[1])]))
-                    self.mouse_click(
-                        XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id[1])])
-                else:
-                    raise IndexError("C_ID Error")
-                self.__wait(3)
-                # 章节选择结束
-                # 拖动
-                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
-                ))
-                self.adb.touch_swipe(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                self.__wait(SMALL_WAIT)
-                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
-                ))
-                self.adb.touch_swipe(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                self.__wait(SMALL_WAIT)
-                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']
-                ))
-                self.adb.touch_swipe(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-
-                # 拖动到正确的地方
-                if c_id in MAIN_TASK_BATTLE_SWIPE.keys():
-                    x = MAIN_TASK_BATTLE_SWIPE[c_id]
-                    logger.info("拖动 {} 次".format(x))
-                    for x in range(0, x):
-                        logger.info(
-                            "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
-                                SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']
-                            ))
-                        self.adb.touch_swipe(
-                            SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'], FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        self.__wait(MEDIUM_WAIT)
-                logger.info("发送坐标BATTLE_SELECT_MAIN_TASK_{}: {}".format(c_id, CLICK_LOCATION[
-                    'BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)]))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MAIN_TASK_{}'.format(c_id)])
-
-            else:
-                self.__wait(MEDIUM_WAIT)
-
-        elif mode == 2:
-            try:
-                X = DAILY_LIST[str(mode)][self.selector.get_week()][c_id[0:2]]
-            except Exception as e:
-                logger.error('\tclick_location 文件配置错误', exc_info=True)
-                X = None
-                exit(0)
-            if first_battle_signal:
-                logger.info("发送滑动坐标BATTLE_TO_MAP_LEFT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_LEFT".format(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT']))
-                self.adb.touch_swipe(
-                    SWIPE_LOCATION['BATTLE_TO_MAP_LEFT'], FLAG=FLAGS_SWIPE_BIAS_TO_LEFT)
-                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION: {}".format(
-                    CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION']))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION'])
-                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION_{}: {}".format(X, CLICK_LOCATION[
-                    'BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(X)]))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_{}'.format(X)])
-                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION_X-{}: {}".format(c_id[-1], CLICK_LOCATION[
-                    'BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])]))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])])
-            else:
-                logger.info("发送坐标BATTLE_SELECT_MATERIAL_COLLECTION_X-{}: {}".format(c_id[-1], CLICK_LOCATION[
-                    'BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])]))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_MATERIAL_COLLECTION_X-{}'.format(c_id[-1])])
-        elif mode == 3:
-            try:
-                X = DAILY_LIST[str(mode)][self.selector.get_week()][c_id[3]]
-            except Exception as e:
-                logger.error('\tclick_location 文件配置错误', exc_info=True)
-                X = None
-                exit(0)
-            if first_battle_signal:
-                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH: {}".format(CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH']))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH'])
-                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH_PR-{}: {}".format(X, CLICK_LOCATION[
-                    'BATTLE_SELECT_CHIP_SEARCH_PR-{}'.format(X)]))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-{}'.format(X)])
-                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH_PR-X-{}: {}".format(c_id[-1], CLICK_LOCATION[
-                    'BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])])
-            else:
-                logger.info("发送坐标BATTLE_SELECT_CHIP_SEARCH_PR-X-{}: {}".format(c_id[-1], CLICK_LOCATION[
-                    'BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])]))
-                self.mouse_click(
-                    XY=CLICK_LOCATION['BATTLE_SELECT_CHIP_SEARCH_PR-X-{}'.format(c_id[-1])])
-        elif mode == 5:
-            logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME: {}".format(
-                CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"]))
-            self.mouse_click(
-                XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME"])
-            logger.info(
-                "欢迎来到火蓝之心副本\n祝你在黑曜石音乐节上玩的愉快\n目前主舞台只支持OF-7,OF-8")
-            try:
-                if c_id[-2] == "F":
-                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F: {}".format(
-                        CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F"]))
-                    self.mouse_click(
-                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-F"])
-                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}: {}".format(c_id, CLICK_LOCATION[
-                        "BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]))
-                    self.mouse_click(
-                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)])
-                elif c_id[-2] == "-":
-                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-: {}".format(
-                        CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"]))
-                    self.mouse_click(
-                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_OF-"])
-
-                    for x in range(0, 3):
-                        logger.info(
-                            "发送滑动坐标BATTLE_TO_MAP_RIGHT: {}; FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT".format(
-                                SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT']))
-                        self.adb.touch_swipe(SWIPE_LOCATION['BATTLE_TO_MAP_RIGHT'],
-                                             FLAG=FLAGS_SWIPE_BIAS_TO_RIGHT)
-                        self.__wait(MEDIUM_WAIT)
-                    logger.info("发送坐标BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}: {}".format(c_id, CLICK_LOCATION[
-                        "BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)]))
-                    self.mouse_click(
-                        XY=CLICK_LOCATION["BATTLE_SELECT_HEART_OF_SURGING_FLAME_{}".format(c_id)])
-                else:
-                    logger.error('click_location 文件配置错误')
-                    exit(0)
-            except Exception as e:
-                logger.error('click_location 文件配置错误', exc_info=True)
-                exit(0)
 
     def clear_daily_task(self):
         logger.debug("base.clear_daily_task")
@@ -739,7 +599,91 @@ class ArknightsHelper(object):
         logger.debug('计算结果：%s', repr(result))
         return result
 
-        
+
+    def find_and_tap(self, partition, target):
+        lastpos = None
+        while True:
+            screenshot = self.adb.get_screen_shoot()
+            recoresult = imgreco.map.recognize_map(screenshot, partition)
+            if recoresult is None:
+                # TODO: retry
+                logger.error('未能定位关卡地图')
+                raise RuntimeError('recognition failed')
+            if target in recoresult:
+                pos = recoresult[target]
+                logger.info('目标 %s 坐标: %s', target, pos)
+                if lastpos is not None and tuple(pos) == tuple(lastpos):
+                    logger.error('拖动后坐标未改变')
+                    raise RuntimeError('拖动后坐标未改变')
+                if 0 < pos[0] < self.viewport[0]:
+                    logger.info('目标在可视区域内，点击')
+                    self.adb.touch_tap(pos, offsets=(5, 5))
+                    self.__wait(3)
+                    break
+                else:
+                    lastpos = pos
+                    originX = self.viewport[0] // 2 + randint(-100, 100)
+                    originY = self.viewport[1] // 2 + randint(-100, 100)
+                    if pos[0] < 0:  # target in left of viewport
+                        logger.info('目标在可视区域左侧，向右拖动')
+                        # swipe right
+                        diff = -pos[0]
+                        if abs(diff) < 100:
+                            diff = 120
+                        diff = min(diff, self.viewport[0] - originX)
+                    elif pos[0] > self.viewport[0]:  # target in right of viewport
+                        logger.info('目标在可视区域右侧，向左拖动')
+                        # swipe left
+                        diff = self.viewport[0] - pos[0]
+                        if abs(diff) < 100:
+                            diff = -120
+                        diff = max(diff, -originX)
+                    self.adb.touch_swipe2((originX, originY), (diff * 0.7 * uniform(0.8, 1.2), 0), max(250, diff / 2))
+                    self.__wait(5)
+                    continue
+
+            else:
+                raise KeyError((target, partition))
+
+    def find_and_tap_daily(self, partition, target, *, recursion=0):
+        screenshot = self.adb.get_screen_shoot()
+        recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
+        if target in recoresult:
+            pos, conf = recoresult[target]
+            logger.info('目标 %s 坐标=%s 差异=%f', target, pos, conf)
+            offset = self.viewport[1] * 0.12  ## 24vh * 24vh range
+            self.tap_rect((*(pos - offset), *(pos + offset)))
+        else:
+            if recursion == 0:
+                logger.info('目标可能在可视区域右侧，向左拖动')
+                originX = self.viewport[0] // 2 + randint(-100, 100)
+                originY = self.viewport[1] // 2 + randint(-100, 100)
+                self.adb.touch_swipe2((originX, originY), (-self.viewport[0] * 0.2, 0), 400)
+                self.__wait(2)
+                self.find_and_tap_daily(partition, target, recursion=recursion+1)
+            else:
+                logger.error('未找到目标，是否未开放关卡？')
+
+    def goto_stage(self, stage):
+        if not stage_path.is_stage_supported(stage):
+            logger.error('不支持的关卡：%s', stage)
+            raise ValueError(stage)
+        path = stage_path.get_stage_path(stage)
+        self.back_to_main()
+        logger.info('进入作战')
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.get_screen_shoot()))
+        self.__wait(3)
+        if path[0] == 'main':
+            self.find_and_tap('episodes', path[1])
+            self.find_and_tap(path[1], path[2])
+        elif path[0] == 'material' or path[0] == 'soc':
+            logger.info('选择类别')
+            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
+            self.find_and_tap_daily(path[0], path[1])
+            self.find_and_tap(path[1], path[2])
+        else:
+            raise NotImplementedError()
+
     def get_credit(self):
         logger.debug("base.get_credit")
         logger.info("领取信赖")
@@ -797,4 +741,5 @@ class ArknightsHelper(object):
         self.back_to_main()
         logger.info("基建领取完毕")
 
-        
+    def log_total_loots(self):
+        logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))

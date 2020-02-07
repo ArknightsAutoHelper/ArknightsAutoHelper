@@ -79,15 +79,16 @@ def auto(argv):
         return 1
     it = iter(arglist)
     tasks = [(stage, int(counts)) for stage, counts in zip(it, it)]
-    for stage, count in tasks:
-        if stage not in MAIN_TASK_SUPPORT:
-            print('stage %s not supported' % stage)
-            return 1
+    # for stage, count in tasks:
+    #     if stage not in MAIN_TASK_SUPPORT:
+    #         print('stage %s not supported' % stage)
+    #         return 1
     helper = _create_helper(True)
     with helper._shellng_with:
         helper.main_handler(
-            clear_tasks=True,
-            task_list=ItemsWrapper(tasks)
+            clear_tasks=False,
+            task_list=tasks,
+            auto_close=False
         )
     return 0
 
@@ -135,16 +136,18 @@ def help(argv):
     help
         输出本段消息
     """
-    print("usage: %s command [command args]" % argv[0])
+    print("usage: %s command [command args]" % help.argv0)
     print("commands:")
     for cmd in cmds:
         print("    " + str(cmd.__doc__.strip()))
 
+help.argv0 = 'placeholder'
 
 cmds = [quick, auto, collect, recruit, help]
 
 
 def main(argv):
+    help.argv0 = argv[0]
     if len(argv) < 2:
         help(argv)
         return 1

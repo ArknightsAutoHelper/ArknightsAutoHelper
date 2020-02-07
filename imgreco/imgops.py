@@ -136,3 +136,15 @@ def invert_color(img):
     lut = np.linspace(255, 0, 256, dtype=np.uint8)
     resultmat = lut[mat]
     return Image.fromarray(resultmat, img.mode)
+
+
+def match_template(img, template, method=cv.TM_CCOEFF_NORMED):
+    templatemat = np.asarray(template)
+    mtresult = cv.matchTemplate(np.asarray(img), templatemat, method)
+    if method == cv.TM_SQDIFF_NORMED or method == cv.TM_SQDIFF:
+        selector = np.argmin
+    else:
+        selector = np.argmax
+    maxidx = np.unravel_index(selector(mtresult), mtresult.shape)
+    y, x = maxidx
+    return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), mtresult[maxidx]

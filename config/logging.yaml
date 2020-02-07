@@ -18,6 +18,9 @@ handlers:
 root:
   level: DEBUG
   handlers: [console, file]
+loggers:
+  PIL.PngImagePlugin:
+    propagate: false
 formatters:
   precise:
     format: '%(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s ! %(message)s'

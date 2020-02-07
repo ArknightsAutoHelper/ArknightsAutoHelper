@@ -131,10 +131,10 @@ def roundint(x):
 def check_level_up_popup(img):
     vw, vh = util.get_vwvh(img.size)
 
-    ap_recovered_img = img.crop((50 * vw + 8.056 * vh, 46.574 * vh, 50 * vw + 24.907 * vh, 51.296 * vh))  # 理智已恢复
-    ap_recovered_img = imgops.enhance_contrast(ap_recovered_img, 100, 225)
-    ap_recovered_text = recozh.recognize(ap_recovered_img)
-    return '理智' in ap_recovered_text
+    lvl_up_img = img.crop((50*vw-48.796*vh, 47.685*vh, 50*vw-23.148*vh, 56.019*vh)).convert('L')  # 等级提升
+    lvl_up_img = imgops.enhance_contrast(lvl_up_img, 216, 255)
+    lvl_up_text = recozh.recognize(lvl_up_img)
+    return minireco.check_charseq(lvl_up_text, '提升')
 
 
 def check_end_operation(img):
@@ -164,7 +164,7 @@ def recognize(im):
     logger.logimage(lower)
 
     operation_id = lower.crop((0, 4.444 * vh, 23.611 * vh, 11.388 * vh)).convert('L')
-    logger.logimage(operation_id)
+    # logger.logimage(operation_id)
     operation_id = imgops.enhance_contrast(imgops.crop_blackedge(operation_id), 80, 220)
     logger.logimage(operation_id)
     operation_id_str = reco_novecento_bold.recognize(operation_id).upper()
@@ -179,10 +179,10 @@ def recognize(im):
     logger.logimage(stars)
     stars_status = tell_stars(stars)
 
-    level = lower.crop((63.148 * vh, 4.444 * vh, 73.333 * vh, 8.611 * vh))
-    logger.logimage(level)
-    exp = lower.crop((76.852 * vh, 5.556 * vh, 94.074 * vh, 7.963 * vh))
-    logger.logimage(exp)
+    # level = lower.crop((63.148 * vh, 4.444 * vh, 73.333 * vh, 8.611 * vh))
+    # logger.logimage(level)
+    # exp = lower.crop((76.852 * vh, 5.556 * vh, 94.074 * vh, 7.963 * vh))
+    # logger.logimage(exp)
 
     items = lower.crop((68.241 * vh, 10.926 * vh, lower.width, 35.000 * vh))
     logger.logimage(items)
@@ -201,8 +201,9 @@ def recognize(im):
     logger.logimage(grouping.resize((grouping.width, 16)))
 
     d = np.array(grouping, dtype=np.int16)[0]
-    points = [0, *find_jumping(d, 32)]
-    assert (len(points) % 2 == 0)
+    points = [0, *find_jumping(d, 64)]
+    if len(points) % 2 != 0:
+        raise RuntimeError('possibly incomplete item list')
     finalgroups = list(zip(*[iter(points)] * 2))  # each_slice(2)
     logger.logtext(repr(finalgroups))
 

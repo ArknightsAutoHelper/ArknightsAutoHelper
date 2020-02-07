@@ -54,9 +54,9 @@ class ADBShell(object):
                 while not input_valid_flag:
                     try:
                         num = int(input(">"))
-                        if 0 <= num < len(devices):
-                            input_valid_flag = True
-                    except:
+                        if not 0 <= num < len(devices):
+                            raise ValueError()
+                    except ValueError:
                         logger.error("输入不合法，请重新输入")
                 device_name = devices[num][0]
         logger.info("确认设备名称\t" + device_name)
@@ -95,13 +95,14 @@ class ADBShell(object):
             return self.get_sub_screen(img, screen_range)
         return img
 
-    def touch_swipe(self, XY_mXmY=None, FLAG=None):
+    def touch_swipe2(self, origin, movement, duration=None):
         # sleep(1)
-        XY, mXmY = XY_mXmY
-        logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(XY[0], XY[1], XY[0] + mXmY[0], XY[1] + mXmY[1]))
-        command = "input swipe {X1} {Y1} {X2} {Y2}".format(
-            X1=XY[0], Y1=XY[1], X2=XY[0] + mXmY[0], Y2=XY[1] + mXmY[1]
-        )
+        x1, y1, x2, y2 = origin[0], origin[1], origin[0] + movement[0], origin[1] + movement[1]
+
+        logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(*origin, *movement))
+        command = "input swipe {} {} {} {} ".format(x1, y1, x2, y2)
+        if duration is not None:
+            command += str(int(duration))
         self.run_device_cmd(command)
 
     def touch_tap(self, XY=None, offsets=None):
