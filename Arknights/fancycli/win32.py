@@ -20,7 +20,9 @@ ENABLE_VIRTUAL_TERMINAL_INPUT = 0x0200
 ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
 DISABLE_NEWLINE_AUTO_RETURN = 0x0008
 GetModuleHandle = k32.GetModuleHandleW
-
+FlushConsoleInputBuffer = k32.FlushConsoleInputBuffer
+GetFileType = k32.GetFileType
+FILE_TYPE_CHAR = 0x0002
 
 def getch_timeout(timeout):
     hstdin = GetStdHandle(STD_INPUT_HANDLE)
@@ -36,6 +38,8 @@ def getch_timeout(timeout):
                 if ch == b'\x00' or ch == b'\xe0':
                     ch = msvcrt.getch()
                 return ch
+            else:
+                FlushConsoleInputBuffer(hstdin)
         else:
             raise OSError()
         t1 = time.monotonic()
@@ -75,9 +79,10 @@ def isatty(io):
         handle = msvcrt.get_osfhandle(io.fileno())
     except OSError:
         return False
-    outmode = ctypes.c_uint32()
-    return bool(GetConsoleMode(handle, ctypes.byref(outmode)))
+    # outmode = ctypes.c_uint32()
+    # return bool(GetConsoleMode(handle, ctypes.byref(outmode)))
     # return io.isatty() and (not is_cygwin_pty(io))
+    return GetFileType(handle) == FILE_TYPE_CHAR
 
 
 def check_control_code():
