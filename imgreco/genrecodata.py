@@ -33,19 +33,28 @@ def main(fontfile, size, chars, threshold, datafile):
     with open(datafile, 'wb') as f:
         pickle.dump(obj, f)
 
+def dump(file):
+    with open(file, 'rb') as f:
+        obj = pickle.load(f)
+    obj['data'] = None
+    print(obj)
 
 if __name__ == '__main__':
     import sys
 
-    if len(sys.argv) not in (5, 6):
+    if len(sys.argv) not in (2, 5, 6):
         print("usage: %s fontfile size chars [crop_threshold] datafile" % sys.argv[0])
+        print("   or: %s datafile" % sys.argv[0])
         sys.exit(1)
     else:
-        fontfile, sizes, chars, *cdr = sys.argv[1:]
-        if len(cdr) == 2:
-            threshold = int(cdr[0])
+        if len(sys.argv) == 2:
+            dump(sys.argv[1])
         else:
-            threshold = 32
-        datafile = cdr[-1]
-        size = int(sizes)
-        main(fontfile, size, chars, threshold, datafile)
+            fontfile, sizes, chars, *cdr = sys.argv[1:]
+            if len(cdr) == 2:
+                threshold = int(cdr[0])
+            else:
+                threshold = 32
+            datafile = cdr[-1]
+            size = int(sizes)
+            main(fontfile, size, chars, threshold, datafile)
