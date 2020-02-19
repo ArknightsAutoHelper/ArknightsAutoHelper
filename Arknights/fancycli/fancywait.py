@@ -3,14 +3,13 @@ import os
 import time
 import logging
 
-from . import isatty, check_control_code
+from .platform import isatty, check_control_code, getch_timeout
 from .termop import TermOp
 
 logger = logging.getLogger('fancywait')
 
 stdinfd = sys.stdout.buffer
-if hasattr(stdinfd, 'raw'):
-    stdinfd = stdinfd.raw
+stdinfd = getattr(stdinfd, 'raw', stdinfd)
 
 has_tty_input = isatty(stdinfd)
 
@@ -130,7 +129,7 @@ if has_tty_input:
         finally:
             status.cleanup()
 else:
-    def fancy_delay(timeout, *_):
+    def fancy_delay(timeout, *args, **kwargs):
         return time.sleep(timeout)
 
 
