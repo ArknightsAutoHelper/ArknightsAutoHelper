@@ -2,22 +2,16 @@ import sys
 import os
 import time
 import logging
+
+from .platform import isatty, check_control_code, getch_timeout
 from .termop import TermOp
 
 logger = logging.getLogger('fancywait')
 
-if os.name == 'posix':
-    from .posix import *
-elif os.name == 'nt':
-    from .win32 import *
-else:
-    raise NotImplementedError("os %s not supported" % os.name)
+stdinfd = sys.stdout.buffer
+stdinfd = getattr(stdinfd, 'raw', stdinfd)
 
-fd = sys.stdout.buffer
-if hasattr(fd, 'raw'):
-    fd = fd.raw
-
-has_tty_input = isatty(fd)
+has_tty_input = isatty(stdinfd)
 
 
 class StatusLineBase:
@@ -42,7 +36,7 @@ class StatusLineBase:
 
 class StatusLineFancy(StatusLineBase):
     def __init__(self, io):
-        self.op = TermOp(fd)
+        self.op = TermOp(stdinfd)
         self.io = io
         check_control_code()
 
@@ -76,7 +70,8 @@ class StatusLineLegacy(StatusLineBase):
 
 
 class StatusLineDummy(StatusLineBase):
-    pass
+    def __init__(self, io):
+        pass
 
 
 class KeyHandler:
@@ -86,10 +81,10 @@ class KeyHandler:
         self.callback = callback
 
 
-if has_tty_input and check_control_code():
+if check_control_code() and has_tty_input:
     logger.debug('has tty input and control code')
     StatusLine = StatusLineFancy
-elif has_tty_input and fd.isatty():
+elif has_tty_input and stdinfd.isatty():
     logger.debug('has tty input and legacy conhost')
     StatusLine = StatusLineLegacy
 else:
@@ -102,14 +97,10 @@ if has_tty_input:
         timeout0 = timeout
         check_control_code()
         if status is None:
-            status = StatusLine(fd)
+            status = StatusLine(stdinfd)
 
         if key_handlers is None:
             key_handlers = ()
-
-        skipable = timeout > 7
-        use_toggle = True
-        toggle = True
 
         try:
             waittime = 1
@@ -138,13 +129,13 @@ if has_tty_input:
         finally:
             status.cleanup()
 else:
-    def fancy_delay(timeout, status=None):
+    def fancy_delay(timeout, *args, **kwargs):
         return time.sleep(timeout)
 
 
 def main():
     # enable_escape_code()
-    with StatusLine(fd) as statusline:
+    with StatusLine(stdinfd) as statusline:
         def enter(handler):
             raise StopIteration()
         def toggle(handler):
