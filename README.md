@@ -29,7 +29,7 @@ P.P.S. 例外（欢迎提交代码改进）：
     $ adb devices
     emulator-5554   device
 
-如何连接 ADB 请参考各模拟器的文档、论坛等资源。
+如何连接 ADB 请参考各模拟器的文档、论坛等资源。已知 MuMu 模拟器需要自行启动 ADB server。
 
 如果 `adb devices` 中列出了目标模拟器/设备，但脚本不能正常连接，或遇到其他问题，请尝试使用[最新的 ADB 工具](https://developer.android.google.cn/studio/releases/platform-tools)。
 
