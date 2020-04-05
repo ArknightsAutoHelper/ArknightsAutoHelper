@@ -43,9 +43,9 @@ def _basicGeneral(image, options):
     data.update(options)
     t = time.monotonic()
     tdiff = t - _basicGeneral.last_call
-    if tdiff < 0.3:
+    if tdiff < 0.4:
         # QPS limit
-        time.sleep(0.3 - tdiff)
+        time.sleep(0.4 - tdiff)
     resp = requests.post('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic', data=data, params={'access_token': _get_token()})
     resp.raise_for_status()
     resp = resp.json()
