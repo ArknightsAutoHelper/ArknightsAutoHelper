@@ -379,7 +379,8 @@ class ArknightsHelper(object):
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
                 self.operation_time.append(t)
-                if self.wait_for_still_image(timeout=15, raise_for_timeout=True):
+                crop = imgreco.end_operation.get_still_check_rect(self.viewport)
+                if self.wait_for_still_image(crop=crop, timeout=15, raise_for_timeout=True):
                     smobj.state = on_end_operation
                 return
             dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
