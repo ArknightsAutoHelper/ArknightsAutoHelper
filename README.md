@@ -13,17 +13,23 @@
 
 ###  **环境与分辨率**
 
-该辅助需要安卓模拟器并将分辨率设置为
+大部分功能可以自适应分辨率（宽高比不小于 16:9，即`宽度≥高度×16/9`），作者测试过的分辨率有 <span style="opacity: 0.5">1280x720、1440x720、</span>1920x1080、2160x1080。
 
-⚠ ` 1280*720` ⚠ 分辨率设置非常重要 ⚠
+P.S. 由于游戏内文字渲染机制问题，分辨率过低可能影响识别效果，建议分辨率高度 1080 或以上。
 
-由于作者精力有限，只做了绝对坐标的，欢迎大家重写模块。建议使用夜神模拟器，记得开启开发者模式。
-
-\* 部分模块已经可以自适应分辨率和宽高比（大于 16:9），作者测试过的分辨率有 1280x720、1440x720、1920x1080、2160x1080。
+P.P.S. 例外（欢迎提交代码改进）：
+* 基建收菜（需要 16:9 宽高比和特定基建布局）
+* 好友查房（需要 16:9 宽高比）
+* 自动登录游戏（需要 1280x720 分辨率）
 
 ### **ADB 连接**
 
-虽然脚本不依赖 `adb` 工具进行操作，但是依然需要 ADB server 连接到模拟器/设备，请确认 `adb devices` 中列出了目标模拟器/设备。如何连接 ADB 请参考各模拟器的文档、论坛等资源。
+虽然脚本不依赖 `adb` 工具进行操作，但是依然需要 ADB server 连接到模拟器/设备，请确认 `adb devices` 中列出了目标模拟器/设备：
+
+    $ adb devices
+    emulator-5554   device
+
+如何连接 ADB 请参考各模拟器的文档、论坛等资源。已知 MuMu 模拟器需要自行启动 ADB server。
 
 如果 `adb devices` 中列出了目标模拟器/设备，但脚本不能正常连接，或遇到其他问题，请尝试使用[最新的 ADB 工具](https://developer.android.google.cn/studio/releases/platform-tools)。
 
@@ -42,7 +48,7 @@ $ pip install -r requirements.txt
 * 对话框内容识别（如基建退出提示）
 <details><summary>展开查看</summary>
 
-该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文和英文语言包）或者申请百度OCR
+该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文语言包）或者申请百度OCR
 
 **关于本地OCR工具安装可查看**
 https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/blob/master/OCR_install.md

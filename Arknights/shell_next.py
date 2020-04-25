@@ -78,7 +78,7 @@ def auto(argv):
         print('usage: auto stage1 count1 [stage2 count2] ...')
         return 1
     it = iter(arglist)
-    tasks = [(stage, int(counts)) for stage, counts in zip(it, it)]
+    tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
     # for stage, count in tasks:
     #     if stage not in MAIN_TASK_SUPPORT:
     #         print('stage %s not supported' % stage)
@@ -131,6 +131,27 @@ def recruit(argv):
         print("%s: %s" % (taglist, ' '.join(colors[op[1]] + op[0] + reset for op in operators)))
 
 
+def interactive(argv):
+    import shlex
+    import traceback
+    while True:
+        try:
+            cmdline = input("akhelper> ")
+            argv = shlex.split(cmdline)
+            if len(argv) == 0 or argv[0] == '?' or argv[0] == 'help':
+                print(' '.join(x.__name__ for x in interactive_cmds))
+                continue
+            cmd = match_cmd(argv[0], interactive_cmds)
+            if cmd is not None:
+                cmd(argv)
+        except EOFError:
+            break
+        except (Exception, KeyboardInterrupt):
+            traceback.print_exc()
+            continue
+
+
+
 def help(argv):
     """
     help
@@ -138,31 +159,39 @@ def help(argv):
     """
     print("usage: %s command [command args]" % help.argv0)
     print("commands:")
-    for cmd in cmds:
+    for cmd in global_cmds:
         print("    " + str(cmd.__doc__.strip()))
+
+
+def exit(argv):
+    sys.exit()
 
 help.argv0 = 'placeholder'
 
-cmds = [quick, auto, collect, recruit, help]
+global_cmds = [quick, auto, collect, recruit, interactive, help]
+interactive_cmds = [quick, auto, collect, recruit, exit]
 
+def match_cmd(first, avail_cmds):
+    targetcmd = [x for x in avail_cmds if x.__name__.startswith(first)]
+    if len(targetcmd) == 1:
+        return targetcmd[0]
+    elif len(targetcmd) == 0:
+        print("unrecognized command: " + first)
+        return None
+    else:
+        print("ambiguous command: " + first)
+        print("matched commands: " + ','.join(x.__name__ for x in targetcmd))
+        return None
 
 def main(argv):
     help.argv0 = argv[0]
     if len(argv) < 2:
         help(argv)
         return 1
-    usecmd = argv[1]
-    targetcmd = [x for x in cmds if x.__name__.startswith(usecmd)]
-    if len(targetcmd) == 1:
-        return targetcmd[0](argv[1:])
-    elif len(targetcmd) == 0:
-        print("unrecognized command: " + usecmd)
-        help(argv)
-        return 1
-    else:
-        print("ambiguous command: " + usecmd)
-        print("matched commands: " + ','.join(x.__name__ for x in targetcmd))
-        return 1
+    targetcmd = match_cmd(argv[1], global_cmds)
+    if targetcmd is not None:
+        return targetcmd(argv[1:])
+    return 1
 
 
 if __name__ == '__main__':

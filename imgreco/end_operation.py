@@ -232,6 +232,13 @@ def recognize(im):
     }
 
 
+
+def get_still_check_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return (68.241 * vh, 61.111 * vh, 100 * vw, 100 * vh)
+
+
+
 _load_data()
 
 if __name__ == '__main__':

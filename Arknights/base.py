@@ -170,7 +170,7 @@ class ArknightsHelper(object):
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def wait_for_still_image(self, crop=None, timeout=60, raise_for_timeout=True):
+    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True):
         if crop is None:
             shooter = lambda: self.adb.get_screen_shoot()
         else:
@@ -179,18 +179,21 @@ class ArknightsHelper(object):
         t0 = time.monotonic()
         ts = t0 + timeout
         n = 0
+        minerr = 65025
         while time.monotonic() < ts:
             self.__wait(1)
             screenshot2 = shooter()
             mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
-            if mse <= 1:
+            if mse <= threshold:
                 return screenshot2
             screenshot = screenshot2
+            if mse < minerr:
+                minerr = mse
             n += 1
             if n == 9:
                 logger.info("等待画面静止")
         if raise_for_timeout:
-            raise RuntimeError("%d 秒内画面未静止" % timeout)
+            raise RuntimeError("%d 秒内画面未静止，最小误差=%d，阈值=%d" % (timeout, minerr, threshold))
         return None
 
     def module_login(self):
@@ -379,7 +382,8 @@ class ArknightsHelper(object):
             if imgreco.end_operation.check_end_operation(screenshot):
                 logger.info('战斗结束')
                 self.operation_time.append(t)
-                if self.wait_for_still_image(timeout=15, raise_for_timeout=True):
+                crop = imgreco.end_operation.get_still_check_rect(self.viewport)
+                if self.wait_for_still_image(crop=crop, timeout=15, raise_for_timeout=True):
                     smobj.state = on_end_operation
                 return
             dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
