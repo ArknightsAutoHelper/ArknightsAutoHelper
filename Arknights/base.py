@@ -12,7 +12,7 @@ import imgreco
 import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
-from connector.ADBShell import ADBShell
+from connector.ADBConnector import ADBConnector
 from . import stage_path
 from Arknights.click_location import *
 from Arknights.flags import *
@@ -66,14 +66,14 @@ class ArknightsHelper(object):
         if adb_host is None:
             adb_host = config.ADB_HOST
         try:
-            self.adb = ADBShell(adb_host=adb_host)
+            self.adb = ADBConnector(adb_host=adb_host)
         except ConnectionRefusedError as e:
             logger.error("错误: {}".format(e))
             logger.info("尝试启动本地adb")
             try:
                 os.system(config.ADB_ROOT + "\\adb kill-server")
                 os.system(config.ADB_ROOT + "\\adb start-server")
-                self.adb = ADBShell(adb_host=adb_host)
+                self.adb = ADBConnector(adb_host=adb_host)
             except Exception as e:
                 logger.error("尝试解决失败，错误: {}".format(e))
                 logger.info("建议检查adb版本夜神模拟器正确的版本为: 1.0.36")

@@ -27,7 +27,7 @@ def _ensure_pil_image(imgorfile):
     return Image.open(imgorfile)
 
 
-class ADBShell:
+class ADBConnector:
     def __init__(self, adb_host=config.ADB_HOST):
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = config.ADB_ROOT
@@ -209,4 +209,4 @@ class ADBShell:
 
 #
 # if __name__ == '__main__':
-#     a = ADBShell()
+#     a = ADBConnector()
