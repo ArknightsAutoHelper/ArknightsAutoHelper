@@ -132,6 +132,10 @@ def recruit(argv):
 
 
 def interactive(argv):
+    """
+    interactive
+        进入交互模式，减少按键次数（
+    """
     import shlex
     import traceback
     while True:
@@ -158,7 +162,7 @@ def help(argv):
         输出本段消息
     """
     print("usage: %s command [command args]" % help.argv0)
-    print("commands:")
+    print("commands (prefix abbreviation accepted):")
     for cmd in global_cmds:
         print("    " + str(cmd.__doc__.strip()))
 
