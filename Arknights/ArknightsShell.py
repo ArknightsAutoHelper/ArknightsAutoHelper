@@ -10,7 +10,7 @@
 import optparse
 from collections import OrderedDict
 
-from Arknights.base import ArknightsHelper
+from Arknights.helper import ArknightsHelper
 from Arknights.click_location import MAIN_TASK_SUPPORT
 
 

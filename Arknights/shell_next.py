@@ -28,7 +28,7 @@ def delay_impl_factory(helper, statusline, show_toggle):
 
 
 def _create_helper(show_toggle=False):
-    from Arknights.base import ArknightsHelper
+    from Arknights.helper import ArknightsHelper
     helper = ArknightsHelper()
 
     io = sys.stdout.buffer

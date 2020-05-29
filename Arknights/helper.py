@@ -17,7 +17,7 @@ from . import stage_path
 from Arknights.click_location import *
 from Arknights.flags import *
 
-logger = logging.getLogger('base')
+logger = logging.getLogger('helper')
 coloredlogs.install(
     fmt=' Ξ %(message)s',
     #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
@@ -116,7 +116,7 @@ class ArknightsHelper(object):
         self.__del()
 
     def check_game_active(self):  # 启动游戏 需要手动调用
-        logger.debug("base.check_game_active")
+        logger.debug("helper.check_game_active")
         current = self.adb.run_device_cmd('dumpsys window windows | grep mCurrentFocus').decode(errors='ignore')
         logger.debug("正在尝试启动游戏")
         logger.debug(current)
@@ -139,7 +139,7 @@ class ArknightsHelper(object):
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
         assert (self.viewport == (1280, 720))
-        logger.debug("base.mouse_click")
+        logger.debug("helper.mouse_click")
         xx = randint(XY[0][0], XY[1][0])
         yy = randint(XY[0][1], XY[1][1])
         logger.info("接收到点击坐标并传递xx:{}和yy:{}".format(xx, yy))
@@ -197,7 +197,7 @@ class ArknightsHelper(object):
         return None
 
     def module_login(self):
-        logger.debug("base.module_login")
+        logger.debug("helper.module_login")
         logger.info("发送坐标LOGIN_QUICK_LOGIN: {}".format(CLICK_LOCATION['LOGIN_QUICK_LOGIN']))
         self.mouse_click(CLICK_LOCATION['LOGIN_QUICK_LOGIN'])
         self.__wait(BIG_WAIT)
@@ -222,7 +222,7 @@ class ArknightsHelper(object):
             True 完成指定次数的作战
             False 理智不足, 退出作战
         '''
-        logger.debug("base.module_battle_slim")
+        logger.debug("helper.module_battle_slim")
         sub = kwargs["sub"] \
             if "sub" in kwargs else False
         auto_close = kwargs["auto_close"] \
@@ -523,7 +523,7 @@ class ArknightsHelper(object):
     def module_battle(self,  # 完整的战斗模块
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
-        logger.debug("base.module_battle")
+        logger.debug("helper.module_battle")
         self.goto_stage(c_id)
         self.module_battle_slim(c_id,
                                 set_count=set_count,
@@ -563,7 +563,7 @@ class ArknightsHelper(object):
                 self.__del()
 
     def clear_daily_task(self):
-        logger.debug("base.clear_daily_task")
+        logger.debug("helper.clear_daily_task")
         logger.info("领取每日任务")
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
@@ -689,7 +689,7 @@ class ArknightsHelper(object):
             raise NotImplementedError()
 
     def get_credit(self):
-        logger.debug("base.get_credit")
+        logger.debug("helper.get_credit")
         logger.info("领取信赖")
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
@@ -711,7 +711,7 @@ class ArknightsHelper(object):
         logger.info('信赖领取完毕')
     
     def get_building(self):
-        logger.debug("base.get_building")
+        logger.debug("helper.get_building")
         logger.info("清空基建")
         self.back_to_main()
         screenshot = self.adb.get_screen_shoot()
