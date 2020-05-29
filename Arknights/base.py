@@ -12,7 +12,7 @@ import imgreco
 import imgreco.imgops
 import penguin_stats.loader
 import penguin_stats.reporter
-from ADBShell import ADBShell
+from connector.ADBShell import ADBShell
 from . import stage_path
 from Arknights.click_location import *
 from Arknights.flags import *

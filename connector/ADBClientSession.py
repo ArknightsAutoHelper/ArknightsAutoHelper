@@ -1,27 +1,41 @@
-import gzip
+import zlib
 import socket
 import struct
 
 
 def _recvexactly(sock, n):
-    buf = sock.recv(n)
-    assert (len(buf) != 0)
-    remain = n - len(buf)
-    while remain > 0:
-        buf2 = sock.recv(remain)
-        buf += buf2
-        remain -= len(buf2)
-    return buf
-
-
-def _recvall(sock):
-    buf = b''
-    while True:
-        data = sock.recv(4096)
-        if not data:
+    buf = bytearray(n)
+    mem = memoryview(buf)
+    pos = 0
+    while pos < n:
+        rcvlen = sock.recv_into(mem[pos:])
+        pos += rcvlen
+        if rcvlen == 0:
             break
-        buf += data
-    return buf
+    if pos != n:
+        raise RuntimeError("recvexactly %d bytes failed" % n)
+    return bytes(buf)
+
+
+def _recvall(sock, reflen=65536, return_mem=False):
+    buflen = reflen
+    buf = bytearray(buflen)
+    mem = memoryview(buf)
+    pos = 0
+    while True:
+        if pos >= buflen:
+            # do realloc
+            mem.release()
+            buf += bytearray(reflen)
+            buflen += reflen
+            mem = memoryview(buf)
+        rcvlen = sock.recv_into(mem[pos:])
+        pos += rcvlen
+        if rcvlen == 0:
+            break
+    if return_mem:
+        return mem[:pos]
+    return buf[:pos]
 
 
 def _check_okay(sock):
@@ -43,6 +57,7 @@ class ADBClientSession:
         if server is None:
             server = ('127.0.0.1', 5037)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         sock.connect(server)
         self.sock = sock
 
@@ -113,20 +128,3 @@ class ADBClientSession:
         data = _recvall(sock)
         sock.close()
         return data
-
-    def screencap_png(self):
-        """returns PNG bytes"""
-        data = self.exec('screencap -p')
-        return data
-        # w, h, f = struct.unpack_from('III', data, 0)
-        # assert(f == 1)
-        # return (w, h, data[12:])
-
-    def screencap(self):
-        """returns (width, height, pixels)
-        pixels in RGBA/RGBX format"""
-        data = self.exec('screencap|gzip')
-        data = gzip.decompress(data)
-        w, h, f = struct.unpack_from('III', data, 0)
-        assert (f == 1)
-        return (w, h, data[12:])
