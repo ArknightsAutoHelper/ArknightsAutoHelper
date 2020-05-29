@@ -108,6 +108,7 @@ venv.bak/
 .idea/
 code_bin/
 screen_shoot/*
+screenshot/*
 #Arknights/daliy_task_screen
 #Arknights/dev_tools
 start.py
