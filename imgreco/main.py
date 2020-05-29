@@ -3,7 +3,7 @@ from fractions import Fraction
 import numpy as np
 from PIL import Image
 
-from richlog import get_logger
+from util.richlog import get_logger
 from . import imgops
 from . import resources
 from . import util

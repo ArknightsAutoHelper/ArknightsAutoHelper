@@ -8,7 +8,8 @@ from PIL import Image
 
 import config
 # from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
-from .ADBClientSession import ADBClientSession, _recvall
+from .ADBClientSession import ADBClientSession
+from util.socketutil import recvall
 from . import revconn
 
 # from numpy import average, dot, linalg
@@ -123,7 +124,7 @@ class ADBConnector:
         cookie = self.rch.register_cookie()
         control_sock = self.device_session_factory().exec_stream('echo -n %sOKAY | nc -w 1 %s %d' % (cookie.decode(), self.loopback, self.rch.port))
         conn = self.rch.wait_registered_socket(cookie)
-        data = _recvall(conn)
+        data = recvall(conn)
         conn.close()
         control_sock.close()
         return data == b'OKAY'
@@ -131,14 +132,14 @@ class ADBConnector:
     def screencap_png(self):
         """returns PNG bytes"""
         s = self.device_session_factory().exec_stream('screencap -p')
-        data = _recvall(s, 4194304)
+        data = recvall(s, 4194304)
         return data
 
     def screencap(self):
         """returns (width, height, pixels)
         pixels in RGBA/RGBX format"""
         s = self.device_session_factory().exec('screencap|gzip -1')
-        data = _recvall(s, 4194304)
+        data = recvall(s, 4194304)
         data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
@@ -150,7 +151,7 @@ class ADBConnector:
         cookie = self.rch.register_cookie()
         control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (cookie.decode(), self.loopback, self.rch.port))
         conn = self.rch.wait_registered_socket(cookie)
-        data = _recvall(conn, 8388608, True)
+        data = recvall(conn, 8388608, True)
         conn.close()
         control_sock.close()
         # data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)

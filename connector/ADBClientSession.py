@@ -1,54 +1,19 @@
-import zlib
 import socket
 import struct
 
-
-def _recvexactly(sock, n):
-    buf = bytearray(n)
-    mem = memoryview(buf)
-    pos = 0
-    while pos < n:
-        rcvlen = sock.recv_into(mem[pos:])
-        pos += rcvlen
-        if rcvlen == 0:
-            break
-    if pos != n:
-        raise RuntimeError("recvexactly %d bytes failed" % n)
-    return bytes(buf)
-
-
-def _recvall(sock, reflen=65536, return_mem=False):
-    buflen = reflen
-    buf = bytearray(buflen)
-    mem = memoryview(buf)
-    pos = 0
-    while True:
-        if pos >= buflen:
-            # do realloc
-            mem.release()
-            buf += bytearray(reflen)
-            buflen += reflen
-            mem = memoryview(buf)
-        rcvlen = sock.recv_into(mem[pos:])
-        pos += rcvlen
-        if rcvlen == 0:
-            break
-    if return_mem:
-        return mem[:pos]
-    return buf[:pos]
-
+from util.socketutil import recvexactly, recvall
 
 def _check_okay(sock):
-    result = _recvexactly(sock, 4)
+    result = recvexactly(sock, 4)
     if result != b'OKAY':
         raise RuntimeError(_read_hexlen(sock))
 
 
 def _read_hexlen(sock):
-    textlen = int(_recvexactly(sock, 4), 16)
+    textlen = int(recvexactly(sock, 4), 16)
     if textlen == 0:
         return b''
-    buf = _recvexactly(sock, textlen)
+    buf = recvexactly(sock, textlen)
     return buf
 
 
@@ -111,7 +76,7 @@ class ADBClientSession:
         if len(cmd) == 0:
             raise ValueError('no command specified for blocking exec')
         sock = self.exec_stream(cmd)
-        data = _recvall(sock)
+        data = recvall(sock)
         sock.close()
         return data
 
@@ -125,6 +90,6 @@ class ADBClientSession:
         if len(cmd) == 0:
             raise ValueError('no command specified for blocking shell')
         sock = self.shell_stream(cmd)
-        data = _recvall(sock)
+        data = recvall(sock)
         sock.close()
         return data
