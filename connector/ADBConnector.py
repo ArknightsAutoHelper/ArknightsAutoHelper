@@ -110,7 +110,6 @@ class ADBConnector:
 
 
     def _detect_loopback(self):
-        sock = self.device_session_factory().exec_stream('sh')
         board = self.device_session_factory().exec('getprop ro.product.board')
         if b'goldfish' in board:
             return '10.0.2.2'
@@ -191,22 +190,3 @@ class ADBConnector:
         command = "input tap {} {}".format(final_X,
                                            final_Y)
         self.run_device_cmd(command)
-
-    @staticmethod
-    def img_difference(img1, img2):
-        img1 = _ensure_pil_image(img1).convert('1')
-        img2 = _ensure_pil_image(img2).convert('1')
-        hist1 = list(img1.getdata())
-        hist2 = list(img2.getdata())
-        sum1 = 0
-        for i in range(len(hist1)):
-            if hist1[i] == hist2[i]:
-                sum1 += 1
-            else:
-                sum1 += 1 - \
-                        float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])
-        return sum1 / len(hist1)
-
-#
-# if __name__ == '__main__':
-#     a = ADBConnector()
