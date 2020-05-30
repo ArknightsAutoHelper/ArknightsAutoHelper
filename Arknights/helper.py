@@ -577,6 +577,7 @@ class ArknightsHelper(object):
             logger.info('发现见习任务，切换到每日任务')
             self.tap_rect(imgreco.task.get_daily_task_rect(screenshot, hasbeginner))
             self.__wait(TINY_WAIT)
+            screenshot = self.adb.get_screen_shoot()
 
         while imgreco.task.check_collectable_reward(screenshot):
             logger.info('完成任务')
