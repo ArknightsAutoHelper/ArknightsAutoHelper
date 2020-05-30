@@ -10,7 +10,7 @@ def recvexactly(sock, n):
         if rcvlen == 0:
             break
     if pos != n:
-        raise RuntimeError("recvexactly %d bytes failed" % n)
+        raise EOFError("recvexactly %d bytes failed" % n)
     return bytes(buf)
 
 
