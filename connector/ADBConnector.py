@@ -72,12 +72,13 @@ class ADBConnector:
             if device_name == "":
                 logger.warn("自动选择设备失败，请根据上述内容自行输入数字并选择")
                 input_valid_flag = False
-                num = "0"
-                while not input_valid_flag:
+                num = 0
+                while True:
                     try:
                         num = int(input(">"))
                         if not 0 <= num < len(devices):
                             raise ValueError()
+                        break
                     except ValueError:
                         logger.error("输入不合法，请重新输入")
                 device_name = devices[num][0]
