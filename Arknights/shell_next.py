@@ -16,13 +16,15 @@ def delay_impl_factory(helper, statusline, show_toggle):
 
     skiphandler = fancywait.KeyHandler('<ENTER>跳过', b'\r', skipcallback)
     skipdummy   = fancywait.KeyHandler('           ', b'', lambda x: None)
+    if not helper.refill_with_item and not helper.refill_with_originium:
+        show_toggle = False
     if show_toggle and helper.use_refill:
-        togglehandler = fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
+        togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
     else:
-        togglehandler = fancywait.KeyHandler(None, None, None)
+        togglehandler = lambda: fancywait.KeyHandler(None, None, None)
 
     def delay_impl(timeout):
-        fancywait.fancy_delay(timeout, statusline, [skiphandler if timeout > 9 else skipdummy, togglehandler])
+        fancywait.fancy_delay(timeout, statusline, [skiphandler if timeout > 9 else skipdummy, togglehandler()])
 
     return delay_impl
 
@@ -39,17 +41,48 @@ def _create_helper(show_toggle=False):
     helper.delay_impl = delay_impl_factory(helper, line, show_toggle)
     return helper
 
+def _parse_opt(argv):
+    ops = []
+    if len(argv) >= 2 and argv[1][:1] in ('+', '-'):
+        opts = argv.pop(1)
+        print(opts)
+        action = None
+        for c in opts:
+            if c == '+':
+                action = True
+            elif c == '-':
+                action = False
+            elif c == 'r':
+                if action is not None:
+                    print('set use_refill', action)
+                    def op(helper):
+                        print('op called')
+                        helper.use_refill = action
+                    ops.append(op)
+            elif c == 'R':
+                if action is not None:
+                    print('set refill_with_originium', action)
+                    def op(helper):
+                        helper.refill_with_originium = action
+                    ops.append(op)
+    return ops
 
 def quick(argv):
     """
-    quick [n]
+    quick [+-rR] [n]
         重复挑战当前画面关卡特定次数或直到理智不足
+        +r/-r 是否自动回复理智
+        +R/-R 是否使用源石回复理智
     """
+
+    ops = _parse_opt(argv)
     if len(argv) == 2:
         count = int(argv[1])
     else:
         count = 114514
     helper = _create_helper(True)
+    for op in ops:
+        op(helper)
     with helper._shellng_with:
         helper.module_battle_slim(
             c_id=None,
@@ -58,32 +91,22 @@ def quick(argv):
     return 0
 
 
-class ItemsWrapper:
-    def __init__(self, obj):
-        self.obj = obj
-    def __len__(self):
-        return len(self.obj)
-    def items(self):
-        return self.obj
-
-
 def auto(argv):
     """
-    auto stage1 count1 [stage2 count2] ...
+    auto [+-rR] stage1 count1 [stage2 count2] ...
         按顺序挑战指定关卡特定次数直到理智不足
     """
-    from Arknights.click_location import MAIN_TASK_SUPPORT
+    ops = _parse_opt(argv)
     arglist = argv[1:]
     if len(arglist) % 2 != 0:
-        print('usage: auto stage1 count1 [stage2 count2] ...')
+        print('usage: auto [+-rR] stage1 count1 [stage2 count2] ...')
         return 1
     it = iter(arglist)
     tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
-    # for stage, count in tasks:
-    #     if stage not in MAIN_TASK_SUPPORT:
-    #         print('stage %s not supported' % stage)
-    #         return 1
+
     helper = _create_helper(True)
+    for op in ops:
+        op(helper)
     with helper._shellng_with:
         helper.main_handler(
             clear_tasks=False,
@@ -155,13 +178,15 @@ def interactive(argv):
             continue
 
 
+argv0 = 'placeholder'
+
 
 def help(argv):
     """
     help
         输出本段消息
     """
-    print("usage: %s command [command args]" % help.argv0)
+    print("usage: %s command [command args]" % argv0)
     print("commands (prefix abbreviation accepted):")
     for cmd in global_cmds:
         print("    " + str(cmd.__doc__.strip()))
@@ -170,7 +195,6 @@ def help(argv):
 def exit(argv):
     sys.exit()
 
-help.argv0 = 'placeholder'
 
 global_cmds = [quick, auto, collect, recruit, interactive, help]
 interactive_cmds = [quick, auto, collect, recruit, exit]
@@ -188,7 +212,8 @@ def match_cmd(first, avail_cmds):
         return None
 
 def main(argv):
-    help.argv0 = argv[0]
+    global argv0
+    argv0 = argv[0]
     if len(argv) < 2:
         help(argv)
         return 1
