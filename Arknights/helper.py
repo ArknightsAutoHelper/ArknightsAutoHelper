@@ -86,7 +86,7 @@ class ArknightsHelper(object):
         if DEBUG_LEVEL >= 1:
             self.__print_info()
         self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
-        self.refill_with_originium = config.get('behavior/refill_ap_with_oiriginium', False)
+        self.refill_with_originium = config.get('behavior/refill_ap_with_originium', False)
         self.use_refill = self.refill_with_item or self.refill_with_originium
         self.loots = {}
         logger.debug("成功初始化模块")
