@@ -10,6 +10,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            height: 100%;
+        }
+
         .bottombar {
             padding: 8px;
         }
@@ -116,6 +120,23 @@
             loadImage(e.target.files[0])
         })
 
+        let preventDefaults = e => {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+
+        ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.addEventListener(eventName, preventDefaults, false)
+        })
+
+        document.addEventListener('drop', function(e) {
+            let dt = e.dataTransfer
+            let files = dt.files
+            console.log(files)
+            if (files.length >= 1) {
+                loadImage(files[0])
+            }
+        }, false)
     </script>
 </body>
 
