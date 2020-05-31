@@ -139,8 +139,9 @@ class ADBConnector:
     def screencap(self):
         """returns (width, height, pixels)
         pixels in RGBA/RGBX format"""
-        s = self.device_session_factory().exec('screencap|gzip -1')
+        s = self.device_session_factory().exec_stream('screencap|gzip -1')
         data = recvall(s, 4194304)
+        s.close()
         data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
