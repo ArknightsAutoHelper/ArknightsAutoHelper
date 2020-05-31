@@ -14,10 +14,10 @@
             padding: 8px;
         }
 
-        /*html {
-                height: 100%;
-            }
-            body {
+        html {
+            height: 100%;
+        }
+            /*body {
                 margin: 0;
                 display: flex;
                 flex-direction: column;
@@ -357,6 +357,24 @@
             updateLayout();
             updateOutput();
         })
+
+        let preventDefaults = e => {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+
+        ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.addEventListener(eventName, preventDefaults, false)
+        })
+
+        document.addEventListener('drop', function(e) {
+            let dt = e.dataTransfer
+            let files = dt.files
+            console.log(files)
+            if (files.length >= 1) {
+                loadImage(files[0])
+            }
+        }, false)
     </script>
 </body>
 

@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from PIL import Image
 
-from richlog import get_logger
+from util.richlog import get_logger
 from . import imgops
 from . import resources
 from . import util
@@ -10,6 +10,13 @@ from . import ocr
 
 LOGFILE = 'recruit.html'
 logger = get_logger(LOGFILE)
+
+from Arknights.recruit_database import recruit_database
+known_tagchars = set(z for x in recruit_database for y in x[2] for z in y)
+
+def remove_unknown_chars(s, known_chars):
+    result = ''.join(c for c in s if c in known_chars)
+    return result
 
 def get_recruit_tags(img):
     vw, vh = util.get_vwvh(img)
@@ -21,7 +28,9 @@ def get_recruit_tags(img):
         img.crop((50*vw-13.241*vh, 60.278*vh, 50*vw+6.111*vh, 66.019*vh)).convert('L')
     ]
 
-    tags = [ocr.get_config_engine().recognize(imgops.invert_color(img), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]).text.replace(' ', '') for img in tagimgs]
+    eng = ocr.get_config_engine()
+    recognize = lambda img: eng.recognize(imgops.invert_color(img), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]).text
+    tags = [remove_unknown_chars(recognize(img), known_tagchars) for img in tagimgs]
 
     for tagimg, tagtext in zip(tagimgs, tags):
         logger.logimage(tagimg)

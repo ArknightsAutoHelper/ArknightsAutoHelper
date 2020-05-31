@@ -3,7 +3,7 @@ from functools import lru_cache
 import numpy as np
 from PIL import Image
 
-from richlog import get_logger
+from util.richlog import get_logger
 from . import imgops
 from . import minireco
 from . import resources

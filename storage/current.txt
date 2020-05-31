@@ -1,1 +1,0 @@
-  mCurrentFocus=Window{15ce0e8f u0 com.vphone.launcher/com.vphone.launcher.Launcher}

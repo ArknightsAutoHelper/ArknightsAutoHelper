@@ -106,17 +106,28 @@ Windows OCR 的语言数据是随语言支持安装的，非简体中文系统�
 ```
 $ python3 akhelper.py
 usage: akhelper.py command [command args]
-commands:
-    quick [n]
-        重复挑战当前画面关卡特定次数或直到理智不足
-    auto stage1 count1 [stage2 count2] ...
-        按顺序挑战指定关卡特定次数直到理智不足
+commands (prefix abbreviation accepted):
+    quick [+-rR] [n]
+        重复挑战当前画面关卡特定次数或直到理智不足 
+        +r/-r 是否自动回复理智
+        +R/-R 是否使用源石回复理智
+    auto [+-rR] stage1 count1 [stage2 count2] ...  
+        按顺序挑战指定关卡特定次数直到理智不足     
     collect
         收集每日任务奖励
-    recruit
+    recruit [tags ...]
         公开招募识别/计算，不指定标签则从截图中识别
+    interactive
+        进入交互模式，减少按键次数（
     help
         输出本段消息
+```
+
+命令可使用前缀缩写（类似 Linux iproute2），交互模式下只需输入对应命令名称即可，如：
+
+```
+$ python3 akhelper.py i
+akhelper> q 5
 ```
 
 <details><summary>旧版命令行接口</summary>
@@ -153,6 +164,10 @@ Options:
 ```bash
 python3 akhelper.py quick 99
 # 重复刷当前画面关卡 99 次，也可以不指定次数
+python3 akhelper.py quick -r
+# 重复刷当前画面关卡，禁用自动回复理智（直到理智不足停止）
+python3 akhelper.py quick +rR 99
+# 重复刷当前画面关卡 99 次，启用自动回复理智，启用碎石回复理智
 ```
 
 <details><summary>旧版命令行接口</summary>
@@ -210,8 +225,14 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 注意：“无限休眠”其实是有时间的，大概是1024秒，**提交这个批处理的时候我也将这个时间改成了60秒**，如果需要可以修改回来。
 
 
+## 0x06 已知问题
 
-## 0x06 自定义开发与TODO
+* 尚未适配新版企鹅物流数据统计 API
+* 自动选关功能：点击随机偏移范围大小固定，且与分辨率无关
+* 某些情况下，物品、数量识别会出错
+
+
+## 0x07 自定义开发与TODO
 
 ### 关于一些常见的问题
 

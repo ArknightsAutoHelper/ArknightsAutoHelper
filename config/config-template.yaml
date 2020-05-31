@@ -10,6 +10,10 @@ device:
   # 设备在 `adb devices` 中显示的名称，或 `adb connect` 时的端口。
   #adb_connect: 127.0.0.1:7555
 
+  # 模拟器内可访问本机端口时，尝试使用模拟器优化模式
+  # 模拟器判断逻辑：ro.product.board 包含 goldfish（SDK emulator）或存在 vboxguest 模块
+  try_emulator_enhanced_mode: true
+
   package_name: com.hypergryph.arknights
   # package_name: com.hypergryph.arknights.bilibili
   activity_name: com.u8.sdk.U8UnityContext

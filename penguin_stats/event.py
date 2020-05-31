@@ -35,6 +35,13 @@ def event_preprocess(stage: str, itemgroups: List[Tuple[str, List[Tuple[str, int
                 items.pop(i)
                 continue
 
+            # 活动时间：05月15日 16:00 - 05月29日 03:59
+            if item[0] == '32h战略配给':
+                if item[1] != 1:
+                    raise ValueError('%sx%d' % item)
+                exclude_from_validation.append(item)
+                continue
+
         # 移除空分组
         if len(group[1]) == 0:
             itemgroups.pop(j)

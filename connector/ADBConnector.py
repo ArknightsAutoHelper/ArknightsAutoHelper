@@ -1,15 +1,20 @@
 import logging.config
 from random import randint
+import zlib
+import struct
+import socket
 
 from PIL import Image
 
 import config
 # from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
-from ADBClientSession import ADBClientSession
+from .ADBClientSession import ADBClientSession
+from util.socketutil import recvall
+from . import revconn
 
 # from numpy import average, dot, linalg
 
-logger = logging.getLogger('ADBShell')
+logger = logging.getLogger(__name__)
 
 
 def _screencap_to_image(cap):
@@ -23,7 +28,7 @@ def _ensure_pil_image(imgorfile):
     return Image.open(imgorfile)
 
 
-class ADBShell(object):
+class ADBConnector:
     def __init__(self, adb_host=config.ADB_HOST):
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = config.ADB_ROOT
@@ -31,6 +36,23 @@ class ADBShell(object):
         self.host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
         self.DEVICE_NAME = self.__adb_device_name_detector()
         self.device_session_factory = lambda: self.host_session_factory().device(self.DEVICE_NAME)
+        self.rch = None
+        if config.get('device/try_emulator_enhanced_mode', True):
+            self.loopback = self._detect_loopback()
+            if self.loopback:
+                self.rch = revconn.ReverseConnectionHost()
+                self.rch.start()
+                if self._test_reverse_connection():
+                    logger.info('正在使用模拟器优化模式')
+                    self.screencap = self._reverse_connection_screencap
+                else:
+                    self.rch.stop()
+        else:
+            self.loopback = None
+
+    def __del__(self):
+        if self.rch and self.rch.is_alive():
+            self.rch.stop()
 
     def __adb_device_name_detector(self):
         devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
@@ -50,12 +72,13 @@ class ADBShell(object):
             if device_name == "":
                 logger.warn("自动选择设备失败，请根据上述内容自行输入数字并选择")
                 input_valid_flag = False
-                num = "0"
-                while not input_valid_flag:
+                num = 0
+                while True:
                     try:
                         num = int(input(">"))
                         if not 0 <= num < len(devices):
                             raise ValueError()
+                        break
                     except ValueError:
                         logger.error("输入不合法，请重新输入")
                 device_name = devices[num][0]
@@ -87,9 +110,59 @@ class ADBShell(object):
             )
         )
 
+
+    def _detect_loopback(self):
+        board = self.device_session_factory().exec('getprop ro.product.board')
+        if b'goldfish' in board:
+            return '10.0.2.2'
+        modules = self.device_session_factory().exec('grep -o vboxguest /proc/modules')
+        if b'vboxguest' in modules:
+            loopback = self.device_session_factory().exec('tail -n+2 /proc/net/arp | cut -f " " -d 0')
+            return loopback.decode().strip()
+        return None
+
+    def _test_reverse_connection(self):
+        cookie = self.rch.register_cookie()
+        control_sock = self.device_session_factory().exec_stream('echo -n %sOKAY | nc -w 1 %s %d' % (cookie.decode(), self.loopback, self.rch.port))
+        conn = self.rch.wait_registered_socket(cookie)
+        data = recvall(conn)
+        conn.close()
+        control_sock.close()
+        return data == b'OKAY'
+
+    def screencap_png(self):
+        """returns PNG bytes"""
+        s = self.device_session_factory().exec_stream('screencap -p')
+        data = recvall(s, 4194304)
+        return data
+
+    def screencap(self):
+        """returns (width, height, pixels)
+        pixels in RGBA/RGBX format"""
+        s = self.device_session_factory().exec('screencap|gzip -1')
+        data = recvall(s, 4194304)
+        data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
+        w, h, f = struct.unpack_from('III', data, 0)
+        assert (f == 1)
+        return (w, h, data[12:])
+
+    def _reverse_connection_screencap(self):
+        """returns (width, height, pixels)
+        pixels in RGBA/RGBX format"""
+        cookie = self.rch.register_cookie()
+        control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (cookie.decode(), self.loopback, self.rch.port))
+        conn = self.rch.wait_registered_socket(cookie)
+        data = recvall(conn, 8388608, True)
+        conn.close()
+        control_sock.close()
+        # data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
+        w, h, f = struct.unpack_from('III', data, 0)
+        assert (f == 1)
+        return (w, h, data[12:].tobytes())
+
     def get_screen_shoot(self, screen_range=None):
         # sleep(1)
-        rawcap = self.device_session_factory().screencap()
+        rawcap = self.screencap()
         img = _screencap_to_image(rawcap)
         if screen_range is not None:
             return self.get_sub_screen(img, screen_range)
@@ -119,22 +192,3 @@ class ADBShell(object):
         command = "input tap {} {}".format(final_X,
                                            final_Y)
         self.run_device_cmd(command)
-
-    @staticmethod
-    def img_difference(img1, img2):
-        img1 = _ensure_pil_image(img1).convert('1')
-        img2 = _ensure_pil_image(img2).convert('1')
-        hist1 = list(img1.getdata())
-        hist2 = list(img2.getdata())
-        sum1 = 0
-        for i in range(len(hist1)):
-            if hist1[i] == hist2[i]:
-                sum1 += 1
-            else:
-                sum1 += 1 - \
-                        float(abs(hist1[i] - hist2[i])) / max(hist1[i], hist2[i])
-        return sum1 / len(hist1)
-
-#
-# if __name__ == '__main__':
-#     a = ADBShell()
