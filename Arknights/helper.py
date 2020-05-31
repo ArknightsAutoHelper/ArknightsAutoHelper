@@ -419,9 +419,9 @@ class ArknightsHelper(object):
                     else:
                         logger.info('放弃关卡')
                         self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
-                        self.__wait(1)
                         # 关闭失败提示
-                        self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
+                        self.wait_for_still_image()
+                        self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(screenshot))
                         self.__wait(1)
                         return
                 elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
