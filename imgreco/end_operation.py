@@ -91,10 +91,12 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         return (groupname, [('(家具)', 1)])
 
     vw, vh = session.vw, session.vh
-    itemcount = roundint(groupimg.width / (20.370 * vh))
+    itemwidth = 20.370 * vh
+    itemcount = roundint(groupimg.width / itemwidth)
+    logger.logtext('group has %d items' % itemcount)
     result = []
     for i in range(itemcount):
-        itemimg = groupimg.crop((20.370 * vh * i, 0.000 * vh, 40.741 * vh, 18.981 * vh))
+        itemimg = groupimg.crop((itemwidth * i, 0.000 * vh, itemwidth * (i+1), 18.981 * vh))
         # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
         itemimg = itemimg.crop((0.093 * vh, 0, 19.074 * vh, itemimg.height))
         result.append(item.tell_item(itemimg, session))
