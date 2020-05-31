@@ -16,12 +16,14 @@ class RichLogger:
         image.save(bio, format='PNG')
         imgb64 = b64encode(bio.getvalue())
         self.f.write(b'<p><img src="data:image/png;base64,%s" /></p>\n' % imgb64)
+        self.f.flush()
 
     def logtext(self, text):
         self.loghtml('<pre>%s</pre>\n' % text)
 
     def loghtml(self, html):
         self.f.write(html.encode())
+        self.f.flush()
 
 
 @lru_cache(maxsize=None)
