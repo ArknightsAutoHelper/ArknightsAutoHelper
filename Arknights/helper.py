@@ -16,6 +16,7 @@ from connector.ADBConnector import ADBConnector
 from . import stage_path
 from Arknights.click_location import *
 from Arknights.flags import *
+from util.exc_guard import guard
 
 logger = logging.getLogger('helper')
 coloredlogs.install(
@@ -56,6 +57,25 @@ def _penguin_report(recoresult):
         logger.info('企鹅数据报告 ID: %s', reportid)
     return reportid
 
+
+def item_name_guard(item):
+    return str(item) if item is not None else '<无法识别的物品>'
+
+
+def item_qty_guard(qty):
+    return str(qty) if qty is not None else '?'
+
+
+def format_recoresult(recoresult):
+    result = None
+    with guard(logger):
+        result = '[%s] %s' % (recoresult['operation'],
+            '; '.join('%s: %s' % (grpname, ', '.join('%sx%s' % (item_name_guard(itemtup[0]), item_qty_guard(itemtup[1]))
+            for itemtup in grpcont))
+            for grpname, grpcont in recoresult['items']))
+    if result is None:
+        result = '<发生错误>'
+    return result
 
 class ArknightsHelper(object):
     def __init__(self,
@@ -429,14 +449,13 @@ class ArknightsHelper(object):
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
-                logger.info('掉落识别结果：[%s] %s', drops['operation'],
-                            '; '.join('%s: %s' % (grpname, ', '.join('%sx%d' % itemtup for itemtup in grpcont))
-                                      for grpname, grpcont in drops['items']))
                 logger.debug('%s', repr(drops))
+                logger.info('掉落识别结果：%s', format_recoresult(drops))
                 log_total = len(self.loots)
                 for _, group in drops['items']:
                     for name, qty in group:
-                        self.loots[name] = self.loots.get(name, 0) + qty
+                        if name is not None and qty is not None:
+                            self.loots[name] = self.loots.get(name, 0) + qty
                 if log_total:
                     self.log_total_loots()
                 reportid = _penguin_report(drops)
