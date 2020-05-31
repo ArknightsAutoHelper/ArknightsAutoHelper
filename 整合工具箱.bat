@@ -77,4 +77,4 @@ goto end
 :end
 echo [93m[!] 拜拜嘞您（3秒后下班）[1m
 TIMEOUT>nul 2>nul /T 3
-@exit
+@goto :eof
