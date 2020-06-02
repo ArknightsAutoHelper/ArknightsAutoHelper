@@ -5,6 +5,29 @@ import secrets
 import queue
 
 class ReverseConnectionHost(threading.Thread):
+
+    class FutureConnection:
+        def __init__(self, rch, cookie):
+            self.rch = rch
+            self.cookie = cookie
+            self.fulfilled = False
+
+        def get(self, timeout=15):
+            result = self.rch.wait_registered_socket(self.cookie, timeout)
+            if result is not None:
+                self.fulfilled = True
+            return result
+        
+        def unregister(self):
+            self.rch.unregister_cookie(self.cookie)
+        
+        def __enter__(self):
+            pass
+
+        def __exit__(self, *_):
+            if not self.fulfilled:
+                self.unregister()
+
     def __init__(self, port=0):
         super().__init__()
         self.daemon = True
@@ -21,7 +44,6 @@ class ReverseConnectionHost(threading.Thread):
             evt.set()
 
     def register_cookie(self, cookie=None):
-
         with self.registered_lock:
             if cookie is None:
                 while True:
@@ -32,7 +54,7 @@ class ReverseConnectionHost(threading.Thread):
                 assert len(cookie) == 8
             if cookie not in self.registered:
                 self.registered[cookie] = threading.Event()
-        return cookie
+        return ReverseConnectionHost.FutureConnection(self, cookie)
 
     def wait_registered_socket(self, cookie, timeout=15):
         assert len(cookie) == 8
@@ -45,6 +67,15 @@ class ReverseConnectionHost(threading.Thread):
         if e.wait(timeout):
             return self.wait_registered_socket(cookie)
         return None
+
+    def unregister_cookie(self, cookie):
+        with self.registered_lock:
+            if cookie in self.registered:
+                del self.registered[cookie]
+            with self.fulfilled_lock:
+                if cookie in self.fulfilled:
+                    del self.fulfilled[cookie]
+
 
     def _fulfilled(self, cookie, sock):
         with self.fulfilled_lock:

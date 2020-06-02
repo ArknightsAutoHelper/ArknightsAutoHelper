@@ -38,11 +38,12 @@ class ADBConnector:
         self.device_session_factory = lambda: self.host_session_factory().device(self.DEVICE_NAME)
         self.rch = None
         if config.get('device/try_emulator_enhanced_mode', True):
-            self.loopback = self._detect_loopback()
-            if self.loopback:
+            loopbacks = self._detect_loopbacks()
+            if len(loopbacks):
+                logger.debug('possible loopback addresses: %s', repr(loopbacks))
                 self.rch = revconn.ReverseConnectionHost()
                 self.rch.start()
-                if self._test_reverse_connection():
+                if self._test_reverse_connection(loopbacks):
                     logger.info('正在使用模拟器优化模式')
                     self.screencap = self._reverse_connection_screencap
                 else:
@@ -111,24 +112,34 @@ class ADBConnector:
         )
 
 
-    def _detect_loopback(self):
+    def _detect_loopbacks(self):
         board = self.device_session_factory().exec('getprop ro.product.board')
         if b'goldfish' in board:
-            return '10.0.2.2'
+            return ['10.0.2.2']
         modules = self.device_session_factory().exec('grep -o vboxguest /proc/modules')
         if b'vboxguest' in modules:
-            loopback = self.device_session_factory().exec('tail -n+2 /proc/net/arp | cut -f " " -d 0')
-            return loopback.decode().strip()
-        return None
+            arp = self.device_session_factory().exec('cat /proc/net/arp')
+            return [x[:x.find(b' ')].decode() for x in arp.splitlines()[1:]]
+        return []
 
-    def _test_reverse_connection(self):
-        cookie = self.rch.register_cookie()
-        control_sock = self.device_session_factory().exec_stream('echo -n %sOKAY | nc -w 1 %s %d' % (cookie.decode(), self.loopback, self.rch.port))
-        conn = self.rch.wait_registered_socket(cookie)
-        data = recvall(conn)
-        conn.close()
-        control_sock.close()
-        return data == b'OKAY'
+    def _test_reverse_connection(self, loopbacks):
+        for addr in loopbacks:
+            logger.debug('testing loopback address %s', addr)
+            future = self.rch.register_cookie()
+            with future:
+                cmd = 'echo -n %sOKAY | nc -w 1 %s %d' % (future.cookie.decode(), addr, self.rch.port)
+                logger.debug(cmd)
+                control_sock = self.device_session_factory().exec_stream(cmd)
+                with control_sock:
+                    conn = future.get(2)
+                    if conn is not None:
+                        data = recvall(conn)
+                        conn.close()
+                        if data == b'OKAY':
+                            self.loopback = addr
+                            logger.debug('found loopback address %s', addr)
+                            return True
+        return False
 
     def screencap_png(self):
         """returns PNG bytes"""
@@ -150,13 +161,12 @@ class ADBConnector:
     def _reverse_connection_screencap(self):
         """returns (width, height, pixels)
         pixels in RGBA/RGBX format"""
-        cookie = self.rch.register_cookie()
-        control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (cookie.decode(), self.loopback, self.rch.port))
-        conn = self.rch.wait_registered_socket(cookie)
-        data = recvall(conn, 8388608, True)
-        conn.close()
-        control_sock.close()
-        # data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
+        future = self.rch.register_cookie()
+        with future:
+            control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
+            with control_sock:
+                with future.get() as conn:
+                    data = recvall(conn, 8388608, True)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
         return (w, h, data[12:].tobytes())
