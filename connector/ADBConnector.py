@@ -3,6 +3,7 @@ from random import randint
 import zlib
 import struct
 import socket
+import time
 
 from PIL import Image
 
@@ -37,6 +38,11 @@ class ADBConnector:
         self.DEVICE_NAME = self.__adb_device_name_detector()
         self.device_session_factory = lambda: self.host_session_factory().device(self.DEVICE_NAME)
         self.rch = None
+        self.cache_screenshot = config.get('device/cache_screenshot', True)
+        self.last_screenshot_timestamp = 0
+        self.last_screenshot_duration = 0
+        self.last_screenshot = None
+
         if config.get('device/try_emulator_enhanced_mode', True):
             loopbacks = self._detect_loopbacks()
             if len(loopbacks):
@@ -171,12 +177,17 @@ class ADBConnector:
         assert (f == 1)
         return (w, h, data[12:].tobytes())
 
-    def get_screen_shoot(self, screen_range=None):
-        # sleep(1)
+    def screenshot(self, cached=True):
+        t0 = time.monotonic()
+        if cached and self.cache_screenshot:
+            if self.last_screenshot is not None and t0 - self.last_screenshot_timestamp < self.last_screenshot_duration:
+                return self.last_screenshot
         rawcap = self.screencap()
         img = _screencap_to_image(rawcap)
-        if screen_range is not None:
-            return self.get_sub_screen(img, screen_range)
+        t1 = time.monotonic()
+        self.last_screenshot_timestamp = t1
+        self.last_screenshot_duration = t1 - t0
+        self.last_screenshot = img
         return img
 
     def touch_swipe2(self, origin, movement, duration=None):

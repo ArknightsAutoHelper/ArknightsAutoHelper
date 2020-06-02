@@ -19,7 +19,7 @@ def load_data():
     reco2 = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Medium.dat'))
     return (reco, reco2)
 
-
+@lru_cache(1)
 def recognize(img):
     vw, vh = util.get_vwvh(img.size)
 
@@ -62,6 +62,13 @@ def recognize(img):
     consumetext = reco_Noto.recognize(consumeimg)
     consumetext = ''.join(c for c in consumetext if c in '0123456789')
     logger.logtext(consumetext)
+
+    if not aptext:
+        # ASSUMPTION: 只有在战斗前界面才能识别到右上角体力
+        return None
+    if not consumetext.isdigit():
+        # ASSUMPTION: 所有关卡都显示并能识别体力消耗
+        return None
 
     return {
         'AP': aptext,

@@ -100,7 +100,7 @@ class ArknightsHelper(object):
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.is_called_by_gui = call_by_gui
-        self.viewport = self.adb.get_screen_shoot().size
+        self.viewport = self.adb.screenshot().size
         self.operation_time = []
         self.delay_impl = sleep
         if DEBUG_LEVEL >= 1:
@@ -192,9 +192,9 @@ class ArknightsHelper(object):
 
     def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True):
         if crop is None:
-            shooter = lambda: self.adb.get_screen_shoot()
+            shooter = lambda: self.adb.screenshot()
         else:
-            shooter = lambda: self.adb.get_screen_shoot().crop(crop)
+            shooter = lambda: self.adb.screenshot().crop(crop)
         screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
@@ -295,24 +295,15 @@ class ArknightsHelper(object):
         def on_prepare(smobj):
             count_times = 0
             while True:
-                screenshot = self.adb.get_screen_shoot()
+                screenshot = self.adb.screenshot()
                 recoresult = imgreco.before_operation.recognize(screenshot)
-                not_in_scene = False
-                if not recoresult['AP']:
-                    # ASSUMPTION: 只有在战斗前界面才能识别到右上角体力
-                    not_in_scene = True
-                if recoresult['consume'] is None:
-                    # ASSUMPTION: 所有关卡都显示并能识别体力消耗
-                    not_in_scene = True
-
-                logger.debug('当前画面关卡：%s', recoresult['operation'])
-
-                if (not not_in_scene) and c_id is not None:
-                    # 如果传入了关卡 ID，检查识别结果
-                    if recoresult['operation'] != c_id:
-                        not_in_scene = True
-
-                if not_in_scene:
+                if recoresult is not None:
+                    logger.debug('当前画面关卡：%s', recoresult['operation'])
+                    if c_id is not None:
+                        # 如果传入了关卡 ID，检查识别结果
+                        if recoresult['operation'] != c_id:
+                            not_in_scene = True
+                else:
                     count_times += 1
                     if count_times <= 7:
                         logger.warning('不在关卡界面')
@@ -321,8 +312,6 @@ class ArknightsHelper(object):
                     else:
                         logger.error('{}次检测后都不再关卡界面，退出进程'.format(count_times))
                         raise StopIteration()
-                else:
-                    break
 
             self.CURRENT_STRENGTH = int(recoresult['AP'].split('/')[0])
             ap_text = '理智' if recoresult['consume_ap'] else '门票'
@@ -333,7 +322,7 @@ class ArknightsHelper(object):
                     logger.info('尝试回复理智')
                     self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
                     self.__wait(SMALL_WAIT)
-                    screenshot = self.adb.get_screen_shoot()
+                    screenshot = self.adb.screenshot()
                     refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
                     confirm_refill = False
                     if refill_type == 'item' and self.refill_with_item:
@@ -363,7 +352,7 @@ class ArknightsHelper(object):
             count_times = 0
             while True:
                 self.__wait(TINY_WAIT, False)
-                screenshot = self.adb.get_screen_shoot()
+                screenshot = self.adb.screenshot()
                 recoresult = imgreco.before_operation.check_confirm_troop_rect(screenshot)
                 if recoresult:
                     logger.info('确认编队')
@@ -393,7 +382,7 @@ class ArknightsHelper(object):
 
             logger.info('已进行 %.1f s，判断是否结束', t)
 
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("等级提升")
                 self.operation_time.append(t)
@@ -442,7 +431,7 @@ class ArknightsHelper(object):
             smobj.state = on_end_operation
 
         def on_end_operation(smobj):
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
             logger.info('离开结算画面')
             self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
             reportid = None
@@ -485,7 +474,7 @@ class ArknightsHelper(object):
     def back_to_main(self):  # 回到主页
         logger.info("正在返回主页")
         while True:
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
 
             if imgreco.main.check_main(screenshot):
                 break
@@ -585,39 +574,39 @@ class ArknightsHelper(object):
         logger.debug("helper.clear_daily_task")
         logger.info("领取每日任务")
         self.back_to_main()
-        screenshot = self.adb.get_screen_shoot()
+        screenshot = self.adb.screenshot()
         logger.info('进入任务界面')
         self.tap_quadrilateral(imgreco.main.get_task_corners(screenshot))
         self.__wait(SMALL_WAIT)
-        screenshot = self.adb.get_screen_shoot()
+        screenshot = self.adb.screenshot()
 
         hasbeginner = imgreco.task.check_beginners_task(screenshot)
         if hasbeginner:
             logger.info('发现见习任务，切换到每日任务')
             self.tap_rect(imgreco.task.get_daily_task_rect(screenshot, hasbeginner))
             self.__wait(TINY_WAIT)
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
 
         while imgreco.task.check_collectable_reward(screenshot):
             logger.info('完成任务')
             self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
             self.__wait(SMALL_WAIT)
             while True:
-                screenshot = self.adb.get_screen_shoot()
+                screenshot = self.adb.screenshot()
                 if imgreco.common.check_get_item_popup(screenshot):
                     logger.info('领取奖励')
                     self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
                     self.__wait(SMALL_WAIT)
                 else:
                     break
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
         logger.info("奖励已领取完毕")
 
 
     def recruit(self):
         from . import recruit_calc
         logger.info('识别招募标签')
-        tags = imgreco.recruit.get_recruit_tags(self.adb.get_screen_shoot())
+        tags = imgreco.recruit.get_recruit_tags(self.adb.screenshot())
         logger.info('可选标签：%s', ' '.join(tags))
         result = recruit_calc.calculate(tags)
         logger.debug('计算结果：%s', repr(result))
@@ -627,7 +616,7 @@ class ArknightsHelper(object):
     def find_and_tap(self, partition, target):
         lastpos = None
         while True:
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
             recoresult = imgreco.map.recognize_map(screenshot, partition)
             if recoresult is None:
                 # TODO: retry
@@ -670,7 +659,7 @@ class ArknightsHelper(object):
                 raise KeyError((target, partition))
 
     def find_and_tap_daily(self, partition, target, *, recursion=0):
-        screenshot = self.adb.get_screen_shoot()
+        screenshot = self.adb.screenshot()
         recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
         if target in recoresult:
             pos, conf = recoresult[target]
@@ -695,7 +684,7 @@ class ArknightsHelper(object):
         path = stage_path.get_stage_path(stage)
         self.back_to_main()
         logger.info('进入作战')
-        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.get_screen_shoot()))
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
         self.__wait(3)
         if path[0] == 'main':
             self.find_and_tap('episodes', path[1])
@@ -712,7 +701,7 @@ class ArknightsHelper(object):
         logger.debug("helper.get_credit")
         logger.info("领取信赖")
         self.back_to_main()
-        screenshot = self.adb.get_screen_shoot()
+        screenshot = self.adb.screenshot()
         logger.info('进入好友列表')
         self.tap_quadrilateral(imgreco.main.get_friend_corners(screenshot))
         self.__wait(SMALL_WAIT)
@@ -723,7 +712,7 @@ class ArknightsHelper(object):
         self.__wait(MEDIUM_WAIT)
         building_count = 0
         while building_count <= 11:
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
             self.tap_quadrilateral(imgreco.main.get_next_friend_build(screenshot))
             self.__wait(MEDIUM_WAIT)
             building_count = building_count + 1
@@ -734,7 +723,7 @@ class ArknightsHelper(object):
         logger.debug("helper.get_building")
         logger.info("清空基建")
         self.back_to_main()
-        screenshot = self.adb.get_screen_shoot()
+        screenshot = self.adb.screenshot()
         logger.info('进入我的基建')
         self.tap_quadrilateral(imgreco.main.get_back_my_build(screenshot))
         self.__wait(MEDIUM_WAIT + 3)
@@ -750,7 +739,7 @@ class ArknightsHelper(object):
         self.__wait(SMALL_WAIT -1 )
         sell_count = 0
         while sell_count <= 6:
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
             self.tap_quadrilateral(imgreco.main.get_my_sell_task_main(screenshot))
             self.__wait(TINY_WAIT)
             sell_count = sell_count + 1
@@ -758,7 +747,7 @@ class ArknightsHelper(object):
         self.__wait(SMALL_WAIT - 1)
         sell_count = 0
         while sell_count <= 6:
-            screenshot = self.adb.get_screen_shoot()
+            screenshot = self.adb.screenshot()
             self.tap_quadrilateral(imgreco.main.get_my_sell_task_main(screenshot))
             self.__wait(TINY_WAIT)
             sell_count = sell_count + 1
