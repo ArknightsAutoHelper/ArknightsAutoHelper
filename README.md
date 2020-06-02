@@ -4,10 +4,19 @@
 
 | 分支    | 说明    |
 |:----|:----|
-| master |目前的稳定版本|
+| master |~~开发者认为的~~ 稳定版本|
+| dev |开发、测试新功能的分支|
 |release |目前可以应用的GUI版本|
-| dev |目前的开发版本|
 | shaobao_adb |经过封装可以移植的ADB方法类|
+
+功能说明：
+
+* 自动重复刷图，使用理智药、~~碎石~~
+    * 识别掉落物品，上传企鹅物流数据统计
+* 自动选图（从主界面开始到关卡信息界面）
+* 自动领取任务奖励
+* 公开招募识别
+* 基建查房、一键领取（部分）
 
 ## 0x01 运行须知
 
@@ -44,48 +53,13 @@ $ pip install -r requirements.txt
 
 #### OCR 依赖
 目前 OCR 用于：
-* 公开招募识别、计算
+
+* 公开招募 tag 识别
 * 对话框内容识别（如基建退出提示）
-<details><summary>展开查看</summary>
 
-该辅助需要安装本地OCR工具（tesseract），Windows OCR（需要安装简体中文语言包）或者申请百度OCR
+如果 OCR 不可用，则不能自动处理以上情况。
 
-**关于本地OCR工具安装可查看**
-https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/blob/master/OCR_install.md
-
-**关于百度OCR申请**
-
-> 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，根据百度文字识别文档，会暂停使用，建议使用前阅读文档，不保证政策是否改变。理论上每天次数非常充足
-
-文档地址：https://cloud.baidu.com/doc/OCR/index.html
-启用百度api作为ocr识别方案，需要自行注册百度云。并在 `config.yaml` 中配置
-```yaml
-ocr:
-  # 选择 OCR 引擎，非必要
-  # 设置为 auto 则选择下列第一个可用的引擎: tesseract, windows_media_ocr, baidu
-  engine: baidu
-  # 百度 API 设置，使用 baidu OCR 时需要正确填写
-  baidu_api:
-    # 是否将百度 OCR 标记为可用
-    enabled: true
-    # 百度 API 鉴权数据
-    app_id: '你的 App ID'
-    app_key: '你的 Api Key'
-    app_secret: '你的 Secret Key'
-```
-
-**关于Windows OCR**
-
-需要 Windows 10。
-
-当前默认配置为在 tesseract 无法使用（未安装）时使用。如要强制使用，请更改如下
-```yaml
-ocr:
-  engine: windows_media_ocr
-```
-Windows OCR 的语言数据是随语言支持安装的，非简体中文系统需要安装简体中文语言包。
-
-</details>
+目前可以使用 tesseract、Windows OCR（需要安装简体中文语言包）和百度 OCR API，请参阅 [OCR 安装说明](OCR_install.md)。
 
 ### **额外设置**
 
@@ -123,11 +97,15 @@ commands (prefix abbreviation accepted):
         输出本段消息
 ```
 
-命令可使用前缀缩写（类似 Linux iproute2），交互模式下只需输入对应命令名称即可，如：
+命令可使用前缀（首字母）缩写（类似 Linux iproute2），交互模式下只需输入对应命令名称即可，如：
 
 ```
+$ python3 akhelper.py q 5
+
 $ python3 akhelper.py i
 akhelper> q 5
+    ...
+akhelper> c
 ```
 
 <details><summary>旧版命令行接口</summary>

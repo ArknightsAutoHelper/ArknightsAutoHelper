@@ -1,32 +1,36 @@
-# 一份简单的OCR模块安装文档
+# OCR 安装说明
 
-> 由于在后续的版本中将要逐渐废弃不支持OCR模块的功能。所以这里放一个简单的OCR模块安装教程
-> 目前大家主流使用的是 tesseract V4.x 的版本不推荐使用 3.x 的版本应为在中文的识别上有些过拟合
+## OCR 后端比较
 
-## tesseract 官方页面
+后端                          |识别速度          |准确率
+------------------------------|------------------|------
+[Tesseract](Tesseract)        |慢                |高
+[Windows OCR](#windows-ocr)   |快                |中
+[百度 OCR API](#百度-ocr-api) |快，但有 QPS 限制 |高
 
-https://github.com/tesseract-ocr/tesseract
 
-## Windows 版本的下载链接
+## Tesseract
 
-- tesseract-ocr-w64-setup-v4.1.0-bibtag19.exe,
-    - https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v4.1.0-bibtag19.exe
-- tesseract-ocr-w64-setup-v4.1.0-elag2019.exe,
-    - https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v4.1.0-elag2019.exe
+安装说明：https://tesseract-ocr.github.io/tessdoc/Home.html
+
+### TL;DR; for Windows
+
+参考 https://github.com/UB-Mannheim/tesseract/wiki
+
+- tesseract-ocr-w32-setup-v5.0.0-alpha.20200328.exe (x86),
+    - https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w32-setup-v5.0.0-alpha.20200328.exe
+- tesseract-ocr-w64-setup-v5.0.0-alpha.20200328.exe (amd64),
+    - https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0-alpha.20200328.exe
     
-安装完毕后请确认系统变量已经安装，并在安装时候勾选中文语言支持
+安装需要勾选中文语言支持，安装完毕后请将安装路径加入 PATH 环境变量。
 
 如果你没有添加中文语言支持。可以下载中文的训练向量包并把它放到对应路径下
 
-#### 语料包的下载地址
+#### 语料包的下载地址及安装文档
 
-- https://github.com/tesseract-ocr/tessdata/raw/4.00/chi_sim.traineddata
+https://tesseract-ocr.github.io/tessdoc/Data-Files
 
-#### 语料包的安装文档
-
-- https://github.com/tesseract-ocr/tesseract/wiki/Data-Files
-
-## 测试
+### 测试
 
 #### 版本
 ```bash
@@ -48,4 +52,39 @@ List of available languages (8):
 chi_sim
 chi_tra
 eng
+```
+
+## Windows OCR
+
+需要 Windows 10。
+
+Windows 的 OCR 语言支持一般随该语言的基本语言支持（键盘/输入法）一同安装，部分版本的 Windows 10 可以在可选功能中手动安装。
+
+可以通过检查 `C:\Windows\OCR` 确认语言支持是否安装。
+
+当前默认配置为在 tesseract 无法使用（未安装）时使用。如要强制使用，请在 `config.yaml` 中配置
+```yaml
+ocr:
+  engine: windows_media_ocr
+```
+
+## 百度 OCR API
+
+> 百度普通的文字识别免费为50000次/日，可以开通付费，超过免费调用量后，根据百度文字识别文档，会暂停使用，建议使用前阅读文档，不保证政策是否改变。
+
+文档地址：https://cloud.baidu.com/doc/OCR/index.html
+理论上每天次数非常充足。
+
+启用百度api作为ocr识别方案，需要自行注册百度云。并在 `config.yaml` 中配置
+```yaml
+ocr:
+  engine: baidu
+  # 百度 API 设置，使用 baidu OCR 时需要正确填写
+  baidu_api:
+    # 是否将百度 OCR 标记为可用
+    enabled: true
+    # 百度 API 鉴权数据
+    app_id: '你的 App ID'
+    app_key: '你的 Api Key'
+    app_secret: '你的 Secret Key'
 ```
