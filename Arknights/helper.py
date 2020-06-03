@@ -302,9 +302,12 @@ class ArknightsHelper(object):
                     if c_id is not None:
                         # 如果传入了关卡 ID，检查识别结果
                         if recoresult['operation'] != c_id:
-                            not_in_scene = True
+                            logger.error('不在关卡界面')
+                            raise StopIteration()
+                    break
                 else:
                     count_times += 1
+                    self.__wait(1, False)
                     if count_times <= 7:
                         logger.warning('不在关卡界面')
                         self.__wait(TINY_WAIT, False)
