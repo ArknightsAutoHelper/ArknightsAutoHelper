@@ -108,6 +108,8 @@ def find_jumping(ary, threshold):
     ary = np.array(ary, dtype=np.int16)
     diffs = np.diff(ary)
     shit = [x for x in enumerate(diffs) if abs(x[1]) >= threshold]
+    if not shit:
+        return []
     groups = [[shit[0]]]
     for x in shit[1:]:
         lastgroup = groups[-1]
@@ -186,13 +188,26 @@ def recognize(im):
     # exp = lower.crop((76.852 * vh, 5.556 * vh, 94.074 * vh, 7.963 * vh))
     # logger.logimage(exp)
 
+    recoresult = {
+        'operation': operation_id_str,
+        'stars': stars_status,
+        'items': [],
+        'low_confidence': False
+    }
+
     items = lower.crop((68.241 * vh, 10.926 * vh, lower.width, 35.000 * vh))
     logger.logimage(items)
 
     x, y = 6.667 * vh, 18.519 * vh
     linedet = items.crop((x, y, x + 1, items.height)).convert('L')
     d = np.asarray(linedet)
-    linetop, linebottom, *_ = find_jumping(d.reshape(linedet.height), 32)
+    linedet = find_jumping(d.reshape(linedet.height), 64)
+    if len(linedet) >= 2:
+        linetop, linebottom, *_ = linedet
+    else:
+        logger.logtext('horizontal line detection failed')
+        recoresult['low_confidence'] = True
+        return recoresult
     linetop += y
     linebottom += y
 
@@ -218,20 +233,17 @@ def recognize(im):
     session.vh = vh
 
     for group in imggroups:
-        result = tell_group(group, session, linetop, linebottom)
-        session.recognized_groups.append(result[0])
-        items.append(result)
+        groupresult = tell_group(group, session, linetop, linebottom)
+        session.recognized_groups.append(groupresult[0])
+        items.append(groupresult)
 
     t1 = time.monotonic()
     if session.low_confidence:
         logger.logtext('LOW CONFIDENCE')
     logger.logtext('time elapsed: %f' % (t1 - t0))
-    return {
-        'operation': operation_id_str,
-        'stars': stars_status,
-        'items': items,
-        'low_confidence': session.low_confidence
-    }
+    recoresult['items'] = items
+    recoresult['low_confidence'] = recoresult['low_confidence'] or session.low_confidence
+    return recoresult
 
 
 

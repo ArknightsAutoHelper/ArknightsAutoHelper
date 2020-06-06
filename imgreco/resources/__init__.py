@@ -37,6 +37,13 @@ def load_pickle(name):
         result = pickle.load(f)
     return result
 
+def load_minireco_model(name, filter_chars=None):
+    model = load_pickle(name)
+    if filter_chars is not None:
+        model['data'] = [x for x in model['data'] if x[0] in filter_chars]
+        model['chars'] = [x[0] for x in model['data']]
+    return model
+
 
 def get_entries(base):
     findroot = get_path(base.split('/'))
