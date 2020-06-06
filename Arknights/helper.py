@@ -10,7 +10,6 @@ import numpy as np
 import config
 import imgreco
 import imgreco.imgops
-import penguin_stats.loader
 import penguin_stats.reporter
 from connector.ADBConnector import ADBConnector
 from . import stage_path
@@ -25,37 +24,6 @@ coloredlogs.install(
     datefmt='%H:%M:%S',
     level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
     level='INFO')
-
-def _penguin_init():
-    if _penguin_init.ready or _penguin_init.error:
-        return
-    if not config.get('reporting/enabled', False):
-        logger.info('未启用掉落报告')
-        _penguin_init.error = True
-        return
-    try:
-        logger.info('载入企鹅数据资源...')
-        penguin_stats.loader.load_from_service()
-        penguin_stats.loader.user_login()
-        _penguin_init.ready = True
-    except:
-        logger.error('载入企鹅数据资源出错', exc_info=True)
-        _penguin_init.error = True
-
-
-_penguin_init.ready = False
-_penguin_init.error = False
-
-
-def _penguin_report(recoresult):
-    _penguin_init()
-    if not _penguin_init.ready:
-        return False
-    logger.info('向企鹅数据汇报掉落...')
-    reportid = penguin_stats.reporter.report(recoresult)
-    if bool(reportid):
-        logger.info('企鹅数据报告 ID: %s', reportid)
-    return reportid
 
 
 def item_name_guard(item):
@@ -109,6 +77,9 @@ class ArknightsHelper(object):
         self.refill_with_originium = config.get('behavior/refill_ap_with_originium', False)
         self.use_refill = self.refill_with_item or self.refill_with_originium
         self.loots = {}
+        self.use_penguin_report = config.get('reporting/enabled', False)
+        if self.use_penguin_report:
+            self.penguin_reporter = penguin_stats.reporter.PenguinStatsReporter()
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -437,7 +408,7 @@ class ArknightsHelper(object):
             screenshot = self.adb.screenshot()
             logger.info('离开结算画面')
             self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
-            reportid = None
+            reportresult = penguin_stats.reporter.ReportResult.NotReported
             try:
                 # 掉落识别
                 drops = imgreco.end_operation.recognize(screenshot)
@@ -450,10 +421,13 @@ class ArknightsHelper(object):
                             self.loots[name] = self.loots.get(name, 0) + qty
                 if log_total:
                     self.log_total_loots()
-                reportid = _penguin_report(drops)
+                if self.use_penguin_report:
+                    reportresult = self.penguin_reporter.report(drops)
+                    if isinstance(reportresult, penguin_stats.reporter.ReportResult.Ok):
+                        logger.debug('report hash = %s', reportresult.report_hash)
             except Exception as e:
                 logger.error('', exc_info=True)
-            if reportid is None:
+            if self.use_penguin_report and reportresult is penguin_stats.reporter.ReportResult.NotReported:
                 filename = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '未上报掉落-%d.png' % time.time())
                 with open(filename, 'wb') as f:
                     screenshot.save(f, format='PNG')
