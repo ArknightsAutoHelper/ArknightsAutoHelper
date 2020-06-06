@@ -4,3 +4,4 @@ opencv-python==4.1.2.30
 Pillow==6.2.2
 requests==2.22.0
 ruamel.yaml==0.16.5
+./vendor/penguin_client
