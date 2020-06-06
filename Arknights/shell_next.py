@@ -157,6 +157,7 @@ def interactive(argv):
     """
     import shlex
     import traceback
+    helpcmds(interactive_cmds)
     while True:
         try:
             cmdline = input("akhelper> ")
@@ -177,15 +178,22 @@ def interactive(argv):
 argv0 = 'placeholder'
 
 
+def helpcmds(cmds):
+    print("commands (prefix abbreviation accepted):")
+    for cmd in cmds:
+        if cmd.__doc__:
+            print("    " + str(cmd.__doc__.strip()))
+        else:
+            print("    " + cmd.__name__)
+
+
 def help(argv):
     """
     help
         输出本段消息
     """
     print("usage: %s command [command args]" % argv0)
-    print("commands (prefix abbreviation accepted):")
-    for cmd in global_cmds:
-        print("    " + str(cmd.__doc__.strip()))
+    helpcmds(global_cmds)
 
 
 def exit(argv):
