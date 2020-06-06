@@ -45,7 +45,6 @@ def _parse_opt(argv):
     ops = []
     if len(argv) >= 2 and argv[1][:1] in ('+', '-'):
         opts = argv.pop(1)
-        print(opts)
         action = None
         for c in opts:
             if c == '+':
@@ -54,14 +53,11 @@ def _parse_opt(argv):
                 action = False
             elif c == 'r':
                 if action is not None:
-                    print('set use_refill', action)
                     def op(helper):
-                        print('op called')
                         helper.use_refill = action
                     ops.append(op)
             elif c == 'R':
                 if action is not None:
-                    print('set refill_with_originium', action)
                     def op(helper):
                         helper.refill_with_originium = action
                     ops.append(op)
