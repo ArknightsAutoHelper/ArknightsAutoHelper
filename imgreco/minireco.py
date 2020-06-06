@@ -102,8 +102,11 @@ class MiniRecognizer:
         if image.mode != 'L':
             image = image.convert('L')
         charimgs = split_chars(image, split_threshold)
-        matches = [self.recognize_char(charimg) for charimg in charimgs]
-        return ''.join(x[0] for x in matches), min(x[1] for x in matches)
+        if charimgs:
+            matches = [self.recognize_char(charimg) for charimg in charimgs]
+            return ''.join(x[0] for x in matches), min(x[1] for x in matches)
+        else:
+            return '', 1
 
 def check_charseq(string, seq):
     lastindex = -1
