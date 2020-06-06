@@ -33,7 +33,7 @@ class ReportResultOk(ReportResult):
 ReportResult.Ok = ReportResultOk
 ReportResult.NothingToReport = ReportResult()
 ReportResult.NotReported =ReportResult()
-        
+
 
 class PenguinStatsReporter:
     GROUP_NAME_TO_TYPE_MAP = {
@@ -49,7 +49,20 @@ class PenguinStatsReporter:
         self.client = penguin_client.ApiClient()
         self.stage_map = {}
         self.item_map = {}
+
     
+    def set_login_state_with_last_response_cookie(self, response):
+        setcookie = response.urllib3_response.headers['set-cookie']
+        try:
+            begin = setcookie.index('userID=')
+            end = setcookie.index(';', begin)
+            userid = setcookie[begin+7:end]
+            self.client.cookie = 'userID=' + userid
+            self.logged_in = True
+            return userid
+        except ValueError:
+            return None
+
     def try_login(self, userid):
         if self.logged_in:
             return True
@@ -60,8 +73,7 @@ class PenguinStatsReporter:
         except: 
             logger.error('登录失败', exc_info=1)
             return False
-        self.client.cookie = 'userID=' + json.loads(jdoc)['userID']
-        self.logged_in = True
+        self.set_login_state_with_last_response_cookie(self.client.last_response)
         return True
 
     def initialize(self):
@@ -86,7 +98,7 @@ class PenguinStatsReporter:
     def report(self, recoresult):
         if not self.initialize():
             return ReportResult.NothingToReport
-
+        logger.info('向企鹅数据汇报掉落')
         if recoresult['stars'] != (True, True, True):
             logger.info('不汇报非三星过关掉落')
             return ReportResult.NotReported
@@ -177,20 +189,12 @@ class PenguinStatsReporter:
             # use cookie stored in session
             resp = api.save_single_report_using_post1(req)
             if not self.logged_in:
-                setcookie = client.last_response.urllib3_response.headers['set-cookie']
-                try:
-                    begin = setcookie.index('userID=')
-                    end = setcookie.index(';', begin)
-                    userid = setcookie[begin+7:end]
-                    self.client.cookie = 'userID=' + userid
-                    self.logged_in = True
+                userid = self.set_login_state_with_last_response_cookie(client.last_response)
+                if userid is not None:
                     logger.info('企鹅数据用户 ID: %s', userid)
                     config.set('reporting/penguin_stats_uid', userid)
                     config.save()
                     logger.info('已写入配置文件')
-                except ValueError:
-                    pass
-
             return ReportResult.Ok(resp.report_hash)
         except:
             logger.error('汇报失败', exc_info=True)
