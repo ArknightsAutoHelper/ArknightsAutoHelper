@@ -112,6 +112,10 @@ class PenguinStatsReporter:
             return ReportResult.NothingToReport
         stage = self.stage_map[code]
 
+        if sum(1 for drop in stage.drop_infos if drop.item_id is not None and drop.item_id != 'furni') == 0:
+            logger.info('关卡 %s 目前无除家具外掉落，不进行汇报', code)
+            return ReportResult.NothingToReport
+
         flattenitems = {}
         groupcount = 0
         furncount = 0
