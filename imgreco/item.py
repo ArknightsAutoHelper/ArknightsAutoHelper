@@ -27,7 +27,7 @@ def load_data():
             mat = np.array(img)
             mat[itemmask] = 0
             iconmats[basename] = mat
-    model = resources.load_minireco_model('minireco/NotoSansCJKsc-DemiLight-nums.dat', '0123456789万')
+    model = resources.load_pickle('minireco/NotoSansCJKsc-DemiLight-nums.dat')
     reco = minireco.MiniRecognizer(model, minireco.compare_ccoeff)
     return (iconmats, reco)
 
@@ -44,7 +44,7 @@ def tell_item(itemimg, session):
     if numimg is not None:
         numimg = imgops.enhance_contrast(numimg, 32)
         logger.logimage(numimg)
-        numtext, score = textreco.recognize2(numimg)
+        numtext, score = textreco.recognize2(numimg, subset='0123456789万')
         logger.logtext('amount: %s, minscore: %f' % (numtext, score))
         if score < 0.2:
             session.low_confidence = True

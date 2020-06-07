@@ -68,12 +68,14 @@ class MiniRecognizer:
         self.chars = tuple(x[0] for x in self.model)
         self.compare = compare
 
-    def recognize_char(self, image):
+    def recognize_char(self, image, subset=None):
         w1, h1 = image.size
         # comparsions = [(c, imgcompare(image, mat)) for c, mat in self.model]
         comparsions = []
         aggreate_score = lambda img_comparsion, ratio_comparsion: img_comparsion - ratio_comparsion * 0.4
         for c, mats in self.model:
+            if subset is not None and c in subset:
+                continue
             if not isinstance(mats, list):
                 mats = [mats]
             scores = []
@@ -97,13 +99,13 @@ class MiniRecognizer:
         """requires white chars on black background, grayscale image"""
         return self.recognize2(image)[0]
 
-    def recognize2(self, image, split_threshold=127):
+    def recognize2(self, image, split_threshold=127, subset=None):
         """requires white chars on black background, grayscale image"""
         if image.mode != 'L':
             image = image.convert('L')
         charimgs = split_chars(image, split_threshold)
         if charimgs:
-            matches = [self.recognize_char(charimg) for charimg in charimgs]
+            matches = [self.recognize_char(charimg, subset) for charimg in charimgs]
             return ''.join(x[0] for x in matches), min(x[1] for x in matches)
         else:
             return '', 1
