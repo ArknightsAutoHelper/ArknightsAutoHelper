@@ -59,7 +59,7 @@ def recognize(img):
     consumeimg = img.crop((100 * vw - 14.306 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)).convert('L')
     consumeimg = imgops.enhance_contrast(consumeimg, 80, 255)
     logger.logimage(consumeimg)
-    consumetext = reco_Noto.recognize(consumeimg, subset='-0123456789')
+    consumetext, _ = reco_Noto.recognize2(consumeimg, subset='-0123456789')
     consumetext = ''.join(c for c in consumetext if c in '0123456789')
     logger.logtext(consumetext)
 
