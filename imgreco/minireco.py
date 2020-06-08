@@ -74,7 +74,7 @@ class MiniRecognizer:
         comparsions = []
         aggreate_score = lambda img_comparsion, ratio_comparsion: img_comparsion - ratio_comparsion * 0.4
         for c, mats in self.model:
-            if subset is not None and c in subset:
+            if subset is not None and c not in subset:
                 continue
             if not isinstance(mats, list):
                 mats = [mats]
