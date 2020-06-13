@@ -1,5 +1,5 @@
 import copy
-
+from abc import ABC
 
 def mult_in(needles, haystack):
     for needle in needles:
@@ -97,3 +97,12 @@ def merge_words(words):
         else:
             new_words.append(copy.deepcopy(word))
     return new_words
+
+
+class OcrEngine(ABC):
+    def __init__(self, lang, **kwargs):
+        self.lang = lang
+        self.kwargs = kwargs
+
+    def recognize(self, image, ppi=70, *, hints=None):
+        raise NotImplementedError()

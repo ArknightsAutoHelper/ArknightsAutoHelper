@@ -28,8 +28,8 @@ def get_recruit_tags(img):
         img.crop((50*vw-13.241*vh, 60.278*vh, 50*vw+6.111*vh, 66.019*vh)).convert('L')
     ]
 
-    eng = ocr.get_config_engine()
-    recognize = lambda img: eng.recognize(imgops.invert_color(img), 'zh-cn', hints=[ocr.OcrHint.SINGLE_LINE]).text
+    eng = ocr.acquire_engine_global_cached('zh-cn')
+    recognize = lambda img: eng.recognize(imgops.invert_color(img), int(vh * 20),  hints=[ocr.OcrHint.SINGLE_LINE]).text
     tags = [remove_unknown_chars(recognize(img), known_tagchars) for img in tagimgs]
 
     for tagimg, tagtext in zip(tagimgs, tags):

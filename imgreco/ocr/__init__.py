@@ -18,15 +18,15 @@ engine.recognize(image, lang, *, hints=None)
 """
 
 
-def get_engine(name):
+def get_impl(name):
     return importlib.import_module("." + name, __name__)
 
 
-def _auto_engine():
+def _auto_impl():
     """返回一个运行时可用的 engine，没有可用 engine 则为 dummy engine"""
     for name in available_engines:
         try:
-            eng = get_engine(name)
+            eng = get_impl(name)
             if eng.check_supported():
                 return eng
         except Exception:
@@ -35,10 +35,16 @@ def _auto_engine():
 
 
 @lru_cache()
-def get_config_engine():
+def get_config_impl():
     import config
     if config.engine == 'auto':
-        engine = _auto_engine()
+        engine = _auto_impl()
     else:
-        engine = get_engine(config.engine)
+        engine = get_impl(config.engine)
     return engine
+
+
+@lru_cache()
+def acquire_engine_global_cached(lang, **kwargs):
+    impl = get_config_impl()
+    return impl.Engine(lang, **kwargs)

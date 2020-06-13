@@ -3,7 +3,7 @@ from PIL import ImageOps
 from rotypes import HSTRING
 from rotypes.Windows.Globalization import Language
 from rotypes.Windows.Graphics.Imaging import SoftwareBitmap, BitmapAlphaMode, BitmapPixelFormat
-from rotypes.Windows.Media.Ocr import OcrEngine
+from rotypes.Windows.Media.Ocr import OcrEngine as WinRTOcrEngine
 from rotypes.Windows.Security.Cryptography import CryptographicBuffer
 
 from .common import *
@@ -40,18 +40,25 @@ def _swbmp_from_pil_image(img):
 
 def check_supported():
     try:
-        return OcrEngine.IsLanguageSupported(Language.CreateLanguage(HSTRING('zh-cn')))
+        return WinRTOcrEngine.IsLanguageSupported(Language.CreateLanguage(HSTRING('zh-cn')))
     except Exception:
         return False
 
-def recognize(img, lang, *, hints=None):
-    if hints == None:
-        hints = []
-    if OcrHint.SINGLE_LINE in hints:
-        img = ImageOps.expand(img, 32, fill=img.getpixel((0, 0)))
+class WindowsOcrEngine(OcrEngine):
+    def __init__(self, lang, **kwargs):
+        super().__init__(lang, **kwargs)
+        lang = Language.CreateLanguage(HSTRING(lang))
+        if not WinRTOcrEngine.IsLanguageSupported(lang):
+            raise ValueError('unsupported language')
+        self.winengine = WinRTOcrEngine.TryCreateFromLanguage(lang)
 
-    lang = Language.CreateLanguage(HSTRING(lang))
-    assert (OcrEngine.IsLanguageSupported(lang))
-    eng = OcrEngine.TryCreateFromLanguage(lang)
-    swbmp = _swbmp_from_pil_image(img)
-    return _dump_ocrresult(eng.RecognizeAsync(swbmp).wait())
+    def recognize(self, img, ppi=70, *, hints=None):
+        if hints == None:
+            hints = []
+        if OcrHint.SINGLE_LINE in hints:
+            img = ImageOps.expand(img, 32, fill=img.getpixel((0, 0)))
+
+        swbmp = _swbmp_from_pil_image(img)
+        return _dump_ocrresult(self.winengine.RecognizeAsync(swbmp).wait())
+
+Engine = WindowsOcrEngine

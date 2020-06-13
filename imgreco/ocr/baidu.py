@@ -56,20 +56,23 @@ def _basicGeneral(image, options):
 
 _basicGeneral.last_call = 0
 
-def recognize(image, lang, *, hints=None):
-    # line = 0
-    # if hints is None:
-    #     hints = []
-    # if OcrHint.SINGLE_LINE in hints:
-    #     line = 0
-    # elif OcrHint.SPARSE in hints:
-    #     # TODO
-    #     line = 1
-    imgbytesio = BytesIO()
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
-    image.save(imgbytesio, format='JPEG', quality=95)
-    result = _basicGeneral(imgbytesio.getvalue(), _options(lang))
-    line = OcrLine([OcrWord(Rect(0, 0), x['words']) for x in result['words_result']])
-    result = OcrResult([line])
-    return result
+class BaiduOCR(OcrEngine):
+    def recognize(self, image, ppi=70, *, hints=None):
+        # line = 0
+        # if hints is None:
+        #     hints = []
+        # if OcrHint.SINGLE_LINE in hints:
+        #     line = 0
+        # elif OcrHint.SPARSE in hints:
+        #     # TODO
+        #     line = 1
+        imgbytesio = BytesIO()
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image.save(imgbytesio, format='JPEG', quality=95)
+        result = _basicGeneral(imgbytesio.getvalue(), _options(self.lang))
+        line = OcrLine([OcrWord(Rect(0, 0), x['words']) for x in result['words_result']])
+        result = OcrResult([line])
+        return result
+
+Engine = BaiduOCR
