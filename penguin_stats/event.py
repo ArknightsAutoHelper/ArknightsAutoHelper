@@ -42,6 +42,11 @@ def event_preprocess(stage: str, itemgroups: List[Tuple[str, List[Tuple[str, int
                 exclude_from_validation.append(item)
                 continue
 
+            # 关卡开放时间：06月18日 16:00 - 06月25日 03:59
+            if item[0] == '彼得海姆热销饼干':
+                items.pop(i)
+                continue
+
         # 移除空分组
         if len(group[1]) == 0:
             itemgroups.pop(j)
