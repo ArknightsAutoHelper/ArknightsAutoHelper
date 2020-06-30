@@ -180,14 +180,13 @@ class PenguinStatsReporter:
         )
 
 
-        if self.logged_in:
-            client = self.client
-        else:
+        client = self.client
+        if not self.logged_in:
             uid = config.get('reporting/penguin_stats_uid', None)
             if uid is not None:
-                self.try_login(uid)
-            # use exclusive client instance to get response cookie
-            client = penguin_client.ApiClient()
+                if not self.try_login(uid):
+                    # use exclusive client instance to get response cookie
+                    client = penguin_client.ApiClient()
         api = penguin_client.ReportApi(client)
         try:
             # use cookie stored in session
