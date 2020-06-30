@@ -42,7 +42,7 @@ def tell_item(itemimg, session):
     numimg = imgops.crop_blackedge2(numimg, 220)
     recodata, textreco = load_data()
     if numimg is not None:
-        numimg = imgops.enhance_contrast(numimg, 32)
+        numimg = imgops.enhance_contrast(numimg, 120)
         logger.logimage(numimg)
         numtext, score = textreco.recognize2(numimg, subset='0123456789万')
         logger.logtext('amount: %s, minscore: %f' % (numtext, score))
