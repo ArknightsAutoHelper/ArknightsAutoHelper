@@ -84,7 +84,7 @@ commands (prefix abbreviation accepted):
     quick [+-rR] [n]
         重复挑战当前画面关卡特定次数或直到理智不足 
         +r/-r 是否自动回复理智
-        +R/-R 是否使用源石回复理智
+        +R/-R 是否使用源石回复理智（需要同时开启 +r）
     auto [+-rR] stage1 count1 [stage2 count2] ...  
         按顺序挑战指定关卡特定次数直到理智不足     
     collect
