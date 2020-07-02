@@ -305,8 +305,7 @@ class ArknightsHelper(object):
                     if refill_type == 'originium' and self.refill_with_originium:
                         logger.info('碎石回复理智')
                         confirm_refill = True
-                    # FIXME: 1. 道具回复量不足时也会尝试使用
-                    # FIXME: 2. 缺少没有道具和源石时的情况
+                    # FIXME: 道具回复量不足时也会尝试使用
                     if confirm_refill:
                         self.tap_rect(imgreco.before_operation.get_ap_refill_confirm_rect(self.viewport))
                         self.__wait(MEDIUM_WAIT)

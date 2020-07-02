@@ -126,6 +126,15 @@ def check_ap_refill_type(img):
         return None
     if mse1 < mse2:
         return 'item'
+
+    icon1 = img.crop((50*vw+25.972*vh, 36.250*vh, 50*vw+54.722*vh, 61.250*vh)).convert('RGB')
+    icon2 = resources.load_image_cached('before_operation/no_originium.png', 'RGB')
+    icon1, icon2 = imgops.uniform_size(icon1, icon2)
+    mse3 = imgops.compare_mse(icon1, icon2)
+    logger.logimage(icon1)
+    logger.logtext('mse=%f' % mse3)
+    if mse3 < 500:
+        return None
     else:
         return 'originium'
 
