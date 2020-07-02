@@ -51,9 +51,11 @@ def recognize(img):
     # print('operation:', opidtext)
 
     delegateimg = img.crop((100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh)).convert('L')
+    template = resources.load_image_cached('before_operation/delegation_checked.png', 'L')
     logger.logimage(delegateimg)
-    score = np.count_nonzero(np.asarray(delegateimg) > 127) / (delegateimg.width * delegateimg.height)
-    delegated = score > 0.5
+    mse = imgops.compare_mse(*imgops.uniform_size(delegateimg, template))
+    logger.logtext('mse=%f' % mse)
+    delegated = mse < 400
     # print('delegated:', delegated)
 
     consumeimg = img.crop((100 * vw - 14.306 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)).convert('L')
