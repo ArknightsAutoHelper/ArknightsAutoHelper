@@ -35,9 +35,9 @@ class ADBConnector:
         self.ADB_ROOT = config.ADB_ROOT
         self.ADB_HOST = adb_host
         self.host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
+        self.rch = None
         self.DEVICE_NAME = self.__adb_device_name_detector()
         self.device_session_factory = lambda: self.host_session_factory().device(self.DEVICE_NAME)
-        self.rch = None
         self.cache_screenshot = config.get('device/cache_screenshot', True)
         self.last_screenshot_timestamp = 0
         self.last_screenshot_duration = 0
