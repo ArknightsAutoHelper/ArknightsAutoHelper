@@ -55,6 +55,7 @@ def _parse_opt(argv):
                 if action is not None:
                     def op(helper):
                         helper.use_refill = action
+                        helper.refill_with_item = action
                     ops.append(op)
             elif c == 'R':
                 if action is not None:
