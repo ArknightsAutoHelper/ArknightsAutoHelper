@@ -1,5 +1,8 @@
 import copy
+from dataclasses import dataclass, field
 from abc import ABC
+from typing import Any, List
+
 
 def mult_in(needles, haystack):
     for needle in needles:
@@ -20,83 +23,66 @@ class Rect:
         self.width = w
         self.height = h
         if right is not None:
-            self.set_right(right)
+            self.right = right
         if bottom is not None:
-            self.set_bottom(bottom)
+            self.bottom = bottom
 
     def __repr__(self):
         return 'Rect(%d, %d, %d, %d)' % (self.x, self.y, self.width, self.height)
 
+    @property
     def right(self):
         return self.x + self.width
 
+    @right.setter
+    def right(self, value):
+        self.width = value - self.x
+
+    @property
     def bottom(self):
         return self.y + self.height
 
-    def set_right(self, value):
-        self.width = value - self.x
-
-    def set_bottom(self, value):
+    @bottom.setter
+    def bottom(self, value):
         self.height = value - self.y
 
     def __iter__(self):
         return iter((self.x, self.y, self.right(), self.bottom()))
 
 
+@dataclass
 class OcrObject:
-    def __init__(self):
-        self.extra = None
-
-    def __repr__(self):
-        return self.__dict__.__repr__()
+    extra: Any = field(default=None, init=False)
 
 
+@dataclass
 class OcrWord(OcrObject):
-    def __init__(self, rect, text):
-        super().__init__()
-        self.rect = rect
-        self.text = text
+    rect: Rect
+    text: str
 
 
+@dataclass
 class OcrLine(OcrObject):
-    def __init__(self, words):
-        super().__init__()
-        self.words = words
-        self.merged_words = merge_words(words)
-        self.merged_text = ' '.join(x.text for x in self.merged_words)
-        self.text = ' '.join(x.text for x in self.words)
+    words: List[OcrWord]
+
+    @property
+    def text(self):
+        return ' '.join(x.text for x in self.words)
 
 
+@dataclass
 class OcrResult(OcrObject):
-    def __init__(self, lines):
-        super().__init__()
-        self.lines = lines
-        self.text = ' '.join(x.text for x in lines)
+    lines: List[OcrLine]
+
+    @property
+    def text(self):
+        return ' '.join(x.text for x in self.lines)
 
     def __contains__(self, text):
         return text in self.text.replace(' ', '')
 
     def __repr__(self):
         return 'OcrResult[%s]' % repr(self.text)
-
-def merge_words(words):
-    if len(words) == 0:
-        return words
-    new_words = [copy.deepcopy(words[0])]
-    words = words[1:]
-    for word in words:
-        lastnewword = new_words[-1]
-        lastnewwordrect = new_words[-1].rect
-        wordrect = word.rect
-        if len(word.text) == 1 and wordrect.x - lastnewwordrect.right() <= wordrect.width * 0.2:
-            lastnewword.text += word.text
-            lastnewwordrect.x = min((wordrect.x, lastnewwordrect.x))
-            lastnewwordrect.y = min((wordrect.y, lastnewwordrect.y))
-            lastnewwordrect.set_right(max((wordrect.right(), lastnewwordrect.right())))
-            lastnewwordrect.set_bottom(max((wordrect.bottom(), lastnewwordrect.bottom())))
-        else:
-            new_words.append(copy.deepcopy(word))
-    return new_words
 
 
 class OcrEngine(ABC):

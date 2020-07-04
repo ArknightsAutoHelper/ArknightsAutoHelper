@@ -1,3 +1,4 @@
+dataclasses==0.7; python_version < '3.7'
 coloredlogs==10.0
 numpy==1.18.0
 opencv-python==4.1.2.30
