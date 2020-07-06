@@ -81,9 +81,7 @@ class MiniRecognizer:
             scores = []
             for mat in mats:
                 h2, w2 = mat.shape
-                scale = h2 / h1
-                w1s = w1 * scale
-                ratcomp = abs(w1s - w2) / w1
+                ratcomp = abs((w1 * h2) / (w2 * h1) - 1)
                 # print(c, ratcomp)
                 # if ratcomp < 0.8:
                 score = self.compare(image, mat)
