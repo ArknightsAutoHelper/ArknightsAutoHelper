@@ -46,14 +46,14 @@ def split_chars(textimg, split_threshold=127):
             if spaces >= spacing_threshold:
                 inchar = False
                 if left != x:
-                    chars.append(imgops.crop_blackedge(Image.fromarray(mat[:, left:x])))
+                    chars.append(imgops.crop_blackedge(Image.fromarray(mat[:, left:x+1])))
         if not inchar and (col > split_threshold).any():
             left = x
             inchar = True
             spaces = 0
 
     if inchar and left != x:
-        chars.append(imgops.crop_blackedge(Image.fromarray(mat[:, left:x])))
+        chars.append(imgops.crop_blackedge(Image.fromarray(mat[:, left:x+1])))
 
     # for cimg in chars:
     #     logger.logimage(cimg)
