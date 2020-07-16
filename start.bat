@@ -7,7 +7,7 @@ rem 修改夜神模拟器的路径
 set emuPath=F:\Nox\bin
 
 rem 打开夜神模拟器
-start "" "%emuPath%"nox.exe
+start "" "%emuPath%"\nox.exe
 timeout 120
 rem 打开明日方舟
 "%emuPath%"\adb.exe -s 127.0.0.1:62001 shell am start -n com.hypergryph.arknights/com.u8.sdk.U8UnityContext
