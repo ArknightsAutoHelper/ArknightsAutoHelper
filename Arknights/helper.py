@@ -316,6 +316,7 @@ class ArknightsHelper(object):
             if not recoresult['delegated']:
                 logger.info('设置代理指挥')
                 self.tap_rect(imgreco.before_operation.get_delegate_rect(self.viewport))
+                return  # to on_prepare state
 
             logger.info("理智充足 开始行动")
             self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
