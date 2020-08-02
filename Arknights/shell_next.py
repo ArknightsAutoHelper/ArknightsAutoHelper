@@ -220,11 +220,13 @@ def main(argv):
     global argv0
     argv0 = argv[0]
     if len(argv) < 2:
-        help(argv)
+        interactive(argv[1:])
         return 1
     targetcmd = match_cmd(argv[1], global_cmds)
     if targetcmd is not None:
         return targetcmd(argv[1:])
+    else:
+        help(argv)
     return 1
 
 
