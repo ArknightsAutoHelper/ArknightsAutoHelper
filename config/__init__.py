@@ -19,10 +19,13 @@ else:
     CONFIG_PATH = os.path.realpath(os.path.dirname(__file__))
     root = os.path.realpath(os.path.join(CONFIG_PATH, '..'))
 
-if os.path.exists(os.path.join(root, '.git')):
-    from .scm_version import version
-else:
-    from .release_info import version
+try:
+    if not bundled and os.path.exists(os.path.join(root, '.git')):
+        from .scm_version import version
+    else:
+        from .release_info import version
+except ImportError:
+    version = 'UNKNOWN'
 
 
 ADB_ROOT = os.path.join(root, 'ADB', sys.platform)
