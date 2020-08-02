@@ -53,7 +53,10 @@ if libname:
     TessBaseAPIDelete = cfunc(tesseract, 'TessBaseAPIDelete', None, ctypes.c_void_p)
     TessBaseAPISetSourceResolution = cfunc(tesseract, 'TessBaseAPISetSourceResolution', None, ctypes.c_void_p, ctypes.c_int)
     TessBaseAPISetVariable = cfunc(tesseract, 'TessBaseAPISetVariable', ctypes.c_bool, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
-    version = TessVersion()
+    version = TessVersion().decode()
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.debug('using libtesseract C interface %s', version)
 else:
     raise ModuleNotFoundError()
 
