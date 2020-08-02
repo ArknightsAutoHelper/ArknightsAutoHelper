@@ -1,11 +1,14 @@
 import os
 import pickle
 from functools import lru_cache
+import importlib.util
 
 import numpy as np
 from PIL import Image
 
-root = os.path.realpath(os.path.dirname(__file__))
+import config
+
+root = os.path.join(config.root, 'imgreco', 'resources')
 
 
 def get_path(names):
@@ -37,6 +40,7 @@ def load_pickle(name):
         result = pickle.load(f)
     return result
 
+
 def load_minireco_model(name, filter_chars=None):
     model = load_pickle(name)
     if filter_chars is not None:
@@ -49,3 +53,9 @@ def get_entries(base):
     findroot = get_path(base.split('/'))
     _, dirs, files = next(os.walk(findroot))
     return (dirs, files)
+
+
+spec = importlib.util.spec_from_file_location("imgreco.resources.map_vectors", os.path.join(root, 'map_vectors.py'))
+map_vectors = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(map_vectors)
+del spec
