@@ -34,6 +34,15 @@ config_file = os.path.join(CONFIG_PATH, 'config.yaml')
 config_template = os.path.join(CONFIG_PATH, 'config-template.yaml')
 logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
 logs = os.path.join(root, 'log')
+use_archived_resources = not os.path.isdir(os.path.join(root, 'resources'))
+if use_archived_resources:
+    resource_archive = os.path.join(root, 'resources.zip')
+    sys.path.append(resource_archive)
+    resource_root = os.path.join(root, 'resources.zip', 'resources')
+else:
+    resource_archive = None
+    resource_root = os.path.join(root, 'resources')
+
 if not os.path.exists(logs):
     os.mkdir(logs)
 

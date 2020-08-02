@@ -8,17 +8,53 @@ from PIL import Image
 
 import config
 
-root = os.path.join(config.root, 'imgreco', 'resources')
+if config.use_archived_resources:
+    import zipfile
+    root = 'resources/imgreco'
+    archive = zipfile.ZipFile(open(config.resource_archive, 'rb'), 'r')
+    filelist = archive.namelist()
 
+    def get_path(names):
+        return '/'.join([root, *names])
 
-def get_path(names):
-    return os.path.join(root, *names)
+    def open_file(path):
+        return archive.open(path)
+
+    def get_entries(base):
+        prefix = 'resources/imgreco/' + base + '/'
+        dirs = []
+        files = []
+        for name in filelist:
+            if name.startswith(prefix):
+                name = name[len(prefix):]
+                if len(name) == 0:
+                    continue
+                elif name[-1] == '/':
+                    dirs.append(name[:-1])
+                elif '/' in name:
+                    continue
+                else:
+                    files.append(name)
+        return dirs, files
+else:
+    root = os.path.join(config.root, 'resources', 'imgreco')
+
+    def get_path(names):
+        return os.path.join(root, *names)
+
+    def open_file(path):
+        return open(path, 'rb')
+
+    def get_entries(base):
+        findroot = get_path(base.split('/'))
+        _, dirs, files = next(os.walk(findroot))
+        return (dirs, files)
 
 
 def load_image(name, mode=None):
     names = name.split('/')
     path = get_path(names)
-    im = Image.open(path)
+    im = Image.open(open_file(path))
     if mode is not None and im.mode != mode:
         im = im.convert(mode)
     return im
@@ -36,7 +72,7 @@ def load_image_as_ndarray(name):
 def load_pickle(name):
     names = name.split('/')
     path = get_path(names)
-    with open(path, 'rb') as f:
+    with open_file(path) as f:
         result = pickle.load(f)
     return result
 
@@ -49,13 +85,4 @@ def load_minireco_model(name, filter_chars=None):
     return model
 
 
-def get_entries(base):
-    findroot = get_path(base.split('/'))
-    _, dirs, files = next(os.walk(findroot))
-    return (dirs, files)
-
-
-spec = importlib.util.spec_from_file_location("imgreco.resources.map_vectors", os.path.join(root, 'map_vectors.py'))
-map_vectors = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(map_vectors)
-del spec
+map_vectors = __import__('resources.imgreco.map_vectors')
