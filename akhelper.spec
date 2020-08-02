@@ -3,12 +3,17 @@
 block_cipher = None
 
 import sys
+
+if not hasattr(sys, '_using_makepackage'):
+    print('NOTE: use packaging/makepackage.py to build package.')
+    input('press Enter to continue')
+
 sys.modules['FixTk'] = None
 
 a = Analysis(['akhelper.py'],
              pathex=['D:\\projects\\ArknightsAutoHelper'],
              binaries=[],
-             datas=[('imgreco/resources', 'imgreco/resources'), ('config/config-template.yaml', 'config'), ('config/logging.yaml', 'config'), ('screenshot', 'screenshot')],
+             datas=[('resources.zip', '.'), ('config/config-template.yaml', 'config'), ('config/logging.yaml', 'config'), ('screenshot', 'screenshot'), ('LICENSE', '.'), ('README.md', '.'), ('OCR_install.md', '.')],
              hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr'],
              hookspath=[],
              runtime_hooks=[],
@@ -35,6 +40,6 @@ coll = COLLECT(exe,
                a.zipfiles,
                a.datas,
                strip=False,
-               upx=True,
+               upx=False,
                upx_exclude=[],
                name='akhelper')
