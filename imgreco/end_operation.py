@@ -10,7 +10,7 @@ from . import minireco
 from . import resources
 from . import util
 
-LOGFILE = 'drop-recognition.html'
+logger = get_logger(__name__)
 
 
 class RecognizeSession:
@@ -52,7 +52,6 @@ def _load_data():
 
 
 def tell_group(groupimg, session, bartop, barbottom, ):
-    logger = get_logger(LOGFILE)
     logger.logimage(groupimg)
     grouptext = groupimg.crop((0, barbottom, groupimg.width, groupimg.height))
 
@@ -104,7 +103,6 @@ def tell_group(groupimg, session, bartop, barbottom, ):
 
 
 def find_jumping(ary, threshold):
-    logger = get_logger(LOGFILE)
     ary = np.array(ary, dtype=np.int16)
     diffs = np.diff(ary)
     shit = [x for x in enumerate(diffs) if abs(x[1]) >= threshold]
@@ -162,7 +160,6 @@ def recognize(im):
     import time
     t0 = time.monotonic()
     vw, vh = util.get_vwvh(im.size)
-    logger = get_logger(LOGFILE)
 
     lower = im.crop((0, 61.111 * vh, 100 * vw, 100 * vh))
     logger.logimage(lower)

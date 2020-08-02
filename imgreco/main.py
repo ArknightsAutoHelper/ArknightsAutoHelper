@@ -8,8 +8,7 @@ from . import imgops
 from . import resources
 from . import util
 
-LOGFILE = 'main.html'
-logger = get_logger(LOGFILE)
+logger = get_logger(__name__)
 
 def check_main(img):
     vw, vh = util.get_vwvh(img.size)

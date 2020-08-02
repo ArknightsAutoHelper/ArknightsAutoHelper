@@ -7,8 +7,7 @@ from . import imgops
 from . import resources
 from . import util
 
-LOGFILE = 'common.html'
-logger = get_logger(LOGFILE)
+logger = get_logger(__name__)
 
 def check_get_item_popup(img):
     vw, vh = util.get_vwvh(img.size)

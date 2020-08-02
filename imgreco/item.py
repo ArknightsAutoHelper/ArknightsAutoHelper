@@ -9,7 +9,7 @@ from . import imgops
 from . import minireco
 from . import resources
 
-LOGFILE = 'item-recognition.html'
+logger = get_logger(__name__)
 
 itemmask = np.asarray(resources.load_image('common/itemmask.png', '1'))
 
@@ -33,7 +33,6 @@ def load_data():
 
 
 def tell_item(itemimg, session):
-    logger = get_logger(LOGFILE)
     logger.logimage(itemimg)
     # l, t, r, b = scaledwh(80, 146, 90, 28)
     # print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)

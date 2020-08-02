@@ -9,8 +9,7 @@ from . import minireco
 from . import resources
 from . import util
 
-LOGFILE = 'task.html'
-logger = get_logger(LOGFILE)
+logger = get_logger(__name__)
 
 @lru_cache(1)
 def load_data():

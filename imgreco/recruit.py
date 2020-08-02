@@ -9,7 +9,7 @@ from . import util
 from . import ocr
 
 LOGFILE = 'recruit.html'
-logger = get_logger(LOGFILE)
+logger = get_logger(__name__)
 
 from Arknights.recruit_database import recruit_database
 known_tagchars = set(z for x in recruit_database for y in x[2] for z in y)
