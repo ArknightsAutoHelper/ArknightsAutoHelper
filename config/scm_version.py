@@ -1,7 +1,5 @@
 """
 get version from git working tree
-
-FIXME: replace with hardcoded value for release
 """
 import os
 import subprocess
