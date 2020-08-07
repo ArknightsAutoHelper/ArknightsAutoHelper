@@ -20,7 +20,7 @@ def main():
 
     print('archiving resources')
     stash_id = subprocess.run(['git', 'stash', 'create', 'stashed by makepackage'], capture_output=True, check=True).stdout.decode().strip()
-    subprocess.run(['git', 'archive', '-o', 'resources.zip', stash_id, 'resources'], check=True)
+    subprocess.run(['git', 'archive', '-o', 'resources.zip', stash_id or 'HEAD', 'resources'], check=True)
 
     print('calling PyInstaller')
     PyInstaller.__main__.run([os.path.join(os.path.dirname(__file__), '..', 'akhelper.spec'), '--noconfirm', *sys.argv[1:]])
