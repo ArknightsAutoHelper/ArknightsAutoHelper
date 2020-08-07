@@ -85,4 +85,5 @@ def load_minireco_model(name, filter_chars=None):
     return model
 
 
-map_vectors = __import__('resources.imgreco.map_vectors')
+__import__('resources.imgreco.map_vectors')
+map_vectors = __import__('resources').imgreco.map_vectors

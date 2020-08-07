@@ -20,7 +20,8 @@ def is_stage_supported(stage):
         return False
     if path[0] in ('main', 'material', 'soc'):
         partition = path[1]
-        import imgreco.resources.map_vectors as map_vectors
+        __import__('resources.imgreco.map_vectors')
+        map_vectors = __import__('resources').imgreco.map_vectors
         if partition in map_vectors.stage_maps:
             return path[2] in map_vectors.stage_maps[partition]
         return False
