@@ -1,8 +1,10 @@
 import sys
 import os
 import runpy
-import PyInstaller.__main__
 import shutil
+import subprocess
+
+import PyInstaller.__main__
 
 def main():
     sys._using_makepackage = True
@@ -17,8 +19,8 @@ def main():
         f.write('version = %r\n' % version)
 
     print('archiving resources')
-    shutil.rmtree(os.path.join(dir, 'resources', '__pycache__'), ignore_errors=True)
-    shutil.make_archive(os.path.join(dir, 'resources'), 'zip', dir, 'resources')
+    stash_id = subprocess.run(['git', 'stash', 'create', 'stashed by makepackage'], capture_output=True, check=True).stdout.decode().strip()
+    subprocess.run(['git', 'archive', '-o', 'resources.zip', stash_id, 'resources'], check=True)
 
     print('calling PyInstaller')
     PyInstaller.__main__.run([os.path.join(os.path.dirname(__file__), '..', 'akhelper.spec'), '--noconfirm', *sys.argv[1:]])

@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import Union
 import config
-from . import event
+from resources.event import event_preprocess
 import penguin_client
 
 
@@ -123,7 +123,7 @@ class PenguinStatsReporter:
         exclude_from_validation = []
         flattenitems4validate = {}
         try:
-            itemgroups = event.event_preprocess(recoresult['operation'], itemgroups, exclude_from_validation)
+            itemgroups = event_preprocess(recoresult['operation'], itemgroups, exclude_from_validation)
         except:
             logger.error('处理活动道具时出错', exc_info=True)
             return ReportResult.NotReported

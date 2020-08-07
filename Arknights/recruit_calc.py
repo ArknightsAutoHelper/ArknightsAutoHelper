@@ -1,7 +1,7 @@
 import itertools
 import sys
 
-from .recruit_database import recruit_database
+from resources.recruit_database import recruit_database
 
 
 def _rank(operators):

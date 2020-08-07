@@ -83,7 +83,3 @@ def load_minireco_model(name, filter_chars=None):
         model['data'] = [x for x in model['data'] if x[0] in filter_chars]
         model['chars'] = [x[0] for x in model['data']]
     return model
-
-
-__import__('resources.imgreco.map_vectors')
-map_vectors = __import__('resources').imgreco.map_vectors
