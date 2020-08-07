@@ -48,8 +48,13 @@ class ADBClientSession:
         return devices
 
     def connect(self, device):
-        resp = self.service('host:connect:%s' % device).read_response()
-        if b'unable' in resp:
+        resp = self.service('host:connect:%s' % device).read_response().decode(errors='ignore')
+        if 'unable' in resp or 'cannot' in resp:
+            raise RuntimeError(resp)
+
+    def disconnect(self, device):
+        resp = self.service('host:connect:%s' % device).read_response().decode(errors='ignore')
+        if 'unable' in resp or 'cannot' in resp:
             raise RuntimeError(resp)
 
     def device(self, devid=None):

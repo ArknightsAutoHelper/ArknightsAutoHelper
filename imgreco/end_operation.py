@@ -141,11 +141,10 @@ def check_level_up_popup(img):
 
 def check_end_operation(img):
     vw, vh = util.get_vwvh(img.size)
-    template = resources.load_image_cached('end_operation/end.png', 'L')
-    operation_end_img = img.crop((4.722 * vh, 80.278 * vh, 56.389 * vh, 93.889 * vh)).convert('L')
-    operation_end_img = imgops.enhance_contrast(operation_end_img, 225, 255)
+    template = resources.load_image_cached('end_operation/friendship.png', 'RGB')
+    operation_end_img = img.crop((117.083*vh, 64.306*vh, 121.528*vh, 69.583*vh)).convert('RGB')
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
-    return mse < 6502
+    return mse < 3251
 
 
 def get_dismiss_level_up_popup_rect(viewport):

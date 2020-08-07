@@ -7,7 +7,7 @@ from PIL import Image
 from . import imgops, util
 from . import resources
 
-from .resources import map_vectors
+from resources.imgreco import map_vectors
 
 logger = logging.getLogger('imgreco.map')
 

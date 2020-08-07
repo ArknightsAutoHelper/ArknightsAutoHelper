@@ -1,3 +1,4 @@
+import os
 import logging.config
 from random import randint
 import zlib
@@ -29,15 +30,50 @@ def _ensure_pil_image(imgorfile):
     return Image.open(imgorfile)
 
 
+def check_adb_alive():
+    try:
+        sess = ADBClientSession(config.ADB_SERVER)
+        version = int(sess.service('host:version').read_response().decode(), 16)
+        logger.debug('ADB server version %d', version)
+        return True
+    except ConnectionRefusedError:
+        return False
+    except RuntimeError:
+        return False
+
+
+def ensure_adb_alive():
+    if check_adb_alive():
+        return
+    logger.info('尝试启动 adb server')
+    import subprocess
+    adbbin = config.get('device/adb_binary', None)
+    if adbbin is None:
+        adb_binaries = ['adb', os.path.join(config.ADB_ROOT, 'adb')]
+    else:
+        adb_binaries = [adbbin]
+    for adbbin in adb_binaries:
+        try:
+            logger.debug('trying %r', adbbin)
+            subprocess.run([adbbin, 'start-server'], check=True)
+            return True
+        except FileNotFoundError:
+            pass
+        except subprocess.CalledProcessError:
+            pass
+    raise OSError("can't start adb server")
+
+
 class ADBConnector:
-    def __init__(self, adb_host=config.ADB_HOST):
+    def __init__(self, adb_serial=None):
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = config.ADB_ROOT
-        self.ADB_HOST = adb_host
+        self.adb_serial = adb_serial
         self.host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
         self.rch = None
-        self.DEVICE_NAME = self.__adb_device_name_detector()
-        self.device_session_factory = lambda: self.host_session_factory().device(self.DEVICE_NAME)
+        if self.adb_serial is None:
+            self.adb_serial = self.__adb_device_name_detector()
+        self.device_session_factory = lambda: self.host_session_factory().device(self.adb_serial)
         self.cache_screenshot = config.get('device/cache_screenshot', True)
         self.last_screenshot_timestamp = 0
         self.last_screenshot_duration = 0
@@ -63,45 +99,45 @@ class ADBConnector:
 
     def __adb_device_name_detector(self):
         devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
-        if not config.enable_adb_host_auto_detect:
-            if config.ADB_HOST not in (x[0] for x in devices):
-                self.host_session_factory().connect(config.ADB_HOST)
-            return config.ADB_HOST
+
+        if len(devices) == 0:
+            auto_connect = config.get('device/adb_auto_connect', None)
+            if auto_connect is not None:
+                logger.info('没有已连接设备，尝试连接 %s', auto_connect)
+                try:
+                    self.host_session_factory().disconnect(auto_connect)
+                except:
+                    pass
+                self.host_session_factory().connect(auto_connect)
+            else:
+                raise RuntimeError('找不到可用设备')
+
+        devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
+
+        always_use_device = config.get('device/adb_always_use_device', None)
+        if always_use_device is not None:
+            if always_use_device not in (x[0] for x in devices):
+                raise RuntimeError('设备 %s 未连接' % always_use_device)
+            return always_use_device
+
         if len(devices) == 1:
             device_name = devices[0][0]
         elif len(devices) > 1:
-            logger.info("检测到多台设备，根据 ADB_HOST 参数将自动选择设备")
-            device_name = ""
-            for i, device in enumerate(devices):
-                print('[%d]  %s\t%s' % (i, *device))
-                if self.ADB_HOST == device[0]:
-                    device_name = self.ADB_HOST
-            if device_name == "":
-                logger.warn("自动选择设备失败，请根据上述内容自行输入数字并选择")
-                input_valid_flag = False
-                num = 0
-                while True:
-                    try:
-                        num = int(input(">"))
-                        if not 0 <= num < len(devices):
-                            raise ValueError()
-                        break
-                    except ValueError:
-                        logger.error("输入不合法，请重新输入")
-                device_name = devices[num][0]
+            logger.info("检测到多台设备")
+            num = 0
+            while True:
+                try:
+                    num = int(input("请输入序号选择设备: "))
+                    if not 0 <= num < len(devices):
+                        raise ValueError()
+                    break
+                except ValueError:
+                    logger.error("输入不合法，请重新输入")
+            device_name = devices[num][0]
         else:
             raise RuntimeError('找不到可用设备')
-        logger.info("确认设备名称\t" + device_name)
+        logger.info("确认设备名称：" + device_name)
         return device_name
-
-    def __adb_connect(self):
-        try:
-            self.host_session_factory().service('host:connect:' + self.DEVICE_NAME)
-            logger.info(
-                "[+] Connect to DEVICE {}  Success".format(self.DEVICE_NAME))
-        except:
-            logger.error(
-                "[-] Connect to DEVICE {}  Failed".format(self.DEVICE_NAME))
 
     def run_device_cmd(self, cmd, DEBUG_LEVEL=2):
         output = self.device_session_factory().exec(cmd)

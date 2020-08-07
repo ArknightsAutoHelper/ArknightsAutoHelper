@@ -11,7 +11,7 @@ import config
 import imgreco
 import imgreco.imgops
 import penguin_stats.reporter
-from connector.ADBConnector import ADBConnector
+from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from . import stage_path
 from Arknights.click_location import *
 from Arknights.flags import *
@@ -51,20 +51,8 @@ class ArknightsHelper(object):
                  adb_host=None,  # 当前绑定到的设备
                  out_put=True,  # 是否有命令行输出
                  call_by_gui=False):  # 是否为从 GUI 程序调用
-        if adb_host is None:
-            adb_host = config.ADB_HOST
-        try:
-            self.adb = ADBConnector(adb_host=adb_host)
-        except ConnectionRefusedError as e:
-            logger.error("错误: {}".format(e))
-            logger.info("尝试启动本地adb")
-            try:
-                os.system(config.ADB_ROOT + "\\adb kill-server")
-                os.system(config.ADB_ROOT + "\\adb start-server")
-                self.adb = ADBConnector(adb_host=adb_host)
-            except Exception as e:
-                logger.error("尝试解决失败，错误: {}".format(e))
-                logger.info("建议检查adb版本夜神模拟器正确的版本为: 1.0.36")
+        ensure_adb_alive()
+        self.adb = ADBConnector(adb_serial=adb_host)
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.is_called_by_gui = call_by_gui
