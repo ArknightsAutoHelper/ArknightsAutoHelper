@@ -144,8 +144,8 @@ ADB_SERVER = (lambda host, portstr: (host, int(portstr)))(
     # attempt to not pollute global namespace
     *(get('device/adb_server', '127.0.0.1:5037').rsplit(':', 1))
 )
-enable_adb_host_auto_detect = get('device/enable_adb_host_auto_detect', True)
-ADB_HOST = get('device/adb_connect', '127.0.0.1:7555')
+# enable_adb_host_auto_detect = get('device/enable_adb_host_auto_detect', True)
+# ADB_HOST = get('device/adb_connect', '127.0.0.1:7555')
 ArkNights_PACKAGE_NAME = get('device/package_name', 'com.hypergryph.arknights')
 ArkNights_ACTIVITY_NAME = get('device/activity_name', 'com.u8.sdk.U8UnityContext')
 
