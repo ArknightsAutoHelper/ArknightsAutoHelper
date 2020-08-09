@@ -24,6 +24,7 @@ FlushConsoleInputBuffer = k32.FlushConsoleInputBuffer
 GetFileType = k32.GetFileType
 FILE_TYPE_CHAR = 0x0002
 
+
 def getch_timeout(timeout):
     hstdin = GetStdHandle(STD_INPUT_HANDLE)
     timeout0 = timeout
@@ -114,8 +115,12 @@ def check_control_code():
         if not GetConsoleMode(hout, ctypes.byref(outmode)):
             return False
         # check for ansicon/ConEmu hook dlls
-        return bool(GetModuleHandle('ansi32.dll') or GetModuleHandle('ansi64.dll') or GetModuleHandle(
+        hooked = bool(GetModuleHandle('ansi32.dll') or GetModuleHandle('ansi64.dll') or GetModuleHandle(
             'conemuhk64.dll') or GetModuleHandle('conemuhk.dll'))
+        if not hooked:
+            import colorama
+            colorama.init()  # for basic color output
+        return hooked
 
 
 __all__ = ['getch_timeout', 'isatty', 'check_control_code']
