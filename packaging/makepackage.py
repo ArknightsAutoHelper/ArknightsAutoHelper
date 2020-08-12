@@ -13,6 +13,10 @@ def main():
     scmver = runpy.run_path(os.path.join(dir, 'config', 'scm_version.py'))
 
     version = scmver['version']
+
+    if '_MAKEPACKAGE_VERSION_SUFFIX' is os.environ:
+        version += os.environ['_MAKEPACKAGE_VERSION_SUFFIX']
+
     print('version:', version)
     
     with open(os.path.join(os.path.dirname(__file__), '..', 'config', 'release_info.py'), 'w') as f:
