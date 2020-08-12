@@ -23,13 +23,12 @@ jobs:
       shell: cmd
     - name: Make package
       run: |
-        set _MAKEPACKAGE_VERSION_SUFFIX=-ci
-        venv32\Scripts\python packaging/makepackage.py
+        venv32\Scripts\python packaging/makepackage.py --version-suffix -ci --skip-zipball
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
         name: akhelper-cp38-win_i686
-        path: dist/akhelper/
+        path: dist/akhelper/.
         
   build-win-amd64:
     runs-on: windows-latest
@@ -49,10 +48,9 @@ jobs:
       shell: cmd
     - name: Make package
       run: |
-        set _MAKEPACKAGE_VERSION_SUFFIX=-ci
-        venv64\Scripts\python packaging/makepackage.py
+        venv64\Scripts\python packaging/makepackage.py --version-suffix -ci --skip-zipball
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
         name: akhelper-cp38-win_amd64
-        path: dist/akhelper/
+        path: dist/akhelper/.

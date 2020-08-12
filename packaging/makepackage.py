@@ -3,20 +3,38 @@ import os
 import runpy
 import shutil
 import subprocess
+import argparse
 
 import PyInstaller.__main__
 
 def main():
+    argv = sys.argv[1:]
+    suffix = ''
+    skip_zipball = False
+    while len(argv) > 0 and argv[0].startswith('-'):
+        opt = argv.pop(0)
+        if opt == '--version-suffix':
+            suffix = argv.pop(0)
+            continue
+        elif opt == '--skip-zipball':
+            skip_zipball = True
+            continue
+        elif opt == '--help' or opt == '-h':
+            print('usage: %s [--version-suffix SUFFIX] [--skip-zipball] [--] [PyInstaller extra args ...]' % sys.argv[0])
+            return
+        elif opt == '--':
+            break
+        else:
+            print('unknown option: ' + opt)
+            return
+
+
     sys._using_makepackage = True
 
     dir = os.path.realpath(os.path.join(os.path.dirname(__file__), '..'))
     scmver = runpy.run_path(os.path.join(dir, 'config', 'scm_version.py'))
 
-    version = scmver['version']
-
-    if '_MAKEPACKAGE_VERSION_SUFFIX' in os.environ:
-        version += os.environ['_MAKEPACKAGE_VERSION_SUFFIX']
-
+    version = scmver['version'] + suffix
     print('version:', version)
     
     with open(os.path.join(os.path.dirname(__file__), '..', 'config', 'release_info.py'), 'w') as f:
@@ -27,7 +45,10 @@ def main():
     subprocess.run(['git', 'archive', '-o', 'resources.zip', stash_id or 'HEAD', 'resources'], check=True)
 
     print('calling PyInstaller')
-    PyInstaller.__main__.run([os.path.join(os.path.dirname(__file__), '..', 'akhelper.spec'), '--noconfirm', *sys.argv[1:]])
+    PyInstaller.__main__.run([os.path.join(os.path.dirname(__file__), '..', 'akhelper.spec'), '--noconfirm', *argv])
+
+    if skip_zipball:
+        return
 
     print('making archive')
 
