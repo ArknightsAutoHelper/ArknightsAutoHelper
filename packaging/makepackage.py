@@ -14,7 +14,7 @@ def main():
 
     version = scmver['version']
 
-    if '_MAKEPACKAGE_VERSION_SUFFIX' is os.environ:
+    if '_MAKEPACKAGE_VERSION_SUFFIX' in os.environ:
         version += os.environ['_MAKEPACKAGE_VERSION_SUFFIX']
 
     print('version:', version)
