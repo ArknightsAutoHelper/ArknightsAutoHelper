@@ -25,13 +25,11 @@ jobs:
       run: |
         set _MAKEPACKAGE_VERSION_SUFFIX=-ci
         venv32\Scripts\python packaging/makepackage.py
-        cd dist
-        move akhelper.zip akhelper-cp38-win_i686.zip
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
-        name: akhelper-cp38-win_i686.zip
-        path: dist/akhelper-cp38-win_i686.zip
+        name: akhelper-cp38-win_i686
+        path: dist/akhelper
         
   build-win-amd64:
     runs-on: windows-latest
@@ -47,16 +45,14 @@ jobs:
         python -m pip install --upgrade pip
         python -m venv venv64
         venv64\Scripts\pip install -r requirements.txt
-        venv32\Scripts\pip install pyinstaller
+        venv64\Scripts\pip install pyinstaller
       shell: cmd
     - name: Make package
       run: |
         set _MAKEPACKAGE_VERSION_SUFFIX=-ci
         venv64\Scripts\python packaging/makepackage.py
-        cd dist
-        move akhelper.zip akhelper-cp38-win_amd64.zip
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
-        name: akhelper-cp38-win_amd64.zip
-        path: dist/akhelper-cp38-win_amd64.zip
+        name: akhelper-cp38-win_amd64
+        path: dist/akhelper
