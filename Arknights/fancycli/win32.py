@@ -4,6 +4,9 @@ import os
 import struct
 import sys
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 k32 = ctypes.windll.kernel32
 STD_INPUT_HANDLE = -10
@@ -94,6 +97,7 @@ def check_control_code():
     outmode = ctypes.c_uint32()
 
     if sys.getwindowsversion().build >= 14393:
+        logger.debug('using Windows ENABLE_VIRTUAL_TERMINAL_PROCESSING')
         if not GetConsoleMode(hout, ctypes.byref(outmode)):
             return False
         if not SetConsoleMode(hout, outmode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING):
@@ -117,7 +121,10 @@ def check_control_code():
         # check for ansicon/ConEmu hook dlls
         hooked = bool(GetModuleHandle('ansi32.dll') or GetModuleHandle('ansi64.dll') or GetModuleHandle(
             'conemuhk64.dll') or GetModuleHandle('conemuhk.dll'))
-        if not hooked:
+        if hooked:
+            logger.debug('using ansicon/conemu hook')
+        else:
+            logger.debug('using colorama as fallback')
             import colorama
             colorama.init()  # for basic color output
         return hooked
