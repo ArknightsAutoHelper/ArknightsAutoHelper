@@ -1,0 +1,60 @@
+name: make PyInstaller packaged release
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-win-x86:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8 x86
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+        architecture: x86
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m venv venv32
+        venv32\Scripts\pip install -r requirements.txt
+      shell: cmd
+    - name: Make package
+      run: |
+        set _MAKEPACKAGE_VERSION_SUFFIX=-ci
+        venv32\Scripts\python packaging/makepackage.py
+        cd dist
+        move akhelper.zip akhelper-cp38-win_i686.zip
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2.1.4
+      with:
+        name: akhelper-cp38-win_i686.zip
+        path: dist/akhelper-cp38-win_i686.zip
+        
+  build-win-amd64:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.8 x86
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+        architecture: x64
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m venv venv64
+        venv64\Scripts\pip install -r requirements.txt
+      shell: cmd
+    - name: Make package
+      run: |
+        set _MAKEPACKAGE_VERSION_SUFFIX=-ci
+        venv64\Scripts\python packaging/makepackage.py
+        cd dist
+        move akhelper.zip akhelper-cp38-win_amd64.zip
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2.1.4
+      with:
+        name: akhelper-cp38-win_amd64.zip
+        path: dist/akhelper-cp38-win_amd64.zip
