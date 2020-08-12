@@ -147,6 +147,15 @@ def check_end_operation(img):
     return mse < 3251
 
 
+def check_end_operation_alt(img):
+    vw, vh = util.get_vwvh(img.size)
+    template = resources.load_image_cached('end_operation/end.png', 'L')
+    operation_end_img = img.crop((4.722 * vh, 80.278 * vh, 56.389 * vh, 93.889 * vh)).convert('L')
+    operation_end_img = imgops.enhance_contrast(operation_end_img, 225, 255)
+    mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
+    return mse < 6502
+
+
 def get_dismiss_level_up_popup_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
     return (100 * vw - 67.315 * vh, 16.019 * vh, 100 * vw - 5.185 * vh, 71.343 * vh)
@@ -170,6 +179,8 @@ def recognize(im):
     operation_id_str = reco_novecento_bold.recognize(operation_id).upper()
     # FIXME: recognizer can't recognize [0o], [-i] well (the game uses sᴍᴀʟʟ ᴄᴀᴘs and the font has sᴍᴀʟʟ ᴄᴀᴘs in ASCII range)
     # FIXME: currently, we have no 'o' and 'i' in recognizer data as '0' and '-' are used more frequently
+    if operation_id_str[0] == '0':
+        operation_id_str = 'O' + operation_id_str[1:]
 
     # operation_name = lower.crop((0, 14.074*vh, 23.611*vh, 20*vh)).convert('L')
     # operation_name = imgops.enhance_contrast(imgops.crop_blackedge(operation_name))

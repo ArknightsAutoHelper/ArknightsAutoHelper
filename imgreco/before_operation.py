@@ -31,7 +31,7 @@ def recognize(img):
     logger.logtext('ccoeff=%f' % coef)
     consume_ap = coef > 0.9
 
-    apimg = img.crop((100 * vw - 22.917 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)).convert('L')
+    apimg = img.crop((100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)).convert('L')
     reco_Noto, reco_Novecento = load_data()
     apimg = imgops.enhance_contrast(apimg, 80, 255)
     logger.logimage(apimg)
@@ -47,6 +47,9 @@ def recognize(img):
         opidtext = opidtext[:-1]
     opidtext = opidtext.upper()
     logger.logtext(opidtext)
+    if opidtext[0] == '0':
+        opidtext = 'O' + opidtext[1:]
+        logger.logtext('fixed to ' + opidtext)
     # print('operation:', opidtext)
 
     delegateimg = img.crop((100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh)).convert('L')
@@ -57,7 +60,7 @@ def recognize(img):
     delegated = mse < 400
     # print('delegated:', delegated)
 
-    consumeimg = img.crop((100 * vw - 14.306 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)).convert('L')
+    consumeimg = img.crop((100 * vw - 12.870 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)).convert('L')
     consumeimg = imgops.enhance_contrast(consumeimg, 80, 255)
     logger.logimage(consumeimg)
     consumetext, minscore = reco_Noto.recognize2(consumeimg, subset='-0123456789')

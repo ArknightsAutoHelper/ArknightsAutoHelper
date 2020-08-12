@@ -1,6 +1,8 @@
 import os
 import time
 import logging
+from typing import Callable
+from dataclasses import dataclass
 from random import randint, uniform, gauss
 from time import sleep, monotonic
 
@@ -241,13 +243,14 @@ class ArknightsHelper(object):
             logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
             return True
 
+    @dataclass
     class operation_once_state:
-        def __init__(self):
-            self.state = None
-            self.stop = False
-            self.operation_start = None
-            self.first_wait = True
-            self.mistaken_delegation = False
+        state: Callable = None
+        stop: bool = False
+        operation_start: float = 0
+        first_wait: bool = True
+        mistaken_delegation: bool = False
+        prepare_reco: dict = None
 
     def operation_once_statemachine(self, c_id):
         smobj = ArknightsHelper.operation_once_state()
@@ -308,6 +311,7 @@ class ArknightsHelper(object):
 
             logger.info("理智充足 开始行动")
             self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
+            smobj.prepare_reco = recoresult
             smobj.state = on_troop
 
         def on_troop(smobj):
@@ -350,7 +354,12 @@ class ArknightsHelper(object):
                 self.operation_time.append(t)
                 smobj.state = on_level_up_popup
                 return
-            if imgreco.end_operation.check_end_operation(screenshot):
+
+            if smobj.prepare_reco['consume_ap']:
+                detector = imgreco.end_operation.check_end_operation
+            else:
+                detector = imgreco.end_operation.check_end_operation_alt
+            if detector(screenshot):
                 logger.info('战斗结束')
                 self.operation_time.append(t)
                 crop = imgreco.end_operation.get_still_check_rect(self.viewport)
