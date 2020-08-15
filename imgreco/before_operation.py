@@ -57,7 +57,7 @@ def recognize(img):
     logger.logimage(delegateimg)
     mse = imgops.compare_mse(*imgops.uniform_size(delegateimg, template))
     logger.logtext('mse=%f' % mse)
-    delegated = mse < 400
+    delegated = mse < 3251
     # print('delegated:', delegated)
 
     consumeimg = img.crop((100 * vw - 12.870 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)).convert('L')
