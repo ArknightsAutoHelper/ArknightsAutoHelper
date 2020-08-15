@@ -179,7 +179,7 @@ def recognize(im):
     operation_id_str = reco_novecento_bold.recognize(operation_id).upper()
     # FIXME: recognizer can't recognize [0o], [-i] well (the game uses sᴍᴀʟʟ ᴄᴀᴘs and the font has sᴍᴀʟʟ ᴄᴀᴘs in ASCII range)
     # FIXME: currently, we have no 'o' and 'i' in recognizer data as '0' and '-' are used more frequently
-    if operation_id_str[0] == '0':
+    if operation_id_str and operation_id_str[0] == '0':
         operation_id_str = 'O' + operation_id_str[1:]
 
     # operation_name = lower.crop((0, 14.074*vh, 23.611*vh, 20*vh)).convert('L')

@@ -47,7 +47,7 @@ def recognize(img):
         opidtext = opidtext[:-1]
     opidtext = opidtext.upper()
     logger.logtext(opidtext)
-    if opidtext[0] == '0':
+    if opidtext and opidtext[0] == '0':
         opidtext = 'O' + opidtext[1:]
         logger.logtext('fixed to ' + opidtext)
     # print('operation:', opidtext)
