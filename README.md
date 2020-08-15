@@ -20,13 +20,49 @@
 
 ## 0x01 运行须知
 
+### **安装**
+
+#### 从源代码安装
+```bash
+git clone https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper
+cd ArknightsAutoHelper
+
+#### 建议使用 venv 避免依赖包冲突
+python3 -m venv venv
+# 在 Windows cmd 中：
+venv\Scripts\activate.bat
+# 在 PowerShell 中：
+& ./venv/[bS]*/Activate.ps1
+# 在 bash/zsh 中：
+source venv/bin/activate
+#### venv end
+
+pip install -r requirements.txt
+```
+
+#### 二进制包（Windows）
+
+从 Actions artifacts 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
+
+[![make PyInstaller packaged release](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/make%20PyInstaller%20packaged%20release/badge.svg?branch=master)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions?query=workflow%3A%22make+PyInstaller+packaged+release%22+is%3Asuccess)
+
+#### OCR 依赖
+目前 OCR 用于：
+
+* 公开招募 tag 识别
+* 对话框内容识别（如基建退出提示）
+
+如果 OCR 不可用，则不能自动处理以上情况。
+
+目前可以使用 tesseract（需另行安装）、Windows OCR（需要 Windows 10 简体中文系统或语言包）和百度 OCR API，请参阅 [OCR 安装说明](OCR_install.md)。
+
+
 ###  **环境与分辨率**
+> 💡 由于游戏内文字渲染机制问题，分辨率过低可能影响识别效果，建议分辨率高度 1080 或以上。
 
 大部分功能可以自适应分辨率（宽高比不小于 16:9，即`宽度≥高度×16/9`），作者测试过的分辨率有 <span style="opacity: 0.5">1280x720、1440x720、</span>1920x1080、2160x1080。
 
-P.S. 由于游戏内文字渲染机制问题，分辨率过低可能影响识别效果，建议分辨率高度 1080 或以上。
-
-P.P.S. 例外（欢迎提交代码改进）：
+例外（欢迎提交代码改进）：
 * 基建收菜（需要 16:9 宽高比和特定基建布局）
 * 好友查房（需要 16:9 宽高比）
 * 自动登录游戏（需要 1280x720 分辨率）
@@ -38,32 +74,21 @@ P.P.S. 例外（欢迎提交代码改进）：
     $ adb devices
     emulator-5554   device
 
-如何连接 ADB 请参考各模拟器的文档、论坛等资源。已知 MuMu 模拟器需要自行启动 ADB server。
+如何连接 ADB 请参考各模拟器的文档、论坛等资源。
 
 如果 `adb devices` 中列出了目标模拟器/设备，但脚本不能正常连接，或遇到其他问题，请尝试使用[最新的 ADB 工具](https://developer.android.google.cn/studio/releases/platform-tools)。
 
-目前暂不考虑直接连接到模拟器/设备的 ADB over TCP/IP 或 USB 端口，因为 ADB daemon 不支持同时存在多个连接，需要 ADB server 进行复用。
+#### 常见问题
 
-### **安装依赖**
+* 部分模拟器（如 MuMu、BlueStacks）需要自行启动 ADB server。
+* 部分模拟器（如 MuMu）不使用标准模拟器 ADB 端口，ADB server 无法自动探测，需要另行 adb connect。
+* 部分模拟器（如夜神）会频繁使用自带的旧版本 ADB 挤掉用户自行启动的新版 ADB。
 
-#### Python 依赖
-```bash
-$ pip install -r requirements.txt
-```
-
-#### OCR 依赖
-目前 OCR 用于：
-
-* 公开招募 tag 识别
-* 对话框内容识别（如基建退出提示）
-
-如果 OCR 不可用，则不能自动处理以上情况。
-
-目前可以使用 tesseract、Windows OCR（需要安装简体中文语言包）和百度 OCR API，请参阅 [OCR 安装说明](OCR_install.md)。
+以上问题可自动处理，请参阅[配置说明](#额外设置)。
 
 ### **额外设置**
 
-关于额外设置请移步到 config/README.md中查看
+关于额外设置请移步到 [config/config-template.yaml](config/config-template.yaml) 中查看
 
 #### **日志说明**
 
@@ -74,6 +99,8 @@ $ pip install -r requirements.txt
 日志目前启动按照时间自动备份功能，间隔为一天一次，保留最多7份。
 
 ## 0x02 ArknightsHelper 命令行启动
+
+> 💡 Windows：命令行功能在 Windows 10 1607 (build 14393) 及以上版本上体验最佳。
 
 ### 命令行启动说明
 
@@ -213,19 +240,29 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 
 ### 关于一些常见的问题
 
-1. 分辨率/模拟器/路径问题
-请看README
-2. 我想跑一些别的关卡，但是提示我关卡不支持。
-这些关卡可以通过slim模式来启动。目前主战斗模块并不支持所有的关卡
-3. OCR 模块可以不装嚒？
+##### 1. 分辨率/模拟器/路径问题
+
+☞ [环境与分辨率](#环境与分辨率)
+
+##### 2. 我想跑一些别的关卡，但是提示我关卡不支持。
+
+这些关卡可以通过 ~~slim~~ quick 模式来启动。
+
+##### 3. OCR 模块可以不装嚒？
+
 最好安装，在之后的版本迭代中会对没有OCR依赖的用户越来越不友好
-4. 我不会python|我电脑里没装Python，我能用这个嚒？
-可以，请下载release分支下经过PyInstaller 打包后的exe 文件。如果有问题欢迎来群里提问
-5. 之后会收费么？
+
+##### 4. 我不会python|我电脑里没装Python，我能用这个嚒？
+
+可以使用[二进制包](#二进制包)
+
+##### 5. 之后会收费么？
+
 不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。欢迎来pull代码以及加群
-6. ~~关于mumu模拟器的adb在哪里的问题~~【目前已经解决】
-mumu模拟器的adb不在模拟器的主路径下，而且它的名字叫adb_server。mumu模拟器自动隐藏了adb端口。
-除非你是专业人士，否则不建议使用mumu模拟器。推荐使用夜神模拟器，群友也有用雷电模拟器的。
+
+##### 6. ~~关于mumu模拟器的adb在哪里的问题~~【目前已经解决】
+
+☞ [常见问题](#常见问题)
 
 
 ### 自定义开发与更多功能

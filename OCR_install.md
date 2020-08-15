@@ -4,7 +4,7 @@
 
 后端                          |识别速度          |准确率
 ------------------------------|------------------|------
-[Tesseract](Tesseract)        |慢                |高
+[Tesseract](#Tesseract)        |慢                |高
 [Windows OCR](#windows-ocr)   |快                |中
 [百度 OCR API](#百度-ocr-api) |快，但有 QPS 限制 |高
 
