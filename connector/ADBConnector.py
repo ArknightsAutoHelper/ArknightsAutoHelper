@@ -124,6 +124,8 @@ class ADBConnector:
             device_name = devices[0][0]
         elif len(devices) > 1:
             logger.info("检测到多台设备")
+            for i, (serial, status) in enumerate(devices):
+                print("%2d. %s" % (i, serial))
             num = 0
             while True:
                 try:
