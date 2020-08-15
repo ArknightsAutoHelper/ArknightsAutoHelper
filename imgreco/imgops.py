@@ -150,3 +150,50 @@ def match_template(img, template, method=cv.TM_CCOEFF_NORMED):
     maxidx = np.unravel_index(selector(mtresult), mtresult.shape)
     y, x = maxidx
     return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), mtresult[maxidx]
+
+
+def find_homography(templ, haystack, *, min_match=10):
+    templ = np.asarray(templ.convert('L'))
+    haystack = np.asarray(haystack.convert('L'))
+
+    detector = cv.SIFT_create()
+    kp1, des1 = detector.detectAndCompute(templ, None)
+    kp2, des2 = detector.detectAndCompute(haystack, None)
+
+    # index_params = dict(algorithm=6,
+    #                     table_number=6,
+    #                     key_size=12,
+    #                     multi_probe_level=2)
+    index_params = dict(algorithm=0, trees=5)  # algorithm=FLANN_INDEX_KDTREE
+    search_params = {}
+    flann = cv.FlannBasedMatcher(index_params, search_params)
+    matches = flann.knnMatch(des1, des2, k=2)
+    good = []
+    for group in matches:
+        if len(group) >= 2 and group[0].distance < 0.75 * group[1].distance:
+            good.append(group[0])
+
+    if len(good) >= min_match:
+        src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+        dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+
+        M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
+        matchesMask = mask.ravel().tolist()
+
+        h, w = templ.shape
+        pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
+        dst = cv.perspectiveTransform(pts, M)
+
+        # img2 = cv.polylines(haystack, [np.int32(dst)], True, 0, 2, cv.LINE_AA)
+        return dst
+    else:
+        raise RuntimeError("Not enough matches are found - %d/%d" % (len(good), min_match))
+        matchesMask = None
+
+
+def _find_homography_test(templ, haystack):
+    pts = find_homography(templ, haystack)
+    img2 = cv.polylines(np.asarray(haystack.convert('L')), [np.int32(pts)], True, 0, 2, cv.LINE_AA)
+    img = Image.fromarray(img2, 'L')
+    print(pts)
+    img.show()
