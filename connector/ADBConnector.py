@@ -5,6 +5,7 @@ import zlib
 import struct
 import socket
 import time
+import contextlib
 
 from PIL import Image
 
@@ -30,6 +31,34 @@ def _ensure_pil_image(imgorfile):
     return Image.open(imgorfile)
 
 
+def find_adb_from_android_sdk():
+    import platform
+    system = platform.system()
+    root = ''
+    base = 'adb'
+
+    try:
+        if system == 'Windows':
+            root = os.path.join(os.environ['LOCALAPPDATA'], 'Android', 'Sdk')
+            base = 'adb.exe'
+        elif system == 'Linux':
+            root = os.path.join(os.environ['HOME'], 'Android', 'Sdk')
+        elif system == 'Darwin':
+            root = os.path.join(os.environ['HOME'], 'Library', 'Android', 'sdk')
+
+        if 'ANDROID_SDK_ROOT' in os.environ:
+            root = os.environ['ANDROID_SDK_ROOT']
+
+        adbpath = os.path.join(root, 'platform-tools', base)
+
+        if os.path.exists(adbpath):
+            return adbpath
+
+    except:
+        return None
+
+
+
 def check_adb_alive():
     try:
         sess = ADBClientSession(config.ADB_SERVER)
@@ -50,6 +79,9 @@ def ensure_adb_alive():
     adbbin = config.get('device/adb_binary', None)
     if adbbin is None:
         adb_binaries = ['adb', os.path.join(config.ADB_ROOT, 'adb')]
+        findadb = find_adb_from_android_sdk()
+        if findadb is not None:
+            adb_binaries.append(findadb)
     else:
         adb_binaries = [adbbin]
     for adbbin in adb_binaries:
@@ -104,10 +136,12 @@ class ADBConnector:
             auto_connect = config.get('device/adb_auto_connect', None)
             if auto_connect is not None:
                 logger.info('没有已连接设备，尝试连接 %s', auto_connect)
-                try:
+                with contextlib.suppress(RuntimeError):
                     self.host_session_factory().disconnect(auto_connect)
-                except:
-                    pass
+                for x in self.host_session_factory().devices():
+                    if x[1] == 'offline':
+                        with contextlib.suppress(RuntimeError):
+                            self.host_session_factory().disconnect(x[0])
                 self.host_session_factory().connect(auto_connect)
             else:
                 raise RuntimeError('找不到可用设备')
@@ -159,6 +193,8 @@ class ADBConnector:
 
 
     def _detect_loopbacks(self):
+        if not (self.adb_serial.startswith('emulator-') or self.adb_serial.startswith('127.0.0.1:')):
+            return []
         board = self.device_session_factory().exec('getprop ro.product.board')
         if b'goldfish' in board:
             return ['10.0.2.2']
