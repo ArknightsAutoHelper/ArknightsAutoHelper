@@ -26,10 +26,10 @@ def recognize(img):
 
     apicon2 = resources.load_image_cached('before_operation/ap_icon.png', 'RGB')
     apicon1, apicon2 = imgops.uniform_size(apicon1, apicon2)
-    coef = imgops.compare_ccoeff(apicon1, apicon2)
+    mse = imgops.compare_mse(apicon1, apicon2)
     logger.logimage(apicon1)
-    logger.logtext('ccoeff=%f' % coef)
-    consume_ap = coef > 0.9
+    logger.logtext('mse=%f' % mse)
+    consume_ap = mse < 3251
 
     apimg = img.crop((100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)).convert('L')
     reco_Noto, reco_Novecento = load_data()
