@@ -55,28 +55,60 @@ with open(config_file, 'r', encoding='utf-8') as f:
     _ydoc = yaml.load(f)
 
 
-def get_instance_id():
+def get_instance_id_win32():
+    import ctypes
+    k32 = ctypes.WinDLL('kernel32', use_last_error=True)
+    CreateMutex = k32.CreateMutexW
+    CloseHandle = k32.CloseHandle
+    ERROR_ALREADY_EXISTS = 183
+    i = 0
+    while True:
+        name = 'Global\\ArknightsAutoHelper.%d' % i
+        import ctypes
+        mutex = ctypes.c_void_p(CreateMutex(None, True, name))
+        err = ctypes.get_last_error()
+
+        if not mutex:
+            raise OSError("CreateMutex failed")
+
+        if err == ERROR_ALREADY_EXISTS:
+            CloseHandle(mutex)
+            i += 1
+            continue  # try next index
+
+        import atexit
+        atexit.register(lambda: CloseHandle(mutex))
+
+        return i
+
+
+def get_instance_id_posix():
     i = 0
     while True:
         try:
-            filename = os.path.join(logs, 'ArknightsAutoHelper.%d.lock' % i)
+            if i == 0:
+                filename = os.path.join(logs, 'ArknightsAutoHelper.log')
+            else:
+                filename = os.path.join(logs, 'ArknightsAutoHelper.%d.log' % i)
             f = open(filename, 'a+b')
             f.seek(0)
-            if os.name == 'nt':
-                import msvcrt
-                msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 114514)
-            else:
-                import fcntl
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            import fcntl
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             import atexit
-            def fini(lockfile, lockfilename):
+            def fini(lockfile):
                 if lockfile is not None:
                     lockfile.close()
-                    os.unlink(lockfilename)
-            atexit.register(fini, f, filename)
+            atexit.register(fini, f)
             return i
         except OSError:
             i += 1
+
+
+def get_instance_id():
+    if os.name == 'nt':
+        return get_instance_id_win32()
+    else:
+        return get_instance_id_posix()
 
 
 def _set_dirty():
