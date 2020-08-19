@@ -159,6 +159,7 @@ def interactive(argv):
     import shlex
     import traceback
     helpcmds(interactive_cmds)
+    errorlevel = None
     while True:
         try:
             cmdline = input("akhelper> ")
@@ -166,14 +167,19 @@ def interactive(argv):
             if len(argv) == 0 or argv[0] == '?' or argv[0] == 'help':
                 print(' '.join(x.__name__ for x in interactive_cmds))
                 continue
+            elif argv[0] == 'exit':
+                break
             cmd = match_cmd(argv[0], interactive_cmds)
             if cmd is not None:
-                cmd(argv)
+                errorlevel = cmd(argv)
         except EOFError:
+            print('')  # print newline on EOF
             break
-        except (Exception, KeyboardInterrupt):
+        except (Exception, KeyboardInterrupt) as e:
+            errorlevel = e
             traceback.print_exc()
             continue
+    return errorlevel
 
 
 argv0 = 'placeholder'
