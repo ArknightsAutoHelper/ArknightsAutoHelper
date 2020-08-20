@@ -1,6 +1,9 @@
 import itertools
 import sys
+import time
+
 from .fancycli import fancywait
+from .fancycli.platform import isatty
 
 
 def skipcallback(handler):
@@ -63,6 +66,34 @@ def _parse_opt(argv):
                         helper.refill_with_originium = action
                     ops.append(op)
     return ops
+
+
+class AlarmContext:
+    def __init__(self, duration=60):
+        self.duration = duration
+
+    def __enter__(self):
+        self.t0 = time.monotonic()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        t1 = time.monotonic()
+        if t1 - self.t0 >= self.duration:
+            self.alarm()
+
+    def alarm(self):
+        pass
+
+
+class BellAlarmContext(AlarmContext):
+    def alarm(self):
+        print('\a', end='')
+
+
+def _alarm_context_factory():
+    if isatty(sys.stdout):
+        return BellAlarmContext()
+    return AlarmContext()
+
 
 def quick(argv):
     """
@@ -171,7 +202,8 @@ def interactive(argv):
                 break
             cmd = match_cmd(argv[0], interactive_cmds)
             if cmd is not None:
-                errorlevel = cmd(argv)
+                with _alarm_context_factory():
+                    errorlevel = cmd(argv)
         except EOFError:
             print('')  # print newline on EOF
             break
