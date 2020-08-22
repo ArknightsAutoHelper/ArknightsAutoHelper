@@ -1,6 +1,7 @@
 import itertools
 import sys
 import time
+import signal
 
 from .fancycli import fancywait
 from .fancycli.platform import isatty
@@ -48,23 +49,28 @@ def _parse_opt(argv):
     ops = []
     if len(argv) >= 2 and argv[1][:1] in ('+', '-'):
         opts = argv.pop(1)
-        action = None
-        for c in opts:
+        enable_refill = None
+        for i, c in enumerate(opts):
             if c == '+':
-                action = True
+                enable_refill = True
             elif c == '-':
-                action = False
-            elif c == 'r':
-                if action is not None:
-                    def op(helper):
-                        helper.use_refill = action
-                        helper.refill_with_item = action
-                    ops.append(op)
-            elif c == 'R':
-                if action is not None:
-                    def op(helper):
-                        helper.refill_with_originium = action
-                    ops.append(op)
+                enable_refill = False
+            elif c == 'r' and enable_refill is not None:
+                def op(helper):
+                    helper.use_refill = enable_refill
+                    helper.refill_with_item = enable_refill
+                ops.append(op)
+            elif c == 'R' and enable_refill is not None:
+                def op(helper):
+                    helper.refill_with_originium = enable_refill
+                ops.append(op)
+            elif c in '0123456789' and enable_refill:
+                num = int(opts[i:])
+                def op(helper):
+                    helper.max_refill_count = num
+                ops.append(op)
+            else:
+                raise ValueError('unrecognized token: %r in option %r' % (c, opts))
     return ops
 
 
@@ -97,9 +103,9 @@ def _alarm_context_factory():
 
 def quick(argv):
     """
-    quick [+-rR] [n]
+    quick [+-rR[N]] [n]
         重复挑战当前画面关卡特定次数或直到理智不足
-        +r/-r 是否自动回复理智
+        +r/-r 是否自动回复理智，最多回复 N 次
         +R/-R 是否使用源石回复理智（需要同时开启 +r）
     """
 
@@ -121,7 +127,7 @@ def quick(argv):
 
 def auto(argv):
     """
-    auto [+-rR] stage1 count1 [stage2 count2] ...
+    auto [+-rR[N]] stage1 count1 [stage2 count2] ...
         按顺序挑战指定关卡特定次数直到理智不足
     """
     ops = _parse_opt(argv)

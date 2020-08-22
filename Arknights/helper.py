@@ -70,6 +70,8 @@ class ArknightsHelper(object):
         self.use_penguin_report = config.get('reporting/enabled', False)
         if self.use_penguin_report:
             self.penguin_reporter = penguin_stats.reporter.PenguinStatsReporter()
+        self.refill_count = 0
+        self.max_refill_count = None
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -243,6 +245,12 @@ class ArknightsHelper(object):
             logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
             return True
 
+    def can_perform_refill(self):
+        if not self.use_refill:
+            return False
+        if self.max_refill_count is not None:
+            return self.refill_count < self.max_refill_count
+
     @dataclass
     class operation_once_state:
         state: Callable = None
@@ -283,7 +291,7 @@ class ArknightsHelper(object):
             logger.info('当前%s %d, 关卡消耗 %d', ap_text, self.CURRENT_STRENGTH, recoresult['consume'])
             if self.CURRENT_STRENGTH < int(recoresult['consume']):
                 logger.error(ap_text + '不足 无法继续')
-                if recoresult['consume_ap'] and self.use_refill:
+                if recoresult['consume_ap'] and self.can_perform_refill():
                     logger.info('尝试回复理智')
                     self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
                     self.__wait(SMALL_WAIT)
@@ -299,6 +307,7 @@ class ArknightsHelper(object):
                     # FIXME: 道具回复量不足时也会尝试使用
                     if confirm_refill:
                         self.tap_rect(imgreco.before_operation.get_ap_refill_confirm_rect(self.viewport))
+                        self.refill_count += 1
                         self.__wait(MEDIUM_WAIT)
                         return  # to on_prepare state
                     logger.error('未能回复理智')

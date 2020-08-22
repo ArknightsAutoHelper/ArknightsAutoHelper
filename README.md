@@ -108,12 +108,12 @@ pip install -r requirements.txt
 $ python3 akhelper.py
 usage: akhelper.py command [command args]
 commands (prefix abbreviation accepted):
-    quick [+-rR] [n]
-        重复挑战当前画面关卡特定次数或直到理智不足 
-        +r/-r 是否自动回复理智
+    quick [+-rR[N]] [n]
+        重复挑战当前画面关卡特定次数或直到理智不足
+        +r/-r 是否自动回复理智，最多回复 N 次
         +R/-R 是否使用源石回复理智（需要同时开启 +r）
-    auto [+-rR] stage1 count1 [stage2 count2] ...  
-        按顺序挑战指定关卡特定次数直到理智不足     
+    auto [+-rR[N]] stage1 count1 [stage2 count2] ...
+        按顺序挑战指定关卡特定次数直到理智不足
     collect
         收集每日任务奖励
     recruit [tags ...]
@@ -171,6 +171,8 @@ python3 akhelper.py quick 99
 # 重复刷当前画面关卡 99 次，也可以不指定次数
 python3 akhelper.py quick -r
 # 重复刷当前画面关卡，禁用自动回复理智（直到理智不足停止）
+python3 akhelper.py quick +r5
+# 重复刷当前画面关卡，启用自动回复理智，最多回复 5 次
 python3 akhelper.py quick +rR 99
 # 重复刷当前画面关卡 99 次，启用自动回复理智，启用碎石回复理智
 ```
