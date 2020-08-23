@@ -86,9 +86,10 @@ class BaseAPI:
             varlen = len(vars)
             arrtype = ctypes.c_char_p * varlen
             varnamearr = arrtype()
-            varnamearr[:] = [x.encode() for x in vars.keys()]
+            varsitems = list(vars.items())
+            varnamearr[:] = [k.encode() for k, v in varsitems]
             varvaluearr = arrtype()
-            varvaluearr[:] = [str(x).encode() for x in vars.values()]
+            varvaluearr[:] = [str(v).encode() for k, v in varsitems]
         else:
             varlen = 0
             varnamearr = None

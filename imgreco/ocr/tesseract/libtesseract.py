@@ -1,4 +1,5 @@
 import io
+import os
 from ..common import *
 from .common import *
 from . import tessbaseapi
@@ -13,7 +14,7 @@ version = tessbaseapi.version
 class LibTesseractEngine(BaseTesseractEngine):
     def __init__(self, lang, **kwargs):
         super().__init__(lang, **kwargs)
-        self.baseapi = tessbaseapi.BaseAPI(tessbaseapi.resolve_datapath(), self.tesslang)
+        self.baseapi = tessbaseapi.BaseAPI(tessbaseapi.resolve_datapath(), self.tesslang, vars={'debug_file': os.devnull})
 
     def recognize(self, image, ppi=70, *, hints=None):
         self.baseapi.set_image(image, ppi)
