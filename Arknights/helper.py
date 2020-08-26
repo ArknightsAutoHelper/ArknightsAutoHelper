@@ -250,6 +250,8 @@ class ArknightsHelper(object):
             return False
         if self.max_refill_count is not None:
             return self.refill_count < self.max_refill_count
+        else:
+            return True
 
     @dataclass
     class operation_once_state:
