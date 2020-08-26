@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 如果 OCR 不可用，则不能自动处理以上情况。
 
-目前可以使用 tesseract（需另行安装）、Windows OCR（需要 Windows 10 简体中文系统或语言包）和百度 OCR API，请参阅 [OCR 安装说明](OCR_install.md)。
+目前可以使用 tesseract（需另行安装）、Windows OCR（需要 Windows 10 简体中文系统或语言包）和百度 OCR API，请参阅 [OCR 安装说明](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/wiki/OCR-%E5%AE%89%E8%A3%85%E8%AF%B4%E6%98%8E)。
 
 
 ###  **环境与分辨率**
@@ -69,7 +69,7 @@ pip install -r requirements.txt
 
 ### **ADB 连接**
 
-虽然脚本不依赖 `adb` 工具进行操作，但是依然需要 ADB server 连接到模拟器/设备，请确认 `adb devices` 中列出了目标模拟器/设备：
+请确认 `adb devices` 中列出了目标模拟器/设备：
 
     $ adb devices
     emulator-5554   device
@@ -84,23 +84,28 @@ pip install -r requirements.txt
 * 部分模拟器（如 MuMu）不使用标准模拟器 ADB 端口，ADB server 无法自动探测，需要另行 adb connect。
 * 部分模拟器（如夜神）会频繁使用自带的旧版本 ADB 挤掉用户自行启动的新版 ADB。
 
-以上问题可自动处理，请参阅[配置说明](#额外设置)。
+可以参阅[配置说明](#额外设置)以配置自动解决以上问题。
 
 ### **额外设置**
 
 关于额外设置请移步到 [config/config-template.yaml](config/config-template.yaml) 中查看
 
 #### **日志说明**
-
-日志采用```import logging```在log目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
+运行日志（文本）采用```import logging```在log目录下生成**ArknightsAutoHelper.log**推荐用Excel打开，分割符号为“!”
 
 相关配置文件在```config```目录下的**logging.yaml**，由于过于复杂 ~~其实也没确定理解的对不对~~ 这里请自行研究，欢迎讨论
 
 日志目前启动按照时间自动备份功能，间隔为一天一次，保留最多7份。
 
+图像识别日志为 `log/*.html`，相应识别模块初始化时会清空原有内容。
+
+多开时日志文件名会出现实例 ID，如 `ArknightsAutoHelper.1.log`。
+
+**报告 issue 时，建议附上日志以便定位问题。**
+
 ## 0x02 ArknightsHelper 命令行启动
 
-> 💡 Windows：命令行功能在 Windows 10 1607 (build 14393) 及以上版本上体验最佳。
+> 💡 Windows：命令行功能在 Windows 10 1607 (build 14393) 及以上版本上体验最佳。非简体中文系统可能无法在 Windows 命令行窗口中正确显示简体中文文字，可尝试使用 Windows Terminal。
 
 ### 命令行启动说明
 
@@ -242,30 +247,33 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 
 ### 关于一些常见的问题
 
-##### 1. 分辨率/模拟器/路径问题
+#### 1. 分辨率/模拟器/路径问题
 
 ☞ [环境与分辨率](#环境与分辨率)
 
-##### 2. 我想跑一些别的关卡，但是提示我关卡不支持。
+#### 2. 我想跑一些别的关卡，但是提示我关卡不支持。
 
 这些关卡可以通过 ~~slim~~ quick 模式来启动。
 
-##### 3. OCR 模块可以不装嚒？
+#### 3. OCR 模块可以不装嚒？
 
 最好安装，在之后的版本迭代中会对没有OCR依赖的用户越来越不友好
 
-##### 4. 我不会python|我电脑里没装Python，我能用这个嚒？
+#### 4. 我不会python|我电脑里没装Python，我能用这个嚒？
 
 可以使用[二进制包](#二进制包windows)
 
-##### 5. 之后会收费么？
+#### 5. 之后会收费么？
 
 不会，该项目一直开源。实际上作者还有别的事情要做，代码可能突然会有一段时间不更新了。欢迎来pull代码以及加群
 
-##### 6. ~~关于mumu模拟器的adb在哪里的问题~~【目前已经解决】
+#### 6. ~~关于mumu模拟器的adb在哪里的问题~~【目前已经解决】
 
 ☞ [常见问题](#常见问题)
 
+#### 7. 我想将这个脚本适配到其他服务器
+
+☞ [Porting to Another Server](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/wiki/Porting-to-Another-Server)
 
 ### 自定义开发与更多功能
 
