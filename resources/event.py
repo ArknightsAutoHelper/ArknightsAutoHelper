@@ -52,6 +52,10 @@ def event_preprocess(stage: str, itemgroups: List[Tuple[str, List[Tuple[str, int
                 items.pop(i)
                 continue
 
+            # 活动时间：08月25日 16:00 - 09月15日 03:59
+            if item[0] == '机械零件':
+                items.pop(i)
+                continue
         # 移除空分组
         if len(group[1]) == 0:
             itemgroups.pop(j)
