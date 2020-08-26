@@ -119,3 +119,14 @@ def check_charseq(string, seq):
             return False
         lastindex = index
     return True
+
+
+# FIXME: recognizer can't recognize [0o], [-i] well (the font is in sᴍᴀʟʟ ᴄᴀᴘs but we think it UPPERCASE)
+# FIXME: currently, we have no 'o' and 'i' in recognizer data as '0' and '-' are used more frequently
+
+def fix_stage_name(s):
+    if s[0] == '0':
+        return True, 'O' + s[1:]
+    elif s.startswith('R--'):
+        return True, 'RI-' + s[3:]
+    return False, s

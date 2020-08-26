@@ -42,15 +42,14 @@ def recognize(img):
     opidimg = img.crop((100 * vw - 55.694 * vh, 11.667 * vh, 100 * vw - 44.028 * vh, 15.139 * vh)).convert('L')
     opidimg = imgops.enhance_contrast(opidimg, 80, 255)
     logger.logimage(opidimg)
-    opidtext = reco_Novecento.recognize(opidimg)
+    opidtext = str(reco_Novecento.recognize(opidimg))
     if opidtext.endswith('-'):
         opidtext = opidtext[:-1]
     opidtext = opidtext.upper()
     logger.logtext(opidtext)
-    if opidtext and opidtext[0] == '0':
-        opidtext = 'O' + opidtext[1:]
+    fixup, opidtext = minireco.fix_stage_name(opidtext)
+    if fixup:
         logger.logtext('fixed to ' + opidtext)
-    # print('operation:', opidtext)
 
     delegateimg = img.crop((100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh)).convert('L')
     template = resources.load_image_cached('before_operation/delegation_checked.png', 'L')

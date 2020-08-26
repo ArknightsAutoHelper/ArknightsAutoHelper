@@ -177,11 +177,9 @@ def recognize(im):
     operation_id = imgops.enhance_contrast(imgops.crop_blackedge(operation_id), 80, 220)
     logger.logimage(operation_id)
     operation_id_str = reco_novecento_bold.recognize(operation_id).upper()
-    # FIXME: recognizer can't recognize [0o], [-i] well (the game uses sᴍᴀʟʟ ᴄᴀᴘs and the font has sᴍᴀʟʟ ᴄᴀᴘs in ASCII range)
-    # FIXME: currently, we have no 'o' and 'i' in recognizer data as '0' and '-' are used more frequently
-    if operation_id_str and operation_id_str[0] == '0':
-        operation_id_str = 'O' + operation_id_str[1:]
-
+    fixup, operation_id_str = minireco.fix_stage_name(operation_id_str)
+    if fixup:
+        logger.logtext('fixed to ' + operation_id_str)
     # operation_name = lower.crop((0, 14.074*vh, 23.611*vh, 20*vh)).convert('L')
     # operation_name = imgops.enhance_contrast(imgops.crop_blackedge(operation_name))
     # logger.logimage(operation_name)
