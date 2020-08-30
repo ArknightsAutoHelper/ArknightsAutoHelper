@@ -45,6 +45,7 @@ pip install -r requirements.txt
 从 Actions artifacts 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
 
 [![make PyInstaller packaged release](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/make%20PyInstaller%20packaged%20release/badge.svg?branch=master)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions?query=workflow%3A%22make+PyInstaller+packaged+release%22+is%3Asuccess)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FninthDevilHAUNSTER%2FArknightsAutoHelper.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FninthDevilHAUNSTER%2FArknightsAutoHelper?ref=badge_shield)
 
 #### OCR 依赖
 目前 OCR 用于：
@@ -284,3 +285,7 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
   [1]: http://static.zybuluo.com/shaobaobaoer/7ifp1acn3an7a3z23t96owt1/TIM%E6%88%AA%E5%9B%BE20190530114456.png
   [2]: http://static.zybuluo.com/shaobaobaoer/860t36w2ygsvet6sxn3lv3ty/TIM%E5%9B%BE%E7%89%8720190612102050.png
   [3]: http://static.zybuluo.com/shaobaobaoer/14ufv5gx72buoo1vyaa9jmgy/qrcode_1558871927006.jpg
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FninthDevilHAUNSTER%2FArknightsAutoHelper.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FninthDevilHAUNSTER%2FArknightsAutoHelper?ref=badge_large)
