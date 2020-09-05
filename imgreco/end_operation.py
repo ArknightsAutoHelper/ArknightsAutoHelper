@@ -1,5 +1,6 @@
 import sys
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -41,15 +42,6 @@ def tell_stars(starsimg):
 recozh = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-Medium.dat'))
 reco_novecento_bold = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Bold.dat'))
 
-grouptemplates = []
-
-
-def _load_data():
-    _, files = resources.get_entries('end_operation')
-    for f in files:
-        if f.endswith('.png'):
-            grouptemplates.append((f[:-4], resources.load_image('end_operation/' + f, 'L')))
-
 
 def tell_group(groupimg, session, bartop, barbottom, ):
     logger.logimage(groupimg)
@@ -58,34 +50,11 @@ def tell_group(groupimg, session, bartop, barbottom, ):
     thim = imgops.enhance_contrast(grouptext.convert('L'), 60)
     thim = imgops.crop_blackedge(thim)
     logger.logimage(thim)
-    # groupname = recozh.recognize(thim)
-    # logger.logtext(recozh.recognize(thim))
 
-    # if len(recognized_groups) == 0 and any_in('首次', groupname):
-    #     groupname = '首次掉落'
-    # elif any_in('声望', groupname) and '声望&龙门币奖励' not in recognized_groups:
-    #     groupname = '声望&龙门币奖励'
-    # elif any_in('常规', groupname) and '常规掉落' not in recognized_groups:
-    #     groupname = '常规掉落'
-    # elif any_in('特殊', groupname) and '特殊掉落' not in recognized_groups:
-    #     groupname = '特殊掉落'
-    # elif any_in('幸运', groupname) and '幸运掉落' not in recognized_groups:
-    #     groupname = '幸运掉落'
-    # elif any_in('额物资', groupname) and '额外物资' not in recognized_groups:
-    #     groupname = '额外物资'
-    # elif any_in('报酬', groupname) and '报酬' not in recognized_groups:
-    #     groupname = '报酬'
-    # elif any_in('理智返还', groupname) and '理智返还' not in recognized_groups:
-    #     groupname = '理智返还'
-
-    comparsions = [(x[0], imgops.compare_ccoeff(*imgops.uniform_size(thim, x[1])))
-                   for x in grouptemplates
-                   if x[0] not in session.recognized_groups]
-    comparsions.sort(key=lambda x: x[1], reverse=True)
-    logger.logtext(repr(comparsions))
-    groupname = comparsions[0][0]
-    if comparsions[0][1] < 0.6:
+    groupname, diff = tell_group_name_alt(thim, session.recognized_groups)
+    if diff > 0.8:
         session.low_confidence = True
+
     if groupname == '幸运掉落':
         return (groupname, [('(家具)', 1)])
 
@@ -100,6 +69,30 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         itemimg = itemimg.crop((0.093 * vh, 0, 19.074 * vh, itemimg.height))
         result.append(item.tell_item(itemimg, session))
     return (groupname, result)
+
+
+def tell_group_name_alt(img, exclude=()):
+    names = [('龙门币', '声望&龙门币奖励'),
+             ('常规', '常规掉落'),
+             ('特殊', '特殊掉落'),
+             ('幸运', '幸运掉落'),
+             ('额外', '额外掉落'),
+             ('首次', '首次掉落'),
+             ('返还', '理智返还')]
+    comparsions = []
+    for name, group in names:
+        if group in exclude:
+            continue
+        template = resources.load_image_cached(f'end_operation/group/{name}.png', 'L')
+        if template.height > img.height:
+            template = imgops.scale_to_height(template, img.height)
+        pos, value = imgops.match_template(img, template, cv2.TM_SQDIFF_NORMED)
+        comparsions.append((group, value))
+
+    if comparsions:
+        comparsions.sort(key=lambda x: x[1])
+        logger.logtext(repr(comparsions))
+        return comparsions[0]
 
 
 def find_jumping(ary, threshold):
@@ -256,9 +249,6 @@ def get_still_check_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
     return (68.241 * vh, 61.111 * vh, 100 * vw, 100 * vh)
 
-
-
-_load_data()
 
 if __name__ == '__main__':
     print(globals()[sys.argv[-2]](Image.open(sys.argv[-1])))
