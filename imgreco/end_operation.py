@@ -1,4 +1,5 @@
 import sys
+import math
 
 import cv2
 import numpy as np
@@ -48,10 +49,10 @@ def tell_group(groupimg, session, bartop, barbottom, ):
     grouptext = groupimg.crop((0, barbottom, groupimg.width, groupimg.height))
 
     thim = imgops.enhance_contrast(grouptext.convert('L'), 60)
-    thim = imgops.crop_blackedge(thim)
+    # thim = imgops.crop_blackedge(thim)
     logger.logimage(thim)
 
-    groupname, diff = tell_group_name_alt(thim, session.recognized_groups)
+    groupname, diff = tell_group_name_alt(thim, session)
     if diff > 0.8:
         session.low_confidence = True
 
@@ -71,7 +72,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
     return (groupname, result)
 
 
-def tell_group_name_alt(img, exclude=()):
+def tell_group_name_alt(img, session):
     names = [('龙门币', '声望&龙门币奖励'),
              ('常规', '常规掉落'),
              ('特殊', '特殊掉落'),
@@ -80,14 +81,25 @@ def tell_group_name_alt(img, exclude=()):
              ('首次', '首次掉落'),
              ('返还', '理智返还')]
     comparsions = []
+    scale = session.vh * 100 / 1080
+
     for name, group in names:
-        if group in exclude:
+        if group in session.recognized_groups:
             continue
         template = resources.load_image_cached(f'end_operation/group/{name}.png', 'L')
-        if template.height > img.height:
-            template = imgops.scale_to_height(template, img.height)
-        pos, value = imgops.match_template(img, template, cv2.TM_SQDIFF_NORMED)
-        comparsions.append((group, value))
+        scaled_height = template.height * scale
+        scaled_height_floor = math.floor(scaled_height)
+        scaled_template_floor = imgops.scale_to_height(template, scaled_height_floor)
+        if scaled_template_floor.width > img.width or scaled_template_floor.height > img.height:
+            raise ValueError('image smaller than template')
+        _, diff_floor = imgops.match_template(img, scaled_template_floor, cv2.TM_SQDIFF_NORMED)
+        if scaled_height_floor + 1 <= img.height:
+            scaled_template_ceil = imgops.scale_to_height(template, scaled_height_floor + 1)
+            _, diff_ceil = imgops.match_template(img, scaled_template_ceil, cv2.TM_SQDIFF_NORMED)
+            diff = min(diff_floor, diff_ceil)
+        else:
+            diff = diff_floor
+        comparsions.append((group, diff))
 
     if comparsions:
         comparsions.sort(key=lambda x: x[1])
