@@ -125,7 +125,7 @@ def check_charseq(string, seq):
 # FIXME: currently, we have no 'o' and 'i' in recognizer data as '0' and '-' are used more frequently
 
 def fix_stage_name(s):
-    if s.startswith('0'):
+    if s.startswith('0') and not s.startswith('0-'):
         return True, 'O' + s[1:]
     elif s.startswith('R--'):
         return True, 'RI-' + s[3:]
