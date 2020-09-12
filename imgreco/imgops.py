@@ -17,6 +17,13 @@ def enhance_contrast(img, lower=90, upper=None):
     return Image.fromarray(lut[np.asarray(img, np.uint8)])
 
 
+def clear_background(img, threshold=90):
+    mat = np.array(img, dtype=np.uint8)
+    mask = mat < threshold
+    mat[mask] = 0
+    return Image.fromarray(mat)
+
+
 def image_threshold_mat2img(mat, threshold=127):
     """
     threshold filter on L channel
@@ -48,10 +55,11 @@ def crop_blackedge(numimg, value_threshold=127):
     return numimg.crop(thimg.getbbox())
 
 
-def crop_blackedge2(numimg, value_threshold=127):
+def crop_blackedge2(numimg, value_threshold=127, x_threshold=None):
     thimg = image_threshold(numimg, value_threshold)
 
-    x_threshold = int(numimg.height * 0.4)
+    if x_threshold is None:
+        x_threshold = int(numimg.height * 0.25)
     y_threshold = 16
     mat = np.asarray(thimg)
     right = -1

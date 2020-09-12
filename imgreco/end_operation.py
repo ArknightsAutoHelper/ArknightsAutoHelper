@@ -68,7 +68,10 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         itemimg = groupimg.crop((itemwidth * i, 0.000 * vh, itemwidth * (i+1), 18.981 * vh))
         # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
         itemimg = itemimg.crop((0.093 * vh, 0, 19.074 * vh, itemimg.height))
-        result.append(item.tell_item(itemimg, session))
+        recognized_item = item.tell_item(itemimg, session)
+        if recognized_item.low_confidence:
+            session.low_confidence = True
+        result.append((recognized_item.name, recognized_item.quantity))
     return (groupname, result)
 
 
