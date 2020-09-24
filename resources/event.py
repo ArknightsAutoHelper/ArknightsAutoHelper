@@ -56,6 +56,11 @@ def event_preprocess(stage: str, itemgroups: List[Tuple[str, List[Tuple[str, int
             if item[0] == '机械零件':
                 items.pop(i)
                 continue
+
+            # 关卡开放时间：2020年09月24日 16:00 ~ 10月01日 03:59
+            if item[0] == '废弃时钟表盘':
+                items.pop(i)
+                continue
         # 移除空分组
         if len(group[1]) == 0:
             itemgroups.pop(j)
