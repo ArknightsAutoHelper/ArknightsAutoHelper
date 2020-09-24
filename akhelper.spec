@@ -13,7 +13,7 @@ sys.modules['FixTk'] = None
 a = Analysis(['akhelper.py'],
              pathex=['D:\\projects\\ArknightsAutoHelper'],
              binaries=[],
-             datas=[('resources.zip', '.'), ('config/config-template.yaml', 'config'), ('config/logging.yaml', 'config'), ('screenshot', 'screenshot'), ('LICENSE', '.'), ('README.md', '.')],
+             datas=[('resources.zip', '.'), ('config/config-template.yaml', 'config'), ('config/logging.yaml', 'config'), ('LICENSE', '.'), ('README.md', '.')],
              hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr'],
              hookspath=[],
              runtime_hooks=[],
@@ -35,6 +35,28 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           console=True )
+
+
+def is_crt_binary(name):
+    name = name.lower()
+    prefixes = [
+        'api-ms',
+        'vcruntime',
+        'msvcr',
+        'msvcp',
+        'vcomp',
+        'concrt',
+        'vccorlib',
+        'ucrtbase',
+    ]
+    for prefix in prefixes:
+        if name.startswith(prefix):
+            return True
+    return False
+
+a.binaries[:] = (x for x in a.binaries if not is_crt_binary(x[0]))
+print(a.binaries)
+
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
@@ -43,3 +65,6 @@ coll = COLLECT(exe,
                upx=False,
                upx_exclude=[],
                name='akhelper')
+
+import os
+os.mkdir(os.path.join(DISTPATH, 'akhelper', 'screenshot'))
