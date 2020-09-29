@@ -313,6 +313,7 @@ class ArknightsHelper(object):
                         self.__wait(MEDIUM_WAIT)
                         return  # to on_prepare state
                     logger.error('未能回复理智')
+                    self.tap_rect(imgreco.before_operation.get_ap_refill_cancel_rect(self.viewport))
                 raise StopIteration()
 
             if not recoresult['delegated']:

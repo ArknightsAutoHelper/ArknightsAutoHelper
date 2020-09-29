@@ -147,5 +147,10 @@ def get_ap_refill_confirm_rect(viewport):
     return (50*vw+49.537*vh, 77.222*vh, 50*vw+74.352*vh, 84.815*vh)
 
 
+def get_ap_refill_cancel_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return (50*vw+14.259*vh, 77.130*vh, 50*vw+24.352*vh, 83.611*vh)
+
+
 if __name__ == "__main__":
     print(recognize(Image.open(sys.argv[-1])))
