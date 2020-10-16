@@ -66,6 +66,10 @@ def event_preprocess(stage: str, itemgroups: List[Tuple[str, List[Tuple[str, int
                 items.pop(i)
                 continue
 
+            if item[0] == '梅什科竞技证券':
+                items.pop(i)
+                continue
+
         # 移除空分组
         if len(group[1]) == 0:
             itemgroups.pop(j)
