@@ -47,8 +47,9 @@ else:
 
     def get_entries(base):
         findroot = get_path(base.split('/'))
-        _, dirs, files = next(os.walk(findroot))
-        return (dirs, files)
+        for _, dirs, files in os.walk(findroot):
+            return (dirs, files)
+        return ([], [])
 
 
 def load_image(name, mode=None):
