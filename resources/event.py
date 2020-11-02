@@ -20,13 +20,13 @@ FIXED_QUANTITY = [
     '梅什科竞技证券',
 ]
 
-ONE_OR_NONE = [
-    '应急理智小样',
-    '罗德岛物资补给',
-    '岁过华灯',
-    '32h战略配给',
-    '感谢庆典物资补给',
-]
+# ONE_OR_NONE = [
+#     '应急理智小样',
+#     '罗德岛物资补给',
+#     '岁过华灯',
+#     '32h战略配给',
+#     '感谢庆典物资补给',
+# ]
 
 def event_preprocess(stage: str, items: List[Tuple[str, str, int]], exclude_from_validation: List):
     # [('常规掉落', '固源岩', 1), ...]
@@ -37,11 +37,11 @@ def event_preprocess(stage: str, items: List[Tuple[str, str, int]], exclude_from
             # 不加入汇报列表
             continue
             
-        if name in ONE_OR_NONE:
-            # 不使用企鹅数据验证规则进行验证
-            exclude_from_validation.append(itemrecord)
-            if qty != 1:
-                raise ValueError('%sx%d' % (name, qty))
+        # if name in ONE_OR_NONE:
+        #     # 不使用企鹅数据验证规则进行验证
+        #     exclude_from_validation.append(itemrecord)
+        #     if qty != 1:
+        #         raise ValueError('%sx%d' % (name, qty))
 
         # 加入汇报列表
         yield itemrecord
