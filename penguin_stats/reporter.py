@@ -3,7 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import Union
 import config
-from resources.event import event_preprocess
+from resources.event import EXTRA_KNOWN_ITEMS, event_preprocess
 import penguin_client
 
 
@@ -34,7 +34,6 @@ ReportResult.Ok = ReportResultOk
 ReportResult.NothingToReport = ReportResult()
 ReportResult.NotReported =ReportResult()
 
-
 class PenguinStatsReporter:
     GROUP_NAME_TO_TYPE_MAP = {
         '常规掉落': 'NORMAL_DROP',
@@ -46,6 +45,7 @@ class PenguinStatsReporter:
     def __init__(self):
         self.logged_in = False
         self.initialized = None
+        self.noop = False
         self.client = penguin_client.ApiClient()
         self.stage_map = {}
         self.item_map = {}
@@ -89,6 +89,13 @@ class PenguinStatsReporter:
                 self.stage_map[s.code] = s
             for i in items:
                 self.item_map[i.name] = i
+            import imgreco.item
+            recognizer_data = imgreco.item.load_data()
+            unrecognized_items = (set(self.item_map.keys())) - (set(imgreco.item.all_known_items()) | set(EXTRA_KNOWN_ITEMS))
+            if unrecognized_items:
+                logger.warn('企鹅数据中存在未识别的物品：%s', ', '.join(unrecognized_items))
+                logger.warn('为避免产生统计偏差，已禁用汇报功能')
+                self.noop = True
             self.initialized = True
         except:
             logger.error('载入企鹅数据资源出错', exc_info=True)
@@ -96,8 +103,8 @@ class PenguinStatsReporter:
         return self.initialized
 
     def report(self, recoresult):
-        if not self.initialize():
-            return ReportResult.NothingToReport
+        if self.initialize() == False or self.noop:
+            return ReportResult.NotReported
         logger.info('向企鹅数据汇报掉落')
         if recoresult['stars'] != (True, True, True):
             logger.info('不汇报非三星过关掉落')
@@ -119,27 +126,27 @@ class PenguinStatsReporter:
             logger.info('关卡 %s 目前无除家具外掉落，不进行汇报', code)
             return ReportResult.NothingToReport
 
-        flattenitems = {}
-        groupcount = 0
-        furncount = 0
         itemgroups = recoresult['items']
         exclude_from_validation = []
-        flattenitems4validate = {}
+
+        flattenitems = [(groupname, *item) for groupname, items in itemgroups for item in items]
+        # [('常规掉落', '固源岩', 1), ...]
+
         try:
-            itemgroups = event_preprocess(recoresult['operation'], itemgroups, exclude_from_validation)
+            flattenitems = list(event_preprocess(recoresult['operation'], flattenitems, exclude_from_validation))
         except:
             logger.error('处理活动道具时出错', exc_info=True)
             return ReportResult.NotReported
 
         typeddrops = []
         dropinfos = stage.drop_infos
-        for groupname, items in itemgroups:
+        for itemdef in flattenitems:
+            groupname, name, qty = itemdef
             if groupname == '首次掉落':
                 logger.info('不汇报首次掉落')
                 return ReportResult.NotReported
             if '声望&龙门币奖励' in groupname:
                 continue
-            groupcount += 1
             if groupname == '幸运掉落':
                 typeddrops.append(penguin_client.TypedDrop('FURNITURE', 'furni', 1))
                 continue
@@ -149,29 +156,27 @@ class PenguinStatsReporter:
                 logger.warning("不汇报包含 %s 分组的掉落数据", groupname)
                 return ReportResult.NotReported
 
-            for tup in items:
-                name, qty = tup
-                item = self.item_map.get(name, None)
-                if item is None:
-                    logger.warning("%s 不在企鹅数据物品列表内", name)
-                    return ReportResult.NotReported
-                itemid = item.item_id
-                if not _object_in(exclude_from_validation, tup):
-                    filterresult = [x for x in dropinfos if x.item_id == itemid and x.drop_type == droptype]
-                    if filterresult:
-                        dropinfo4item = filterresult[0]
-                        if not _check_in_bound(dropinfo4item.bounds, qty):
-                            logger.error('物品 %s（%s）数量（%d）不符合企鹅数据验证规则', name, itemid, qty)
-                            return ReportResult.NotReported
-                        typeddrops.append(penguin_client.TypedDrop(droptype, itemid, qty))
-                    else:
-                        logger.warning('物品 %s:%s（%s:%s）× %d 缺少验证规则', groupname, name, droptype, itemid, qty)
+            item = self.item_map.get(name, None)
+            if item is None:
+                logger.warning("%s 不在企鹅数据物品列表内", name)
+                return ReportResult.NotReported
+            itemid = item.item_id
+            if itemdef not in exclude_from_validation:
+                filterresult = [x for x in dropinfos if x.item_id == itemid and x.drop_type == droptype]
+                if filterresult:
+                    dropinfo4item = filterresult[0]
+                    if not _check_in_bound(dropinfo4item.bounds, qty):
+                        logger.error('物品 %s（%s）数量（%d）不符合企鹅数据验证规则', name, itemid, qty)
+                        return ReportResult.NotReported
+                    typeddrops.append(penguin_client.TypedDrop(droptype, itemid, qty))
+                else:
+                    logger.warning('物品 %s:%s（%s:%s）× %d 缺少验证规则', groupname, name, droptype, itemid, qty)
 
         for groupinfo in dropinfos:
              if groupinfo.item_id is None:
                 kinds = sum(1 for x in typeddrops if x.drop_type == groupinfo.drop_type)
                 if not _check_in_bound(groupinfo.bounds, kinds):
-                    logger.error('分组 %s（%s）内物品种类数量（%d）不符合企鹅数据验证规则', groupname, droptype, kinds)
+                    logger.error('分组 %s 内物品种类数量（%d）不符合企鹅数据验证规则', groupinfo.drop_type, kinds)
                     return ReportResult.NotReported
 
         req = penguin_client.SingleReportRequest(

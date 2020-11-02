@@ -40,6 +40,14 @@ def load_data():
     reco = minireco.MiniRecognizer(model, minireco.compare_ccoeff)
     return SimpleNamespace(itemmats=iconmats, num_recognizer=reco, itemmask=itemmask)
 
+@lru_cache()
+def all_known_items():
+    _, files1 = resources.get_entries('items')
+    _, files2 = resources.get_entries('items/archive')
+    _, files3 = resources.get_entries('items/not-loot')
+    files = files1 + files2 + files3
+    return [filename[:-4] if filename.endswith('.png') else filename for filename in files]
+
 
 def tell_item(itemimg, with_quantity=True):
     logger.logimage(itemimg)
