@@ -168,9 +168,9 @@ class PenguinStatsReporter:
                     if not _check_in_bound(dropinfo4item.bounds, qty):
                         logger.error('物品 %s（%s）数量（%d）不符合企鹅数据验证规则', name, itemid, qty)
                         return ReportResult.NotReported
-                    typeddrops.append(penguin_client.TypedDrop(droptype, itemid, qty))
                 else:
                     logger.warning('物品 %s:%s（%s:%s）× %d 缺少验证规则', groupname, name, droptype, itemid, qty)
+            typeddrops.append(penguin_client.TypedDrop(droptype, itemid, qty))
 
         for groupinfo in dropinfos:
              if groupinfo.item_id is None:
