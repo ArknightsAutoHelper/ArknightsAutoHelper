@@ -83,11 +83,17 @@ pip install -r requirements.txt
 
 #### 常见问题
 
+##### ADB server 相关
+
 * 部分模拟器（如 MuMu、BlueStacks）需要自行启动 ADB server。
 * 部分模拟器（如 MuMu）不使用标准模拟器 ADB 端口，ADB server 无法自动探测，需要另行 adb connect。
 * 部分模拟器（如夜神）会频繁使用自带的旧版本 ADB 挤掉用户自行启动的新版 ADB。
 
 可以参阅[配置说明](#额外设置)以配置自动解决以上问题。
+
+##### 其他
+
+* 部分模拟器（如 MuMu 星云引擎）不提供 ADB 接口。
 
 ### **额外设置**
 
