@@ -93,7 +93,7 @@ pip install -r requirements.txt
 
 ##### 其他
 
-* 部分模拟器（如 MuMu 星云引擎）不提供 ADB 接口。
+* 部分非 VMM 模拟器（声称“不需要开启 VT”，如 MuMu 星云引擎）不提供 ADB 接口。
 
 ### **额外设置**
 
