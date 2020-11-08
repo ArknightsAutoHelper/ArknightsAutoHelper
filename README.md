@@ -23,6 +23,9 @@
 ### **安装**
 
 #### 从源代码安装
+
+> ⚠ **不建议从 GitHub 下载 zip 源码包安装**：这样做会丢失版本信息，且不便于后续更新。
+
 ```bash
 git clone https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper
 cd ArknightsAutoHelper
