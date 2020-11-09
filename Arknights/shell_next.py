@@ -69,6 +69,7 @@ def _parse_opt(argv):
                 def op(helper):
                     helper.max_refill_count = num
                 ops.append(op)
+                break
             else:
                 raise ValueError('unrecognized token: %r in option %r' % (c, opts))
     return ops
