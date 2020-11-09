@@ -260,6 +260,8 @@ class ADBConnector:
                 return self.last_screenshot
         rawcap = self.screencap()
         img = _screencap_to_image(rawcap)
+        if img.size[0] < img.size[1]:
+            img = img.rotate(90, expand=True)
         t1 = time.monotonic()
         self.last_screenshot_timestamp = t1
         self.last_screenshot_duration = t1 - t0
