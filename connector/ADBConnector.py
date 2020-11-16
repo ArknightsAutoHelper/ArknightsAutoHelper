@@ -88,6 +88,8 @@ def ensure_adb_alive():
         try:
             logger.debug('trying %r', adbbin)
             subprocess.run([adbbin, 'start-server'], check=True)
+            # wait for the newly started ADB server to probe emulators
+            time.sleep(0.5)
             return True
         except FileNotFoundError:
             pass
