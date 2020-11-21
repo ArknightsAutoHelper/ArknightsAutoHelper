@@ -198,6 +198,10 @@ def interactive(argv):
     import traceback
     helpcmds(interactive_cmds)
     errorlevel = None
+    try:
+        import readline
+    except ImportError:
+        pass
     while True:
         try:
             cmdline = input("akhelper> ")
