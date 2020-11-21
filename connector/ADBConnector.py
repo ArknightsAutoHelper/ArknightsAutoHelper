@@ -260,8 +260,15 @@ class ADBConnector:
         if cached and self.cache_screenshot:
             if self.last_screenshot is not None and t0 - self.last_screenshot_timestamp < self.last_screenshot_duration:
                 return self.last_screenshot
-        rawcap = self.screencap()
-        img = _screencap_to_image(rawcap)
+        for attempt in range(10):
+            try:
+                rawcap = self.screencap()
+                img = _screencap_to_image(rawcap)
+            except Exception as e:
+                continue
+            break
+        else:  # not break
+            raise e
         t1 = time.monotonic()
         self.last_screenshot_timestamp = t1
         self.last_screenshot_duration = t1 - t0
