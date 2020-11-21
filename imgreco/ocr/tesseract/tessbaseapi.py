@@ -43,7 +43,7 @@ if libname:
     tesseract = ctypes.cdll.LoadLibrary(libname)
     TessVersion = cfunc(tesseract, 'TessVersion', ctypes.c_char_p)
     TessBaseAPICreate = cfunc(tesseract, 'TessBaseAPICreate', ctypes.c_void_p)
-    TessBaseAPIInit4 = cfunc(tesseract, 'TessBaseAPIInit4', ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int)
+    TessBaseAPIInit4 = cfunc(tesseract, 'TessBaseAPIInit4', ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int)
     TessBaseAPISetImage = cfunc(tesseract, 'TessBaseAPISetImage', None, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int)
     TessBaseAPIGetHOCRText = cfunc(tesseract, 'TessBaseAPIGetHOCRText', ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int)
     TessDeleteText = cfunc(tesseract, 'TessDeleteText', None, ctypes.c_void_p)
