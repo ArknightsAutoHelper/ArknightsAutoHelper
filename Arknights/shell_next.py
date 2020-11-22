@@ -33,16 +33,19 @@ def delay_impl_factory(helper, statusline, show_toggle):
     return delay_impl
 
 
-def _create_helper(show_toggle=False):
+def _create_helper(use_status_line=True, show_toggle=False):
     from Arknights.helper import ArknightsHelper
     helper = ArknightsHelper()
-
-    io = sys.stdout.buffer
-    if hasattr(io, 'raw'):
-        io = io.raw
-    line = fancywait.StatusLine(io)
-    helper._shellng_with = line
-    helper.delay_impl = delay_impl_factory(helper, line, show_toggle)
+    if use_status_line:
+        io = sys.stdout.buffer
+        if hasattr(io, 'raw'):
+            io = io.raw
+        line = fancywait.StatusLine(io)
+        helper._shellng_context = line
+        helper.delay_impl = delay_impl_factory(helper, line, show_toggle)
+    else:
+        from contextlib import nullcontext
+        helper._shellng_context = nullcontext()
     return helper
 
 def _parse_opt(argv):
@@ -115,10 +118,10 @@ def quick(argv):
         count = int(argv[1])
     else:
         count = 114514
-    helper = _create_helper(True)
+    helper = _create_helper(show_toggle=True)
     for op in ops:
         op(helper)
-    with helper._shellng_with:
+    with helper._shellng_context:
         helper.module_battle_slim(
             c_id=None,
             set_count=count,
@@ -139,10 +142,10 @@ def auto(argv):
     it = iter(arglist)
     tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
 
-    helper = _create_helper(True)
+    helper = _create_helper(show_toggle=True)
     for op in ops:
         op(helper)
-    with helper._shellng_with:
+    with helper._shellng_context:
         helper.main_handler(
             clear_tasks=False,
             task_list=tasks,
@@ -157,7 +160,7 @@ def collect(argv):
         收集每日任务奖励
     """
     helper = _create_helper()
-    with helper._shellng_with:
+    with helper._shellng_context:
         helper.clear_daily_task()
     return 0
 
@@ -173,8 +176,8 @@ def recruit(argv):
         tags = argv[1:]
         result = recruit_calc.calculate(tags)
     elif len(argv) == 1:
-        helper = _create_helper()
-        with helper._shellng_with:
+        helper = _create_helper(use_status_line=False)
+        with helper._shellng_context:
             result = helper.recruit()
     else:
         print('要素过多')
