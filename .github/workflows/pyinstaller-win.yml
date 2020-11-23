@@ -9,10 +9,10 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8 x86
+    - name: Set up Python 3.9 x86
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.9
         architecture: x86
     - name: Install dependencies
       run: |
@@ -27,17 +27,17 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
-        name: akhelper-cp38-win_i686
+        name: akhelper-cp39-win32
         path: dist/akhelper.zip
         
   build-win-amd64:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python 3.8 x86
+    - name: Set up Python 3.9 amd64
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.9
         architecture: x64
     - name: Install dependencies
       run: |
@@ -52,5 +52,5 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
-        name: akhelper-cp38-win_amd64
+        name: akhelper-cp39-win_amd64
         path: dist/akhelper.zip
