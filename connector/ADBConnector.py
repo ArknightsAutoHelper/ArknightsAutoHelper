@@ -1,3 +1,4 @@
+from io import BytesIO
 import os
 import logging.config
 from random import randint
@@ -113,7 +114,10 @@ class ADBConnector:
         self.last_screenshot_duration = 0
         self.last_screenshot = None
 
-        if config.get('device/try_emulator_enhanced_mode', True):
+        if config.get('device/compat_screenshot', True):
+            logger.debug('using compat screencap')
+            self.screencap = self.screencap_png
+        elif config.get('device/try_emulator_enhanced_mode', True):
             loopbacks = self._detect_loopbacks()
             if len(loopbacks):
                 logger.debug('possible loopback addresses: %s', repr(loopbacks))
@@ -229,22 +233,20 @@ class ADBConnector:
         """returns PNG bytes"""
         s = self.device_session_factory().exec_stream('screencap -p')
         data = recvall(s, 4194304)
-        return data
+        return Image.open(BytesIO(data))
 
     def screencap(self):
-        """returns (width, height, pixels)
-        pixels in RGBA/RGBX format"""
+        """returns PIL Image"""
         s = self.device_session_factory().exec_stream('screencap|gzip -1')
         data = recvall(s, 4194304)
         s.close()
         data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
-        return (w, h, data[12:])
+        return _screencap_to_image((w, h, data[12:]))
 
     def _reverse_connection_screencap(self):
-        """returns (width, height, pixels)
-        pixels in RGBA/RGBX format"""
+        """returns PIL Image"""
         future = self.rch.register_cookie()
         with future:
             control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
@@ -253,7 +255,7 @@ class ADBConnector:
                     data = recvall(conn, 8388608, True)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
-        return (w, h, data[12:].tobytes())
+        return _screencap_to_image((w, h, data[12:].tobytes()))
 
     def screenshot(self, cached=True):
         t0 = time.monotonic()
@@ -263,8 +265,7 @@ class ADBConnector:
         exc = None
         for attempt in range(10):
             try:
-                rawcap = self.screencap()
-                img = _screencap_to_image(rawcap)
+                img = self.screencap()
             except Exception as e:
                 exc = e
                 continue

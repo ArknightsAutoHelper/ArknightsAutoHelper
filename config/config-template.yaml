@@ -20,10 +20,13 @@ device:
   adb_auto_connect: 127.0.0.1:5555  # 大部分模拟器
   # adb_auto_connect: 127.0.0.1:7555  # MuMu模拟器
 
+  # 使用兼容性较好（但较慢）的截图方式
+  compat_screenshot: false
+
   # 模拟器内可访问本机端口时，尝试使用模拟器优化模式，加速截图数据传输
   # 模拟器判断逻辑：1. 设备名称以 "emulator-" 或 "127.0.0.1:" 开头
   #                 2. ro.product.board 包含 goldfish（SDK emulator）或存在 vboxguest 模块
-  # PS. 部分模拟器（如 BlueStacks）无需此项优化
+  # PS. 部分模拟器（如 BlueStacks）无需此项优化，此项优化也可能会减慢截图速度
   try_emulator_enhanced_mode: true
 
   # 截图缓存：如果两次截图间隔小于上次截图耗时，则直接返回上次的截图
