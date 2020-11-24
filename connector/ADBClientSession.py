@@ -1,7 +1,10 @@
 import socket
 import struct
+import logging
 
 from util.socketutil import recvexactly, recvall
+
+logger = logging.getLogger(__name__)
 
 def _check_okay(sock):
     result = recvexactly(sock, 4)
@@ -49,11 +52,13 @@ class ADBClientSession:
 
     def connect(self, device):
         resp = self.service('host:connect:%s' % device).read_response().decode(errors='ignore')
+        logger.debug('adb connect %s: %s', device, resp)
         if 'unable' in resp or 'cannot' in resp:
             raise RuntimeError(resp)
 
     def disconnect(self, device):
-        resp = self.service('host:connect:%s' % device).read_response().decode(errors='ignore')
+        resp = self.service('host:disconnect:%s' % device).read_response().decode(errors='ignore')
+        logger.debug('adb disconnect %s: %s', device, resp)
         if 'unable' in resp or 'cannot' in resp:
             raise RuntimeError(resp)
 
