@@ -2,6 +2,7 @@ from io import BytesIO
 import os
 import logging.config
 from random import randint
+from sys import exc_info
 import zlib
 import struct
 import socket
@@ -9,11 +10,13 @@ import time
 import contextlib
 
 from PIL import Image
+import numpy as np
+import cv2
 
 import config
 # from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
 from .ADBClientSession import ADBClientSession
-from util.socketutil import recvall
+from util.socketutil import recvall, recvexactly
 from . import revconn
 
 # from numpy import average, dot, linalg
@@ -21,9 +24,22 @@ from . import revconn
 logger = logging.getLogger(__name__)
 
 
-def _screencap_to_image(cap):
+def _screencap_to_image(cap, rotate=0):
     w, h, pixels = cap
-    return Image.frombytes('RGBA', (w, h), pixels)
+    mem = memoryview(pixels)
+    arr = np.frombuffer(mem, dtype=np.uint8)
+    arr = arr.reshape((h, w, 4))
+    if rotate == 0:
+        pass
+    elif rotate == 90:
+        arr = cv2.rotate(arr, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    elif rotate == 180:
+        arr = cv2.rotate(arr, cv2.ROTATE_180)
+    elif rotate == 270:
+        arr = cv2.rotate(arr, cv2.ROTATE_90_CLOCKWISE)
+    else:
+        raise ValueError('invalid rotate')
+    return Image.fromarray(arr, 'RGBA')
 
 
 def _ensure_pil_image(imgorfile):
@@ -99,6 +115,80 @@ def ensure_adb_alive():
     raise OSError("can't start adb server")
 
 
+class _ScreenCapImplPNG:
+    def __init__(self, device_session_factory, rotate):
+        self.device_session_factory = device_session_factory
+        self.screenshot_rotate = rotate
+
+    def check(self):
+        return self.screencap().size
+    
+    def screencap(self):
+        s = self.device_session_factory().exec_stream('screencap -p')
+        data = recvall(s, 4194304, True)
+        img = Image.open(BytesIO(data))
+        if self.screenshot_rotate != 0:
+            img = img.rotate(self.screenshot_rotate)
+        return img
+    
+    __call__ = screencap
+
+class _ScreenCapImplDefault:
+    def __init__(self, device_session_factory, rotate):
+        self.device_session_factory = device_session_factory
+        self.screenshot_rotate = rotate
+
+    def check(self):
+        A_gz = self.device_session_factory().exec('echo A | gzip -1')
+        if zlib.decompress(A_gz, zlib.MAX_WBITS | 16, 32) != b'A\n':
+            raise RuntimeError("gzip -1 in device cannot produce desired output")
+        s = self.device_session_factory().exec_stream('screencap')
+        data = recvexactly(s, 12)
+        s.close()
+        w, h, f = struct.unpack_from('III', data, 0)
+        assert (f == 1)
+        return w, h
+
+    def screencap(self):
+        s = self.device_session_factory().exec_stream('screencap|gzip -1')
+        data = recvall(s, 4194304)
+        s.close()
+        data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
+        w, h, f = struct.unpack_from('III', data, 0)
+        assert (f == 1)
+        return _screencap_to_image((w, h, data[12:]), self.screenshot_rotate)
+
+    __call__ = screencap
+
+class _ScreenCapImplReverseLoopback:
+    def __init__(self, device_session_factory, rotate, rch, loopback):
+        self.device_session_factory = device_session_factory
+        self.screenshot_rotate = rotate
+        self.loopback = loopback
+        self.rch = rch
+
+    def check(self):
+        future = self.rch.register_cookie()
+        with future:
+            control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
+            with control_sock, future.get() as conn:
+                data = recvexactly(conn, 12)
+        w, h, f = struct.unpack_from('III', data, 0)
+        assert (f == 1)
+        return w, h
+
+    def screencap(self):
+        future = self.rch.register_cookie()
+        with future:
+            control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
+            with control_sock, future.get() as conn:
+                data = recvall(conn, 8388608, True)
+        w, h, f = struct.unpack_from('III', data, 0)
+        assert (f == 1)
+        return _screencap_to_image((w, h, data[12:]), self.screenshot_rotate)
+
+    __call__ = screencap
+
 class ADBConnector:
     def __init__(self, adb_serial=None):
         # os.chdir(ADB_ROOT)
@@ -113,27 +203,25 @@ class ADBConnector:
         self.last_screenshot_timestamp = 0
         self.last_screenshot_duration = 0
         self.last_screenshot = None
-
-        if config.get('device/compat_screenshot', True):
-            logger.debug('using compat screencap')
-            self.screencap = self.screencap_png
-        elif config.get('device/try_emulator_enhanced_mode', True):
-            loopbacks = self._detect_loopbacks()
-            if len(loopbacks):
-                logger.debug('possible loopback addresses: %s', repr(loopbacks))
-                self.rch = revconn.ReverseConnectionHost()
-                self.rch.start()
-                if self._test_reverse_connection(loopbacks):
-                    logger.info('正在使用模拟器优化模式')
-                    self.screencap = self._reverse_connection_screencap
-                else:
-                    self.rch.stop()
-        else:
-            self.loopback = None
+        self.screencap_impl = None
+        self.screen_size = (0, 0)
+        self.device_identifier = self.get_device_identifier()
+        self.config_key = 'adb-%s' % self.device_identifier
+        self.screenshot_rotate = 0
+        logger.debug('device identifier: %s', self.device_identifier)
+        self.load_device_config()
 
     def __del__(self):
         if self.rch and self.rch.is_alive():
             self.rch.stop()
+
+    def get_device_identifier(self):
+        hostname = self.device_session_factory().exec('getprop net.hostname').decode().strip()
+        if hostname:
+            return hostname
+        android_id = self.device_session_factory().exec('settings get secure android_id').decode().strip()
+        if android_id:
+            return android_id
 
     def __adb_device_name_detector(self):
         devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
@@ -229,33 +317,11 @@ class ADBConnector:
                             return True
         return False
 
-    def screencap_png(self):
-        """returns PNG bytes"""
-        s = self.device_session_factory().exec_stream('screencap -p')
-        data = recvall(s, 4194304)
-        return Image.open(BytesIO(data))
-
-    def screencap(self):
-        """returns PIL Image"""
-        s = self.device_session_factory().exec_stream('screencap|gzip -1')
-        data = recvall(s, 4194304)
-        s.close()
-        data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
-        w, h, f = struct.unpack_from('III', data, 0)
-        assert (f == 1)
-        return _screencap_to_image((w, h, data[12:]))
-
-    def _reverse_connection_screencap(self):
-        """returns PIL Image"""
-        future = self.rch.register_cookie()
-        with future:
-            control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
-            with control_sock:
-                with future.get() as conn:
-                    data = recvall(conn, 8388608, True)
-        w, h, f = struct.unpack_from('III', data, 0)
-        assert (f == 1)
-        return _screencap_to_image((w, h, data[12:].tobytes()))
+    def _init_reverse_connection(self):
+        if self.rch is not None:
+            return
+        self.rch = revconn.ReverseConnectionHost()
+        self.rch.start()
 
     def screenshot(self, cached=True):
         t0 = time.monotonic()
@@ -265,7 +331,7 @@ class ADBConnector:
         exc = None
         for attempt in range(10):
             try:
-                img = self.screencap()
+                img = self.screencap_impl()
             except Exception as e:
                 exc = e
                 continue
@@ -302,3 +368,99 @@ class ADBConnector:
         command = "input tap {} {}".format(final_X,
                                            final_Y)
         self.run_device_cmd(command)
+
+    def load_device_config(self):
+        import config.device_database
+        
+        device_record = config.device_database.get_device(self.config_key)
+        if device_record.is_new_record():
+            self._probe_device_config(device_record)
+            return
+
+        logger.debug('using device-specific config in database')
+
+        if 'screenshot_rotate' in device_record:
+            self.screenshot_rotate = int(device_record['screenshot_rotate'])
+            if self.screenshot_rotate % 90 != 0:
+                raise ValueError("invalid screenshot_rotate value")
+
+        screenshot_impl = device_record.get('screenshot_type', 'default')
+        if screenshot_impl == 'safe':
+            self.screencap_impl = _ScreenCapImplPNG(self.device_session_factory, self.screenshot_rotate)
+        elif screenshot_impl == 'loopback' and 'loopback_address' in device_record:
+            self._init_reverse_connection()
+            self.loopback = device_record['loopback_address']
+            self.screencap_impl = _ScreenCapImplReverseLoopback(self.device_session_factory, self.screenshot_rotate, self.rch, self.loopback)
+        elif screenshot_impl == 'default':
+            self.screencap_impl = _ScreenCapImplDefault(self.device_session_factory, self.screenshot_rotate)
+        else:
+            raise KeyError("unknown screenshot_type: %s" % screenshot_impl)
+
+        try:
+            width, height = self.screencap_impl.check()
+        except:
+            logger.error("device sanity check with information in database failed", exc_info=True)
+            self._probe_device_config(device_record)
+        else:
+            if width != device_record.get('screen_width', 0) or height != device_record.get('screen_height', 0):
+                logger.debug('screen size changed, reprobing device %s', self.device_identifier)
+                self._probe_device_config(device_record)
+            else:
+                self.screen_size = (width, height)
+
+
+
+    def _probe_device_config(self, device_record):
+        time_gzipped_raw = 999
+        time_reverse_loopback = 999
+        screenshot = None
+        workaround_slow_emulator_adb = config.get('device/workaround_slow_emulator_adb', 'auto')
+
+        if 'screenshot_rotate' not in device_record:
+            device_record['screenshot_rotate'] = 0
+
+        try:
+            default_impl = _ScreenCapImplDefault(self.device_session_factory, device_record['screenshot_rotate'])
+            device_record['screenshot_type'] = 'default'
+            self.screencap_impl = default_impl
+            t0 = time.monotonic()
+            screenshot = default_impl.screencap()
+            t1 = time.monotonic()
+            time_gzipped_raw = t1 - t0
+            logger.debug('gzipped raw screencap: %dx%d image in %.02f secs ', screenshot.width, screenshot.height, time_gzipped_raw)
+        except:
+            logger.debug('gzipped raw screencap failed, using fail-safe PNG screencap')
+            png_impl = _ScreenCapImplPNG(self.device_session_factory, device_record['screenshot_rotate'])
+            screenshot = png_impl.screencap()
+            logger.debug('PNG screencap: %dx%d image in %.03f secs', screenshot.width, screenshot.height, time_gzipped_raw)
+            self.screencap_impl = png_impl
+            device_record['screenshot_type'] = 'safe'
+            workaround_slow_emulator_adb = 'never'
+        
+        if workaround_slow_emulator_adb == 'auto' or workaround_slow_emulator_adb == 'always':
+            loopbacks = self._detect_loopbacks()
+            if len(loopbacks):
+                logger.debug('possible loopback addresses: %s', repr(loopbacks))
+                self._init_reverse_connection()
+                if self._test_reverse_connection(loopbacks):
+                    loopback_impl = _ScreenCapImplReverseLoopback(self.device_session_factory, device_record['screenshot_rotate'], self.rch, self.loopback)
+                    t0 = time.monotonic()
+                    screenshot = loopback_impl.screencap()
+                    t1 = time.monotonic()
+                    time_reverse_loopback = t1 - t0
+                    logger.debug('reverse connection raw screencap: %dx%d image in %.03f secs', screenshot.width, screenshot.height, time_gzipped_raw)
+                    if workaround_slow_emulator_adb == 'always' or time_reverse_loopback < time_gzipped_raw:
+                        device_record['screenshot_type'] = 'loopback'
+                        device_record['loopback_address'] = self.loopback
+                        self.screencap_impl = loopback_impl
+                else:
+                    self.rch.stop()
+
+        device_record['screen_width'] = screenshot.width
+        device_record['screen_height'] = screenshot.height
+        device_record.save()
+
+        self.screen_size = (screenshot.width, screenshot.height)
+
+    def ensure_alive(self):
+        self.device_session_factory().exec(':')

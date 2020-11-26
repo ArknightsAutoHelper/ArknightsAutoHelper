@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "$id": "https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/config/device-config.schema.json",
+  "type": "object",
+  "patternProperties": {
+    "^adb-": {
+      "type": "object",
+      "properties": {
+        "screenshot_type": {"type": "string", "enum": ["default", "safe", "loopback"]},
+        "screen_width": {"type": "integer"},
+        "screen_height": {"type": "integer"},
+        "loopback_address": {"type": "string"},
+        "screenshot_rotate": {
+          "type": "integer",
+          "enum": [0, 90, 180, 270],
+          "description": "截图需要逆时针旋转的角度"
+        }
+      },
+      "dependencies": {
+        "loopback_address": {
+          "properties": {"screenshot_type": {"const": "loopback"}}
+        }
+      }
+    }
+  }
+}

@@ -5,6 +5,7 @@ from typing import Callable
 from dataclasses import dataclass
 from random import randint, uniform, gauss
 from time import sleep, monotonic
+from fractions import Fraction
 
 import coloredlogs
 import numpy as np
@@ -58,7 +59,7 @@ class ArknightsHelper(object):
         self.__is_game_active = False
         self.__call_by_gui = call_by_gui
         self.is_called_by_gui = call_by_gui
-        self.viewport = self.adb.screenshot().size
+        self.viewport = self.adb.screen_size
         self.operation_time = []
         self.delay_impl = sleep
         if DEBUG_LEVEL >= 1:
@@ -72,6 +73,16 @@ class ArknightsHelper(object):
             self.penguin_reporter = penguin_stats.reporter.PenguinStatsReporter()
         self.refill_count = 0
         self.max_refill_count = None
+        if Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
+            logger.warn('当前分辨率（%dx%d）不符合要求', self.viewport[0], self.viewport[1])
+            if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
+                logger.info('屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度')
+                img = self.adb.screenshot()
+                imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
+                img.save(imgfile)
+                import json
+                logger.info('参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]', imgfile, json.dumps(self.adb.config_key))
+
         logger.debug("成功初始化模块")
 
     def __print_info(self):

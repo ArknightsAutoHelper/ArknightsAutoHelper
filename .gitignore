@@ -118,6 +118,7 @@ start2.py
 log/*
 
 config/config.yaml
+config/device-config.json
 .vs
 .vscode
 
