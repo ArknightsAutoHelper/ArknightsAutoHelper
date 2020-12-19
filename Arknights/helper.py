@@ -82,6 +82,7 @@ class ArknightsHelper(object):
                 img.save(imgfile)
                 import json
                 logger.info('参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]', imgfile, json.dumps(self.adb.config_key))
+                self.viewport = (self.viewport[1], self.viewport[0])
 
         logger.debug("成功初始化模块")
 
