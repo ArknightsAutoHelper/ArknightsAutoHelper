@@ -232,7 +232,7 @@ class ADBConnector:
                     with contextlib.suppress(RuntimeError):
                         self.host_session_factory().disconnect(x[0])
 
-    def panaroid_connect(self, port, timeout=0):
+    def paranoid_connect(self, port, timeout=0):
         with contextlib.suppress(RuntimeError):
             self.host_session_factory().disconnect(port)
         host_session = self.host_session_factory()

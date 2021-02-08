@@ -113,7 +113,7 @@ if availiable:
                         if policy.get("InternalPort", None) == 5555:
                             port = policy['ExternalPort']
                             logger.info("found bluestacks hyperv adb port %s", port)
-                            connector.panaroid_connect('127.0.0.1:%d' % port)
+                            connector.paranoid_connect('127.0.0.1:%d' % port)
                             result = True
         return result
 else:

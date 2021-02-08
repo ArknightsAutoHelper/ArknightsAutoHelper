@@ -14,7 +14,7 @@ def run(connector, params):
     for target in targets:
         try:
             logger.info('尝试连接 %s', target)
-            connector.panaroid_connect(target, timeout=0.5)
+            connector.paranoid_connect(target, timeout=0.5)
             result = True
             if not tryall:
                 break
