@@ -16,9 +16,15 @@ device:
   # 始终选择指定设备进行操作（指定 adb devices 中列出的名称）
   # adb_always_use_device:
 
-  # 无设备连接时，自动 adb connect 此端口
-  adb_auto_connect: 127.0.0.1:5555  # 大部分模拟器
-  # adb_auto_connect: 127.0.0.1:7555  # MuMu模拟器
+  # 无设备连接时进行的操作
+  # 如果某个操作报告成功，则不再执行后续定义的操作
+  adb_no_device_fixups:
+  - run: probe_bluestacks_hyperv  # 自动探测并连接 BlueStacks Hyper-V 的 ADB 端口
+  - run: adb_connect  # 连接 ADB TCP/IP 端口
+    target: 
+      - 127.0.0.1:5555  # 大部分模拟器
+      - 127.0.0.1:7555  # MuMu模拟器
+    try_all: false  # 某个端口连接成功后，是否继续尝试后续定义的端口
 
   # 使用兼容性较好（但较慢）的截图方式
   compat_screenshot: false

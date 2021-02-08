@@ -8,6 +8,8 @@ import struct
 import socket
 import time
 import contextlib
+import importlib
+import collections.abc
 
 from PIL import Image
 import numpy as np
@@ -223,20 +225,51 @@ class ADBConnector:
         if android_id:
             return android_id
 
+    def disconnect_offline(self):
+        with contextlib.suppress(RuntimeError):
+            for x in self.host_session_factory().devices():
+                if x[1] == 'offline':
+                    with contextlib.suppress(RuntimeError):
+                        self.host_session_factory().disconnect(x[0])
+
+    def panaroid_connect(self, port, timeout=0):
+        with contextlib.suppress(RuntimeError):
+            self.host_session_factory().disconnect(port)
+        host_session = self.host_session_factory()
+        if timeout != 0:
+            host_session.sock.settimeout(timeout)
+        host_session.connect(port)
+
     def __adb_device_name_detector(self):
         devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
 
         if len(devices) == 0:
-            auto_connect = config.get('device/adb_auto_connect', None)
-            if auto_connect is not None:
-                logger.info('没有已连接设备，尝试连接 %s', auto_connect)
-                with contextlib.suppress(RuntimeError):
-                    self.host_session_factory().disconnect(auto_connect)
-                for x in self.host_session_factory().devices():
-                    if x[1] == 'offline':
-                        with contextlib.suppress(RuntimeError):
-                            self.host_session_factory().disconnect(x[0])
-                self.host_session_factory().connect(auto_connect)
+            fixups = config.get('device/adb_no_device_fixups', [])
+
+            # old config migration
+            if autoconn := config.get('device/adb_auto_connect', None):
+                fixups.append(dict(run='adb_connect', target=autoconn))
+
+            if fixups:
+                logger.info('无设备连接，尝试自动修复')
+                self.disconnect_offline()
+                for fixup in fixups:
+                    if isinstance(fixup, collections.abc.Mapping):
+                        name = fixup['run']
+                        if not name.isidentifier():
+                            logger.error('无效修复模块名称 %r', name)
+                            continue
+                        try:
+                            logger.info('运行修复模块 %s', name)
+                            module = importlib.import_module('..fixups.' + name, __name__)
+                            if module.run(self, fixup):
+                                logger.info('自动修复成功')
+                                break
+                        except ModuleNotFoundError:
+                            logger.error('无效修复模块名称 %s', name)
+                        except Exception:
+                            logger.error('自动修复模块 %s 发生错误', name)
+                            logger.debug('', exc_info=True)
             else:
                 raise RuntimeError('找不到可用设备')
 
