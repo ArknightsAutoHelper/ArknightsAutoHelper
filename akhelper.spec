@@ -6,14 +6,14 @@ import sys
 
 if not hasattr(sys, '_using_makepackage'):
     print('NOTE: use packaging/makepackage.py to build package.')
-    input('press Enter to continue')
+    input('press Enter to continue anyway')
 
 sys.modules['FixTk'] = None
 
 a = Analysis(['akhelper.py'],
              pathex=['D:\\projects\\ArknightsAutoHelper'],
              binaries=[],
-             datas=[('resources.zip', '.'), ('config/config-template.yaml', 'config'), ('config/device-config.schema.json', 'config'), ('config/logging.yaml', 'config'), ('LICENSE', '.'), ('README.md', '.')],
+             datas=[('resources.zip', '.'), ('config/config-template.yaml', 'config'), ('config/device-config.schema.json', 'config'), ('config/logging.yaml', 'config'), ('LICENSE', '.'), ('README.md', '.'), ('ADB', '.')],
              hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr', 'connector.fixups.adb_connect', 'connector.fixups.probe_bluestacks_hyperv'],
              hookspath=[],
              runtime_hooks=[],
