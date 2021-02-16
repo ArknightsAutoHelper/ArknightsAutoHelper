@@ -598,6 +598,37 @@ class ArknightsHelper(object):
                     break
             screenshot = self.adb.screenshot()
         logger.info("奖励已领取完毕")
+        
+    def clear_weekly_task(self):
+        logger.debug("helper.clear_weekly_task")
+        logger.info("领取每周任务")
+        self.back_to_main()
+        screenshot = self.adb.screenshot()
+        logger.info('进入任务界面')
+        self.tap_quadrilateral(imgreco.main.get_task_corners(screenshot))
+        self.__wait(SMALL_WAIT)
+        screenshot = self.adb.screenshot()
+        hasbeginner = imgreco.task.check_beginners_task(screenshot)
+        logger.info('切换到每周任务') #默认进入见习任务或每日任务，因此无需检测，直接切换即可
+        
+        self.tap_rect(imgreco.task.get_weekly_task_rect(screenshot, hasbeginner))
+        self.__wait(TINY_WAIT)
+        screenshot = self.adb.screenshot()
+        while imgreco.task.check_collectable_reward(screenshot):
+            logger.info('完成任务')
+            self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
+            self.__wait(SMALL_WAIT)
+            while True:
+                screenshot = self.adb.screenshot()
+                if imgreco.common.check_get_item_popup(screenshot):
+                    logger.info('领取奖励')
+                    self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
+                    self.__wait(SMALL_WAIT)
+                else:
+                    break
+            screenshot = self.adb.screenshot()
+        logger.info("奖励已领取完毕")
+
 
 
     def recruit(self):
