@@ -157,11 +157,12 @@ def auto(argv):
 def collect(argv):
     """
     collect
-        收集每日任务奖励
+        收集每日任务和每周任务奖励
     """
     helper = _create_helper()
     with helper._shellng_context:
         helper.clear_daily_task()
+        helper.clear_weekly_task()
     return 0
 
 
