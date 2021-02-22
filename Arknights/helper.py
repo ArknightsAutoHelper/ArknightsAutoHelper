@@ -51,17 +51,6 @@ def format_recoresult(recoresult):
     return result
 
 
-def _get_first_digit(s):
-    try:
-        return int(re.search(r'\d+', s).group())
-    except:
-        return 10000 + sum(bytearray(s))
-
-
-def _sort_tag_split(tag_splits):
-    return sorted(tag_splits, key=lambda x: _get_first_digit(x))
-
-
 class ArknightsHelper(object):
     def __init__(self,
                  current_strength=None,  # 当前理智
@@ -543,10 +532,10 @@ class ArknightsHelper(object):
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("helper.module_battle")
-        if stage_path.is_stage_supported(c_id):
-            self.goto_stage(c_id)
-        elif config.get('behavior/use_ocr_goto_stage'):
+        if config.get('behavior/use_ocr_goto_stage', False) and stage_path.is_stage_supported_ocr(c_id):
             self.goto_stage_by_ocr(c_id)
+        elif stage_path.is_stage_supported(c_id):
+            self.goto_stage(c_id)
         else:
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
@@ -565,8 +554,8 @@ class ArknightsHelper(object):
             logger.fatal("任务清单为空!")
 
         for c_id, count in task_list:
-            if not stage_path.is_stage_supported(c_id):
-                raise ValueError(c_id)
+            # if not stage_path.is_stage_supported(c_id):
+            #     raise ValueError(c_id)
             logger.info("开始 %s", c_id)
             flag = self.module_battle(c_id, count)
 
@@ -676,9 +665,6 @@ class ArknightsHelper(object):
                 raise KeyError((target, partition))
 
     def find_and_tap_stage_by_ocr(self, partition, target):
-        if partition == 'ep08':
-            logger.error('不支持第八章地图')
-            raise RuntimeError('recognition failed')
         target = target.upper()
         while True:
             screenshot = self.adb.screenshot()
@@ -690,31 +676,23 @@ class ArknightsHelper(object):
                 self.adb.touch_tap(pos, offsets=(5, 5))
                 self.__wait(3)
                 return
-            # FIXME 这个移动算法只能识别屏幕中有相同前缀的关卡, 这也是为什么不支持第八章的原因
-            tag_prefix_map = {}
-            for tag in tags_map.keys():
-                tag_split = tag.split('-', 1)
-                tag_prefix = tag_split[0]
-                if tag_prefix_map.get(tag_prefix) is None:
-                    tag_prefix_map[tag_prefix] = [tag_split[1]]
-                else:
-                    tag_prefix_map[tag_prefix].append(tag_split[1])
-            target_split = target.split('-', 1)
-            target_prefix = target_split[0]
-            if target_prefix not in tag_prefix_map.keys():
-                logger.error('未能定位关卡地图')
-                raise RuntimeError('recognition failed')
+            from resources.imgreco.map_vectors import stage_maps_linear
+            partition_map = stage_maps_linear[partition]
+            target_index = partition_map.index(target)
+            known_indices = [partition_map.index(x) for x in tags_map.keys() if x in partition_map]
 
             originX = self.viewport[0] // 2 + randint(-100, 100)
             originY = self.viewport[1] // 2 + randint(-100, 100)
             move = randint(self.viewport[0] // 4, self.viewport[0] // 3)
 
-            tags = _sort_tag_split(tag_prefix_map[target_prefix])
-            if _get_first_digit(target_split[1]) < _get_first_digit(tags[0]):
+            if all(x > target_index for x in known_indices):
                 logger.info('目标在可视区域左侧，向右拖动')
-            else:
+            elif all(x < target_index for x in known_indices):
                 move = -move
                 logger.info('目标在可视区域右侧，向左拖动')
+            else:
+                logger.error('未能定位关卡地图')
+                raise RuntimeError('recognition failed')
             self.adb.touch_swipe2((originX, originY), (move, max(250, move // 2)))
             self.__wait(3)
 
