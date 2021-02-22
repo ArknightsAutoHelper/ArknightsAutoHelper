@@ -34,7 +34,7 @@ def initialize():
     episodes['ep06'] = episodes['ep05'] + vec(497, 0)
     episodes['ep07'] = episodes['ep06'] + vec(497, 0)
     stage_maps['episodes'] = episodes
-    map_anchors['episodes'] = ['ep00', 'ep02', 'ep04', 'ep06']
+    map_anchors['episodes'] = list(episodes.keys())
 
 
     # partition "ep01"

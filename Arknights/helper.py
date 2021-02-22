@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import logging
 from typing import Callable
@@ -13,6 +14,7 @@ import numpy as np
 import config
 import imgreco
 import imgreco.imgops
+import imgreco.stage_svm_ocr
 import penguin_stats.reporter
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from . import stage_path
@@ -47,6 +49,18 @@ def format_recoresult(recoresult):
     if result is None:
         result = '<发生错误>'
     return result
+
+
+def _get_first_digit(s):
+    try:
+        return int(re.search(r'\d+', s).group())
+    except:
+        return 10000 + sum(bytearray(s))
+
+
+def _sort_tag_split(tag_splits):
+    return sorted(tag_splits, key=lambda x: _get_first_digit(x))
+
 
 class ArknightsHelper(object):
     def __init__(self,
@@ -529,7 +543,13 @@ class ArknightsHelper(object):
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("helper.module_battle")
-        self.goto_stage(c_id)
+        if stage_path.is_stage_supported(c_id):
+            self.goto_stage(c_id)
+        elif config.get('behavior/use_ocr_goto_stage'):
+            self.goto_stage_by_ocr(c_id)
+        else:
+            logger.error('不支持的关卡：%s', c_id)
+            raise ValueError(c_id)
         self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
@@ -655,6 +675,49 @@ class ArknightsHelper(object):
             else:
                 raise KeyError((target, partition))
 
+    def find_and_tap_stage_by_ocr(self, partition, target):
+        if partition == 'ep08':
+            logger.error('不支持第八章地图')
+            raise RuntimeError('recognition failed')
+        target = target.upper()
+        while True:
+            screenshot = self.adb.screenshot()
+            tags_map = imgreco.stage_svm_ocr.recognize_all_screen_stage_tags(screenshot)
+            logger.debug('tags map: ' + repr(tags_map))
+            pos = tags_map.get(target)
+            if pos:
+                logger.info('目标在可视区域内，点击')
+                self.adb.touch_tap(pos, offsets=(5, 5))
+                self.__wait(3)
+                return
+            # FIXME 这个移动算法只能识别屏幕中有相同前缀的关卡, 这也是为什么不支持第八章的原因
+            tag_prefix_map = {}
+            for tag in tags_map.keys():
+                tag_split = tag.split('-', 1)
+                tag_prefix = tag_split[0]
+                if tag_prefix_map.get(tag_prefix) is None:
+                    tag_prefix_map[tag_prefix] = [tag_split[1]]
+                else:
+                    tag_prefix_map[tag_prefix].append(tag_split[1])
+            target_split = target.split('-', 1)
+            target_prefix = target_split[0]
+            if target_prefix not in tag_prefix_map.keys():
+                logger.error('未能定位关卡地图')
+                raise RuntimeError('recognition failed')
+
+            originX = self.viewport[0] // 2 + randint(-100, 100)
+            originY = self.viewport[1] // 2 + randint(-100, 100)
+            move = randint(self.viewport[0] // 4, self.viewport[0] // 3)
+
+            tags = _sort_tag_split(tag_prefix_map[target_prefix])
+            if _get_first_digit(target_split[1]) < _get_first_digit(tags[0]):
+                logger.info('目标在可视区域左侧，向右拖动')
+            else:
+                move = -move
+                logger.info('目标在可视区域右侧，向左拖动')
+            self.adb.touch_swipe2((originX, originY), (move, max(250, move // 2)))
+            self.__wait(3)
+
     def find_and_tap_daily(self, partition, target, *, recursion=0):
         screenshot = self.adb.screenshot()
         recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
@@ -686,6 +749,23 @@ class ArknightsHelper(object):
         if path[0] == 'main':
             self.find_and_tap('episodes', path[1])
             self.find_and_tap(path[1], path[2])
+        elif path[0] == 'material' or path[0] == 'soc':
+            logger.info('选择类别')
+            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
+            self.find_and_tap_daily(path[0], path[1])
+            self.find_and_tap(path[1], path[2])
+        else:
+            raise NotImplementedError()
+
+    def goto_stage_by_ocr(self, stage):
+        path = stage_path.get_stage_path(stage)
+        self.back_to_main()
+        logger.info('进入作战')
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
+        self.__wait(SMALL_WAIT)
+        if path[0] == 'main':
+            self.find_and_tap('episodes', path[1])
+            self.find_and_tap_stage_by_ocr(path[1], path[2])
         elif path[0] == 'material' or path[0] == 'soc':
             logger.info('选择类别')
             self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
