@@ -79,12 +79,14 @@ class PenguinStatsReporter:
     def initialize(self):
         if self.initialized is not None:
             return self.initialized
+        """
         if config.version == 'UNKNOWN':
             logger.warn('无法获取程序版本，请通过 git clone 下载源代码')
             logger.warn('为避免产生统计偏差，已禁用汇报功能')
             self.noop = True
             self.initialized = False
             return True
+        """
         try:
             logger.info('载入企鹅数据资源...')
             stageapi = penguin_client.StageApi(self.client)
