@@ -1,8 +1,9 @@
 import numpy
+from typing import Dict, List
 
 stage_maps = {}
 map_anchors = {}
-stage_maps_linear: dict[str, list[str]] = {}
+stage_maps_linear: Dict[str, List[str]] = {}
 _invalid_stages = []
 
 def vec(*scalars, dtype=numpy.int32):
