@@ -566,7 +566,7 @@ class ArknightsHelper(object):
                 if clear_tasks:
                     self.clear_daily_task()
                 logger.info("所有模块执行完毕... 60s后退出")
-                self.__wait(20)
+                self.__wait(60)
                 self.__del()
         else:
             if self.__call_by_gui or auto_close is False:
