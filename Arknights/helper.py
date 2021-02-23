@@ -553,7 +553,7 @@ class ArknightsHelper(object):
         if len(task_list) == 0:
             logger.fatal("任务清单为空!")
 
-        for c_id, count in task_list:
+        for c_id, count in task_list.items():
             # if not stage_path.is_stage_supported(c_id):
             #     raise ValueError(c_id)
             logger.info("开始 %s", c_id)
