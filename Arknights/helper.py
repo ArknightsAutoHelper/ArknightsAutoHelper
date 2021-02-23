@@ -532,6 +532,7 @@ class ArknightsHelper(object):
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("helper.module_battle")
+        c_id = c_id.upper()
         if config.get('behavior/use_ocr_goto_stage', False) and stage_path.is_stage_supported_ocr(c_id):
             self.goto_stage_by_ocr(c_id)
         elif stage_path.is_stage_supported(c_id):
