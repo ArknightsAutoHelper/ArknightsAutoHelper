@@ -14,7 +14,6 @@ import numpy as np
 import config
 import imgreco
 import imgreco.imgops
-import imgreco.stage_svm_ocr
 import penguin_stats.reporter
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from . import stage_path
@@ -666,6 +665,7 @@ class ArknightsHelper(object):
                 raise KeyError((target, partition))
 
     def find_and_tap_stage_by_ocr(self, partition, target):
+        import imgreco.stage_svm_ocr
         target = target.upper()
         while True:
             screenshot = self.adb.screenshot()
