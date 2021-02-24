@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import logging
 from typing import Callable
@@ -13,6 +14,7 @@ import numpy as np
 import config
 import imgreco
 import imgreco.imgops
+import imgreco.stage_svm_ocr
 import penguin_stats.reporter
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from . import stage_path
@@ -47,6 +49,7 @@ def format_recoresult(recoresult):
     if result is None:
         result = '<发生错误>'
     return result
+
 
 class ArknightsHelper(object):
     def __init__(self,
@@ -529,7 +532,14 @@ class ArknightsHelper(object):
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("helper.module_battle")
-        self.goto_stage(c_id)
+        c_id = c_id.upper()
+        if config.get('behavior/use_ocr_goto_stage', False) and stage_path.is_stage_supported_ocr(c_id):
+            self.goto_stage_by_ocr(c_id)
+        elif stage_path.is_stage_supported(c_id):
+            self.goto_stage(c_id)
+        else:
+            logger.error('不支持的关卡：%s', c_id)
+            raise ValueError(c_id)
         self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
@@ -544,9 +554,9 @@ class ArknightsHelper(object):
         if len(task_list) == 0:
             logger.fatal("任务清单为空!")
 
-        for c_id, count in task_list:
-            if not stage_path.is_stage_supported(c_id):
-                raise ValueError(c_id)
+        for c_id, count in task_list.items():
+            # if not stage_path.is_stage_supported(c_id):
+            #     raise ValueError(c_id)
             logger.info("开始 %s", c_id)
             flag = self.module_battle(c_id, count)
 
@@ -686,6 +696,38 @@ class ArknightsHelper(object):
             else:
                 raise KeyError((target, partition))
 
+    def find_and_tap_stage_by_ocr(self, partition, target):
+        target = target.upper()
+        while True:
+            screenshot = self.adb.screenshot()
+            tags_map = imgreco.stage_svm_ocr.recognize_all_screen_stage_tags(screenshot)
+            logger.debug('tags map: ' + repr(tags_map))
+            pos = tags_map.get(target)
+            if pos:
+                logger.info('目标在可视区域内，点击')
+                self.adb.touch_tap(pos, offsets=(5, 5))
+                self.__wait(3)
+                return
+            from resources.imgreco.map_vectors import stage_maps_linear
+            partition_map = stage_maps_linear[partition]
+            target_index = partition_map.index(target)
+            known_indices = [partition_map.index(x) for x in tags_map.keys() if x in partition_map]
+
+            originX = self.viewport[0] // 2 + randint(-100, 100)
+            originY = self.viewport[1] // 2 + randint(-100, 100)
+            move = randint(self.viewport[0] // 4, self.viewport[0] // 3)
+
+            if all(x > target_index for x in known_indices):
+                logger.info('目标在可视区域左侧，向右拖动')
+            elif all(x < target_index for x in known_indices):
+                move = -move
+                logger.info('目标在可视区域右侧，向左拖动')
+            else:
+                logger.error('未能定位关卡地图')
+                raise RuntimeError('recognition failed')
+            self.adb.touch_swipe2((originX, originY), (move, max(250, move // 2)))
+            self.__wait(3)
+
     def find_and_tap_daily(self, partition, target, *, recursion=0):
         screenshot = self.adb.screenshot()
         recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
@@ -717,6 +759,23 @@ class ArknightsHelper(object):
         if path[0] == 'main':
             self.find_and_tap('episodes', path[1])
             self.find_and_tap(path[1], path[2])
+        elif path[0] == 'material' or path[0] == 'soc':
+            logger.info('选择类别')
+            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
+            self.find_and_tap_daily(path[0], path[1])
+            self.find_and_tap(path[1], path[2])
+        else:
+            raise NotImplementedError()
+
+    def goto_stage_by_ocr(self, stage):
+        path = stage_path.get_stage_path(stage)
+        self.back_to_main()
+        logger.info('进入作战')
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
+        self.__wait(SMALL_WAIT)
+        if path[0] == 'main':
+            self.find_and_tap('episodes', path[1])
+            self.find_and_tap_stage_by_ocr(path[1], path[2])
         elif path[0] == 'material' or path[0] == 'soc':
             logger.info('选择类别')
             self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
