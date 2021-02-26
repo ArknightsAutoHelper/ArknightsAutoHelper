@@ -473,6 +473,8 @@ class ArknightsHelper(object):
 
     def back_to_main(self):  # 回到主页
         logger.info("正在返回主页")
+        retry_count = 0
+        max_retry = 3
         while True:
             screenshot = self.adb.screenshot()
 
@@ -524,8 +526,9 @@ class ArknightsHelper(object):
                 self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
                 self.__wait(1)
                 continue
-
-            raise RuntimeError('未知画面')
+            retry_count += 1
+            if retry_count > max_retry:
+                raise RuntimeError('未知画面')
         logger.info("已回到主页")
 
     def module_battle(self,  # 完整的战斗模块
