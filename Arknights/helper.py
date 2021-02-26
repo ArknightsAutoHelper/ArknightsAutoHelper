@@ -226,9 +226,10 @@ class ArknightsHelper(object):
         if not sub:
             logger.info("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
-            return True
+            return c_id, 0
         self.operation_time = []
         count = 0
+        remain = 0
         try:
             for count in range(set_count):
                 # logger.info("开始第 %d 次战斗", count + 1)
@@ -242,9 +243,9 @@ class ArknightsHelper(object):
                         self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
         except StopIteration:
             logger.error('未能进行第 %d 次作战', count + 1)
-            remain = set_count - count - 1
-            if remain > 0:
-                logger.error('已忽略余下的 %d 次战斗', remain)
+            remain = set_count - count
+            if remain - 1 > 0:
+                logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
         if not sub:
             if auto_close:
@@ -253,10 +254,10 @@ class ArknightsHelper(object):
                 self.__del()
             else:
                 logger.info("简略模块{}结束".format(c_id))
-                return True
+                return c_id, remain
         else:
             logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
-            return True
+            return c_id, remain
 
     def can_perform_refill(self):
         if not self.use_refill:
@@ -539,11 +540,10 @@ class ArknightsHelper(object):
         else:
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
-        self.module_battle_slim(c_id,
+        return self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
                                 sub=True)
-        return True
 
     def main_handler(self, task_list, clear_tasks=False, auto_close=True):
 
@@ -774,7 +774,7 @@ class ArknightsHelper(object):
             building_count = building_count + 1
             logger.info('访问第 %s 位好友', building_count)
         logger.info('信赖领取完毕')
-    
+
     def get_building(self):
         logger.debug("helper.get_building")
         logger.info("清空基建")
