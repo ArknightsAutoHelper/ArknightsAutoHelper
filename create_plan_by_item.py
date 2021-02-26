@@ -1,5 +1,6 @@
 from penguin_stats import arkplanner
 import json
+import math
 
 
 if __name__ == '__main__':
@@ -18,24 +19,26 @@ if __name__ == '__main__':
     required = {}
     while True:
         # s = '2/1'
-        s = input('材料序号/需求数量(输入 q 结束):')
-        if s.strip() == 'q':
+        s = input('材料序号/需求数量(输入为空时结束):')
+        if s.strip() == '':
             break
         a = s.strip().split('/')
-        required[a[0]] = int(a[1])
+        material = material_index_map[int(a[0])]
+        required[material['itemId']] = int(a[1])
     # required = {'30125': 1}
     # todo 检查已有的数量
     owns = {}
     print('正在获取刷图计划...')
     plan = arkplanner.get_plan(required, owns)
-    print('正在获取关卡信息...')
     main_stage_map = arkplanner.get_main_stage_map()
     stage_task_list = []
+    print(plan)
     print('刷图计划:')
     for stage in plan['stages']:
         stage_info = main_stage_map[stage['stage']]
-        print('关卡 [%s] 次数 %s' % (stage_info['code'], stage['count']))
-        stage_task_list.append({'stage': stage_info['code'], 'count': int(stage['count'])})
+        count = math.ceil(float(stage['count']))
+        print('关卡 [%s] 次数 %s' % (stage_info['code'], count))
+        stage_task_list.append({'stage': stage_info['code'], 'count': count})
     print('预计消耗理智:', plan['cost'])
     save_data = {
         'required': required,
