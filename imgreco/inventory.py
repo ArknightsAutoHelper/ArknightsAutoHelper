@@ -9,7 +9,15 @@ from util.richlog import get_logger
 
 logger = get_logger(__name__)
 
-ark_material_net = cv2.dnn.readNetFromONNX('resources/imgreco/inventory/ark_material.onnx')
+
+def _load_net():
+    with resources.open_file('resources/imgreco/inventory/ark_material.onnx') as f:
+        data = f.read()
+        net = cv2.dnn.readNetFromONNX(data)
+        return net
+
+
+ark_material_net = _load_net()
 
 
 def _load_index():
