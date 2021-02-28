@@ -79,6 +79,7 @@ def get_plan(required, owned, extra_outc=False, exp_demand=False, gold_demand=Tr
         'output_lang': output_lang,
         'server': server
     }
+    print(post_data)
     resp = requests.post(url, json=post_data)
     return resp.json()
 

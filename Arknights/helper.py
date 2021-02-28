@@ -815,3 +815,30 @@ class ArknightsHelper(object):
 
     def log_total_loots(self):
         logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
+
+    def get_inventory_items(self):
+        import imgreco.inventory
+
+        self.back_to_main()
+        logger.info("进入仓库")
+        self.tap_rect(imgreco.inventory.get_inventory_rect(self.viewport))
+
+        items_map = {}
+        last_screen_items = None
+        while True:
+            screenshot = self.adb.screenshot()
+            screen_items_map = imgreco.inventory.get_all_item_in_screen(screenshot)
+            if last_screen_items == screen_items_map.keys():
+                logger.info("读取完毕")
+                break
+            logger.info('screen_items_map: %s' % screen_items_map)
+            last_screen_items = screen_items_map.keys()
+            items_map.update(screen_items_map)
+            # break
+            origin_x = self.viewport[0] // 2 + randint(-100, 100)
+            origin_y = self.viewport[1] // 2 + randint(-100, 100)
+            move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
+            self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)))
+            self.__wait(5)
+
+        return items_map
