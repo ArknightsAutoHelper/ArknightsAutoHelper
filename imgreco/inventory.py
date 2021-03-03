@@ -5,6 +5,7 @@ from PIL import Image
 from . import resources
 import json
 from util.richlog import get_logger
+from math import ceil, floor
 
 logger = get_logger(__name__)
 
@@ -35,32 +36,65 @@ def convert_pil_screen(pil_screen):
     ratio = 720 / img_h
     if ratio != 1:
         ratio = 720 / img_h
-        cv_screen = cv2.resize(pil_screen, (int(img_w * ratio), 720))
+        cv_screen = cv2.resize(cv_screen, (int(img_w * ratio), 720))
     return cv_screen
 
 
 def get_all_item_img_in_screen(pil_screen):
     cv_screen = convert_pil_screen(pil_screen)
     gray_screen = cv2.cvtColor(cv_screen, cv2.COLOR_BGR2GRAY)
-    circles = get_circles(gray_screen)
+    blur_screen = cv2.GaussianBlur(gray_screen, (0, 0), sigmaX=1, sigmaY=1)
+    dbg_screen = cv_screen.copy()
+    circles : np.ndarray = get_circles(blur_screen)
     img_h, img_w = cv_screen.shape[:2]
     if circles is None:
         return []
     res = []
-    for c in circles:
-        x, y, box_size = int(c[0] - int(c[2] * 2.4) // 2), int(c[1] - int(c[2] * 2.4) // 2), int(c[2] * 2.4)
-        if x > 0 and x + box_size < img_w:
-            # cv2.rectangle(cv_screen, (x, y), (x + box_size, y + box_size), (7, 249, 151), 3)
-            cv_item_img = cv_screen[y:y + box_size, x:x + box_size, :]
-            cv_item_img2 = crop_item_middle_img(cv_item_img, c[2])
-            num_img = crop_number_img(cv_item_img, c[2])
-            # item_img = crop_item_img(cv_screen, gray_screen, c)
-            res.append({'item_img': cv_item_img, 'num_img': num_img, 'middle_img': cv_item_img2})
+    # circle size 128x128
+    item_circle_radius = 64
+    itemreco_box_size = 142        # dimension that compatible with imgreco.item
+    item_dx = 156                  # delta X of two items in inventory
+    center_ys = [191, 381, 570.5]  # center Y of items
+    xs = circles[:, 0]
+    xs.sort()
+    dxs = np.diff(xs)
+    center_xs = np.asarray([np.median(x) for x in np.split(xs, np.where(dxs>140)[0]+1)])
+    calautated_offsets = (center_xs - (item_dx / 2)) % item_dx
+    offset_x = int(np.median(calautated_offsets))
+
+    while offset_x < img_w:
+        cv2.line(dbg_screen, (offset_x, 0), (offset_x, img_h-1), (255,0,0), 1)
+        center_x = offset_x + item_dx / 2
+        xf = center_x - itemreco_box_size/2
+        x = int(xf)
+        x2 = x + itemreco_box_size
+        if x2 < img_w:
+            for y in center_ys:
+                yf = y - itemreco_box_size/2
+                y = int(yf)
+                cv_item_img = cv_screen[y:y+itemreco_box_size, x:x+itemreco_box_size]
+                # filter non-item block
+                gray_img = cv2.cvtColor(cv_item_img, cv2.COLOR_BGR2GRAY)
+                canny_img = cv2.Canny(gray_img, 60, 180)
+                if np.sum(canny_img) < 200:
+                    continue
+                cv_item_img2 = crop_item_middle_img(cv_item_img, 64)
+                # use original size for better quantity recognition
+                ratio = img_h / pil_screen.height
+                original_item_img = pil_screen.crop((int(xf / ratio), int(yf / ratio), int((xf+itemreco_box_size)/ratio), int((yf+itemreco_box_size)/ratio)))
+                numimg = imgops.scalecrop(original_item_img, 0.39, 0.71, 0.82, 0.84).convert('L')
+                res.append({'item_img': cv_item_img, 'num_img': numimg, 'middle_img': cv_item_img2})
+                cv2.rectangle(dbg_screen, (x, y), (x+itemreco_box_size, y+itemreco_box_size), (255,0,0), 2)
+        offset_x += item_dx
+    for x, y, r in circles:
+        cv2.circle(dbg_screen, (x, y), int(r), (0, 0, 255), 2)
+
+    logger.logimage(convert_to_pil(dbg_screen))
     return res
 
 
-def get_circles(gray_img, min_radius=55, max_radius=65):
-    circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, 1, 100, param1=50,
+def get_circles(gray_img, min_radius=56, max_radius=68):
+    circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, 1, 100, param1=128,
                                param2=30, minRadius=min_radius, maxRadius=max_radius)
     return circles[0]
 
@@ -74,17 +108,6 @@ def crop_item_middle_img(cv_item_img, radius):
     x1 = int(ox - (32 * ratio))
     x2 = int(ox + (32 * ratio))
     return cv2.resize(cv_item_img[y1:y2, x1:x2], (64, 64))
-
-
-def crop_number_img(cv_item_img, radius):
-    img_h, img_w = cv_item_img.shape[:2]
-    ox, oy = img_w // 2, img_h // 2
-    ratio = radius / 60
-    y1 = int(oy + (28 * ratio))
-    y2 = int(oy + (54 * ratio))
-    x1 = int(ox - (20 * ratio))
-    x2 = int(ox + (46 * ratio))
-    return cv_item_img[y1:y2, x1:x2]
 
 
 def show_img(cv_img):
@@ -104,13 +127,8 @@ def get_item_id(cv_img):
 
 
 def get_quantity(num_img):
-    logger.logimage(convert_to_pil(num_img))
-    threshold = cv2.cvtColor(num_img, cv2.COLOR_BGR2GRAY)
-    threshold = cv2.threshold(threshold, 170, 255, cv2.THRESH_BINARY)[1]
-    remove_holes(threshold)
-    logger.logimage(convert_to_pil(threshold))
-    numimg = convert_to_pil(threshold)
-    numimg = imgops.crop_blackedge2(numimg, 120)
+    logger.logimage(num_img)
+    numimg = imgops.crop_blackedge2(num_img, 120)
 
     if numimg is not None:
         numimg = imgops.clear_background(numimg, 120)
