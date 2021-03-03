@@ -166,18 +166,20 @@ class ArknightsHelper(object):
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True):
+    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
         if crop is None:
-            shooter = lambda: self.adb.screenshot()
+            shooter = lambda: self.adb.screenshot(False)
         else:
-            shooter = lambda: self.adb.screenshot().crop(crop)
+            shooter = lambda: self.adb.screenshot(False).crop(crop)
         screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
         n = 0
         minerr = 65025
-        while time.monotonic() < ts:
-            self.__wait(1)
+        message_shown = False
+        while (t1 := time.monotonic()) < ts:
+            if check_delay > 0:
+                self.__wait(check_delay, False)
             screenshot2 = shooter()
             mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
             if mse <= threshold:
@@ -185,8 +187,7 @@ class ArknightsHelper(object):
             screenshot = screenshot2
             if mse < minerr:
                 minerr = mse
-            n += 1
-            if n == 9:
+            if not message_shown and t1-t0 > 10:
                 logger.info("等待画面静止")
         if raise_for_timeout:
             raise RuntimeError("%d 秒内画面未静止，最小误差=%d，阈值=%d" % (timeout, minerr, threshold))
@@ -226,9 +227,10 @@ class ArknightsHelper(object):
         if not sub:
             logger.info("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
-            return True
+            return c_id, 0
         self.operation_time = []
         count = 0
+        remain = 0
         try:
             for count in range(set_count):
                 # logger.info("开始第 %d 次战斗", count + 1)
@@ -242,9 +244,9 @@ class ArknightsHelper(object):
                         self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
         except StopIteration:
             logger.error('未能进行第 %d 次作战', count + 1)
-            remain = set_count - count - 1
-            if remain > 0:
-                logger.error('已忽略余下的 %d 次战斗', remain)
+            remain = set_count - count
+            if remain - 1 > 0:
+                logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
         if not sub:
             if auto_close:
@@ -253,10 +255,10 @@ class ArknightsHelper(object):
                 self.__del()
             else:
                 logger.info("简略模块{}结束".format(c_id))
-                return True
+                return c_id, remain
         else:
             logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
-            return True
+            return c_id, remain
 
     def can_perform_refill(self):
         if not self.use_refill:
@@ -472,6 +474,8 @@ class ArknightsHelper(object):
 
     def back_to_main(self):  # 回到主页
         logger.info("正在返回主页")
+        retry_count = 0
+        max_retry = 3
         while True:
             screenshot = self.adb.screenshot()
 
@@ -523,8 +527,9 @@ class ArknightsHelper(object):
                 self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
                 self.__wait(1)
                 continue
-
-            raise RuntimeError('未知画面')
+            retry_count += 1
+            if retry_count > max_retry:
+                raise RuntimeError('未知画面')
         logger.info("已回到主页")
 
     def module_battle(self,  # 完整的战斗模块
@@ -539,11 +544,10 @@ class ArknightsHelper(object):
         else:
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
-        self.module_battle_slim(c_id,
+        return self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
                                 sub=True)
-        return True
 
     def main_handler(self, task_list, clear_tasks=False, auto_close=True):
 
@@ -774,7 +778,7 @@ class ArknightsHelper(object):
             building_count = building_count + 1
             logger.info('访问第 %s 位好友', building_count)
         logger.info('信赖领取完毕')
-    
+
     def get_building(self):
         logger.debug("helper.get_building")
         logger.info("清空基建")
@@ -812,3 +816,30 @@ class ArknightsHelper(object):
 
     def log_total_loots(self):
         logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
+
+    def get_inventory_items(self):
+        import imgreco.inventory
+
+        self.back_to_main()
+        logger.info("进入仓库")
+        self.tap_rect(imgreco.inventory.get_inventory_rect(self.viewport))
+
+        items_map = {}
+        last_screen_items = None
+        screenshot = self.adb.screenshot()
+        while True:
+            screen_items_map = imgreco.inventory.get_all_item_in_screen(screenshot)
+            if last_screen_items == screen_items_map.keys():
+                logger.info("读取完毕")
+                break
+            logger.info('screen_items_map: %s' % screen_items_map)
+            last_screen_items = screen_items_map.keys()
+            items_map.update(screen_items_map)
+            # break
+            origin_x = self.viewport[0] // 2 + randint(-100, 100)
+            origin_y = self.viewport[1] // 2 + randint(-100, 100)
+            move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
+            self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
+            screenshot = self.wait_for_still_image(check_delay=0)
+
+        return items_map

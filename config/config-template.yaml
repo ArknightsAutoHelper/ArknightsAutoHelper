@@ -83,3 +83,16 @@ behavior:
 
   # 启用 ocr 前往关卡
   use_ocr_goto_stage: false
+
+plan:
+  # 刷图计划执行完毕后，用剩余理智刷这个关卡
+#  idle_stage: '1-7'
+
+  # 刷 idle_stage 理智不足时自动使用理智回复道具
+  # 免责声明：可能存在识别错误导致碎石，开发者对此不负任何责任
+  refill_ap_with_item: true
+
+  # 刷 idle_stage 理智不足时自动碎石
+  # 如需使用，请将大写字母改为小写
+  REFILL_AP_WITH_ORIGINIUM: false
+

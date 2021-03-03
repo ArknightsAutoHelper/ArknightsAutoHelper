@@ -253,6 +253,7 @@ class ADBConnector:
             if fixups:
                 logger.info('无设备连接，尝试自动修复')
                 self.disconnect_offline()
+                fixup_flag = False
                 for fixup in fixups:
                     if isinstance(fixup, collections.abc.Mapping):
                         name = fixup['run']
@@ -264,12 +265,15 @@ class ADBConnector:
                             module = importlib.import_module('..fixups.' + name, __name__)
                             if module.run(self, fixup):
                                 logger.info('自动修复成功')
+                                fixup_flag = True
                                 break
                         except ModuleNotFoundError:
                             logger.error('无效修复模块名称 %s', name)
                         except Exception:
                             logger.error('自动修复模块 %s 发生错误', name)
                             logger.debug('', exc_info=True)
+                if fixup_flag:
+                    time.sleep(1)
             else:
                 raise RuntimeError('找不到可用设备')
 
