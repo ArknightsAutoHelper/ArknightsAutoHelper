@@ -166,18 +166,20 @@ class ArknightsHelper(object):
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True):
+    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
         if crop is None:
-            shooter = lambda: self.adb.screenshot()
+            shooter = lambda: self.adb.screenshot(False)
         else:
-            shooter = lambda: self.adb.screenshot().crop(crop)
+            shooter = lambda: self.adb.screenshot(False).crop(crop)
         screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
         n = 0
         minerr = 65025
-        while time.monotonic() < ts:
-            self.__wait(1)
+        message_shown = False
+        while (t1 := time.monotonic()) < ts:
+            if check_delay > 0:
+                self.__wait(check_delay, False)
             screenshot2 = shooter()
             mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
             if mse <= threshold:
@@ -185,8 +187,7 @@ class ArknightsHelper(object):
             screenshot = screenshot2
             if mse < minerr:
                 minerr = mse
-            n += 1
-            if n == 9:
+            if not message_shown and t1-t0 > 10:
                 logger.info("等待画面静止")
         if raise_for_timeout:
             raise RuntimeError("%d 秒内画面未静止，最小误差=%d，阈值=%d" % (timeout, minerr, threshold))
@@ -825,8 +826,8 @@ class ArknightsHelper(object):
 
         items_map = {}
         last_screen_items = None
+        screenshot = self.adb.screenshot()
         while True:
-            screenshot = self.adb.screenshot()
             screen_items_map = imgreco.inventory.get_all_item_in_screen(screenshot)
             if last_screen_items == screen_items_map.keys():
                 logger.info("读取完毕")
@@ -838,7 +839,7 @@ class ArknightsHelper(object):
             origin_x = self.viewport[0] // 2 + randint(-100, 100)
             origin_y = self.viewport[1] // 2 + randint(-100, 100)
             move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
-            self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)))
-            self.__wait(5)
+            self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
+            screenshot = self.wait_for_still_image(check_delay=0)
 
         return items_map
