@@ -382,6 +382,7 @@ class ArknightsHelper(object):
                         logger.info('以 2 星结算关卡')
                         self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
                         self.__wait(2)
+                        smobj.stop = True
                         return
                     else:
                         logger.info('放弃关卡')
@@ -389,7 +390,9 @@ class ArknightsHelper(object):
                         # 关闭失败提示
                         self.wait_for_still_image()
                         self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(screenshot))
+                        # FIXME: 理智返还
                         self.__wait(1)
+                        smobj.stop = True
                         return
                 elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
                     logger.info('发现放弃行动提示，关闭')
