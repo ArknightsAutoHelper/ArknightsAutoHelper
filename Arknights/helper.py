@@ -568,7 +568,7 @@ class ArknightsHelper(object):
                 logger.info("所有模块执行完毕")
             else:
                 if clear_tasks:
-                    self.clear_daily_task()
+                    self.clear_task()
                 logger.info("所有模块执行完毕... 60s后退出")
                 self.__wait(60)
                 self.__del()
@@ -580,8 +580,8 @@ class ArknightsHelper(object):
                 self.__wait(60)
                 self.__del()
 
-    def clear_daily_task(self):
-        logger.debug("helper.clear_daily_task")
+    def clear_task(self):
+        logger.debug("helper.clear_task")
         logger.info("领取每日任务")
         self.back_to_main()
         screenshot = self.adb.screenshot()
@@ -596,22 +596,23 @@ class ArknightsHelper(object):
             self.tap_rect(imgreco.task.get_daily_task_rect(screenshot, hasbeginner))
             self.__wait(TINY_WAIT)
             screenshot = self.adb.screenshot()
+        self.clear_task_worker()
+        logger.info('切换到每周任务') #默认进入见习任务或每日任务，因此无需检测，直接切换即可
+        self.tap_rect(imgreco.task.get_weekly_task_rect(screenshot, hasbeginner))
+        self.clear_task_worker()
 
-        while imgreco.task.check_collectable_reward(screenshot):
-            logger.info('完成任务')
+    def clear_task_worker(self):
+        screenshot = self.adb.screenshot()
+        kickoff = True
+        while True:
+            if imgreco.common.check_nav_button(screenshot) and not imgreco.task.check_collectable_reward(screenshot):
+                logger.info("奖励已领取完毕")
+                break
+            if kickoff:
+                logger.info('开始领取奖励')
+                kickoff = False
             self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
-            self.__wait(SMALL_WAIT)
-            while True:
-                screenshot = self.adb.screenshot()
-                if imgreco.common.check_get_item_popup(screenshot):
-                    logger.info('领取奖励')
-                    self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
-                    self.__wait(SMALL_WAIT)
-                else:
-                    break
-            screenshot = self.adb.screenshot()
-        logger.info("奖励已领取完毕")
-
+            screenshot = self.adb.screenshot(cached=False)
 
     def recruit(self):
         from . import recruit_calc

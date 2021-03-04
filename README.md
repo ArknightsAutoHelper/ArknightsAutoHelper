@@ -131,7 +131,7 @@ commands (prefix abbreviation accepted):
     auto [+-rR[N]] stage1 count1 [stage2 count2] ...
         按顺序挑战指定关卡特定次数直到理智不足
     collect
-        收集每日任务奖励
+        收集每日任务和每周任务奖励
     recruit [tags ...]
         公开招募识别/计算，不指定标签则从截图中识别
     interactive
