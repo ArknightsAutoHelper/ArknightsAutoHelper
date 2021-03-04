@@ -51,16 +51,9 @@ def format_recoresult(recoresult):
 
 
 class ArknightsHelper(object):
-    def __init__(self,
-                 current_strength=None,  # 当前理智
-                 adb_host=None,  # 当前绑定到的设备
-                 out_put=True,  # 是否有命令行输出
-                 call_by_gui=False):  # 是否为从 GUI 程序调用
+    def __init__(self, adb_host=None):  # 当前绑定到的设备
         ensure_adb_alive()
         self.adb = ADBConnector(adb_serial=adb_host)
-        self.__is_game_active = False
-        self.__call_by_gui = call_by_gui
-        self.is_called_by_gui = call_by_gui
         self.viewport = self.adb.screen_size
         self.operation_time = []
         self.delay_impl = sleep
@@ -117,13 +110,11 @@ class ArknightsHelper(object):
         logger.debug("正在尝试启动游戏")
         logger.debug(current)
         if config.ArkNights_PACKAGE_NAME in current:
-            self.__is_game_active = True
             logger.debug("游戏已启动")
         else:
             self.adb.run_device_cmd(
                 "am start -n {}/{}".format(config.ArkNights_PACKAGE_NAME, config.ArkNights_ACTIVITY_NAME))
             logger.debug("成功启动游戏")
-            self.__is_game_active = True
 
     def __wait(self, n=10,  # 等待时间中值
                MANLIKE_FLAG=True):  # 是否在此基础上设偏移量
@@ -224,8 +215,6 @@ class ArknightsHelper(object):
             if "sub" in kwargs else False
         auto_close = kwargs["auto_close"] \
             if "auto_close" in kwargs else False
-        if not sub:
-            logger.info("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
             return c_id, 0
         self.operation_time = []
@@ -248,17 +237,8 @@ class ArknightsHelper(object):
             if remain - 1 > 0:
                 logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
-        if not sub:
-            if auto_close:
-                logger.info("简略模块{}结束，系统准备退出".format(c_id))
-                self.__wait(120, False)
-                self.__del()
-            else:
-                logger.info("简略模块{}结束".format(c_id))
-                return c_id, remain
-        else:
-            logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
-            return c_id, remain
+        return c_id, remain
+
 
     def can_perform_refill(self):
         if not self.use_refill:
@@ -550,10 +530,6 @@ class ArknightsHelper(object):
                                 sub=True)
 
     def main_handler(self, task_list, clear_tasks=False, auto_close=True):
-
-        logger.info("装载模块...")
-        logger.info("战斗模块...启动")
-        flag = False
         if len(task_list) == 0:
             logger.fatal("任务清单为空!")
 
@@ -563,22 +539,7 @@ class ArknightsHelper(object):
             logger.info("开始 %s", c_id)
             flag = self.module_battle(c_id, count)
 
-        if flag:
-            if self.__call_by_gui or auto_close is False:
-                logger.info("所有模块执行完毕")
-            else:
-                if clear_tasks:
-                    self.clear_task()
-                logger.info("所有模块执行完毕... 60s后退出")
-                self.__wait(60)
-                self.__del()
-        else:
-            if self.__call_by_gui or auto_close is False:
-                logger.error("发生未知错误... 进程已结束")
-            else:
-                logger.error("发生未知错误... 60s后退出")
-                self.__wait(60)
-                self.__del()
+        logger.info("任务清单执行完毕")
 
     def clear_task(self):
         logger.debug("helper.clear_task")
