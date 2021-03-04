@@ -94,7 +94,7 @@ class ArknightsShell():
                     task_list=self.task_list.items()
                 )
             if self.options.clear_daily:
-                Ark.clear_daily_task()
+                Ark.clear_task()
                 
             if self.options.get_credit:
                 Ark.get_credit()

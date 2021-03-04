@@ -161,8 +161,7 @@ def collect(argv):
     """
     helper = _create_helper()
     with helper._shellng_context:
-        helper.clear_daily_task()
-        helper.clear_weekly_task()
+        helper.clear_task()
     return 0
 
 
