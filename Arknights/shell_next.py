@@ -35,7 +35,8 @@ def delay_impl_factory(helper, statusline, show_toggle):
 
 def _create_helper(use_status_line=True, show_toggle=False):
     from Arknights.helper import ArknightsHelper
-    helper = ArknightsHelper()
+    _ensure_device()
+    helper = ArknightsHelper(device_connector=device)
     if use_status_line:
         io = sys.stdout.buffer
         if hasattr(io, 'raw'):
@@ -104,6 +105,53 @@ def _alarm_context_factory():
         return BellAlarmContext()
     return AlarmContext()
 
+
+device = None
+
+
+def connect(argv):
+    """
+    connect [connector type] [connector args ...]
+        连接到设备
+        支持的设备类型：
+        connect adb [serial or tcpip endpoint]
+    """
+    connector_type = 'adb'
+    if len(argv) > 1:
+        connector_type = argv[1]
+        connector_args = argv[2:]
+    else:
+        connector_args = []
+    if connector_type == 'adb':
+        _connect_adb(connector_args)
+    else:
+        print('unknown connector type:', connector_type)
+
+
+def _connect_adb(args):
+    from connector.ADBConnector import ADBConnector, ensure_adb_alive
+    ensure_adb_alive()
+    global device
+    if len(args) == 0:
+        device = ADBConnector()
+    else:
+        serial = args[0]
+        try:
+            device = ADBConnector(serial)
+        except RuntimeError as e:
+            if e.args and isinstance(e.args[0], bytes) and b'not found' in e.args[0]:
+                if ':' in serial and serial.split(':')[-1].isdigit():
+                    print('adb connect', serial)
+                    ADBConnector.paranoid_connect(serial)
+                    device = ADBConnector(serial)
+                    return
+            raise
+
+
+def _ensure_device():
+    if device is None:
+        connect(['connect'])
+    device.ensure_alive()
 
 def quick(argv):
     """
@@ -207,7 +255,11 @@ def interactive(argv):
         pass
     while True:
         try:
-            cmdline = input("akhelper> ")
+            if device is None:
+                prompt = "akhelper> "
+            else:
+                prompt = "akhelper %s> " % str(device)
+            cmdline = input(prompt)
             argv = shlex.split(cmdline)
             if len(argv) == 0 or argv[0] == '?' or argv[0] == 'help':
                 print(' '.join(x.__name__ for x in interactive_cmds))
@@ -254,7 +306,7 @@ def exit(argv):
 
 
 global_cmds = [quick, auto, collect, recruit, interactive, help]
-interactive_cmds = [quick, auto, collect, recruit, exit]
+interactive_cmds = [connect, quick, auto, collect, recruit, exit]
 
 def match_cmd(first, avail_cmds):
     targetcmd = [x for x in avail_cmds if x.__name__.startswith(first)]

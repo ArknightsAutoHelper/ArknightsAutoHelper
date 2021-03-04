@@ -191,12 +191,14 @@ class _ScreenCapImplReverseLoopback:
 
     __call__ = screencap
 
+_host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
+
 class ADBConnector:
     def __init__(self, adb_serial=None):
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = config.ADB_ROOT
         self.adb_serial = adb_serial
-        self.host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
+        self.host_session_factory = _host_session_factory
         self.rch = None
         if self.adb_serial is None:
             self.adb_serial = self.__adb_device_name_detector()
@@ -217,6 +219,9 @@ class ADBConnector:
         if self.rch and self.rch.is_alive():
             self.rch.stop()
 
+    def __str__(self):
+        return 'adb:'+self.adb_serial
+
     def get_device_identifier(self):
         hostname = self.device_session_factory().exec('getprop net.hostname').decode().strip()
         if hostname:
@@ -232,10 +237,11 @@ class ADBConnector:
                     with contextlib.suppress(RuntimeError):
                         self.host_session_factory().disconnect(x[0])
 
-    def paranoid_connect(self, port, timeout=0):
+    @classmethod
+    def paranoid_connect(cls, port, timeout=0):
         with contextlib.suppress(RuntimeError):
-            self.host_session_factory().disconnect(port)
-        host_session = self.host_session_factory()
+            _host_session_factory().disconnect(port)
+        host_session = _host_session_factory()
         if timeout != 0:
             host_session.sock.settimeout(timeout)
         host_session.connect(port)

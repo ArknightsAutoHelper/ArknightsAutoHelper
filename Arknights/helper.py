@@ -51,9 +51,12 @@ def format_recoresult(recoresult):
 
 
 class ArknightsHelper(object):
-    def __init__(self, adb_host=None):  # 当前绑定到的设备
+    def __init__(self, adb_host=None, device_connector=None):  # 当前绑定到的设备
         ensure_adb_alive()
-        self.adb = ADBConnector(adb_serial=adb_host)
+        if device_connector is not None:
+            self.adb = device_connector
+        else:
+            self.adb = ADBConnector(adb_serial=adb_host)
         self.viewport = self.adb.screen_size
         self.operation_time = []
         self.delay_impl = sleep
