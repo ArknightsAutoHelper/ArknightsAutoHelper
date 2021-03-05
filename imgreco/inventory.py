@@ -128,7 +128,9 @@ def get_item_id(cv_img):
 
 def get_quantity(num_img):
     logger.logimage(num_img)
-    numimg = imgops.crop_blackedge2(num_img, 120)
+    x_threshold = int(num_img.height * 0.33)
+    numimg = imgops.crop_blackedge2(num_img, 150, x_threshold)
+    logger.logimage(numimg)
 
     if numimg is not None:
         numimg = imgops.clear_background(numimg, 120)
