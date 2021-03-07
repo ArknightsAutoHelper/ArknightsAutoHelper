@@ -13,12 +13,12 @@ if __name__ == '__main__':
 
 ### create_custom_record 参数说明
 
-> record_name 记录名称
-> roi_size 截图大小, 默认 64
-> wait_seconds_after_touch 执行点击后等待的时间, 默认 1
-> description 记录描述, 默认无
-> back_to_main 是否在执行记录前返回主界面, 默认 true
-> prefer_mode 点击使用的默认模式, match_template 目标匹配模式, point 坐标模式, 默认 match_template
+ - record_name 记录名称
+ - roi_size 截图大小, 默认 64
+ - wait_seconds_after_touch 执行点击后等待的时间, 默认 1
+ - description 记录描述, 默认无
+ - back_to_main 是否在执行记录前返回主界面, 默认 true
+ - prefer_mode 点击使用的默认模式, match_template 目标匹配模式, point 坐标模式, 默认 match_template
 
 生成的记录保存在 `custom_record` 下相应的文件夹中.
 
