@@ -3,7 +3,7 @@ import numpy as np
 from . import resources
 
 
-# 目前可以识别的字符: ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S', 'T', 'W', 'X']
+# 目前可以识别的字符: ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'W', 'X']
 def _load_svm():
     with resources.open_file('resources/imgreco/stage_ocr/svm_data.dat') as f:
         ydoc = f.read().decode('utf-8')

@@ -113,7 +113,10 @@ screenshot/*
 start.py
 storage/1.txt
 storage/package.txt
-start2.py
+test*.py
+start*.py
+exec-start*.bat
+*_cache.json
 
 log/*
 
