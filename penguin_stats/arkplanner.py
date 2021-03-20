@@ -41,6 +41,10 @@ def get_all_items():
     return load_cache()['items']
 
 
+def get_all_items_map():
+    return {x['itemId']: x for x in get_all_items()}
+
+
 def get_all_stages():
     return load_cache()['stages']
 
@@ -82,6 +86,16 @@ def get_plan(required, owned, extra_outc=False, exp_demand=False, gold_demand=Tr
     print(post_data)
     resp = requests.post(url, json=post_data)
     return resp.json()
+
+
+def cvt_to_item_name_map(item_map):
+    all_item_map = {x['itemId']: x for x in get_all_items()}
+    res = {}
+    for k in item_map.keys():
+        info = all_item_map.get(k)
+        if info:
+            res[info['name']] = item_map[k]
+    return res
 
 
 if __name__ == '__main__':

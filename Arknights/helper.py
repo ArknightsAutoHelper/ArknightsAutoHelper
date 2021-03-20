@@ -788,8 +788,12 @@ class ArknightsHelper(object):
     def log_total_loots(self):
         logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
 
-    def get_inventory_items(self):
+    def get_inventory_items(self, show_item_name=False):
         import imgreco.inventory
+        all_items_map = {}
+        if show_item_name:
+            import penguin_stats.arkplanner
+            all_items_map = penguin_stats.arkplanner.get_all_items_map()
 
         self.back_to_main()
         logger.info("进入仓库")
@@ -797,23 +801,33 @@ class ArknightsHelper(object):
 
         items_map = {}
         last_screen_items = None
+        move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
+        self.__swipe_screen(move)
         screenshot = self.adb.screenshot()
         while True:
+            move = -randint(self.viewport[0] // 3.5, self.viewport[0] // 2.5)
+            self.__swipe_screen(move)
             screen_items_map = imgreco.inventory.get_all_item_in_screen(screenshot)
             if last_screen_items == screen_items_map.keys():
                 logger.info("读取完毕")
                 break
-            logger.info('screen_items_map: %s' % screen_items_map)
+            if show_item_name:
+                name_map = {all_items_map[k]['name']: screen_items_map[k] for k in screen_items_map.keys()}
+                logger.info('name_map: %s' % name_map)
+            else:
+                logger.info('screen_items_map: %s' % screen_items_map)
             last_screen_items = screen_items_map.keys()
             items_map.update(screen_items_map)
             # break
-            origin_x = self.viewport[0] // 2 + randint(-100, 100)
-            origin_y = self.viewport[1] // 2 + randint(-100, 100)
-            move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
-            self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
-            screenshot = self.wait_for_still_image(check_delay=0)
-
+            screenshot = self.adb.screenshot()
+        if show_item_name:
+            logger.info('items_map: %s' % {all_items_map[k]['name']: items_map[k] for k in items_map.keys()})
         return items_map
+
+    def __swipe_screen(self, move):
+        origin_x = self.viewport[0] // 2 + randint(-100, 100)
+        origin_y = self.viewport[1] // 2 + randint(-100, 100)
+        self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
                              description='', back_to_main=True, prefer_mode='match_template'):
