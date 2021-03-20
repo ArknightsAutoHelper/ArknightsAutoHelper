@@ -43,9 +43,9 @@ def convert_pil_screen(pil_screen):
 def get_all_item_img_in_screen(pil_screen):
     cv_screen = convert_pil_screen(pil_screen)
     gray_screen = cv2.cvtColor(cv_screen, cv2.COLOR_BGR2GRAY)
-    blur_screen = cv2.GaussianBlur(gray_screen, (0, 0), sigmaX=1, sigmaY=1)
     dbg_screen = cv_screen.copy()
-    circles : np.ndarray = get_circles(blur_screen)
+    # pip 仓库中的 python-opencv 4.5.1 的 HoughCircles 会返回一些错误的 y 坐标, anaconda 中的 opencv 则没有这个问题
+    circles : np.ndarray = get_circles(gray_screen)
     img_h, img_w = cv_screen.shape[:2]
     if circles is None:
         return []

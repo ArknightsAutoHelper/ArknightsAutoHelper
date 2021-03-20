@@ -1,12 +1,14 @@
 import cv2
 import numpy as np
 from . import resources
+import zipfile
 
 
 # 目前可以识别的字符: ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'W', 'X']
 def _load_svm():
-    with resources.open_file('resources/imgreco/stage_ocr/svm_data.dat') as f:
-        ydoc = f.read().decode('utf-8')
+    with resources.open_file('resources/imgreco/stage_ocr/svm_data.zip') as f:
+        zf = zipfile.ZipFile(f, 'r')
+        ydoc = zf.read('svm_data.dat').decode('utf-8')
         fs = cv2.FileStorage(ydoc, cv2.FileStorage_READ | cv2.FileStorage_MEMORY)
         svm = cv2.ml.SVM_create()
         svm.read(fs.getFirstTopLevelNode())
@@ -58,7 +60,7 @@ def crop_char_img(img):
 
 
 def thresholding(image):
-    img = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    img = cv2.threshold(image, 180, 255, cv2.THRESH_BINARY)[1]
     if img[0, 0] < 127:
         img = ~img
     return img
@@ -111,17 +113,20 @@ def recognize_stage_tags(pil_screen, template):
     # cv2.imshow('test', screen)
     # cv2.waitKey()
     result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.8
+    threshold = 0.7
     loc = np.where(result >= threshold)
     h, w = template.shape[:2]
     img_h, img_w = screen.shape[:2]
     tag_set = set()
+    tag_set2 = set()
     res = []
     for pt in zip(*loc[::-1]):
-        pos_key = '%d-%d' % (pt[0] / 100, pt[1] / 100)
-        if pos_key in tag_set:
+        pos_key = (pt[0] // 100, pt[1] // 100)
+        pos_key2 = (int(pt[0] / 100 + 0.5), int(pt[1] / 100 + 0.5))
+        if pos_key in tag_set or pos_key2 in tag_set2:
             continue
         tag_set.add(pos_key)
+        tag_set2.add(pos_key2)
         # cv2.rectangle(screen, pt, (pt[0] + w, pt[1] + h), (7, 249, 151), 3)
         tag_w = 130
         # 检查边缘像素是否超出截图的范围
