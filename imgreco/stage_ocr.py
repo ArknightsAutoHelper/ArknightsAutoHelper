@@ -5,11 +5,12 @@ from . import resources
 import zipfile
 from . import common
 from util.richlog import get_logger
+import config
 
 
 idx2id = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-prefer_svm = True
+prefer_svm = config.get('ocr/stage_prefer_svm', True)
 logger = get_logger(__name__)
 
 
