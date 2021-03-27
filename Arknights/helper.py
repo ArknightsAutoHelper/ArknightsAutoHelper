@@ -638,7 +638,7 @@ class ArknightsHelper(object):
                 raise KeyError((target, partition))
 
     def find_and_tap_stage_by_ocr(self, partition, target, partition_map=None):
-        import imgreco.stage_svm_ocr
+        import imgreco.stage_ocr
         target = target.upper()
         if partition_map is None:
             from resources.imgreco.map_vectors import stage_maps_linear
@@ -646,13 +646,13 @@ class ArknightsHelper(object):
         target_index = partition_map.index(target)
         while True:
             screenshot = self.adb.screenshot()
-            tags_map = imgreco.stage_svm_ocr.recognize_all_screen_stage_tags(screenshot)
+            tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot)
             logger.debug('tags map: ' + repr(tags_map))
             pos = tags_map.get(target)
             if pos:
                 logger.info('目标在可视区域内，点击')
                 self.adb.touch_tap(pos, offsets=(5, 5))
-                self.__wait(3)
+                self.__wait(1)
                 return
 
             known_indices = [partition_map.index(x) for x in tags_map.keys() if x in partition_map]
@@ -670,7 +670,7 @@ class ArknightsHelper(object):
                 logger.error('未能定位关卡地图')
                 raise RuntimeError('recognition failed')
             self.adb.touch_swipe2((originX, originY), (move, max(250, move // 2)))
-            self.__wait(3)
+            self.__wait(1)
 
     def find_and_tap_daily(self, partition, target, *, recursion=0):
         screenshot = self.adb.screenshot()
@@ -716,7 +716,7 @@ class ArknightsHelper(object):
         self.back_to_main()
         logger.info('进入作战')
         self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
-        self.__wait(SMALL_WAIT)
+        self.__wait(TINY_WAIT)
         if path[0] == 'main':
             self.find_and_tap('episodes', path[1])
             self.find_and_tap_stage_by_ocr(path[1], path[2])
