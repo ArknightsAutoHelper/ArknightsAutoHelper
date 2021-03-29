@@ -13,7 +13,8 @@ rem echo [92m[+] 输入 '2' 计划任务[0m # 'set /p' 传入空格 Error待�
 echo [92m[+] 输入 '2' 公招查询[0m
 echo [92m[+] 输入 '3' 收获信赖[0m
 echo [92m[+] 输入 '4' 任务领取[0m
-echo [92m[+] 输入 '5' 结束服务[0m
+echo [92m[+] 输入 '5' 刷库存中最少的蓝材料[0m
+echo [92m[+] 输入 '6' 结束服务[0m
 :input
 set /p a="[92m[+] 请选择需要的功能：[0m"
 if /i '%a%'=='1' goto slim
@@ -21,7 +22,8 @@ rem if /i '%a%'=='2' goto hander
 if /i '%a%'=='2' goto recruit
 if /i '%a%'=='3' goto credit
 if /i '%a%'=='4' goto task
-if /i '%a%'=='5' goto end
+if /i '%a%'=='5' goto grass_on_aog
+if /i '%a%'=='6' goto end
 echo [31m[x] 输入有误，请重新输入：[0m & goto input
 
 rem 快速护肝
@@ -65,6 +67,12 @@ rem 任务领取
 :task
 echo [93m[!] 正在准备提供服务[1m
 python akhelper.py collect
+goto remain
+
+
+:grass_on_aog
+echo [93m[!] 正在准备提供服务[1m
+python grass_on_aog.py
 goto remain
 
 :remain
