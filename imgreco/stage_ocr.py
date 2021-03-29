@@ -1,10 +1,20 @@
+from functools import lru_cache
 import cv2
 import numpy as np
 from . import resources
 import zipfile
+from . import common
+from util.richlog import get_logger
+import config
 
 
-# 目前可以识别的字符: ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'W', 'X']
+idx2id = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+          'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+prefer_svm = config.get('ocr/stage_prefer_svm', True)
+logger = get_logger(__name__)
+
+
+@lru_cache(maxsize=1)
 def _load_svm():
     with resources.open_file('resources/imgreco/stage_ocr/svm_data.zip') as f:
         zf = zipfile.ZipFile(f, 'r')
@@ -14,14 +24,49 @@ def _load_svm():
         svm.read(fs.getFirstTopLevelNode())
         assert svm.isTrained()
         return svm
-svm = _load_svm()
+
+
+@lru_cache(maxsize=1)
+def _load_onnx_model():
+    with resources.open_file('resources/imgreco/stage_ocr/chars.onnx') as f:
+        data = f.read()
+        net = cv2.dnn.readNetFromONNX(data)
+        return net
+
+
+def predict_cv(img):
+    net = _load_onnx_model()
+    char_imgs = crop_char_img(img)
+    if not char_imgs:
+        return ''
+    roi_list = [np.expand_dims(resize_char(x), 2) for x in char_imgs]
+    blob = cv2.dnn.blobFromImages(roi_list)
+    net.setInput(blob)
+    scores = net.forward()
+    predicts = scores.argmax(1)
+    # softmax = [common.softmax(score) for score in scores]
+    # probs = [softmax[i][predicts[i]] for i in range(len(predicts))]
+    # print(probs)
+    return ''.join([idx2id[p] for p in predicts])
 
 
 def get_img_feature(img):
-    return cv2.resize(img, (16, 16)).reshape((256, 1))
+    return resize_char(img).reshape((256, 1))
+
+
+def resize_char(img):
+    h, w = img.shape[:2]
+    scale = 16 / max(h, w)
+    h = int(h * scale)
+    w = int(w * scale)
+    img2 = np.zeros((16, 16)).astype(np.uint8)
+    img = cv2.resize(img, (w, h))
+    img2[0:h, 0:w] = ~img
+    return img2
 
 
 def predict(gray_img):
+    svm = _load_svm()
     res = svm.predict(np.float32([get_img_feature(gray_img)]))
     return chr(res[1][0][0])
 
@@ -40,7 +85,7 @@ def crop_char_img(img):
                     last_x = x
                 break
         if not has_black and last_x:
-            if x - last_x > 5:
+            if x - last_x >= 3:
                 min_y = None
                 max_y = None
                 for y1 in range(0, h):
@@ -60,7 +105,7 @@ def crop_char_img(img):
 
 
 def thresholding(image):
-    img = cv2.threshold(image, 180, 255, cv2.THRESH_BINARY)[1]
+    img = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     if img[0, 0] < 127:
         img = ~img
     return img
@@ -103,23 +148,21 @@ def remove_holes(img):
             cv2.drawContours(img, [contours[i]], 0, 255, -1)
 
 
-def recognize_stage_tags(pil_screen, template):
+def recognize_stage_tags(pil_screen, template, ccoeff_threshold=0.75):
     screen = pil_to_cv_gray_img(pil_screen)
     img_h, img_w = screen.shape[:2]
     ratio = 1080 / img_h
     if ratio != 1:
         ratio = 1080 / img_h
         screen = cv2.resize(screen, (int(img_w * ratio), 1080))
-    # cv2.imshow('test', screen)
-    # cv2.waitKey()
     result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.7
-    loc = np.where(result >= threshold)
+    loc = np.where(result >= ccoeff_threshold)
     h, w = template.shape[:2]
     img_h, img_w = screen.shape[:2]
     tag_set = set()
     tag_set2 = set()
     res = []
+    dbg_screen = None
     for pt in zip(*loc[::-1]):
         pos_key = (pt[0] // 100, pt[1] // 100)
         pos_key2 = (int(pt[0] / 100 + 0.5), int(pt[1] / 100 + 0.5))
@@ -127,7 +170,6 @@ def recognize_stage_tags(pil_screen, template):
             continue
         tag_set.add(pos_key)
         tag_set2.add(pos_key2)
-        # cv2.rectangle(screen, pt, (pt[0] + w, pt[1] + h), (7, 249, 151), 3)
         tag_w = 130
         # 检查边缘像素是否超出截图的范围
         if pt[0] + w + tag_w < img_w:
@@ -136,18 +178,38 @@ def recognize_stage_tags(pil_screen, template):
                 continue
             remove_holes(tag)
             tag_str = do_tag_ocr(tag)
+            if len(tag_str) < 3:
+                if dbg_screen is None:
+                    dbg_screen = screen.copy()
+                cv2.rectangle(dbg_screen, pt, (pt[0] + w + tag_w, pt[1] + h), 0, 3)
+                continue
+            pos = (int((pt[0] + (tag_w / 2)) / ratio), int((pt[1] + 20) / ratio))
+            # logger.logtext('pos: %s' % str(pos))
             # res.append({'tag_img': tag, 'pos': (pt[0] + (tag_w / 2), pt[1] + 20), 'tag_str': tag_str})
-            res.append({'pos': (int((pt[0] + (tag_w / 2)) / ratio), int((pt[1] + 20) / ratio)), 'tag_str': tag_str})
+            res.append({'pos': pos, 'tag_str': tag_str})
+    if dbg_screen is not None:
+        logger.logimage(common.convert_to_pil(dbg_screen))
     return res
 
 
 def do_tag_ocr(img):
+    logger.logimage(common.convert_to_pil(img))
+    res = do_tag_ocr_svm(img) if prefer_svm else do_tag_ocr_dnn(img)
+    logger.logtext('%s, res: %s' % ('svm' if prefer_svm else 'dnn', res))
+    return res
+
+
+def do_tag_ocr_svm(img):
     char_imgs = crop_char_img(img)
     s = ''
     for char_img in char_imgs:
         c = predict(char_img)
         s += c
     return s
+
+
+def do_tag_ocr_dnn(img):
+    return predict_cv(img)
 
 
 stage_icon1 = pil_to_cv_gray_img(resources.load_image('stage_ocr/stage_icon1.png'))

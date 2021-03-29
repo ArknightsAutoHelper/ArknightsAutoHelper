@@ -2,10 +2,9 @@ import numpy as np
 import cv2
 from . import item, imgops, util
 from PIL import Image
-from . import resources
+from . import resources, common
 import json
 from util.richlog import get_logger
-from math import ceil, floor
 
 logger = get_logger(__name__)
 
@@ -23,10 +22,10 @@ ark_material_net = _load_net()
 def _load_index():
     with resources.open_file('resources/imgreco/inventory/index_itemid_relation.json') as f:
         data = json.load(f)
-        return data['idx2id'], data['id2idx']
+        return data['idx2id'], data['id2idx'], data['idx2name']
 
 
-idx2id, id2idx = _load_index()
+idx2id, id2idx, idx2name = _load_index()
 
 
 def convert_pil_screen(pil_screen):
@@ -56,11 +55,12 @@ def get_all_item_img_in_screen(pil_screen):
     item_dx = 156                  # delta X of two items in inventory
     center_ys = [191, 381, 570.5]  # center Y of items
     xs = circles[:, 0]
+    # print(np.mean(circles[:, 2]))
     xs.sort()
     dxs = np.diff(xs)
     center_xs = np.asarray([np.median(x) for x in np.split(xs, np.where(dxs>140)[0]+1)])
     calautated_offsets = (center_xs - (item_dx / 2)) % item_dx
-    offset_x = int(np.median(calautated_offsets))
+    offset_x = int(np.min(calautated_offsets))
 
     while offset_x < img_w:
         cv2.line(dbg_screen, (offset_x, 0), (offset_x, img_h-1), (255,0,0), 1)
@@ -78,7 +78,7 @@ def get_all_item_img_in_screen(pil_screen):
                 canny_img = cv2.Canny(gray_img, 60, 180)
                 if np.sum(canny_img) < 200:
                     continue
-                cv_item_img2 = crop_item_middle_img(cv_item_img, 64)
+                cv_item_img2 = crop_item_middle_img(cv_item_img)
                 # use original size for better quantity recognition
                 ratio = img_h / pil_screen.height
                 original_item_img = pil_screen.crop((int(xf / ratio), int(yf / ratio), int((xf+itemreco_box_size)/ratio), int((yf+itemreco_box_size)/ratio)))
@@ -99,15 +99,15 @@ def get_circles(gray_img, min_radius=56, max_radius=68):
     return circles[0]
 
 
-def crop_item_middle_img(cv_item_img, radius):
+def crop_item_middle_img(cv_item_img):
+    # radius 60
     img_h, img_w = cv_item_img.shape[:2]
     ox, oy = img_w // 2, img_h // 2
-    ratio = radius / 60
-    y1 = int(oy - (40 * ratio))
-    y2 = int(oy + (24 * ratio))
-    x1 = int(ox - (32 * ratio))
-    x2 = int(ox + (32 * ratio))
-    return cv2.resize(cv_item_img[y1:y2, x1:x2], (64, 64))
+    y1 = int(oy - 40)
+    y2 = int(oy + 20)
+    x1 = int(ox - 30)
+    x2 = int(ox + 30)
+    return cv_item_img[y1:y2, x1:x2]
 
 
 def show_img(cv_img):
@@ -122,13 +122,14 @@ def get_item_id(cv_img):
 
     # Get a class with a highest score.
     out = out.flatten()
+    probs = common.softmax(out)
     classId = np.argmax(out)
-    return idx2id[classId]
+    return probs[classId], idx2id[classId], idx2name[classId]
 
 
 def get_quantity(num_img):
     logger.logimage(num_img)
-    x_threshold = int(num_img.height * 0.33)
+    x_threshold = int(num_img.height * 0.25) + 1
     numimg = imgops.crop_blackedge2(num_img, 150, x_threshold)
     logger.logimage(numimg)
 
@@ -164,8 +165,8 @@ def get_all_item_in_screen(screen):
     item_count_map = {}
     for item_img in imgs:
         logger.logimage(convert_to_pil(item_img['item_img']))
-        item_id = get_item_id(item_img['middle_img'])
-        logger.logtext('item_id: %s' % item_id)
+        prob, item_id, item_name = get_item_id(item_img['middle_img'])
+        logger.logtext('item_id: %s, item_name: %s, prob: %s' % (item_id, item_name, prob))
         if item_id == 'other':
             continue
         quantity = get_quantity(item_img['num_img'])
