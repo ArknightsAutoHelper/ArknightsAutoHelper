@@ -49,7 +49,7 @@ def check_beginners_task(img):
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     logger.logimage(icon1)
     logger.logtext('mse=%f' % mse)
-    return mse < 150
+    return mse < 650
 
 
 def get_daily_task_rect(viewport, beginners_task_exist=False):
