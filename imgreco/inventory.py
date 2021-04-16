@@ -130,7 +130,7 @@ def get_item_id(cv_img):
 def get_quantity(num_img):
     logger.logimage(num_img)
     x_threshold = int(num_img.height * 0.25) + 1
-    numimg = imgops.crop_blackedge2(num_img, 150, x_threshold)
+    numimg = imgops.crop_blackedge2(num_img, 130, x_threshold)
     logger.logimage(numimg)
 
     if numimg is not None:
