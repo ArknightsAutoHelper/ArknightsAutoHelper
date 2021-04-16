@@ -878,7 +878,7 @@ class ArknightsHelper(object):
         self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
-                             description='', back_to_main=True, prefer_mode='match_template'):
+                             description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
         # FIXME 检查设备是否有 root 权限
         record_dir = os.path.join('custom_record/', record_name)
         if os.path.exists(record_dir):
@@ -948,7 +948,8 @@ class ArknightsHelper(object):
                 step = len(records)
                 roi.save(os.path.join(record_dir, f'step{step}.png'))
                 record = {'point': point, 'img': f'step{step}.png', 'type': 'tap',
-                          'wait_seconds_after_touch': wait_seconds_after_touch}
+                          'wait_seconds_after_touch': wait_seconds_after_touch,
+                          'threshold': threshold, 'repeat': 1, 'raise_exception': True}
                 logger.info(f'record: {record}')
                 records.append(record)
                 if wait_seconds_after_touch:
@@ -995,7 +996,7 @@ class ArknightsHelper(object):
             if record['type'] == 'tap':
                 repeat = record.get('repeat', 1)
                 raise_exception = record.get('raise_exception', True)
-                threshold = record.get('threshold', 0.9)
+                threshold = record.get('threshold', 0.7)
                 for _ in range(repeat):
                     if mode == 'match_template':
                         screen = self.adb.screenshot()

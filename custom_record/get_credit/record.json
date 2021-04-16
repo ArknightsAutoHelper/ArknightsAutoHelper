@@ -10,7 +10,8 @@
                 577
             ],
             "type": "tap",
-            "wait_seconds_after_touch": 2
+            "wait_seconds_after_touch": 2,
+            "threshold": 0.7
         },
         {
             "img": "step1.png",
@@ -19,7 +20,8 @@
                 223
             ],
             "type": "tap",
-            "wait_seconds_after_touch": 5
+            "wait_seconds_after_touch": 5,
+            "threshold": 0.7
         },
         {
             "img": "step2.png",
@@ -28,7 +30,8 @@
                 457
             ],
             "type": "tap",
-            "wait_seconds_after_touch": 5
+            "wait_seconds_after_touch": 5,
+            "threshold": 0.7
         },
         {
             "img": "step3.png",
@@ -40,7 +43,7 @@
             "wait_seconds_after_touch": 5,
             "repeat": 11,
             "raise_exception": false,
-            "threshold": 0.95
+            "threshold": 0.7
         }
     ],
     "screen_height": 720,
