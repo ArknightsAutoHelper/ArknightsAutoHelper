@@ -212,6 +212,15 @@ def do_tag_ocr_dnn(img):
     return predict_cv(img)
 
 
+def do_img_ocr(pil_img):
+    img = pil_to_cv_gray_img(pil_img)
+    # cv2.imshow('test', img)
+    # cv2.waitKey()
+    img = thresholding(img)
+    remove_holes(img)
+    return do_tag_ocr(img)
+
+
 stage_icon1 = pil_to_cv_gray_img(resources.load_image('stage_ocr/stage_icon1.png'))
 stage_icon2 = pil_to_cv_gray_img(resources.load_image('stage_ocr/stage_icon2.png'))
 

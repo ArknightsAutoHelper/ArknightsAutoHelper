@@ -637,6 +637,52 @@ class ArknightsHelper(object):
             else:
                 raise KeyError((target, partition))
 
+    def find_and_tap_episode_by_ocr(self, target):
+        import imgreco.stage_ocr
+        from resources.imgreco.map_vectors import ep2region, region2ep
+        target_region = ep2region.get(target)
+        if target_region is None:
+            logger.error(f'未能定位章节区域, target: {target}')
+            raise RuntimeError('recognition failed')
+        vw, vh = imgreco.util.get_vwvh(self.viewport)
+        episode_tag_rect = tuple(map(int, (35.185*vh, 39.259*vh, 50.093*vh, 43.056*vh)))
+        next_ep_region_rect = (5.833*vh, 69.167*vh, 11.944*vh, 74.815*vh)
+        prev_ep_region_rect = (5.833*vh, 15.370*vh, 11.944*vh, 21.481*vh)
+        current_ep_rect = (50*vw+19.907*vh, 28.426*vh, 50*vw+63.426*vh, 71.944*vh)
+        episode_move = (400 * self.viewport[1] / 1080)
+
+        while True:
+            screenshot = self.adb.screenshot()
+            current_episode_tag = screenshot.crop(episode_tag_rect)
+            current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
+            logger.info(f'当前章节: {current_episode_str}')
+            if not current_episode_str.startswith('EPISODE'):
+                logger.error(f'章节识别失败, current_episode_str: {current_episode_str}')
+                raise RuntimeError('recognition failed')
+            current_episode = int(current_episode_str[7:])
+            current_region = ep2region.get(current_episode)
+            if current_region is None:
+                logger.error(f'未能定位章节区域, current_episode: {current_episode}')
+                raise RuntimeError('recognition failed')
+            if current_region == target_region:
+                break
+            if current_region > target_region:
+                logger.info(f'前往上一章节区域')
+                self.tap_rect(prev_ep_region_rect)
+            else:
+                logger.info(f'前往下一章节区域')
+                self.tap_rect(next_ep_region_rect)
+        while current_episode != target:
+            move = min(abs(current_episode - target), 2) * episode_move * (1 if current_episode > target else -1)
+            self.__swipe_screen(move, 10, self.viewport[0] // 4 * 3)
+            screenshot = self.adb.screenshot()
+            current_episode_tag = screenshot.crop(episode_tag_rect)
+            current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
+            current_episode = int(current_episode_str[7:])
+            logger.info(f'当前章节: {current_episode_str}')
+
+        self.tap_rect(current_ep_rect)
+
     def find_and_tap_stage_by_ocr(self, partition, target, partition_map=None):
         import imgreco.stage_ocr
         target = target.upper()
@@ -718,7 +764,9 @@ class ArknightsHelper(object):
         self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
         self.__wait(TINY_WAIT)
         if path[0] == 'main':
-            self.find_and_tap('episodes', path[1])
+            vw, vh = imgreco.util.get_vwvh(self.viewport)
+            self.tap_rect((14.316*vw, 89.815*vh, 28.462*vw, 99.815*vh))
+            self.find_and_tap_episode_by_ocr(int(path[1][2:]))
             self.find_and_tap_stage_by_ocr(path[1], path[2])
         elif path[0] == 'material' or path[0] == 'soc':
             logger.info('选择类别')
@@ -824,9 +872,9 @@ class ArknightsHelper(object):
             logger.info('items_map: %s' % {all_items_map[k]['name']: items_map[k] for k in items_map.keys()})
         return items_map
 
-    def __swipe_screen(self, move):
-        origin_x = self.viewport[0] // 2 + randint(-100, 100)
-        origin_y = self.viewport[1] // 2 + randint(-100, 100)
+    def __swipe_screen(self, move, rand=100, origin_x=None, origin_y=None):
+        origin_x = (origin_x or self.viewport[0] // 2) + randint(-rand, rand)
+        origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
         self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
