@@ -10,44 +10,48 @@ from .fancycli.platform import isatty
 def skipcallback(handler):
     raise StopIteration
 
-
-def delay_impl_factory(helper, statusline, show_toggle):
-    togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if helper.use_refill else 'OFF')
-
-    def togglecallback(handler):
-        helper.use_refill = not helper.use_refill
-        handler.label = togglelabel()
-
-    skiphandler = fancywait.KeyHandler('<ENTER>跳过', b'\r', skipcallback)
-    skipdummy   = fancywait.KeyHandler('           ', b'', lambda x: None)
-    if not helper.refill_with_item and not helper.refill_with_originium:
-        show_toggle = False
-    if show_toggle and helper.use_refill:
-        togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
-    else:
-        togglehandler = lambda: fancywait.KeyHandler(None, None, None)
-
-    def delay_impl(timeout):
-        fancywait.fancy_delay(timeout, statusline, [skiphandler if timeout > 9 else skipdummy, togglehandler()])
-
-    return delay_impl
+class ShellNextFrontend:
+    def __init__(self, use_status_line, show_toggle):
+        self.show_toggle = show_toggle
+        self.use_status_line = use_status_line
+        if use_status_line:
+            io = sys.stdout.buffer
+            if hasattr(io, 'raw'):
+                io = io.raw
+            line = fancywait.StatusLine(io)
+            self.statusline = line
+    def attach(self, helper):
+        self.helper = helper
+    def notify(self, name, value):
+        pass
+    def delay(self, secs, allow_skip):
+        if not self.use_status_line:
+            time.sleep(secs)
+            return
+        if self.show_toggle:
+            togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if self.helper.use_refill else 'OFF')
+            def togglecallback(handler):
+                self.helper.use_refill = not self.helper.use_refill
+                handler.label = togglelabel()
+            togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
+        else:
+            togglehandler = lambda: fancywait.KeyHandler(None, None, None)
+        skiphandler = fancywait.KeyHandler('<ENTER>跳过', b'\r', skipcallback)
+        skipdummy   = fancywait.KeyHandler('           ', b'', lambda x: None)
+        fancywait.fancy_delay(secs, self.statusline, [skiphandler if allow_skip else skipdummy, togglehandler()])
 
 
 def _create_helper(use_status_line=True, show_toggle=False):
     from Arknights.helper import ArknightsHelper
     _ensure_device()
-    helper = ArknightsHelper(device_connector=device)
+    frontend = ShellNextFrontend(use_status_line, show_toggle)
+    helper = ArknightsHelper(device_connector=device, frontend=frontend)
     if use_status_line:
-        io = sys.stdout.buffer
-        if hasattr(io, 'raw'):
-            io = io.raw
-        line = fancywait.StatusLine(io)
-        helper._shellng_context = line
-        helper.delay_impl = delay_impl_factory(helper, line, show_toggle)
+        context = frontend.statusline
     else:
         from contextlib import nullcontext
-        helper._shellng_context = nullcontext()
-    return helper
+        context = nullcontext()
+    return helper, context
 
 def _parse_opt(argv):
     ops = []
@@ -166,10 +170,10 @@ def quick(argv):
         count = int(argv[1])
     else:
         count = 114514
-    helper = _create_helper(show_toggle=True)
+    helper, context = _create_helper(show_toggle=True)
     for op in ops:
         op(helper)
-    with helper._shellng_context:
+    with context:
         helper.module_battle_slim(
             c_id=None,
             set_count=count,
@@ -190,10 +194,10 @@ def auto(argv):
     it = iter(arglist)
     tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
 
-    helper = _create_helper(show_toggle=True)
+    helper, context = _create_helper(show_toggle=True)
     for op in ops:
         op(helper)
-    with helper._shellng_context:
+    with context:
         helper.main_handler(
             clear_tasks=False,
             task_list=tasks,
@@ -207,8 +211,8 @@ def collect(argv):
     collect
         收集每日任务和每周任务奖励
     """
-    helper = _create_helper()
-    with helper._shellng_context:
+    helper, context = _create_helper()
+    with context:
         helper.clear_task()
     return 0
 
@@ -224,8 +228,8 @@ def recruit(argv):
         tags = argv[1:]
         result = recruit_calc.calculate(tags)
     elif len(argv) == 1:
-        helper = _create_helper(use_status_line=False)
-        with helper._shellng_context:
+        helper, context = _create_helper(use_status_line=False)
+        with context:
             result = helper.recruit()
     else:
         print('要素过多')

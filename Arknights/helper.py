@@ -18,6 +18,7 @@ import imgreco.imgops
 import penguin_stats.reporter
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from . import stage_path
+from .frontend import DummyFrontend
 from Arknights.click_location import *
 from Arknights.flags import *
 from util.exc_guard import guard
@@ -52,7 +53,7 @@ def format_recoresult(recoresult):
 
 
 class ArknightsHelper(object):
-    def __init__(self, adb_host=None, device_connector=None):  # 当前绑定到的设备
+    def __init__(self, adb_host=None, device_connector=None, frontend=None):  # 当前绑定到的设备
         ensure_adb_alive()
         if device_connector is not None:
             self.adb = device_connector
@@ -81,7 +82,10 @@ class ArknightsHelper(object):
                 img.save(imgfile)
                 import json
                 logger.info('参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]', imgfile, json.dumps(self.adb.config_key))
-
+        if frontend is None:
+            frontend = DummyFrontend()
+        self.frontend = frontend
+        self.frontend.attach(self)
         logger.debug("成功初始化模块")
 
     def __print_info(self):
@@ -121,11 +125,11 @@ class ArknightsHelper(object):
             logger.debug("成功启动游戏")
 
     def __wait(self, n=10,  # 等待时间中值
-               MANLIKE_FLAG=True):  # 是否在此基础上设偏移量
+               MANLIKE_FLAG=True, allow_skip=False):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
-        self.delay_impl(n)
+        self.frontend.delay(n, allow_skip)
 
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
@@ -174,7 +178,7 @@ class ArknightsHelper(object):
         message_shown = False
         while (t1 := time.monotonic()) < ts:
             if check_delay > 0:
-                self.__wait(check_delay, False)
+                self.__wait(check_delay, False, True)
             screenshot2 = shooter()
             mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
             if mse <= threshold:
@@ -353,7 +357,7 @@ class ArknightsHelper(object):
                 else:
                     wait_time = sum(self.operation_time) / len(self.operation_time) - 7
                 logger.info('等待 %d s' % wait_time)
-                self.__wait(wait_time, MANLIKE_FLAG=False)
+                self.__wait(wait_time, MANLIKE_FLAG=False, allow_skip=True)
                 smobj.first_wait = False
             t = monotonic() - smobj.operation_start
 
@@ -406,7 +410,7 @@ class ArknightsHelper(object):
                     raise RuntimeError('unhandled dialog')
 
             logger.info('战斗未结束')
-            self.__wait(BATTLE_FINISH_DETECT)
+            self.__wait(BATTLE_FINISH_DETECT, allow_skip=True)
 
         def on_level_up_popup(smobj):
             self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)

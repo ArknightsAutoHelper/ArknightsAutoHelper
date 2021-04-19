@@ -6,3 +6,5 @@ requests==2.25.1
 ruamel.yaml==0.16.12
 colorama==0.4.4; sys_platform == 'win32'
 ./vendor/penguin_client
+bottle==0.12.19
+bottle-websocket==0.2.9
