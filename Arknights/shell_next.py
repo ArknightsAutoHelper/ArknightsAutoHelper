@@ -137,7 +137,24 @@ def _connect_adb(args):
     ensure_adb_alive()
     global device
     if len(args) == 0:
-        device = ADBConnector()
+        try:
+            device = ADBConnector.auto_connect()
+        except IndexError:
+            print("检测到多台设备")
+            devices = ADBConnector.available_devices()
+            for i, (serial, status) in enumerate(devices):
+                print("%2d. %s\t[%s]" % (i, serial, status))
+            num = 0
+            while True:
+                try:
+                    num = int(input("请输入序号选择设备: "))
+                    if not 0 <= num < len(devices):
+                        raise ValueError()
+                    break
+                except ValueError:
+                    print("输入不合法，请重新输入")
+            device_name = devices[num][0]
+            device = ADBConnector(device_name)
     else:
         serial = args[0]
         try:

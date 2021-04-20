@@ -16,12 +16,14 @@ import config
 import imgreco
 import imgreco.imgops
 import penguin_stats.reporter
-from connector.ADBConnector import ADBConnector, ensure_adb_alive
+from connector.ADBConnector import ADBConnector
 from . import stage_path
 from .frontend import DummyFrontend
 from Arknights.click_location import *
 from Arknights.flags import *
-from util.exc_guard import guard
+from util.excutil import guard
+
+from Arknights import frontend
 
 logger = logging.getLogger('helper')
 coloredlogs.install(
@@ -54,14 +56,14 @@ def format_recoresult(recoresult):
 
 class ArknightsHelper(object):
     def __init__(self, adb_host=None, device_connector=None, frontend=None):  # 当前绑定到的设备
-        ensure_adb_alive()
-        if device_connector is not None:
-            self.adb = device_connector
-        else:
-            self.adb = ADBConnector(adb_serial=adb_host)
-        self.viewport = self.adb.screen_size
+        self.adb = None
+        if adb_host is not None or device_connector is not None:
+            self.connect_device(device_connector, adb_serial=adb_host)
+        if frontend is None:
+            frontend = DummyFrontend()
+        self.frontend = frontend
+        self.frontend.attach(self)
         self.operation_time = []
-        self.delay_impl = sleep
         if DEBUG_LEVEL >= 1:
             self.__print_info()
         self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
@@ -73,24 +75,41 @@ class ArknightsHelper(object):
             self.penguin_reporter = penguin_stats.reporter.PenguinStatsReporter()
         self.refill_count = 0
         self.max_refill_count = None
+
+        logger.debug("成功初始化模块")
+
+    def ensure_device_connection(self):
+        if self.adb is None:
+            raise RuntimeError('not connected to device')
+
+    def connect_device(self, connector=None, *, adb_serial=None):
+        if connector is not None:
+            self.adb = connector
+        elif adb_serial is not None:
+            self.adb = ADBConnector(adb_serial)
+        else:
+            self.adb = None
+            return
+        self.viewport = self.adb.screen_size
         if Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
-            logger.warn('当前分辨率（%dx%d）不符合要求', self.viewport[0], self.viewport[1])
+            messages = [
+                '设备当前分辨率（%dx%d）不符合要求。' % (self.viewport[0], self.viewport[1]),
+                '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
+            ]
+            logger.warn('设备当前分辨率（%dx%d）不符合要求', self.viewport[0], self.viewport[1])
             if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
                 logger.info('屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度')
                 img = self.adb.screenshot()
                 imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
                 img.save(imgfile)
                 import json
-                logger.info('参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]', imgfile, json.dumps(self.adb.config_key))
-        if frontend is None:
-            frontend = DummyFrontend()
-        self.frontend = frontend
-        self.frontend.attach(self)
-        logger.debug("成功初始化模块")
+                messages.append('参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self.adb.config_key)))
+            for msg in messages:
+                logger.warn(msg)
+            frontend.alert('\n'.join(messages), 'warn')
 
     def __print_info(self):
         logger.info('当前系统信息:')
-        logger.info('ADB 服务器:\t%s:%d', *config.ADB_SERVER)
         logger.info('分辨率:\t%dx%d', *self.viewport)
         # logger.info('OCR 引擎:\t%s', ocr.engine.info)
         logger.info('截图路径:\t%s', config.SCREEN_SHOOT_SAVE_PATH)
@@ -233,6 +252,7 @@ class ArknightsHelper(object):
                 # logger.info("开始第 %d 次战斗", count + 1)
                 self.operation_once_statemachine(c_id, )
                 logger.info("第 %d 次作战完成", count + 1)
+                self.frontend.notify('completed-count', count + 1)
                 if count != set_count - 1:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
@@ -385,6 +405,7 @@ class ArknightsHelper(object):
             if dlgtype is not None:
                 if dlgtype == 'yesno' and '代理指挥' in ocrresult:
                     logger.warning('代理指挥出现失误')
+                    self.frontend.alert('代理指挥出现失误', 'warn')
                     smobj.mistaken_delegation = True
                     if config.get('behavior/mistaken_delegation/settle', False):
                         logger.info('以 2 星结算关卡')
@@ -434,6 +455,8 @@ class ArknightsHelper(object):
                     for name, qty in group:
                         if name is not None and qty is not None:
                             self.loots[name] = self.loots.get(name, 0) + qty
+                self.frontend.notify("combat-result", drops)
+                self.frontend.notify("loots", self.loots)
                 if log_total:
                     self.log_total_loots()
                 if self.use_penguin_report:
