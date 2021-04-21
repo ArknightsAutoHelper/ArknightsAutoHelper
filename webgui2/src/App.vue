@@ -30,29 +30,31 @@
           ><b-icon 
           :icon="canPauseJob ? 'pause-fill' : 'play-fill'"
           />{{canPauseJob ? '暂停' : (appRunning ? '继续' : '启动')}}队列</b-button>
-          <div class="mt-3">运行状态</div>
-          <b-input-group>
-            <b-input-group-prepend is-text>
-              <b-icon icon="arrow-right"/>
-            </b-input-group-prepend>
-            <b-form-input readonly :value="currentJobTitle"></b-form-input>
-          </b-input-group>
-          <b-input-group class="mt-1">
-            <b-input-group-prepend is-text>
-              <b-icon icon="pause-circle" v-show="!appRunning"/>
-              <b-icon icon="stopwatch" v-show="appRunning && workerWaiting"/>
-              <b-spinner small v-show="appRunning && !workerWaiting"/>
-            </b-input-group-prepend>
-              <b-form-input readonly :value="timerText"></b-form-input>
-            <b-input-group-append>
-              <b-button variant="info" title="跳过当前等待时间" :disabled="!(appRunning && workerWaiting && allowSkipWait)" @click="skipWait"><b-icon-skip-forward-fill/></b-button>
-              <b-button variant="outline-danger" title="停止助手" :disabled="!appRunning" @click="interruptWorker"><b-icon-x-octagon size="sm"/></b-button>
-            </b-input-group-append>
-          </b-input-group>
-          <button @click="onWorkerIdle">complete current job</button>
-        <b-form-checkbox v-model="appRunning">app running</b-form-checkbox>
-        <b-form-checkbox v-model="workerWaiting">worker waiting</b-form-checkbox>
-        <b-form-checkbox v-model="allowSkipWait">allow skip wait</b-form-checkbox>
+        <div class="mt-3">运行状态</div>
+        <b-input-group>
+          <b-input-group-prepend is-text>
+            <b-icon icon="arrow-right"/>
+          </b-input-group-prepend>
+          <b-form-input readonly :value="currentJobTitle"></b-form-input>
+        </b-input-group>
+        <b-input-group class="mt-1">
+          <b-input-group-prepend is-text>
+            <b-icon icon="pause-circle" v-show="!appRunning"/>
+            <b-icon icon="stopwatch" v-show="appRunning && workerWaiting"/>
+            <b-spinner small v-show="appRunning && !workerWaiting"/>
+          </b-input-group-prepend>
+            <b-form-input readonly :value="timerText"></b-form-input>
+          <b-input-group-append>
+            <b-button variant="info" title="跳过当前等待时间" :disabled="!(appRunning && workerWaiting && allowSkipWait)" @click="skipWait"><b-icon-skip-forward-fill/></b-button>
+            <b-button variant="outline-danger" title="停止助手" :disabled="!appRunning" @click="interruptWorker"><b-icon-x-octagon size="sm"/></b-button>
+          </b-input-group-append>
+        </b-input-group>
+        <template v-if="debug">
+          <b-form-checkbox v-model="appRunning">app running</b-form-checkbox>
+          <b-form-checkbox v-model="workerWaiting">worker waiting</b-form-checkbox>
+          <b-form-checkbox v-model="allowSkipWait">allow skip wait</b-form-checkbox>
+          <button @click="loots.push(['至纯源石', 1919])">add loot</button>
+        </template>
       </b-card>
 
       <div id="action-cards">
@@ -120,7 +122,13 @@
         </b-card>
       </div>
 
-      <b-card header="战利品" class="status-card"><b-card-text>{{loots}}</b-card-text></b-card>
+      <b-card header="战利品" class="status-card">
+        <div class="d-flex flex-row flex-wrap align-content-start">
+          <div class="item-container" v-for="[name, qty] in loots" v-bind:key="name+'x'+qty" v-b-tooltip.hover :title="name">
+            <b-img rounded="circle" :alt="name"  :src="serverbase + 'itemimg/' + encodeURIComponent(name) + '.png'" /><b-badge class="item-qty-badge">{{qty}}</b-badge>
+          </div>
+        </div>
+      </b-card>
 
     </div>
 
@@ -139,8 +147,31 @@
     <b-form-input v-model.lazy="newChoosedStage"></b-form-input>
   </b-modal>
 
+  <b-modal id="recruit-modal" title="公开招募" v-model="showRecruitResult">
+    <template v-for="tagGroup in recruitResult">
+      <template v-if="tagGroup[1].length > 0">
+        <div v-bind:key="tagGroup[0].join(',')">
+          <b-button-group size="sm"><b-button v-for="tag in tagGroup[0]" v-bind:key="tag" :variant=" (tagGroup[2] < 1 ? 'outline-' : '') + 'dark'">{{tag}}</b-button></b-button-group>
+          <div class="mt-1">
+            <b-button class="mr-1" size="sm" v-for="operator in tagGroup[1]" v-bind:key="operator[0]" :variant=" (tagGroup[2] < 1 ? 'outline-' : '')   + rarityMap[operator[1]]">{{operator[0]}}</b-button>
+          </div>
+          <hr/>
+        </div>
+      </template>
+    </template>
+
+  </b-modal>
+
   <div id="alert-container">
-    <b-alert show fade dismissible v-for="alert in alerts" v-bind:key="alert.id" :variant="alert.level" @dismissed="clearAlert(alert.id)"><p class="alert-text">{{alert.message}}</p></b-alert>
+    <b-toast visible fade dismissible v-for="alert in alerts" v-bind:key="alert.id" :title="alert.title" :variant="alert.level" no-auto-hide @hidden="clearAlert(alert.id)">
+      <p class="alert-text">{{alert.message}}</p>
+      <div class="alert-text" v-if="alert.details">
+        <b-link href="javascript:;" @click="alert.expand = !alert.expand"><b-icon :icon="alert.expand ? 'chevron-down' : 'chevron-right'"/><span class="ml-1">Details</span></b-link>
+        <b-collapse v-model="alert.expand">
+          <p class="alert-text">{{alert.details}}</p>
+        </b-collapse>
+      </div>
+    </b-toast>
   </div>
 
   </div>
@@ -166,7 +197,8 @@ function isVisible(domElement, root=null) {
 
 @Component
 export default class App extends Vue {
-  show = true
+  debug = false
+  serverbase = ''
   version = 'loading'
   deviceName = '(auto)'
   availiableDevices = ['adb:127.0.0.1:5555', 'adb:127.0.0.1:7555']
@@ -177,7 +209,7 @@ export default class App extends Vue {
   repeatCount = 9999
   appRunning = false
   timerText = ""
-  loots = ''
+  loots = []
   workerWaiting = true
   allowSkipWait = true
   drainingJobQueue = false
@@ -190,6 +222,9 @@ export default class App extends Vue {
   currentJobTitle = "空闲"
   pendingJobs = []
   alerts = []
+  showRecruitResult = false
+  recruitResult = []
+  rarityMap = ["info", "secondary", "success", "primary", "warning", "danger"]
 
   get canResumeJobQueue() {
     return this.pendingJobs.length > 0 && (!this.drainingJobQueue || !this.appRunning)
@@ -215,9 +250,17 @@ export default class App extends Vue {
         this.addConsoleLine("fucking loooooooooooooooooooooooooooooooooooooooooooooooooong   shit  ! @" + new Date(), "error");
     // }, 5000))
 
-    let base = process.env.NODE_ENV == 'development' ? 'http://127.0.0.1:8081/' : location.href
+    let wsbase
+    if (process.env.NODE_ENV == 'development') {
+      this.debug = true
+      this.serverbase = 'http://127.0.0.1:8081/'
+      wsbase = this.serverbase
+    } else {
+      this.serverbase = ''
+      wsbase = location.href
+    }
 
-    let wsurl = new URL("ws", base)
+    let wsurl = new URL("ws", wsbase)
     wsurl.protocol = wsurl.protocol.replace(/^http/, 'ws')
     
     let sock = new WebSocket(wsurl.toString())
@@ -286,6 +329,9 @@ export default class App extends Vue {
     result.text = title
     result.action.push({name: "worker:set_refill_with_item", args: [this.refillWithItem]})
     result.action.push({name: "worker:set_refill_with_originium", args: [this.refillWithOriginium]})
+    if (this.refillWithItem || this.refillWithOriginium) {
+      result.action.push({name: "worker:set_max_refill_count", args: [this.maxRefillCount]})
+    }
     if (this.onStage === 'current') {
       result.action.push({name: "worker:module_battle_slim", args: [count]})
     } else {
@@ -310,9 +356,7 @@ export default class App extends Vue {
         break
       }
     }
-    if (this.drainingJobQueue) {
-      this.$nextTick(()=>this.runJobQueue())
-    } else {
+    if (!this.drainingJobQueue) {
       this.setAppIdle()
     }
   }
@@ -366,6 +410,7 @@ export default class App extends Vue {
 
   async runJobQueue() {
     this.drainingJobQueue = true
+    this.appRunning = true
     while (this.drainingJobQueue && this.pendingJobs.length > 0) {
       await this.goJob(this.pendingJobs.shift())
     }
@@ -394,6 +439,9 @@ export default class App extends Vue {
         break
       case "notify":
         this.onNotify(obj.name, obj.value)
+        break
+      case "alert":
+        this.showAlert(obj)
         break
       case "idle":
         this.onWorkerIdle()
@@ -464,7 +512,7 @@ export default class App extends Vue {
         this.onWait(value.duration, value.allow_skip)
         break
       case 'loots':
-
+        this.loots = Object.entries(value)
         break
       default:
         break
@@ -484,16 +532,16 @@ export default class App extends Vue {
       let exc = obj.exception
       let err = new Error(exc.message)
       err.stack = exc.trace
-      this.showAlert("Exception in RPC invocation " + JSON.stringify({action: callrecord.action, args: callrecord.args}) + "\n" + exc.message + "\n" + exc.trace, "error")
+      this.showAlert({level: "error", title: "Exception in RPC invocation ", message: "Invocation: " + JSON.stringify({action: callrecord.action, args: callrecord.args}) + "\n" + exc.message, details: exc.trace})
       callrecord.reject(err)
     }
   }
 
-  showAlert(message, level) {
+  showAlert({level, title, message, details}) {
     console.log("alert", level, message)
     let id = 'alert@' + (+new Date())
     if (level === 'error') level = 'danger'
-    this.alerts.push({id, level, message})
+    this.alerts.push({id, level, title, message, details})
   }
 
   clearAlert(id) {
@@ -501,8 +549,9 @@ export default class App extends Vue {
     this.alerts.splice(index, 1)
   }
 
-  recruit() {
-    1
+  async recruit() {
+    this.recruitResult = await this.callRemote("worker:recruit")
+    this.showRecruitResult = true
   }
 
   chooseStageShown() {
@@ -518,6 +567,9 @@ export default class App extends Vue {
 
 <style>
 
+html {
+  font-size: 11pt;
+}
 
 html, body {
   height: 100%;
@@ -622,7 +674,18 @@ html, body {
 
 .alert-text {
   white-space: pre-wrap;
-  font-size: 0.8rem;
+  font-size: 9pt;
   line-height: 1rem;
+}
+
+.item-container {
+  margin: 0 0.5em;
+  position: relative;
+}
+
+.item-qty-badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
 }
 </style>

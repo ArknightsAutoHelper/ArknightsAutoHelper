@@ -38,9 +38,9 @@ class RichLogger:
 @lru_cache(maxsize=None)
 def get_logger(module):
     import config
-    if config.instanceid == 0:
+    if config.get_instance_id() == 0:
         filename = '%s.html' % module
     else:
-        filename = '%s.%d.html' % (module, config.instanceid)
+        filename = '%s.%d.html' % (module, config.get_instance_id())
     logger = RichLogger(os.path.join(config.logs, filename), True)
     return logger

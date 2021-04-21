@@ -3,7 +3,7 @@ import time
 class DummyFrontend:
     def attach(self, helper):
         pass
-    def alert(self, text, level='info'):
+    def alert(self, title, text, level='info', details=None):
         """user-targeted message"""
     def notify(self, name, value):
         """program-targeted message"""

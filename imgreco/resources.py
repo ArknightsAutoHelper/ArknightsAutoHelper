@@ -17,7 +17,7 @@ if config.use_archived_resources:
     def get_path(names):
         return '/'.join([root, *names])
 
-    def open_file(path):
+    def _open_file(path):
         return archive.open(path)
 
     def get_entries(base):
@@ -42,7 +42,7 @@ else:
     def get_path(names):
         return os.path.join(root, *names)
 
-    def open_file(path):
+    def _open_file(path):
         return open(path, 'rb')
 
     def get_entries(base):
@@ -52,10 +52,14 @@ else:
         return ([], [])
 
 
-def load_image(name, mode=None):
-    names = name.split('/')
+def open_file(respath):
+    names = respath.split('/')
     path = get_path(names)
-    im = Image.open(open_file(path))
+    return _open_file(path)
+
+
+def load_image(name, mode=None):
+    im = Image.open(open_file(name))
     if mode is not None and im.mode != mode:
         im = im.convert(mode)
     return im
@@ -71,9 +75,7 @@ def load_image_as_ndarray(name):
 
 
 def load_pickle(name):
-    names = name.split('/')
-    path = get_path(names)
-    with open_file(path) as f:
+    with open_file(name) as f:
         result = pickle.load(f)
     return result
 

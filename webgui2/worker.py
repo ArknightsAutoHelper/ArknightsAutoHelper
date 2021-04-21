@@ -4,7 +4,6 @@ import threading
 import multiprocessing
 import queue as threading_Queue
 
-from PIL.Image import new
 import Arknights.helper
 import config
 from connector.ADBConnector import ADBConnector
@@ -65,8 +64,8 @@ class WorkerThread(threading.Thread):
         loghandler.setLevel(logging.INFO)
         logging.root.addHandler(loghandler)
         version = config.version
-        if config.instanceid != 0:
-            version += f" (instance {config.instanceid})"
+        if config.get_instance_id() != 0:
+            version += f" (instance {config.get_instance_id()})"
         self.notify("web:version", version)
         devices = ADBConnector.available_devices()
         devices = ["adb:"+x[0] for x in devices]
@@ -98,10 +97,10 @@ class WorkerThread(threading.Thread):
     # frontend, called by helper
     def attach(self, helper):
         pass
-    def alert(self, text, level='info'):
+    def alert(self, title, text, level='info', details=None):
         """user-targeted message"""
-        logger.info("sending alert %s %s", level, text)
-        self.output.put(dict(type="alert", text=text, level=level))
+        logger.info("sending alert %s %s %s %s", level, title, text, details)
+        self.output.put(dict(type="alert", title=title, message=text, level=level, details=details))
     def notify(self, name, value=None):
         """program-targeted message"""
         logger.info("sending notify %s %r", name, value)
@@ -142,7 +141,7 @@ class WorkerThread(threading.Thread):
     def ensure_connector_decorator(self, func):
         def decorated(*args, **kwargs):
             self.ensure_connector()
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         return decorated
 
 
@@ -162,7 +161,7 @@ def worker_process(inq : multiprocessing.Queue, outq : multiprocessing.Queue):
         if request is None:
             break
         if not isinstance(request, Mapping):
-            outq.put(dict(type="alert", text="invalid request object", level="error"))
+            outq.put(dict(type="alert", title="RPC Error", text="invalid request object", level="error"))
             break
         req_type = request.get("type", None)
         if req_type == "web:skip":

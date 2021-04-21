@@ -13,7 +13,10 @@ import coloredlogs
 import numpy as np
 
 import config
-import imgreco
+import imgreco.common
+import imgreco.main
+import imgreco.task
+import imgreco.map
 import imgreco.imgops
 import penguin_stats.reporter
 from connector.ADBConnector import ADBConnector
@@ -91,22 +94,21 @@ class ArknightsHelper(object):
             self.adb = None
             return
         self.viewport = self.adb.screen_size
-        if Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
-            messages = [
-                '设备当前分辨率（%dx%d）不符合要求。' % (self.viewport[0], self.viewport[1]),
-                '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
-            ]
-            logger.warn('设备当前分辨率（%dx%d）不符合要求', self.viewport[0], self.viewport[1])
+        if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
+            title = '设备当前分辨率（%dx%d）不符合要求' % (self.viewport[0], self.viewport[1])
+            body = '需要宽高比等于或大于 16∶9，且渲染高度不小于 720。'
+            details = None
             if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
-                logger.info('屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度')
+                body = '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
                 img = self.adb.screenshot()
                 imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
                 img.save(imgfile)
                 import json
-                messages.append('参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self.adb.config_key)))
-            for msg in messages:
-                logger.warn(msg)
-            frontend.alert('\n'.join(messages), 'warn')
+                details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self.adb.config_key))
+            for msg in [title, body, details]:
+                if msg is not None:
+                    logger.warn(msg)
+            frontend.alert(title, body, 'warn', details)
 
     def __print_info(self):
         logger.info('当前系统信息:')
@@ -286,6 +288,9 @@ class ArknightsHelper(object):
         prepare_reco: dict = None
 
     def operation_once_statemachine(self, c_id):
+        import imgreco.before_operation
+        import imgreco.end_operation
+
         smobj = ArknightsHelper.operation_once_state()
         def on_prepare(smobj):
             count_times = 0
@@ -382,7 +387,7 @@ class ArknightsHelper(object):
             t = monotonic() - smobj.operation_start
 
             logger.info('已进行 %.1f s，判断是否结束', t)
-
+            
             screenshot = self.adb.screenshot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("等级提升")
@@ -405,7 +410,7 @@ class ArknightsHelper(object):
             if dlgtype is not None:
                 if dlgtype == 'yesno' and '代理指挥' in ocrresult:
                     logger.warning('代理指挥出现失误')
-                    self.frontend.alert('代理指挥出现失误', 'warn')
+                    self.frontend.alert('代理指挥', '代理指挥出现失误', 'warn')
                     smobj.mistaken_delegation = True
                     if config.get('behavior/mistaken_delegation/settle', False):
                         logger.info('以 2 星结算关卡')
@@ -610,6 +615,7 @@ class ArknightsHelper(object):
             screenshot = self.adb.screenshot(cached=False)
 
     def recruit(self):
+        import imgreco.recruit
         from . import recruit_calc
         logger.info('识别招募标签')
         tags = imgreco.recruit.get_recruit_tags(self.adb.screenshot())

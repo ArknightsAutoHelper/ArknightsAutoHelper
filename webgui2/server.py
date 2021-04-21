@@ -1,10 +1,10 @@
-import sys
+import os
 import logging
-import traceback
 import bottle
 import json
 import gevent
 import gevent.queue
+import gevent.pywsgi
 import gevent.threadpool
 import multiprocessing
 from geventwebsocket import WebSocketError
@@ -12,20 +12,16 @@ import geventwebsocket
 import geventwebsocket.websocket
 from geventwebsocket.handler import WebSocketHandler
 from geventwebsocket.logging import create_logger
-from util import socketutil
-import numpy as np
-import pickle
-# import pywebview
-
-
-def worker_process(inq, outq):
-    from . import worker
-    worker.worker_process(inq, outq)
-    pass
+import contextlib
+try:
+    import webview
+    use_webview = True
+except ImportError:
+    use_webview = False
 
 
 def start():
-    import os
+    multiprocessing.set_start_method('spawn')
     app = bottle.Bottle()
     logger = create_logger('geventwebsocket.logging')
     logger.setLevel(logging.DEBUG)
@@ -36,27 +32,32 @@ def start():
     httpsock.bind(('127.0.0.1', 8081))
     httpsock.listen()
 
-
-    workersock = gevent.socket.socket(gevent.socket.AF_INET, gevent.socket.SOCK_STREAM)
-    workersock.bind(('127.0.0.1', 0))
-    workersock.listen()
-
-
     server = gevent.pywsgi.WSGIServer(httpsock, app, handler_class=WebSocketHandler, log=logger)
     token = '1145141919'
-    use_webview = False
 
     @app.route("/")
     def serve_root():
         return bottle.static_file("index.html", root)
 
-    @app.route("/<filepath:path>")
-    def serve_static(filepath):
-        return bottle.static_file(filepath, root)
+    @app.route('/itemimg/<name>.png')
+    def itemimg(name):
+        logger.info('serving file %s', name)
+        import imgreco.resources
+        import imgreco.item
+        items = imgreco.item.all_known_items()
+        respath = items.get(name, None)
+        if respath:
+            bottle.response.content_type = 'image/png'
+            return imgreco.resources.open_file(respath)
+        else:
+            return 404
     
     def readws(ws):
         while True:
-            msg = ws.receive()
+            try:
+                msg = ws.receive()
+            except WebSocketError:
+                return None
             if msg is not None:
                 if not isinstance(msg, str):
                     continue
@@ -76,10 +77,7 @@ def start():
         if not wsock:
             bottle.abort(400, 'Expected WebSocket request.')
         authorized = False
-        if use_webview:
-            authorized = False
-        else:
-            wsock.send('{"type":"need-authorize"}')
+        wsock.send('{"type":"need-authorize"}')
         while True:
             try:
                 obj = readws(wsock)
@@ -95,6 +93,7 @@ def start():
                 break
         if authorized:
             logger.info('client authorized')
+            from .worker_launcher import worker_process
             inq = multiprocessing.Queue()
             outq = multiprocessing.Queue()
             p = multiprocessing.Process(target=worker_process, args=(inq, outq), daemon=True)
@@ -126,14 +125,32 @@ def start():
                         wsread = gevent.spawn(readws, wsock)
                         pool.spawn(inq.put, obj)
             logger.info('worker loop stopped')
-            wsock.close()
-            inq.put_nowait(None)
+            with contextlib.suppress(Exception):
+                wsock.close()
+                inq.put_nowait(None)
             p.kill()
-                
+            
+    @app.route("/<filepath:path>")
+    def serve_static(filepath):
+        return bottle.static_file(filepath, root)
 
         # server.stop()
     print(server.address)
-    server.serve_forever()
+    server_task = gevent.spawn(server.serve_forever)
+    url = f'http://{server.address[0]}:{server.address[1]}/?token={token}'
+    print(url)
+    if use_webview:
+        window = webview.create_window(title="Arknights Auto Helper", url=url, width=980, height=820, text_select=True)
+        def start_wrapper():
+            import threading
+            threading.current_thread().name = "MainThread"
+            webview.start(debug=True)
+        evt = gevent.get_hub().threadpool.spawn(start_wrapper)
+        evt.wait()
+        server.stop()
+    else:
+        print("use your fucking browser")
+        server_task.join()
 
     # bottle.run(app, port=None, server=server_class)
 

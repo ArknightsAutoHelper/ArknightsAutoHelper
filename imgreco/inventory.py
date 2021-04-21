@@ -10,7 +10,7 @@ logger = get_logger(__name__)
 
 
 def _load_net():
-    with resources.open_file('resources/imgreco/inventory/ark_material.onnx') as f:
+    with resources.open_file('inventory/ark_material.onnx') as f:
         data = f.read()
         net = cv2.dnn.readNetFromONNX(data)
         return net
@@ -20,7 +20,7 @@ ark_material_net = _load_net()
 
 
 def _load_index():
-    with resources.open_file('resources/imgreco/inventory/index_itemid_relation.json') as f:
+    with resources.open_file('inventory/index_itemid_relation.json') as f:
         data = json.load(f)
         return data['idx2id'], data['id2idx'], data['idx2name']
 
