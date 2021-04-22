@@ -12,7 +12,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+/dist
 downloads/
 eggs/
 .eggs/
@@ -125,6 +125,7 @@ config/device-config.json
 .vs
 .vscode
 config/plan.json
+config/akhelper-gui-datadir/
 
 penguin_stats/penguin_cache.json
 
