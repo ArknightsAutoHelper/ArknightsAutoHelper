@@ -120,7 +120,21 @@ pip install -r requirements.txt
 
 **报告 issue 时，建议附上日志以便定位问题。**
 
-## 0x02 ArknightsHelper 命令行启动
+## 0x02 ArknightsHelper GUI 启动
+
+```
+$ python3 akhelper-gui.pyw
+```
+
+Web GUI 将在一下第一个可用的浏览器环境中打开：
+
+* 内嵌浏览器
+* Google Chrome、Chromium、Microsoft Edge 的 PWA 模式*
+* 系统默认浏览器*
+
+<small>* 使用外部浏览器时，HTTP 服务器将在最后一个连接关闭后 3 分钟内退出。</small>
+
+## 0x03 ArknightsHelper 命令行启动
 
 > 💡 Windows：命令行功能在 Windows 10 1607 (build 14393) 及以上版本上体验最佳。非简体中文系统可能无法在 Windows 命令行窗口中正确显示简体中文文字，可尝试使用 Windows Terminal。
 
@@ -272,15 +286,15 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 
 如果完成刷图计划后, 当前的理智还有剩余, 且 config 中配置了 `plan/idle_stage`, 那么剩余的理智将用来刷这个关卡.
 
-## 0x03 ArknightsHelper 自定义脚本启动
+## 0x04 ArknightsHelper 自定义脚本启动
 
 请阅读 ArknightsHelper_examples.py.txt 下的代码并编写自定义脚本
 
-## 0x04 ArknightsHelper GUI 启动
+## 0x05 ArknightsHelper GUI 启动
 
 详见 release 分支下的文件
 
-## 0x05 开机自启动批处理&一键开启
+## 0x06 开机自启动批处理&一键开启
 
 `start.bat`文件会启动模拟器并自动登录刷本，完成预定任务后关闭电脑，你也可以把它略作修改当做一键启动。如果想要使用这个批处理，需要以下几步：
 
@@ -293,13 +307,13 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 注意：“无限休眠”其实是有时间的，大概是1024秒，**提交这个批处理的时候我也将这个时间改成了60秒**，如果需要可以修改回来。
 
 
-## 0x06 已知问题
+## 0x07 已知问题
 
 * 自动选关功能：点击随机偏移范围大小固定，且与分辨率无关
 * 某些情况下，物品、数量识别会出错
 
 
-## 0x07 自定义开发与TODO
+## 0x08 自定义开发与TODO
 
 ### 关于一些常见的问题
 

@@ -243,11 +243,11 @@ export default class App extends Vue {
     // }, 500))
 
     // this.intervals.push(setInterval(()=>{
-    //     this.addConsoleLine("shit  ! @" + new Date(), "warn");
+    //   this.addConsoleLine("shit  ! @" + new Date(), "warn");
     // }, 1000))
 
     // this.intervals.push(setInterval(()=>{
-        this.addConsoleLine("fucking loooooooooooooooooooooooooooooooooooooooooooooooooong   shit  ! @" + new Date(), "error");
+    //   this.addConsoleLine("fucking loooooooooooooooooooooooooooooooooooooooooooooooooong   shit  ! @" + new Date(), "error");
     // }, 5000))
 
     let wsbase
