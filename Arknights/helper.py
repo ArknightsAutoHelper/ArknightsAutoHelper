@@ -711,9 +711,10 @@ class ArknightsHelper(object):
             screenshot = self.adb.screenshot()
             current_episode_tag = screenshot.crop(episode_tag_rect)
             current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
-            current_episode = int(current_episode_str[7:])
             logger.info(f'当前章节: {current_episode_str}')
+            current_episode = int(current_episode_str[7:])
 
+        logger.info(f'进入章节: {current_episode_str}')
         self.tap_rect(current_ep_rect)
 
     def find_and_tap_stage_by_ocr(self, partition, target, partition_map=None):
