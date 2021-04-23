@@ -20,6 +20,7 @@ try:
     use_webview = True
 except ImportError:
     use_webview = False
+import config
 
 
 def start():
@@ -29,7 +30,10 @@ def start():
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
     logger.propagate = False
-    root=os.path.join(os.path.dirname(__file__), 'dist')
+    if config.bundled:
+        root = os.path.join(config.root, 'web')
+    else:
+        root=os.path.join(os.path.dirname(__file__), 'dist')
     httpsock = gevent.socket.socket(gevent.socket.AF_INET, gevent.socket.SOCK_STREAM)
     httpsock.bind(('127.0.0.1', 0))
     httpsock.listen()
@@ -161,20 +165,22 @@ def start():
             if chrome_executable:
                 print("found Chromium-compatible browser", chrome_executable)
                 print("using chromium PWA mode")
-                import config
                 import subprocess
                 data_dir = os.path.join(config.CONFIG_PATH, "akhelper-gui-datadir")
                 subprocess.Popen([chrome_executable, '--chrome-frame', '--app='+url, '--user-data-dir='+data_dir, '--window-size=980,820', '--disable-plugins', '--disable-extensions'])
                 using_specialized_borwser = True
 
-        if not using_specialized_borwser:
+        if using_specialized_borwser:
+            idlechk_interval = 10
+        else:
+            idlechk_interval = 60
             print("starting generic browser")
             import webbrowser
             webbrowser.open_new(url)
         
         idlecount = 1
         while True:
-            gevent.sleep(60)
+            gevent.sleep(idlechk_interval)
             if len(group) == 0:
                 idlecount += 1
             else:
