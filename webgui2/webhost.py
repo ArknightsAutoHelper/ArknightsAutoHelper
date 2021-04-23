@@ -1,10 +1,8 @@
 
-from ctypes import ArgumentError
-
-
 def find_chromium():
     import shutil
     import platform
+    import os
     uname = platform.system()
     if uname == 'Windows':
         executables = ['chrome.exe', 'msedge.exe']
@@ -43,6 +41,10 @@ def check_webview2():
     import os
     if os.name != 'nt':
         return None
+    try:
+        import webview
+    except ImportError:
+        return None
     import sys
     import winreg
     is64bit = sys.maxsize > 0xFFFFFFFF
@@ -64,7 +66,7 @@ def check_webview2():
 class WebHostWebView:
     def start(self, url, width=None, height=None):
         if [width, height].count(None) == 1:
-            raise ArgumentError("width and height")
+            raise ValueError("width and height")
         import config
         import multiprocessing
         from . import webview_launcher
@@ -77,7 +79,7 @@ class WebHostChromePWA:
         self.exe = exe
     def start(self, url, width, height):
         if [width, height].count(None) == 1:
-            raise ArgumentError("width and height")
+            raise ValueError("width and height")
         import subprocess
         import os
         import config
@@ -126,7 +128,7 @@ def get_host():
     if name is None:
         return auto_host()
     elif name == 'chrome_pwa':
-        exe = config.get('webgui/host', None)
+        exe = config.get('webgui/chrome_bin', None)
         if exe is None:
             exe = find_chromium()
         if exe is None:
@@ -138,4 +140,4 @@ def get_host():
         raise KeyError(name)
 
 if __name__ == '__main__':
-    print(check_webview2())
+    print(find_chromium())

@@ -345,7 +345,7 @@ export default class App extends Vue {
     return {value: "Job@"+(+new Date()), text: "领取任务奖励", action: [{name: "worker:clear_task", args: []}]}
   }
 
-  async goJob(job) {
+  async goJob(job, isQueuedJob=false) {
     this.appRunning = true
     this.currentJobTitle = job.text
     for (let action of job.action) {
@@ -355,6 +355,9 @@ export default class App extends Vue {
         this.drainingJobQueue = false
         break
       }
+    }
+    if (!isQueuedJob && this.drainingJobQueue) {
+      this.$nextTick(()=>this.runJobQueue())
     }
     if (!this.drainingJobQueue) {
       this.setAppIdle()
@@ -412,7 +415,7 @@ export default class App extends Vue {
     this.drainingJobQueue = true
     this.appRunning = true
     while (this.drainingJobQueue && this.pendingJobs.length > 0) {
-      await this.goJob(this.pendingJobs.shift())
+      await this.goJob(this.pendingJobs.shift(), true)
     }
     this.setAppIdle()
   }

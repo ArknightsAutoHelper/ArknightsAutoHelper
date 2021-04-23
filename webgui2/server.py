@@ -23,7 +23,7 @@ except ImportError:
 import config
 
 
-def start():
+def start(port=0):
     multiprocessing.set_start_method('spawn')
     app = bottle.Bottle()
     logger = create_logger('geventwebsocket.logging')
@@ -35,7 +35,7 @@ def start():
     else:
         root=os.path.join(os.path.dirname(__file__), 'dist')
     httpsock = gevent.socket.socket(gevent.socket.AF_INET, gevent.socket.SOCK_STREAM)
-    httpsock.bind(('127.0.0.1', 0))
+    httpsock.bind(('127.0.0.1', port))
     httpsock.listen()
 
     token = '1145141919'
@@ -146,9 +146,11 @@ def start():
     group = gevent.pool.Pool()
     server = gevent.pywsgi.WSGIServer(httpsock, app, handler_class=WebSocketHandler, log=logger, spawn=group)
     url = f'http://{server.address[0]}:{server.address[1]}/?token={token}'
-    print(server.address)
+    print(url)
     server_task = gevent.spawn(server.serve_forever)
-
+    if port != 0:
+        server_task.get()
+        return
     from .webhost import get_host
     host = get_host()
     host.start(url, 980, 820)
