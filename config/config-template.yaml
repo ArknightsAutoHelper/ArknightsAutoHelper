@@ -96,3 +96,14 @@ plan:
   # 如需使用，请将大写字母改为小写
   REFILL_AP_WITH_ORIGINIUM: false
 
+webgui:
+  # 打开 Web GUI 的方式，未设置时根据系统配置自动选择
+  #   webview   : 内嵌浏览器
+  #   chrome_pwa: Chromium 系列浏览器的 PWA 模式
+  #   browser   : 系统默认浏览器
+  host: 
+  # 使用 Chromium 系列浏览器的 PWA 模式时，浏览器的主程序
+  chrome_bin: 
+  # 使用内嵌浏览器时，内嵌浏览器的后端
+  # 请参考 https://pywebview.flowrl.com/guide/renderer.html
+  webview_backend:

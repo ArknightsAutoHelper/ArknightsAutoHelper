@@ -149,35 +149,16 @@ def start():
     print(server.address)
     server_task = gevent.spawn(server.serve_forever)
 
-    if use_webview:
+    from .webhost import get_host
+    host = get_host()
+    host.start(url, 980, 820)
+
+    if host.wait_handle:
         # neither gevent nor pywebview like non-main thread
-        from . import webview_launcher
-        p = multiprocessing.Process(target=webview_launcher.launch, args=[url])
-        p.start()
-        webview_task = gevent.get_hub().threadpool.spawn(p.join)
+        webview_task = gevent.get_hub().threadpool.spawn(host.wait_handle)
         webview_task.wait()
     else:
-        print(url)
-        using_specialized_borwser = False
-        if os.name == 'nt':
-            from .find_chromium import find_chromium_windows
-            chrome_executable = find_chromium_windows()
-            if chrome_executable:
-                print("found Chromium-compatible browser", chrome_executable)
-                print("using chromium PWA mode")
-                import subprocess
-                data_dir = os.path.join(config.CONFIG_PATH, "akhelper-gui-datadir")
-                subprocess.Popen([chrome_executable, '--chrome-frame', '--app='+url, '--user-data-dir='+data_dir, '--window-size=980,820', '--disable-plugins', '--disable-extensions'])
-                using_specialized_borwser = True
-
-        if using_specialized_borwser:
-            idlechk_interval = 10
-        else:
-            idlechk_interval = 60
-            print("starting generic browser")
-            import webbrowser
-            webbrowser.open_new(url)
-        
+        idlechk_interval = getattr(host, 'poll_interval', 60)
         idlecount = 1
         while True:
             gevent.sleep(idlechk_interval)
@@ -190,7 +171,6 @@ def start():
                 break
             # gevent.util.print_run_info()
     server.stop()
-    # bottle.run(app, port=None, server=server_class)
 
 if __name__ == '__main__':
     start()
