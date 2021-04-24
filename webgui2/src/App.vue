@@ -322,15 +322,18 @@ export default class App extends Vue {
   getQuickStartJob() {
     let result = {value: "Job@"+(+new Date()), text: "", action: []}
     let stageText = this.onStage === 'current' ? '当前关卡' : '['+this.choosedStage+']'
-    let count = this.repeatCount
+    let count = parseInt(this.repeatCount)
     let title = stageText + '×' + count
     if (this.refillWithItem) title += " 使用道具"
     if (this.refillWithOriginium) title += " 使用源石"
     result.text = title
-    result.action.push({name: "worker:set_refill_with_item", args: [this.refillWithItem]})
-    result.action.push({name: "worker:set_refill_with_originium", args: [this.refillWithOriginium]})
     if (this.refillWithItem || this.refillWithOriginium) {
-      result.action.push({name: "worker:set_max_refill_count", args: [this.maxRefillCount]})
+      result.action.push({name: "worker:set_enable_refill", args: [true]})
+      result.action.push({name: "worker:set_refill_with_item", args: [this.refillWithItem]})
+      result.action.push({name: "worker:set_refill_with_originium", args: [this.refillWithOriginium]})
+      result.action.push({name: "worker:set_max_refill_count", args: [parseInt(this.maxRefillCount)]})
+    } else {
+      result.action.push({name: "worker:set_enable_refill", args: [false]})
     }
     if (this.onStage === 'current') {
       result.action.push({name: "worker:module_battle_slim", args: [count]})

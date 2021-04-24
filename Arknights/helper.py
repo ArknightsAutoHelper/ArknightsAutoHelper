@@ -250,21 +250,23 @@ class ArknightsHelper(object):
         count = 0
         remain = 0
         try:
-            for count in range(set_count):
+            for _ in range(set_count):
                 # logger.info("开始第 %d 次战斗", count + 1)
                 self.operation_once_statemachine(c_id, )
-                logger.info("第 %d 次作战完成", count + 1)
-                self.frontend.notify('completed-count', count + 1)
-                if count != set_count - 1:
+                count += 1
+                logger.info("第 %d 次作战完成", count)
+                self.frontend.notify('completed-count', count)
+                if count != set_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
                         self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     else:
                         self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
         except StopIteration:
+            # count: succeeded count
             logger.error('未能进行第 %d 次作战', count + 1)
             remain = set_count - count
-            if remain - 1 > 0:
+            if remain > 1:
                 logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
         return c_id, remain

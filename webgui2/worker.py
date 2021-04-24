@@ -48,11 +48,12 @@ class WorkerThread(threading.Thread):
         self.helper = None
         self.allowed_calls = {
             "web:connect": self.web_connect,
-            "worker:set_refill_with_item": lambda x: setattr(self.helper, 'refill_with_item', x),
-            "worker:set_refill_with_originium": lambda x: setattr(self.helper, 'refill_with_originium', x),
-            "worker:set_max_refill_count": lambda x: setattr(self.helper, 'max_refill_count', x),
-            "worker:module_battle": self.ensure_connector_decorator(lambda stage, count: self.helper.module_battle(stage, count)),
-            "worker:module_battle_slim": self.ensure_connector_decorator(lambda count: self.helper.module_battle_slim(set_count=count)),
+            "worker:set_enable_refill": lambda x: setattr(self.helper, 'use_refill', bool(x)),
+            "worker:set_refill_with_item": lambda x: setattr(self.helper, 'refill_with_item', bool(x)),
+            "worker:set_refill_with_originium": lambda x: setattr(self.helper, 'refill_with_originium', bool(x)),
+            "worker:set_max_refill_count": lambda x: setattr(self.helper, 'max_refill_count', int(x)),
+            "worker:module_battle": self.ensure_connector_decorator(lambda stage, count: self.helper.module_battle(stage, int(count))),
+            "worker:module_battle_slim": self.ensure_connector_decorator(lambda count: self.helper.module_battle_slim(set_count=int(count))),
             "worker:clear_task": self.ensure_connector_decorator(lambda: self.helper.clear_task()),
             "worker:recruit": self.ensure_connector_decorator(lambda: self.helper.recruit()),
         }
@@ -76,7 +77,7 @@ class WorkerThread(threading.Thread):
             command : dict = self.input.get(block=True)
             if command.get('type', None) == "call":
                 self.interrupt_event.clear()
-                self.output.put_nowait(dict(type='worker-busy'))
+                self.notify('worker:busy')
                 tag = command.get('tag', None)
                 action = command.get('action', None)
                 return_value = None
