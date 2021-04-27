@@ -22,6 +22,8 @@ class ShellNextFrontend:
             self.statusline = line
     def attach(self, helper):
         self.helper = helper
+    def alert(self, title, text, level='info', details=None):
+        pass
     def notify(self, name, value):
         pass
     def delay(self, secs, allow_skip):
