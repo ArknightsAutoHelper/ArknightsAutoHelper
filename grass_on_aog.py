@@ -1,4 +1,4 @@
-from Arknights.helper import ArknightsHelper
+from Arknights.shell_next import _create_helper
 from penguin_stats import arkplanner
 import requests
 from datetime import datetime
@@ -67,7 +67,7 @@ headers = {
     'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
 }
 aog_cache = load_aog_cache()
-helper = ArknightsHelper()
+helper, _ = _create_helper()
 
 
 def load_inventory():

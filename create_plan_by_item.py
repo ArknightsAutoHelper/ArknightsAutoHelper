@@ -29,8 +29,8 @@ if __name__ == '__main__':
     owned = {}
     c = input('是否获取当前库存材料数量(y,N):')
     if c.lower() == 'y':
-        from Arknights.helper import ArknightsHelper
-        owned = ArknightsHelper().get_inventory_items()
+        from Arknights.shell_next import _create_helper
+        owned = _create_helper()[0].get_inventory_items()
     print('正在获取刷图计划...')
     plan = arkplanner.get_plan(required, owned)
     main_stage_map = arkplanner.get_main_stage_map()
