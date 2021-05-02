@@ -1,4 +1,5 @@
-from Arknights.helper import ArknightsHelper, logger
+from Arknights.helper import logger
+from Arknights.shell_next import _create_helper
 import config
 import json
 import os
@@ -10,7 +11,7 @@ if __name__ == '__main__':
         exit(-1)
     with open('config/plan.json', 'r') as f:
         plan = json.load(f)
-    helper = ArknightsHelper()
+    helper, _ = _create_helper()
     if plan['stages']:
         update_flag = False
         has_remain_sanity = True
