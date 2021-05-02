@@ -6,7 +6,7 @@ import queue as threading_Queue
 
 import Arknights.helper
 import config
-from connector.ADBConnector import ADBConnector
+from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from util.excutil import format_exception
 from typing import Mapping
 
@@ -51,7 +51,7 @@ class WorkerThread(threading.Thread):
             "worker:set_enable_refill": lambda x: setattr(self.helper, 'use_refill', bool(x)),
             "worker:set_refill_with_item": lambda x: setattr(self.helper, 'refill_with_item', bool(x)),
             "worker:set_refill_with_originium": lambda x: setattr(self.helper, 'refill_with_originium', bool(x)),
-            "worker:set_max_refill_count": lambda x: setattr(self.helper, 'max_refill_count', int(x)),
+            "worker:set_max_refill_count": self.set_max_refill_count,
             "worker:module_battle": self.ensure_connector_decorator(lambda stage, count: self.helper.module_battle(stage, int(count))),
             "worker:module_battle_slim": self.ensure_connector_decorator(lambda count: self.helper.module_battle_slim(set_count=int(count))),
             "worker:clear_task": self.ensure_connector_decorator(lambda: self.helper.clear_task()),
@@ -68,6 +68,7 @@ class WorkerThread(threading.Thread):
         if config.get_instance_id() != 0:
             version += f" (instance {config.get_instance_id()})"
         self.notify("web:version", version)
+        ensure_adb_alive()
         devices = ADBConnector.available_devices()
         devices = ["adb:"+x[0] for x in devices]
         self.notify("web:availiable-devices", devices)
@@ -144,6 +145,10 @@ class WorkerThread(threading.Thread):
             self.ensure_connector()
             return func(*args, **kwargs)
         return decorated
+    
+    def set_max_refill_count(self, count):
+        self.helper.refill_count = 0
+        self.helper.max_refill_count = count
 
 
 
