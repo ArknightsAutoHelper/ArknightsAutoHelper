@@ -15,8 +15,9 @@ if __name__ == '__main__':
     from addons.activity import ActivityAddOn
     try:
         stage = config.get('addons/activity/stage')
+        repeat_times = config.get('addons/activity/repeat_times', 1000)
         addon = ActivityAddOn()
-        addon.run(stage)
+        addon.run(stage, repeat_times)
     except KeyError as e:
         print(desc)
         exit(0)

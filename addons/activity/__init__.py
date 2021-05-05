@@ -92,7 +92,6 @@ def check_activity_available(zone_id):
 
 class ActivityAddOn(BaseAddOn):
     def run(self, target_stage_code, repeat_times=1000):
-        repeat_times = repeat_times or config.get('addons/activity/repeat_times')
         target_stage_code = target_stage_code.upper()
         stage_code_map, zone_linear_map = get_stage()
         if target_stage_code not in stage_code_map:
