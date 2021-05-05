@@ -89,8 +89,8 @@ if availiable:
             runningids = [GUID(x['RuntimeId']) for x in runningsystems]
             
             HcnEnumerateEndpoints('{"VirtualNetworkName":"BluestacksNetwork"}', ctypes.byref(response), None)
-            CoTaskMemFree(response)
             endpoints = json.loads(ctypes.wstring_at(response))
+            CoTaskMemFree(response)
             logger.debug("endpoints: %r", endpoints)
 
             for guidstr in endpoints:
