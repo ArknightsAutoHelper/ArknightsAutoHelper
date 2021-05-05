@@ -1,32 +1,29 @@
 {
     "back_to_main": true,
-    "description": "\u6253\u5f00\u7ecf\u9a8c\u672c\u5730\u56fe",
+    "description": "覆潮之下 - 荒败盐风",
     "prefer_mode": "match_template",
     "records": [
         {
             "img": "step0.png",
             "point": [
-                957,
-                170
+                1145,
+                145
             ],
+            "raise_exception": true,
+            "repeat": 1,
+            "threshold": 0.7,
             "type": "tap",
-            "wait_seconds_after_touch": 1
+            "wait_seconds_after_touch": 3
         },
         {
             "img": "step1.png",
             "point": [
-                237,
-                670
+                1111,
+                449
             ],
-            "type": "tap",
-            "wait_seconds_after_touch": 1
-        },
-        {
-            "img": "step2.png",
-            "point": [
-                166,
-                499
-            ],
+            "raise_exception": true,
+            "repeat": 1,
+            "threshold": 0.7,
             "type": "tap",
             "wait_seconds_after_touch": 1
         }

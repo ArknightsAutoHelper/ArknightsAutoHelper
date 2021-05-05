@@ -915,8 +915,8 @@ class ArknightsHelper(object):
 
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
                              description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
-        # FIXME 检查设备是否有 root 权限
-        record_dir = os.path.join('custom_record/', record_name)
+        record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
+                                  os.path.join('custom_record/', record_name))
         if os.path.exists(record_dir):
             c = input('已存在同名的记录, y 覆盖, n 退出: ')
             if c.strip().lower() != 'y':
@@ -1007,7 +1007,8 @@ class ArknightsHelper(object):
 
     def replay_custom_record(self, record_name, mode=None, back_to_main=None):
         from PIL import Image
-        record_dir = os.path.join('custom_record/', record_name)
+        record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
+                                  os.path.join('custom_record/', record_name))
         if not os.path.exists(record_dir):
             logger.error(f'未找到相应的记录: {record_name}')
             raise RuntimeError(f'未找到相应的记录: {record_name}')
