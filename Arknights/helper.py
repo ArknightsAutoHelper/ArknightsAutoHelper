@@ -62,6 +62,8 @@ class ArknightsHelper(object):
         self.adb = None
         if adb_host is not None or device_connector is not None:
             self.connect_device(device_connector, adb_serial=adb_host)
+        if self.adb is None:
+            self.connect_device(ADBConnector.auto_connect())
         if frontend is None:
             frontend = DummyFrontend()
         self.frontend = frontend
@@ -940,7 +942,7 @@ class ArknightsHelper(object):
         }
         half_roi = roi_size // 2
         logger.info('滑动屏幕以退出录制.')
-        logger.info('start recording...')
+        logger.info('开始录制, 请点击相关区域...')
         sock = self.adb.device_session_factory().shell_stream('getevent')
         f = sock.makefile('rb')
         while True:
@@ -989,15 +991,15 @@ class ArknightsHelper(object):
                 logger.info(f'record: {record}')
                 records.append(record)
                 if wait_seconds_after_touch:
-                    logger.info(f'wait {wait_seconds_after_touch}s...')
+                    logger.info(f'请等待 {wait_seconds_after_touch}s...')
                     self.__wait(wait_seconds_after_touch)
 
-                logger.info('go ahead...')
+                logger.info('继续...')
             elif len(point_list) > 1:
                 # 滑动时跳出循环
                 c = input('是否退出录制[Y/n]:')
                 if c.strip().lower() != 'n':
-                    logger.info('stop recording...')
+                    logger.info('停止录制...')
                     break
                 else:
                     # todo 处理屏幕滑动

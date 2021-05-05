@@ -55,23 +55,6 @@ if __name__ == '__main__':
 ## 2. 使用操作记录
 
 
-<details><summary>刷经验本</summary>
-
-```python
-from Arknights.helper import ArknightsHelper
-
-
-if __name__ == '__main__':
-    helper = ArknightsHelper()
-    helper.replay_custom_record('goto_ls')
-    stage_linear = ['LS-1', 'LS-2', 'LS-3', 'LS-4', 'LS-5']
-    helper.find_and_tap_stage_by_ocr(None, 'LS-5', stage_linear)
-    helper.module_battle_slim('LS-5', 1000)
-```
-
-</details>
-
-
 <details><summary>收信用点</summary>
 
 ```python
