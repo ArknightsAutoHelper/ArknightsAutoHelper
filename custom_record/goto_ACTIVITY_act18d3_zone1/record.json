@@ -6,8 +6,8 @@
         {
             "img": "step0.png",
             "point": [
-                1145,
-                145
+                1139,
+                186
             ],
             "raise_exception": true,
             "repeat": 1,
@@ -18,8 +18,8 @@
         {
             "img": "step1.png",
             "point": [
-                1111,
-                449
+                1115,
+                450
             ],
             "raise_exception": true,
             "repeat": 1,
