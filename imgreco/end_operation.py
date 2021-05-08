@@ -164,6 +164,23 @@ def check_end_operation_alt(img):
     return mse < 6502
 
 
+def check_end_operation2(img, threshold=0.8):
+    cv_screen = np.asarray(img.convert('L'))
+    h, w = cv_screen.shape[:2]
+    scale = h / 1080
+    if scale != 1:
+        cv_screen = cv2.resize(cv_screen, (int(w/scale), 1080))
+    template = np.asarray(resources.load_image_cached('end_operation/end2.png', 'L'))
+    res = cv2.matchTemplate(cv_screen, template, cv2.TM_CCOEFF_NORMED)
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+    return max_val > threshold
+
+
+def get_end2_rect(img):
+    vw, vh = util.get_vwvh(img.size)
+    return 38.594 * vw, 88.056 * vh, 61.484 * vw, 95.694 * vh
+
+
 def get_dismiss_level_up_popup_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
     return (100 * vw - 67.315 * vh, 16.019 * vh, 100 * vw - 5.185 * vh, 71.343 * vh)

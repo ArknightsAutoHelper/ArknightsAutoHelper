@@ -392,7 +392,6 @@ class ArknightsHelper(object):
             t = monotonic() - smobj.operation_start
 
             logger.info('已进行 %.1f s，判断是否结束', t)
-            
             screenshot = self.adb.screenshot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("等级提升")
@@ -404,7 +403,13 @@ class ArknightsHelper(object):
                 detector = imgreco.end_operation.check_end_operation
             else:
                 detector = imgreco.end_operation.check_end_operation_alt
-            if detector(screenshot):
+            end_flag = detector(screenshot)
+            if not end_flag and t > 300:
+                if imgreco.end_operation.check_end_operation2(screenshot):
+                    self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
+                    screenshot = self.adb.screenshot()
+                    end_flag = imgreco.end_operation.check_end_operation_alt(screenshot)
+            if end_flag:
                 logger.info('战斗结束')
                 self.operation_time.append(t)
                 crop = imgreco.end_operation.get_still_check_rect(self.viewport)
