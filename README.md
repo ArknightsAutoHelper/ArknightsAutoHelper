@@ -232,16 +232,13 @@ $ python ArknightsShell.py -s -t slim:99
 
 1. 主战斗模块可以从几乎任何位置（理论上有返回键的页面）开始任务序列。
 
-\* 该模块支持关卡有限，请等待后续更新
+\* 该模块支持主线章节大部分关卡。
 
 ```bash
 python3 akhelper.py auto   5-1 2   5-2 3
 # 按顺序刷 5-1 关卡 2 次，5-2 关卡 3 次
 ```
 
-2. 启用 ocr 方式进行跳转关卡的跳转方法: 将 `config.yaml` 下的 `behavior/use_ocr_goto_stage` 更改为 true 即可.
-
-此方式支持第一章至第七章大部分的关卡.
 
 <details><summary>旧版命令行接口</summary>
 

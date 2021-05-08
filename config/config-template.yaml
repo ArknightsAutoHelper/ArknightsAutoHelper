@@ -81,9 +81,6 @@ behavior:
     # 结算/放弃后，是否跳过失误关卡
     skip: true
 
-  # 启用 ocr 前往关卡
-  use_ocr_goto_stage: false
-
 plan:
   # 刷图计划执行完毕后，用剩余理智刷这个关卡
 #  idle_stage: '1-7'

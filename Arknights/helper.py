@@ -561,10 +561,8 @@ class ArknightsHelper(object):
                       set_count=1000):  # 作战次数
         logger.debug("helper.module_battle")
         c_id = c_id.upper()
-        if config.get('behavior/use_ocr_goto_stage', False) and stage_path.is_stage_supported_ocr(c_id):
+        if stage_path.is_stage_supported_ocr(c_id):
             self.goto_stage_by_ocr(c_id)
-        elif stage_path.is_stage_supported(c_id):
-            self.goto_stage(c_id)
         else:
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
@@ -775,26 +773,6 @@ class ArknightsHelper(object):
                 self.find_and_tap_daily(partition, target, recursion=recursion+1)
             else:
                 logger.error('未找到目标，是否未开放关卡？')
-
-    def goto_stage(self, stage):
-        if not stage_path.is_stage_supported(stage):
-            logger.error('不支持的关卡：%s', stage)
-            raise ValueError(stage)
-        path = stage_path.get_stage_path(stage)
-        self.back_to_main()
-        logger.info('进入作战')
-        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
-        self.__wait(3)
-        if path[0] == 'main':
-            self.find_and_tap('episodes', path[1])
-            self.find_and_tap(path[1], path[2])
-        elif path[0] == 'material' or path[0] == 'soc':
-            logger.info('选择类别')
-            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
-            self.find_and_tap_daily(path[0], path[1])
-            self.find_and_tap(path[1], path[2])
-        else:
-            raise NotImplementedError()
 
     def goto_stage_by_ocr(self, stage):
         path = stage_path.get_stage_path(stage)

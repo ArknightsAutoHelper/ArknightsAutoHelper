@@ -18,8 +18,6 @@ cache_key 控制缓存的频率, 默认每周读取一次库存, 如果需要手
 直接删除目录下的 aog_cache.json 和 inventory_items_cache.json 即可.
 
 只刷常规关卡, 活动关卡不刷.
-
-可以尝试将 config/config.yaml 中的 behavior/use_ocr_goto_stage 修改为 true 以支持更多的关卡跳转
 ==================================================================================================
 """
 print(desc)
