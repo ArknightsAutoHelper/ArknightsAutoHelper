@@ -19,6 +19,7 @@ import imgreco.task
 import imgreco.map
 import imgreco.imgops
 import penguin_stats.reporter
+from connector import auto_connect
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from . import stage_path
 from .frontend import DummyFrontend
@@ -63,8 +64,7 @@ class ArknightsHelper(object):
         if adb_host is not None or device_connector is not None:
             self.connect_device(device_connector, adb_serial=adb_host)
         if self.adb is None:
-            ensure_adb_alive()
-            self.connect_device(ADBConnector.auto_connect())
+            self.connect_device(auto_connect())
         if frontend is None:
             frontend = DummyFrontend()
         self.frontend = frontend

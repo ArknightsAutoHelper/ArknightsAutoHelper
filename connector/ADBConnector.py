@@ -191,7 +191,10 @@ class _ScreenCapImplReverseLoopback:
 
     __call__ = screencap
 
-_host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
+
+def _host_session_factory():
+    ensure_adb_alive()
+    return ADBClientSession(config.ADB_SERVER)
 
 class ADBConnector:
     def __init__(self, adb_serial):
