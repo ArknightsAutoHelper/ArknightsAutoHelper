@@ -84,6 +84,8 @@ def check_adb_alive():
         version = int(sess.service('host:version').read_response().decode(), 16)
         logger.debug('ADB server version %d', version)
         return True
+    except socket.timeout:
+        return False
     except ConnectionRefusedError:
         return False
     except RuntimeError:
