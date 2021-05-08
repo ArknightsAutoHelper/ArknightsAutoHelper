@@ -28,6 +28,7 @@ class ADBClientSession:
             timeout = 0.5
         sock = socket.create_connection(server, timeout=timeout)
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        sock.settimeout(None)
         self.sock = sock
 
     def close(self):
