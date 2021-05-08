@@ -21,12 +21,13 @@ def _read_hexlen(sock):
 
 
 class ADBClientSession:
-    def __init__(self, server=None):
+    def __init__(self, server=None, timeout=None):
         if server is None:
             server = ('127.0.0.1', 5037)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if server[0] == '127.0.0.1' or server[0] == '::1':
+            timeout = 0.5
+        sock = socket.create_connection(server, timeout=timeout)
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-        sock.connect(server)
         self.sock = sock
 
     def close(self):
