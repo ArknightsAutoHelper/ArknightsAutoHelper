@@ -36,7 +36,7 @@ def get_ballte_corners(img):
         return (
         (64.693 * vw, 16.852 * vh), (82.378 * vw, 14.352 * vh), (82.378 * vw, 37.500 * vh), (64.693 * vw, 37.963 * vh))
     else:
-        return [x[0] for x in imgops.find_homography(resources.load_image_cached('main/combat.png', 'L'), img)]
+        return [x[0] for x in imgops.find_homography(resources.load_image_cached('main/terminal.png', 'L'), img)]
 
 
 def get_task_corners(img):

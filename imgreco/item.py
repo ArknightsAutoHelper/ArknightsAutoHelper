@@ -19,9 +19,6 @@ class RecognizedItem:
     low_confidence: bool = False
 
 
-logger = get_logger(__name__)
-
-
 @lru_cache(1)
 def load_data():
     _, files = resources.get_entries('items')
@@ -42,14 +39,18 @@ def load_data():
 
 @lru_cache()
 def all_known_items():
-    _, files1 = resources.get_entries('items')
-    _, files2 = resources.get_entries('items/archive')
-    _, files3 = resources.get_entries('items/not-loot')
-    files = files1 + files2 + files3
-    return [filename[:-4] if filename.endswith('.png') else filename for filename in files]
+    result = {}
+    for prefix in ['items', 'items/archive', 'items/not-loot']:
+        _, files = resources.get_entries(prefix)
+        for filename in files:
+            itemname = filename[:-4] if filename.endswith('.png') else filename
+            path = prefix + '/' + filename
+            result[itemname] = path
+    return result
 
 
 def tell_item(itemimg, with_quantity=True):
+    logger = get_logger(__name__)
     logger.logimage(itemimg)
     cached = load_data()
     # l, t, r, b = scaledwh(80, 146, 90, 28)

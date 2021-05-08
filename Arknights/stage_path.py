@@ -1,3 +1,6 @@
+from resources.imgreco.map_vectors import stage_maps_linear, is_invalid_stage
+known_stages_ocr = [x for v in stage_maps_linear.values() for x in v]
+
 
 def _isnumchar(ch):
     return len(ch) == 1 and '0' <= ch <= '9'
@@ -29,3 +32,5 @@ def is_stage_supported(stage):
         return False
 
 
+def is_stage_supported_ocr(stage):
+    return stage in known_stages_ocr and not is_invalid_stage(stage)

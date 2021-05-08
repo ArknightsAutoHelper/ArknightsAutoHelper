@@ -214,7 +214,7 @@ def recognize(im):
     x, y = 6.667 * vh, 18.519 * vh
     linedet = items.crop((x, y, x + 1, items.height)).convert('L')
     d = np.asarray(linedet)
-    linedet = find_jumping(d.reshape(linedet.height), 64)
+    linedet = find_jumping(d.reshape(linedet.height), 55)
     if len(linedet) >= 2:
         linetop, linebottom, *_ = linedet
     else:
@@ -231,7 +231,7 @@ def recognize(im):
     logger.logimage(grouping.resize((grouping.width, 16)))
 
     d = np.array(grouping, dtype=np.int16)[0]
-    points = [0, *find_jumping(d, 64)]
+    points = [0, *find_jumping(d, 55)]
     if len(points) % 2 != 0:
         raise RuntimeError('possibly incomplete item list')
     finalgroups = list(zip(*[iter(points)] * 2))  # each_slice(2)

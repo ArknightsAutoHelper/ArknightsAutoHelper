@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m venv venv32
         venv32\Scripts\pip install -r requirements.txt
-        venv32\Scripts\pip install pyinstaller==4.0
+        venv32\Scripts\pip install pyinstaller
       shell: cmd
     - name: Make package
       run: |
@@ -44,7 +44,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m venv venv64
         venv64\Scripts\pip install -r requirements.txt
-        venv64\Scripts\pip install pyinstaller==4.0
+        venv64\Scripts\pip install pyinstaller
       shell: cmd
     - name: Make package
       run: |

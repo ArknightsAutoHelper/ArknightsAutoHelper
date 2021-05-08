@@ -55,7 +55,7 @@ with open(config_file, 'r', encoding='utf-8') as f:
     _ydoc = yaml.load(f)
 
 
-def get_instance_id_win32():
+def _get_instance_id_win32():
     import ctypes
     k32 = ctypes.WinDLL('kernel32', use_last_error=True)
     CreateMutex = k32.CreateMutexW
@@ -82,7 +82,7 @@ def get_instance_id_win32():
         return i
 
 
-def get_instance_id_posix():
+def _get_instance_id_posix():
     i = 0
     while True:
         try:
@@ -104,11 +104,11 @@ def get_instance_id_posix():
             i += 1
 
 
-def get_instance_id():
+def _get_instance_id():
     if os.name == 'nt':
-        return get_instance_id_win32()
+        return _get_instance_id_win32()
     else:
-        return get_instance_id_posix()
+        return _get_instance_id_posix()
 
 
 def _set_dirty():
@@ -186,17 +186,23 @@ enable_baidu_api = get('ocr/baidu_api/enabled', False)
 APP_ID = get('ocr/baidu_api/app_id', 'AAAZZZ')
 API_KEY = get('ocr/baidu_api/app_key', 'AAAZZZ')
 SECRET_KEY = get('ocr/baidu_api/app_secret', 'AAAZZZ')
-
 reporter = get('reporting/enabled', False)
 
+_instanceid = None
+logfile = None
 
-instanceid = get_instance_id()
-if instanceid == 0:
-    logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.log')
-else:
-    logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.%d.log' % instanceid)
+def get_instance_id():
+    global _instanceid, logfile
+    if _instanceid is not None:
+        return _instanceid
 
-with open(logging_config_file, 'r', encoding='utf-8') as f:
-    logging.config.dictConfig(yaml.load(f))
-del f
-logging.debug('ArknightsAutoHelper version %s', version)
+    _instanceid = _get_instance_id()
+    if _instanceid == 0:
+        logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.log')
+    else:
+        logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.%d.log' % _instanceid)
+
+    with open(logging_config_file, 'r', encoding='utf-8') as f:
+        logging.config.dictConfig(yaml.load(f))
+    logging.debug('ArknightsAutoHelper version %s', version)
+    return _instanceid

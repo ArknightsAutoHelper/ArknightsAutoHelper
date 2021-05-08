@@ -24,6 +24,8 @@
 
 #### 从源代码安装
 
+需要 Python 3.8 或以上版本。
+
 > ⚠ **不建议从 GitHub 下载 zip 源码包安装**：这样做会丢失版本信息，且不便于后续更新。
 
 ```bash
@@ -45,9 +47,15 @@ pip install -r requirements.txt
 
 #### 二进制包（Windows）
 
-从 Actions artifacts 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
+:wink: 从 nightly.link 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
+
+[ninthDevilHAUNSTER/ArknightsAutoHelper](https://nightly.link/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/pyinstaller-win/master)
+
+:satisfied: 从 Actions artifacts 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
 
 [![make PyInstaller packaged release](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/make%20PyInstaller%20packaged%20release/badge.svg?branch=master)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions?query=workflow%3A%22make+PyInstaller+packaged+release%22+is%3Asuccess)
+
+
 
 #### OCR 依赖
 目前 OCR 用于：
@@ -112,7 +120,21 @@ pip install -r requirements.txt
 
 **报告 issue 时，建议附上日志以便定位问题。**
 
-## 0x02 ArknightsHelper 命令行启动
+## 0x02 ArknightsHelper GUI 启动
+
+```
+$ python3 akhelper-gui.pyw
+```
+
+Web GUI 将在一下第一个可用的浏览器环境中打开：
+
+* 内嵌浏览器
+* Google Chrome、Chromium、Microsoft Edge 的 PWA 模式*
+* 系统默认浏览器*
+
+<small>* 使用外部浏览器时，HTTP 服务器将在最后一个连接关闭后 3 分钟内退出。</small>
+
+## 0x03 ArknightsHelper 命令行启动
 
 > 💡 Windows：命令行功能在 Windows 10 1607 (build 14393) 及以上版本上体验最佳。非简体中文系统可能无法在 Windows 命令行窗口中正确显示简体中文文字，可尝试使用 Windows Terminal。
 
@@ -129,7 +151,7 @@ commands (prefix abbreviation accepted):
     auto [+-rR[N]] stage1 count1 [stage2 count2] ...
         按顺序挑战指定关卡特定次数直到理智不足
     collect
-        收集每日任务奖励
+        收集每日任务和每周任务奖励
     recruit [tags ...]
         公开招募识别/计算，不指定标签则从截图中识别
     interactive
@@ -208,7 +230,7 @@ $ python ArknightsShell.py -s -t slim:99
 
 ### 主战斗模块
 
-主战斗模块可以从几乎任何位置（理论上有返回键的页面）开始任务序列。
+1. 主战斗模块可以从几乎任何位置（理论上有返回键的页面）开始任务序列。
 
 \* 该模块支持关卡有限，请等待后续更新
 
@@ -216,6 +238,10 @@ $ python ArknightsShell.py -s -t slim:99
 python3 akhelper.py auto   5-1 2   5-2 3
 # 按顺序刷 5-1 关卡 2 次，5-2 关卡 3 次
 ```
+
+2. 启用 ocr 方式进行跳转关卡的跳转方法: 将 `config.yaml` 下的 `behavior/use_ocr_goto_stage` 更改为 true 即可.
+
+此方式支持第一章至第七章大部分的关卡.
 
 <details><summary>旧版命令行接口</summary>
 
@@ -225,15 +251,50 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 
 </details>
 
-## 0x03 ArknightsHelper 自定义脚本启动
+
+
+
+### 通过输入所需材料数量创建刷图计划并执行
+
+`根据材料创建刷图计划.bat` 文件可以通过企鹅物流的接口, 根据输入的材料创建刷图计划 (支持自动获取当前库存):
+
+```
+# 缓存将在第一次启动脚本时创建, 如果没有新的地图或材料, 这个缓存没必要更新.
+是否刷新企鹅物流缓存(缓存时间: ....)[y/N]:
+材料列表：
+序号: 0, 材料等级: 3, 名称: 赤金
+序号: 1, 材料等级: 3, 名称: 提纯源岩
+...
+...
+# 需要 10 个提纯源岩
+材料序号/需求数量(输入为空时结束):1/10
+材料序号/需求数量(输入为空时结束):
+
+# 默认 n, 输入 y 将自动读取游戏中的库存, 并加入到刷图计划的计算中
+是否获取当前库存材料数量(y,N):y
+
+刷图计划:
+关卡 [...] 次数 2
+...
+预计消耗理智: ...
+刷图计划已保存至: config/plan.json
+```
+
+`执行刷图计划.bat` 文件将从上一步生成的 config/plan.json 获取并执行刷图计划. 
+
+如果当前的理智不足以完成刷图计划, 将保存已经刷图的次数, 并在下次运行时恢复.
+
+如果完成刷图计划后, 当前的理智还有剩余, 且 config 中配置了 `plan/idle_stage`, 那么剩余的理智将用来刷这个关卡.
+
+## 0x04 ArknightsHelper 自定义脚本启动
 
 请阅读 ArknightsHelper_examples.py.txt 下的代码并编写自定义脚本
 
-## 0x04 ArknightsHelper GUI 启动
+## 0x05 ArknightsHelper GUI 启动
 
 详见 release 分支下的文件
 
-## 0x05 开机自启动批处理&一键开启
+## 0x06 开机自启动批处理&一键开启
 
 `start.bat`文件会启动模拟器并自动登录刷本，完成预定任务后关闭电脑，你也可以把它略作修改当做一键启动。如果想要使用这个批处理，需要以下几步：
 
@@ -246,13 +307,13 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 注意：“无限休眠”其实是有时间的，大概是1024秒，**提交这个批处理的时候我也将这个时间改成了60秒**，如果需要可以修改回来。
 
 
-## 0x06 已知问题
+## 0x07 已知问题
 
 * 自动选关功能：点击随机偏移范围大小固定，且与分辨率无关
 * 某些情况下，物品、数量识别会出错
 
 
-## 0x07 自定义开发与TODO
+## 0x08 自定义开发与TODO
 
 ### 关于一些常见的问题
 

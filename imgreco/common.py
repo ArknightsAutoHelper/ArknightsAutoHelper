@@ -35,8 +35,8 @@ def check_nav_button(img):
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     logger.logimage(icon1)
-    logger.logtext('mse=%f' % mse)
-    return mse < 200
+    logger.logtext('check_nav_button mse=%f' % mse)
+    return mse < 300
 
 
 def get_nav_button_back_rect(viewport):
@@ -115,6 +115,17 @@ def get_dialog_ok_button_rect(img):
     dlgtype, y = check_dialog(img)
     assert dlgtype == 'ok'
     return (25*vw, y-4*vh, 75*vw, y+4*vh)
+
+
+def convert_to_pil(cv_img, color_code=cv.COLOR_BGR2RGB):
+    return Image.fromarray(cv.cvtColor(cv_img, color_code))
+
+
+def softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=0)
+
 
 if __name__ == "__main__":
     import sys

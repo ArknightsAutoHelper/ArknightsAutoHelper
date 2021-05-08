@@ -1,4 +1,6 @@
 import os
+import json
+import re
 import time
 import logging
 from typing import Callable
@@ -11,14 +13,20 @@ import coloredlogs
 import numpy as np
 
 import config
-import imgreco
+import imgreco.common
+import imgreco.main
+import imgreco.task
+import imgreco.map
 import imgreco.imgops
 import penguin_stats.reporter
-from connector.ADBConnector import ADBConnector, ensure_adb_alive
+from connector.ADBConnector import ADBConnector
 from . import stage_path
+from .frontend import DummyFrontend
 from Arknights.click_location import *
 from Arknights.flags import *
-from util.exc_guard import guard
+from util.excutil import guard
+
+from Arknights import frontend
 
 logger = logging.getLogger('helper')
 coloredlogs.install(
@@ -48,20 +56,17 @@ def format_recoresult(recoresult):
         result = '<发生错误>'
     return result
 
+
 class ArknightsHelper(object):
-    def __init__(self,
-                 current_strength=None,  # 当前理智
-                 adb_host=None,  # 当前绑定到的设备
-                 out_put=True,  # 是否有命令行输出
-                 call_by_gui=False):  # 是否为从 GUI 程序调用
-        ensure_adb_alive()
-        self.adb = ADBConnector(adb_serial=adb_host)
-        self.__is_game_active = False
-        self.__call_by_gui = call_by_gui
-        self.is_called_by_gui = call_by_gui
-        self.viewport = self.adb.screen_size
+    def __init__(self, adb_host=None, device_connector=None, frontend=None):  # 当前绑定到的设备
+        self.adb = None
+        if adb_host is not None or device_connector is not None:
+            self.connect_device(device_connector, adb_serial=adb_host)
+        if frontend is None:
+            frontend = DummyFrontend()
+        self.frontend = frontend
+        self.frontend.attach(self)
         self.operation_time = []
-        self.delay_impl = sleep
         if DEBUG_LEVEL >= 1:
             self.__print_info()
         self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
@@ -73,22 +78,41 @@ class ArknightsHelper(object):
             self.penguin_reporter = penguin_stats.reporter.PenguinStatsReporter()
         self.refill_count = 0
         self.max_refill_count = None
-        if Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
-            logger.warn('当前分辨率（%dx%d）不符合要求', self.viewport[0], self.viewport[1])
+
+        logger.debug("成功初始化模块")
+
+    def ensure_device_connection(self):
+        if self.adb is None:
+            raise RuntimeError('not connected to device')
+
+    def connect_device(self, connector=None, *, adb_serial=None):
+        if connector is not None:
+            self.adb = connector
+        elif adb_serial is not None:
+            self.adb = ADBConnector(adb_serial)
+        else:
+            self.adb = None
+            return
+        self.viewport = self.adb.screen_size
+        if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
+            title = '设备当前分辨率（%dx%d）不符合要求' % (self.viewport[0], self.viewport[1])
+            body = '需要宽高比等于或大于 16∶9，且渲染高度不小于 720。'
+            details = None
             if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
-                logger.info('屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度')
+                body = '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
                 img = self.adb.screenshot()
                 imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
                 img.save(imgfile)
                 import json
-                logger.info('参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]', imgfile, json.dumps(self.adb.config_key))
+                details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self.adb.config_key))
                 self.viewport = (self.viewport[1], self.viewport[0])
-
-        logger.debug("成功初始化模块")
+            for msg in [title, body, details]:
+                if msg is not None:
+                    logger.warn(msg)
+            frontend.alert(title, body, 'warn', details)
 
     def __print_info(self):
         logger.info('当前系统信息:')
-        logger.info('ADB 服务器:\t%s:%d', *config.ADB_SERVER)
         logger.info('分辨率:\t%dx%d', *self.viewport)
         # logger.info('OCR 引擎:\t%s', ocr.engine.info)
         logger.info('截图路径:\t%s', config.SCREEN_SHOOT_SAVE_PATH)
@@ -116,20 +140,18 @@ class ArknightsHelper(object):
         logger.debug("正在尝试启动游戏")
         logger.debug(current)
         if config.ArkNights_PACKAGE_NAME in current:
-            self.__is_game_active = True
             logger.debug("游戏已启动")
         else:
             self.adb.run_device_cmd(
                 "am start -n {}/{}".format(config.ArkNights_PACKAGE_NAME, config.ArkNights_ACTIVITY_NAME))
             logger.debug("成功启动游戏")
-            self.__is_game_active = True
 
     def __wait(self, n=10,  # 等待时间中值
-               MANLIKE_FLAG=True):  # 是否在此基础上设偏移量
+               MANLIKE_FLAG=True, allow_skip=False):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
-        self.delay_impl(n)
+        self.frontend.delay(n, allow_skip)
 
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
@@ -165,18 +187,20 @@ class ArknightsHelper(object):
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True):
+    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
         if crop is None:
-            shooter = lambda: self.adb.screenshot()
+            shooter = lambda: self.adb.screenshot(False)
         else:
-            shooter = lambda: self.adb.screenshot().crop(crop)
+            shooter = lambda: self.adb.screenshot(False).crop(crop)
         screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
         n = 0
         minerr = 65025
-        while time.monotonic() < ts:
-            self.__wait(1)
+        message_shown = False
+        while (t1 := time.monotonic()) < ts:
+            if check_delay > 0:
+                self.__wait(check_delay, False, True)
             screenshot2 = shooter()
             mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
             if mse <= threshold:
@@ -184,8 +208,7 @@ class ArknightsHelper(object):
             screenshot = screenshot2
             if mse < minerr:
                 minerr = mse
-            n += 1
-            if n == 9:
+            if not message_shown and t1-t0 > 10:
                 logger.info("等待画面静止")
         if raise_for_timeout:
             raise RuntimeError("%d 秒内画面未静止，最小误差=%d，阈值=%d" % (timeout, minerr, threshold))
@@ -222,40 +245,33 @@ class ArknightsHelper(object):
             if "sub" in kwargs else False
         auto_close = kwargs["auto_close"] \
             if "auto_close" in kwargs else False
-        if not sub:
-            logger.info("战斗-选择{}...启动".format(c_id))
         if set_count == 0:
-            return True
+            return c_id, 0
         self.operation_time = []
         count = 0
+        remain = 0
         try:
-            for count in range(set_count):
+            for _ in range(set_count):
                 # logger.info("开始第 %d 次战斗", count + 1)
                 self.operation_once_statemachine(c_id, )
-                logger.info("第 %d 次作战完成", count + 1)
-                if count != set_count - 1:
+                count += 1
+                logger.info("第 %d 次作战完成", count)
+                self.frontend.notify('completed-count', count)
+                if count != set_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
                         self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
                     else:
                         self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
         except StopIteration:
+            # count: succeeded count
             logger.error('未能进行第 %d 次作战', count + 1)
-            remain = set_count - count - 1
-            if remain > 0:
-                logger.error('已忽略余下的 %d 次战斗', remain)
+            remain = set_count - count
+            if remain > 1:
+                logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
-        if not sub:
-            if auto_close:
-                logger.info("简略模块{}结束，系统准备退出".format(c_id))
-                self.__wait(120, False)
-                self.__del()
-            else:
-                logger.info("简略模块{}结束".format(c_id))
-                return True
-        else:
-            logger.info("当前任务{}结束，准备进行下一项任务".format(c_id))
-            return True
+        return c_id, remain
+
 
     def can_perform_refill(self):
         if not self.use_refill:
@@ -275,6 +291,9 @@ class ArknightsHelper(object):
         prepare_reco: dict = None
 
     def operation_once_statemachine(self, c_id):
+        import imgreco.before_operation
+        import imgreco.end_operation
+
         smobj = ArknightsHelper.operation_once_state()
         def on_prepare(smobj):
             count_times = 0
@@ -366,12 +385,12 @@ class ArknightsHelper(object):
                 else:
                     wait_time = sum(self.operation_time) / len(self.operation_time) - 7
                 logger.info('等待 %d s' % wait_time)
-                self.__wait(wait_time, MANLIKE_FLAG=False)
+                self.__wait(wait_time, MANLIKE_FLAG=False, allow_skip=True)
                 smobj.first_wait = False
             t = monotonic() - smobj.operation_start
 
             logger.info('已进行 %.1f s，判断是否结束', t)
-
+            
             screenshot = self.adb.screenshot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("等级提升")
@@ -394,11 +413,13 @@ class ArknightsHelper(object):
             if dlgtype is not None:
                 if dlgtype == 'yesno' and '代理指挥' in ocrresult:
                     logger.warning('代理指挥出现失误')
+                    self.frontend.alert('代理指挥', '代理指挥出现失误', 'warn')
                     smobj.mistaken_delegation = True
                     if config.get('behavior/mistaken_delegation/settle', False):
                         logger.info('以 2 星结算关卡')
                         self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
                         self.__wait(2)
+                        smobj.stop = True
                         return
                     else:
                         logger.info('放弃关卡')
@@ -406,7 +427,9 @@ class ArknightsHelper(object):
                         # 关闭失败提示
                         self.wait_for_still_image()
                         self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(screenshot))
+                        # FIXME: 理智返还
                         self.__wait(1)
+                        smobj.stop = True
                         return
                 elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
                     logger.info('发现放弃行动提示，关闭')
@@ -416,7 +439,7 @@ class ArknightsHelper(object):
                     raise RuntimeError('unhandled dialog')
 
             logger.info('战斗未结束')
-            self.__wait(BATTLE_FINISH_DETECT)
+            self.__wait(BATTLE_FINISH_DETECT, allow_skip=True)
 
         def on_level_up_popup(smobj):
             self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
@@ -440,6 +463,8 @@ class ArknightsHelper(object):
                     for name, qty in group:
                         if name is not None and qty is not None:
                             self.loots[name] = self.loots.get(name, 0) + qty
+                self.frontend.notify("combat-result", drops)
+                self.frontend.notify("loots", self.loots)
                 if log_total:
                     self.log_total_loots()
                 if self.use_penguin_report:
@@ -471,6 +496,8 @@ class ArknightsHelper(object):
 
     def back_to_main(self):  # 回到主页
         logger.info("正在返回主页")
+        retry_count = 0
+        max_retry = 3
         while True:
             screenshot = self.adb.screenshot()
 
@@ -508,7 +535,7 @@ class ArknightsHelper(object):
 
             dlgtype, ocr = imgreco.common.recognize_dialog(screenshot)
             if dlgtype == 'yesno':
-                if '基建' in ocr or '停止招募' in ocr:
+                if '基建' in ocr or '停止招募' in ocr or '好友列表' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
                     self.__wait(3)
                     continue
@@ -522,54 +549,42 @@ class ArknightsHelper(object):
                 self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
                 self.__wait(1)
                 continue
-
-            raise RuntimeError('未知画面')
+            retry_count += 1
+            if retry_count > max_retry:
+                raise RuntimeError('未知画面')
         logger.info("已回到主页")
 
     def module_battle(self,  # 完整的战斗模块
                       c_id,  # 选择的关卡
                       set_count=1000):  # 作战次数
         logger.debug("helper.module_battle")
-        self.goto_stage(c_id)
-        self.module_battle_slim(c_id,
+        c_id = c_id.upper()
+        if config.get('behavior/use_ocr_goto_stage', False) and stage_path.is_stage_supported_ocr(c_id):
+            self.goto_stage_by_ocr(c_id)
+        elif stage_path.is_stage_supported(c_id):
+            self.goto_stage(c_id)
+        else:
+            logger.error('不支持的关卡：%s', c_id)
+            raise ValueError(c_id)
+        return self.module_battle_slim(c_id,
                                 set_count=set_count,
                                 check_ai=True,
                                 sub=True)
-        return True
 
     def main_handler(self, task_list, clear_tasks=False, auto_close=True):
-
-        logger.info("装载模块...")
-        logger.info("战斗模块...启动")
-        flag = False
         if len(task_list) == 0:
             logger.fatal("任务清单为空!")
 
         for c_id, count in task_list:
-            if not stage_path.is_stage_supported(c_id):
-                raise ValueError(c_id)
+            # if not stage_path.is_stage_supported(c_id):
+            #     raise ValueError(c_id)
             logger.info("开始 %s", c_id)
             flag = self.module_battle(c_id, count)
 
-        if flag:
-            if self.__call_by_gui or auto_close is False:
-                logger.info("所有模块执行完毕")
-            else:
-                if clear_tasks:
-                    self.clear_daily_task()
-                logger.info("所有模块执行完毕... 60s后退出")
-                self.__wait(60)
-                self.__del()
-        else:
-            if self.__call_by_gui or auto_close is False:
-                logger.error("发生未知错误... 进程已结束")
-            else:
-                logger.error("发生未知错误... 60s后退出")
-                self.__wait(60)
-                self.__del()
+        logger.info("任务清单执行完毕")
 
-    def clear_daily_task(self):
-        logger.debug("helper.clear_daily_task")
+    def clear_task(self):
+        logger.debug("helper.clear_task")
         logger.info("领取每日任务")
         self.back_to_main()
         screenshot = self.adb.screenshot()
@@ -584,24 +599,26 @@ class ArknightsHelper(object):
             self.tap_rect(imgreco.task.get_daily_task_rect(screenshot, hasbeginner))
             self.__wait(TINY_WAIT)
             screenshot = self.adb.screenshot()
+        self.clear_task_worker()
+        logger.info('切换到每周任务') #默认进入见习任务或每日任务，因此无需检测，直接切换即可
+        self.tap_rect(imgreco.task.get_weekly_task_rect(screenshot, hasbeginner))
+        self.clear_task_worker()
 
-        while imgreco.task.check_collectable_reward(screenshot):
-            logger.info('完成任务')
+    def clear_task_worker(self):
+        screenshot = self.adb.screenshot()
+        kickoff = True
+        while True:
+            if imgreco.common.check_nav_button(screenshot) and not imgreco.task.check_collectable_reward(screenshot):
+                logger.info("奖励已领取完毕")
+                break
+            if kickoff:
+                logger.info('开始领取奖励')
+                kickoff = False
             self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
-            self.__wait(SMALL_WAIT)
-            while True:
-                screenshot = self.adb.screenshot()
-                if imgreco.common.check_get_item_popup(screenshot):
-                    logger.info('领取奖励')
-                    self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(self.viewport))
-                    self.__wait(SMALL_WAIT)
-                else:
-                    break
-            screenshot = self.adb.screenshot()
-        logger.info("奖励已领取完毕")
-
+            screenshot = self.adb.screenshot(cached=False)
 
     def recruit(self):
+        import imgreco.recruit
         from . import recruit_calc
         logger.info('识别招募标签')
         tags = imgreco.recruit.get_recruit_tags(self.adb.screenshot())
@@ -656,6 +673,88 @@ class ArknightsHelper(object):
             else:
                 raise KeyError((target, partition))
 
+    def find_and_tap_episode_by_ocr(self, target):
+        import imgreco.stage_ocr
+        from resources.imgreco.map_vectors import ep2region, region2ep
+        target_region = ep2region.get(target)
+        if target_region is None:
+            logger.error(f'未能定位章节区域, target: {target}')
+            raise RuntimeError('recognition failed')
+        vw, vh = imgreco.util.get_vwvh(self.viewport)
+        episode_tag_rect = tuple(map(int, (35.185*vh, 39.259*vh, 50.093*vh, 43.056*vh)))
+        next_ep_region_rect = (5.833*vh, 69.167*vh, 11.944*vh, 74.815*vh)
+        prev_ep_region_rect = (5.833*vh, 15.370*vh, 11.944*vh, 21.481*vh)
+        current_ep_rect = (50*vw+19.907*vh, 28.426*vh, 50*vw+63.426*vh, 71.944*vh)
+        episode_move = (400 * self.viewport[1] / 1080)
+
+        while True:
+            screenshot = self.adb.screenshot()
+            current_episode_tag = screenshot.crop(episode_tag_rect)
+            current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
+            logger.info(f'当前章节: {current_episode_str}')
+            if not current_episode_str.startswith('EPISODE'):
+                logger.error(f'章节识别失败, current_episode_str: {current_episode_str}')
+                raise RuntimeError('recognition failed')
+            current_episode = int(current_episode_str[7:])
+            current_region = ep2region.get(current_episode)
+            if current_region is None:
+                logger.error(f'未能定位章节区域, current_episode: {current_episode}')
+                raise RuntimeError('recognition failed')
+            if current_region == target_region:
+                break
+            if current_region > target_region:
+                logger.info(f'前往上一章节区域')
+                self.tap_rect(prev_ep_region_rect)
+            else:
+                logger.info(f'前往下一章节区域')
+                self.tap_rect(next_ep_region_rect)
+        while current_episode != target:
+            move = min(abs(current_episode - target), 2) * episode_move * (1 if current_episode > target else -1)
+            self.__swipe_screen(move, 10, self.viewport[0] // 4 * 3)
+            screenshot = self.adb.screenshot()
+            current_episode_tag = screenshot.crop(episode_tag_rect)
+            current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
+            logger.info(f'当前章节: {current_episode_str}')
+            current_episode = int(current_episode_str[7:])
+
+        logger.info(f'进入章节: {current_episode_str}')
+        self.tap_rect(current_ep_rect)
+
+    def find_and_tap_stage_by_ocr(self, partition, target, partition_map=None):
+        import imgreco.stage_ocr
+        target = target.upper()
+        if partition_map is None:
+            from resources.imgreco.map_vectors import stage_maps_linear
+            partition_map = stage_maps_linear[partition]
+        target_index = partition_map.index(target)
+        while True:
+            screenshot = self.adb.screenshot()
+            tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot)
+            logger.debug('tags map: ' + repr(tags_map))
+            pos = tags_map.get(target)
+            if pos:
+                logger.info('目标在可视区域内，点击')
+                self.adb.touch_tap(pos, offsets=(5, 5))
+                self.__wait(1)
+                return
+
+            known_indices = [partition_map.index(x) for x in tags_map.keys() if x in partition_map]
+
+            originX = self.viewport[0] // 2 + randint(-100, 100)
+            originY = self.viewport[1] // 2 + randint(-100, 100)
+            move = randint(self.viewport[0] // 4, self.viewport[0] // 3)
+
+            if all(x > target_index for x in known_indices):
+                logger.info('目标在可视区域左侧，向右拖动')
+            elif all(x < target_index for x in known_indices):
+                move = -move
+                logger.info('目标在可视区域右侧，向左拖动')
+            else:
+                logger.error('未能定位关卡地图')
+                raise RuntimeError('recognition failed')
+            self.adb.touch_swipe2((originX, originY), (move, max(250, move // 2)))
+            self.__wait(1)
+
     def find_and_tap_daily(self, partition, target, *, recursion=0):
         screenshot = self.adb.screenshot()
         recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
@@ -695,6 +794,25 @@ class ArknightsHelper(object):
         else:
             raise NotImplementedError()
 
+    def goto_stage_by_ocr(self, stage):
+        path = stage_path.get_stage_path(stage)
+        self.back_to_main()
+        logger.info('进入作战')
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
+        self.__wait(TINY_WAIT)
+        if path[0] == 'main':
+            vw, vh = imgreco.util.get_vwvh(self.viewport)
+            self.tap_rect((14.316*vw, 89.815*vh, 28.462*vw, 99.815*vh))
+            self.find_and_tap_episode_by_ocr(int(path[1][2:]))
+            self.find_and_tap_stage_by_ocr(path[1], path[2])
+        elif path[0] == 'material' or path[0] == 'soc':
+            logger.info('选择类别')
+            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
+            self.find_and_tap_daily(path[0], path[1])
+            self.find_and_tap(path[1], path[2])
+        else:
+            raise NotImplementedError()
+
     def get_credit(self):
         logger.debug("helper.get_credit")
         logger.info("领取信赖")
@@ -716,7 +834,7 @@ class ArknightsHelper(object):
             building_count = building_count + 1
             logger.info('访问第 %s 位好友', building_count)
         logger.info('信赖领取完毕')
-    
+
     def get_building(self):
         logger.debug("helper.get_building")
         logger.info("清空基建")
@@ -754,3 +872,190 @@ class ArknightsHelper(object):
 
     def log_total_loots(self):
         logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
+
+    def get_inventory_items(self, show_item_name=False):
+        import imgreco.inventory
+        all_items_map = {}
+        if show_item_name:
+            import penguin_stats.arkplanner
+            all_items_map = penguin_stats.arkplanner.get_all_items_map()
+
+        self.back_to_main()
+        logger.info("进入仓库")
+        self.tap_rect(imgreco.inventory.get_inventory_rect(self.viewport))
+
+        items_map = {}
+        last_screen_items = None
+        move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
+        self.__swipe_screen(move)
+        screenshot = self.adb.screenshot()
+        while True:
+            move = -randint(self.viewport[0] // 3.5, self.viewport[0] // 2.5)
+            self.__swipe_screen(move)
+            screen_items_map = imgreco.inventory.get_all_item_in_screen(screenshot)
+            if last_screen_items == screen_items_map.keys():
+                logger.info("读取完毕")
+                break
+            if show_item_name:
+                name_map = {all_items_map[k]['name']: screen_items_map[k] for k in screen_items_map.keys()}
+                logger.info('name_map: %s' % name_map)
+            else:
+                logger.info('screen_items_map: %s' % screen_items_map)
+            last_screen_items = screen_items_map.keys()
+            items_map.update(screen_items_map)
+            # break
+            screenshot = self.adb.screenshot()
+        if show_item_name:
+            logger.info('items_map: %s' % {all_items_map[k]['name']: items_map[k] for k in items_map.keys()})
+        return items_map
+
+    def __swipe_screen(self, move, rand=100, origin_x=None, origin_y=None):
+        origin_x = (origin_x or self.viewport[0] // 2) + randint(-rand, rand)
+        origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
+        self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
+
+    def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
+                             description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
+        # FIXME 检查设备是否有 root 权限
+        record_dir = os.path.join('custom_record/', record_name)
+        if os.path.exists(record_dir):
+            c = input('已存在同名的记录, y 覆盖, n 退出: ')
+            if c.strip().lower() != 'y':
+                return
+            import shutil
+            shutil.rmtree(record_dir)
+        os.mkdir(record_dir)
+
+        if back_to_main:
+            self.back_to_main()
+
+        EVENT_LINE_RE = re.compile(r"(\S+): (\S+) (\S+) (\S+)$")
+        records = []
+        record_data = {
+            'screen_width': self.viewport[0],
+            'screen_height': self.viewport[1],
+            'description': description,
+            'prefer_mode': prefer_mode,
+            'back_to_main': back_to_main,
+            'records': records
+        }
+        half_roi = roi_size // 2
+        logger.info('滑动屏幕以退出录制.')
+        logger.info('start recording...')
+        sock = self.adb.device_session_factory().shell_stream('getevent')
+        f = sock.makefile('rb')
+        while True:
+            x = 0
+            y = 0
+            point_list = []
+            touch_down = False
+            screen = self.adb.screenshot()
+            while True:
+                line = f.readline().decode('utf-8', 'replace').strip()
+                # print(line)
+                match = EVENT_LINE_RE.match(line.strip())
+                if match is not None:
+                    dev, etype, ecode, data = match.groups()
+                    if '/dev/input/event5' != dev:
+                        continue
+                    etype, ecode, data = int(etype, 16), int(ecode, 16), int(data, 16)
+                    # print(dev, etype, ecode, data)
+
+                    if (etype, ecode) == (1, 330):
+                        touch_down = (data == 1)
+
+                    if touch_down:
+                        if 53 == ecode:
+                            x = data
+                        elif 54 == ecode:
+                            y = data
+                        elif (etype, ecode, data) == (0, 0, 0):
+                            # print(f'point: ({x}, {y})')
+                            point_list.append((x, y))
+                    elif (etype, ecode, data) == (0, 0, 0):
+                        break
+            logger.debug(f'point_list: {point_list}')
+            if len(point_list) == 1:
+                point = point_list[0]
+                x1 = max(0, point[0] - half_roi)
+                x2 = min(self.viewport[0] - 1, point[0] + half_roi)
+                y1 = max(0, point[1] - half_roi)
+                y2 = min(self.viewport[1] - 1, point[1] + half_roi)
+                roi = screen.crop((x1, y1, x2, y2))
+                step = len(records)
+                roi.save(os.path.join(record_dir, f'step{step}.png'))
+                record = {'point': point, 'img': f'step{step}.png', 'type': 'tap',
+                          'wait_seconds_after_touch': wait_seconds_after_touch,
+                          'threshold': threshold, 'repeat': 1, 'raise_exception': True}
+                logger.info(f'record: {record}')
+                records.append(record)
+                if wait_seconds_after_touch:
+                    logger.info(f'wait {wait_seconds_after_touch}s...')
+                    self.__wait(wait_seconds_after_touch)
+
+                logger.info('go ahead...')
+            elif len(point_list) > 1:
+                # 滑动时跳出循环
+                c = input('是否退出录制[Y/n]:')
+                if c.strip().lower() != 'n':
+                    logger.info('stop recording...')
+                    break
+                else:
+                    # todo 处理屏幕滑动
+                    continue
+        with open(os.path.join(record_dir, f'record.json'), 'w', encoding='utf-8') as f:
+            json.dump(record_data, f, ensure_ascii=False, indent=4, sort_keys=True)
+
+    def replay_custom_record(self, record_name, mode=None, back_to_main=None):
+        from PIL import Image
+        record_dir = os.path.join('custom_record/', record_name)
+        if not os.path.exists(record_dir):
+            logger.error(f'未找到相应的记录: {record_name}')
+            raise RuntimeError(f'未找到相应的记录: {record_name}')
+
+        with open(os.path.join(record_dir, 'record.json'), 'r', encoding='utf-8') as f:
+            record_data = json.load(f)
+        logger.info(f'record description: {record_data.get("description")}')
+        records = record_data['records']
+        if mode is None:
+            mode = record_data.get('prefer_mode', 'match_template')
+        if mode not in ('match_template', 'point'):
+            logger.error(f'不支持的模式: {mode}')
+            raise RuntimeError(f'不支持的模式: {mode}')
+        if back_to_main is None:
+            back_to_main = record_data.get('back_to_main', True)
+        if back_to_main:
+            self.back_to_main()
+        record_height = record_data['screen_height']
+        ratio = record_height / self.viewport[1]
+        x, y = 0, 0
+        for record in records:
+            if record['type'] == 'tap':
+                repeat = record.get('repeat', 1)
+                raise_exception = record.get('raise_exception', True)
+                threshold = record.get('threshold', 0.7)
+                for _ in range(repeat):
+                    if mode == 'match_template':
+                        screen = self.adb.screenshot()
+                        gray_screen = screen.convert('L')
+                        if ratio != 1:
+                            gray_screen = gray_screen.resize((int(self.viewport[0] * ratio), record_height))
+                        template = Image.open(os.path.join(record_dir, record['img'])).convert('L')
+                        (x, y), r = imgreco.imgops.match_template(gray_screen, template)
+                        x = x // ratio
+                        y = y // ratio
+                        logger.info(f'(x, y), r, record: {(x, y), r, record}')
+                        if r < threshold:
+                            if raise_exception:
+                                logger.error('无法识别的图像: ' + record['img'])
+                                raise RuntimeError('无法识别的图像: ' + record['img'])
+                            break
+                    elif mode == 'point':
+                        # 这个模式屏幕尺寸宽高比必须与记录中的保持一至
+                        assert record_data['screen_width'] == int(self.viewport[0] * ratio)
+                        x, y = record['point']
+                        x = x // ratio
+                        y = y // ratio
+                    self.adb.touch_tap((x, y), offsets=(5, 5))
+                    if record.get('wait_seconds_after_touch'):
+                        self.__wait(record['wait_seconds_after_touch'])

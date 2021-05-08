@@ -8,6 +8,8 @@ import struct
 import socket
 import time
 import contextlib
+import importlib
+import collections.abc
 
 from PIL import Image
 import numpy as np
@@ -189,15 +191,16 @@ class _ScreenCapImplReverseLoopback:
 
     __call__ = screencap
 
+_host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
+
 class ADBConnector:
-    def __init__(self, adb_serial=None):
+    def __init__(self, adb_serial):
+        ensure_adb_alive()
         # os.chdir(ADB_ROOT)
         self.ADB_ROOT = config.ADB_ROOT
         self.adb_serial = adb_serial
-        self.host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
+        self.host_session_factory = _host_session_factory
         self.rch = None
-        if self.adb_serial is None:
-            self.adb_serial = self.__adb_device_name_detector()
         self.device_session_factory = lambda: self.host_session_factory().device(self.adb_serial)
         self.cache_screenshot = config.get('device/cache_screenshot', True)
         self.last_screenshot_timestamp = 0
@@ -215,6 +218,9 @@ class ADBConnector:
         if self.rch and self.rch.is_alive():
             self.rch.stop()
 
+    def __str__(self):
+        return 'adb:'+self.adb_serial
+
     def get_device_identifier(self):
         hostname = self.device_session_factory().exec('getprop net.hostname').decode().strip()
         if hostname:
@@ -223,24 +229,66 @@ class ADBConnector:
         if android_id:
             return android_id
 
-    def __adb_device_name_detector(self):
-        devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
+    @classmethod
+    def disconnect_offline(cls):
+        with contextlib.suppress(RuntimeError):
+            for x in _host_session_factory().devices():
+                if x[1] == 'offline':
+                    with contextlib.suppress(RuntimeError):
+                        _host_session_factory().disconnect(x[0])
+
+    @classmethod
+    def paranoid_connect(cls, port, timeout=0):
+        with contextlib.suppress(RuntimeError):
+            _host_session_factory().disconnect(port)
+        host_session = _host_session_factory()
+        if timeout != 0:
+            host_session.sock.settimeout(timeout)
+        host_session.connect(port)
+
+    @classmethod
+    def available_devices(cls):
+        return [x for x in _host_session_factory().devices() if x[1] != 'offline']
+
+    @classmethod
+    def auto_connect(cls):
+        devices = cls.available_devices()
 
         if len(devices) == 0:
-            auto_connect = config.get('device/adb_auto_connect', None)
-            if auto_connect is not None:
-                logger.info('没有已连接设备，尝试连接 %s', auto_connect)
-                with contextlib.suppress(RuntimeError):
-                    self.host_session_factory().disconnect(auto_connect)
-                for x in self.host_session_factory().devices():
-                    if x[1] == 'offline':
-                        with contextlib.suppress(RuntimeError):
-                            self.host_session_factory().disconnect(x[0])
-                self.host_session_factory().connect(auto_connect)
+            fixups = config.get('device/adb_no_device_fixups', [])
+
+            # old config migration
+            if autoconn := config.get('device/adb_auto_connect', None):
+                fixups.append(dict(run='adb_connect', target=autoconn))
+
+            if fixups:
+                logger.info('无设备连接，尝试自动修复')
+                cls.disconnect_offline()
+                fixup_flag = False
+                for fixup in fixups:
+                    if isinstance(fixup, collections.abc.Mapping):
+                        name = fixup['run']
+                        if not name.isidentifier():
+                            logger.error('无效修复模块名称 %r', name)
+                            continue
+                        try:
+                            logger.info('运行修复模块 %s', name)
+                            module = importlib.import_module('..fixups.' + name, __name__)
+                            if module.run(cls, fixup):
+                                logger.info('自动修复成功')
+                                fixup_flag = True
+                                break
+                        except ModuleNotFoundError:
+                            logger.error('无效修复模块名称 %s', name)
+                        except Exception:
+                            logger.error('自动修复模块 %s 发生错误', name)
+                            logger.debug('', exc_info=True)
+                if fixup_flag:
+                    time.sleep(1)
             else:
                 raise RuntimeError('找不到可用设备')
 
-        devices = [x for x in self.host_session_factory().devices() if x[1] != 'offline']
+        devices = cls.available_devices()
 
         always_use_device = config.get('device/adb_always_use_device', None)
         if always_use_device is not None:
@@ -250,24 +298,12 @@ class ADBConnector:
 
         if len(devices) == 1:
             device_name = devices[0][0]
-        elif len(devices) > 1:
-            logger.info("检测到多台设备")
-            for i, (serial, status) in enumerate(devices):
-                print("%2d. %s" % (i, serial))
-            num = 0
-            while True:
-                try:
-                    num = int(input("请输入序号选择设备: "))
-                    if not 0 <= num < len(devices):
-                        raise ValueError()
-                    break
-                except ValueError:
-                    logger.error("输入不合法，请重新输入")
-            device_name = devices[num][0]
+            return cls(device_name)
+        elif len(devices) == 0:
+            raise IndexError("no device connected")
         else:
-            raise RuntimeError('找不到可用设备')
-        logger.info("确认设备名称：" + device_name)
-        return device_name
+            raise IndexError("more than one device connected")
+        
 
     def run_device_cmd(self, cmd, DEBUG_LEVEL=2):
         output = self.device_session_factory().exec(cmd)

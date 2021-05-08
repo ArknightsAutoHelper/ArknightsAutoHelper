@@ -16,9 +16,15 @@ device:
   # 始终选择指定设备进行操作（指定 adb devices 中列出的名称）
   # adb_always_use_device:
 
-  # 无设备连接时，自动 adb connect 此端口
-  adb_auto_connect: 127.0.0.1:5555  # 大部分模拟器
-  # adb_auto_connect: 127.0.0.1:7555  # MuMu模拟器
+  # 无设备连接时进行的操作
+  # 如果某个操作报告成功，则不再执行后续定义的操作
+  adb_no_device_fixups:
+  - run: probe_bluestacks_hyperv  # 自动探测并连接 BlueStacks Hyper-V 的 ADB 端口
+  - run: adb_connect  # 连接 ADB TCP/IP 端口
+    target: 
+      - 127.0.0.1:5555  # 大部分模拟器
+      - 127.0.0.1:7555  # MuMu模拟器
+    try_all: false  # 某个端口连接成功后，是否继续尝试后续定义的端口
 
   # 使用兼容性较好（但较慢）的截图方式
   compat_screenshot: false
@@ -74,3 +80,30 @@ behavior:
     settle: false
     # 结算/放弃后，是否跳过失误关卡
     skip: true
+
+  # 启用 ocr 前往关卡
+  use_ocr_goto_stage: false
+
+plan:
+  # 刷图计划执行完毕后，用剩余理智刷这个关卡
+#  idle_stage: '1-7'
+
+  # 刷 idle_stage 理智不足时自动使用理智回复道具
+  # 免责声明：可能存在识别错误导致碎石，开发者对此不负任何责任
+  refill_ap_with_item: true
+
+  # 刷 idle_stage 理智不足时自动碎石
+  # 如需使用，请将大写字母改为小写
+  REFILL_AP_WITH_ORIGINIUM: false
+
+webgui:
+  # 打开 Web GUI 的方式，未设置时根据系统配置自动选择
+  #   webview   : 内嵌浏览器
+  #   chrome_pwa: Chromium 系列浏览器的 PWA 模式
+  #   browser   : 系统默认浏览器
+  host: 
+  # 使用 Chromium 系列浏览器的 PWA 模式时，浏览器的主程序
+  chrome_bin: 
+  # 使用内嵌浏览器时，内嵌浏览器的后端
+  # 请参考 https://pywebview.flowrl.com/guide/renderer.html
+  webview_backend:

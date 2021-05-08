@@ -1,0 +1,29 @@
+{
+    "back_to_main": true,
+    "description": "进入r6活动关卡",
+    "prefer_mode": "match_template",
+    "records": [
+        {
+            "img": "step0.png",
+            "point": [
+                1198,
+                217
+            ],
+            "type": "tap",
+            "wait_seconds_after_touch": 5,
+            "threshold": 0.70
+        },
+        {
+            "img": "step1.png",
+            "point": [
+                218,
+                313
+            ],
+            "type": "tap",
+            "wait_seconds_after_touch": 5,
+            "threshold": 0.70
+        }
+    ],
+    "screen_height": 720,
+    "screen_width": 1280
+}

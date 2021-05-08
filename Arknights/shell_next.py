@@ -10,43 +10,50 @@ from .fancycli.platform import isatty
 def skipcallback(handler):
     raise StopIteration
 
-
-def delay_impl_factory(helper, statusline, show_toggle):
-    togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if helper.use_refill else 'OFF')
-
-    def togglecallback(handler):
-        helper.use_refill = not helper.use_refill
-        handler.label = togglelabel()
-
-    skiphandler = fancywait.KeyHandler('<ENTER>跳过', b'\r', skipcallback)
-    skipdummy   = fancywait.KeyHandler('           ', b'', lambda x: None)
-    if not helper.refill_with_item and not helper.refill_with_originium:
-        show_toggle = False
-    if show_toggle and helper.use_refill:
-        togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
-    else:
-        togglehandler = lambda: fancywait.KeyHandler(None, None, None)
-
-    def delay_impl(timeout):
-        fancywait.fancy_delay(timeout, statusline, [skiphandler if timeout > 9 else skipdummy, togglehandler()])
-
-    return delay_impl
+class ShellNextFrontend:
+    def __init__(self, use_status_line, show_toggle):
+        self.show_toggle = show_toggle
+        self.use_status_line = use_status_line
+        if use_status_line:
+            io = sys.stdout.buffer
+            if hasattr(io, 'raw'):
+                io = io.raw
+            line = fancywait.StatusLine(io)
+            self.statusline = line
+    def attach(self, helper):
+        self.helper = helper
+    def alert(self, title, text, level='info', details=None):
+        pass
+    def notify(self, name, value):
+        pass
+    def delay(self, secs, allow_skip):
+        if not self.use_status_line:
+            time.sleep(secs)
+            return
+        if self.show_toggle:
+            togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if self.helper.use_refill else 'OFF')
+            def togglecallback(handler):
+                self.helper.use_refill = not self.helper.use_refill
+                handler.label = togglelabel()
+            togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
+        else:
+            togglehandler = lambda: fancywait.KeyHandler(None, None, None)
+        skiphandler = fancywait.KeyHandler('<ENTER>跳过', b'\r', skipcallback)
+        skipdummy   = fancywait.KeyHandler('           ', b'', lambda x: None)
+        fancywait.fancy_delay(secs, self.statusline, [skiphandler if allow_skip else skipdummy, togglehandler()])
 
 
 def _create_helper(use_status_line=True, show_toggle=False):
     from Arknights.helper import ArknightsHelper
-    helper = ArknightsHelper()
+    _ensure_device()
+    frontend = ShellNextFrontend(use_status_line, show_toggle)
+    helper = ArknightsHelper(device_connector=device, frontend=frontend)
     if use_status_line:
-        io = sys.stdout.buffer
-        if hasattr(io, 'raw'):
-            io = io.raw
-        line = fancywait.StatusLine(io)
-        helper._shellng_context = line
-        helper.delay_impl = delay_impl_factory(helper, line, show_toggle)
+        context = frontend.statusline
     else:
         from contextlib import nullcontext
-        helper._shellng_context = nullcontext()
-    return helper
+        context = nullcontext()
+    return helper, context
 
 def _parse_opt(argv):
     ops = []
@@ -105,6 +112,70 @@ def _alarm_context_factory():
     return AlarmContext()
 
 
+device = None
+
+
+def connect(argv):
+    """
+    connect [connector type] [connector args ...]
+        连接到设备
+        支持的设备类型：
+        connect adb [serial or tcpip endpoint]
+    """
+    connector_type = 'adb'
+    if len(argv) > 1:
+        connector_type = argv[1]
+        connector_args = argv[2:]
+    else:
+        connector_args = []
+    if connector_type == 'adb':
+        _connect_adb(connector_args)
+    else:
+        print('unknown connector type:', connector_type)
+
+
+def _connect_adb(args):
+    from connector.ADBConnector import ADBConnector, ensure_adb_alive
+    ensure_adb_alive()
+    global device
+    if len(args) == 0:
+        try:
+            device = ADBConnector.auto_connect()
+        except IndexError:
+            print("检测到多台设备")
+            devices = ADBConnector.available_devices()
+            for i, (serial, status) in enumerate(devices):
+                print("%2d. %s\t[%s]" % (i, serial, status))
+            num = 0
+            while True:
+                try:
+                    num = int(input("请输入序号选择设备: "))
+                    if not 0 <= num < len(devices):
+                        raise ValueError()
+                    break
+                except ValueError:
+                    print("输入不合法，请重新输入")
+            device_name = devices[num][0]
+            device = ADBConnector(device_name)
+    else:
+        serial = args[0]
+        try:
+            device = ADBConnector(serial)
+        except RuntimeError as e:
+            if e.args and isinstance(e.args[0], bytes) and b'not found' in e.args[0]:
+                if ':' in serial and serial.split(':')[-1].isdigit():
+                    print('adb connect', serial)
+                    ADBConnector.paranoid_connect(serial)
+                    device = ADBConnector(serial)
+                    return
+            raise
+
+
+def _ensure_device():
+    if device is None:
+        connect(['connect'])
+    device.ensure_alive()
+
 def quick(argv):
     """
     quick [+-rR[N]] [n]
@@ -118,10 +189,10 @@ def quick(argv):
         count = int(argv[1])
     else:
         count = 114514
-    helper = _create_helper(show_toggle=True)
+    helper, context = _create_helper(show_toggle=True)
     for op in ops:
         op(helper)
-    with helper._shellng_context:
+    with context:
         helper.module_battle_slim(
             c_id=None,
             set_count=count,
@@ -142,10 +213,10 @@ def auto(argv):
     it = iter(arglist)
     tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
 
-    helper = _create_helper(show_toggle=True)
+    helper, context = _create_helper(show_toggle=True)
     for op in ops:
         op(helper)
-    with helper._shellng_context:
+    with context:
         helper.main_handler(
             clear_tasks=False,
             task_list=tasks,
@@ -157,11 +228,11 @@ def auto(argv):
 def collect(argv):
     """
     collect
-        收集每日任务奖励
+        收集每日任务和每周任务奖励
     """
-    helper = _create_helper()
-    with helper._shellng_context:
-        helper.clear_daily_task()
+    helper, context = _create_helper()
+    with context:
+        helper.clear_task()
     return 0
 
 
@@ -176,8 +247,8 @@ def recruit(argv):
         tags = argv[1:]
         result = recruit_calc.calculate(tags)
     elif len(argv) == 1:
-        helper = _create_helper(use_status_line=False)
-        with helper._shellng_context:
+        helper, context = _create_helper(use_status_line=False)
+        with context:
             result = helper.recruit()
     else:
         print('要素过多')
@@ -207,7 +278,11 @@ def interactive(argv):
         pass
     while True:
         try:
-            cmdline = input("akhelper> ")
+            if device is None:
+                prompt = "akhelper> "
+            else:
+                prompt = "akhelper %s> " % str(device)
+            cmdline = input(prompt)
             argv = shlex.split(cmdline)
             if len(argv) == 0 or argv[0] == '?' or argv[0] == 'help':
                 print(' '.join(x.__name__ for x in interactive_cmds))
@@ -254,7 +329,7 @@ def exit(argv):
 
 
 global_cmds = [quick, auto, collect, recruit, interactive, help]
-interactive_cmds = [quick, auto, collect, recruit, exit]
+interactive_cmds = [connect, quick, auto, collect, recruit, exit]
 
 def match_cmd(first, avail_cmds):
     targetcmd = [x for x in avail_cmds if x.__name__.startswith(first)]
