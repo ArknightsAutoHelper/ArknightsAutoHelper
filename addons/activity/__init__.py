@@ -1,5 +1,4 @@
 import time
-import config
 from addons.base import BaseAddOn
 import requests
 import json
@@ -21,7 +20,8 @@ def get_stage():
 
 def update_stage():
     # https://github.com/Kengxxiao/ArknightsGameData/blob/master/zh_CN/gamedata/excel/stage_table.json
-    resp = requests.get('https://cdn.jsdelivr.net/gh/Kengxxiao/ArknightsGameData/zh_CN/gamedata/excel/stage_table.json')
+    resp = requests.get(
+        'https://cdn.jsdelivr.net/gh/Kengxxiao/ArknightsGameData@master/zh_CN/gamedata/excel/stage_table.json')
     stages = resp.json()['stages']
     arkplanner.update_cache()
     with open(stage_cache_file, 'w', encoding='utf-8') as f:
@@ -54,7 +54,7 @@ def get_activities():
 def update_activities():
     # https://github.com/Kengxxiao/ArknightsGameData/blob/master/zh_CN/gamedata/excel/activity_table.json
     resp = requests.get(
-        'https://cdn.jsdelivr.net/gh/Kengxxiao/ArknightsGameData/zh_CN/gamedata/excel/activity_table.json')
+        'https://cdn.jsdelivr.net/gh/Kengxxiao/ArknightsGameData@master/zh_CN/gamedata/excel/activity_table.json')
     activities = resp.json()['basicInfo']
     with open(activities_cache_file, 'w', encoding='utf-8') as f:
         json.dump(activities, f)
@@ -63,7 +63,8 @@ def update_activities():
 
 def get_zones():
     # https://github.com/Kengxxiao/ArknightsGameData/blob/master/zh_CN/gamedata/excel/zone_table.json
-    resp = requests.get('https://cdn.jsdelivr.net/gh/Kengxxiao/ArknightsGameData/zh_CN/gamedata/excel/zone_table.json')
+    resp = requests.get(
+        'https://cdn.jsdelivr.net/gh/Kengxxiao/ArknightsGameData@master/zh_CN/gamedata/excel/zone_table.json')
     return resp.json()['zones']
 
 
@@ -128,7 +129,7 @@ class ActivityAddOn(BaseAddOn):
                     print(f'请在点击后等待 {wait_seconds_after_touch} s , 待控制台出现 "继续..." 字样, 再进行下一次点击.')
                     print(f'请在点击后等待 {wait_seconds_after_touch} s , 待控制台出现 "继续..." 字样, 再进行下一次点击.')
                     print(f'准备开始录制 {record_name}...')
-                    self.helper.create_custom_record(record_name,
+                    self.helper.create_custom_record(record_name, roi_size=32,
                                                      description=get_zone_description(target_stage["zoneId"]),
                                                      wait_seconds_after_touch=wait_seconds_after_touch)
                 else:
