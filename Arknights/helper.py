@@ -559,6 +559,8 @@ class ArknightsHelper(object):
             retry_count += 1
             if retry_count > max_retry:
                 raise RuntimeError('未知画面')
+            logger.info('未知画面，尝试重新识别 {}/{} 次'.format(retry_count, max_retry))
+            self.__wait(3)
         logger.info("已回到主页")
 
     def module_battle(self,  # 完整的战斗模块
@@ -770,10 +772,18 @@ class ArknightsHelper(object):
             self.tap_rect((*(pos - offset), *(pos + offset)))
         else:
             if recursion == 0:
-                logger.info('目标可能在可视区域右侧，向左拖动')
                 originX = self.viewport[0] // 2 + randint(-100, 100)
                 originY = self.viewport[1] // 2 + randint(-100, 100)
-                self.adb.touch_swipe2((originX, originY), (-self.viewport[0] * 0.2, 0), 400)
+                if partition == 'material':
+                    logger.info('目标可能在可视区域左侧，向右拖动')
+                    offset = self.viewport[0] * 0.2
+                elif partition == 'soc':
+                    logger.info('目标可能在可视区域右侧，向左拖动')
+                    offset = -self.viewport[0] * 0.2
+                else:
+                    logger.error('未知类别')
+                    raise StopIteration()
+                self.adb.touch_swipe2((originX, originY), (offset, 0), 400)
                 self.__wait(2)
                 self.find_and_tap_daily(partition, target, recursion=recursion+1)
             else:
