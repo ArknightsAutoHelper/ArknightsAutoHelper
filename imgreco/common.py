@@ -41,7 +41,17 @@ def check_nav_button(img):
 
 def get_nav_button_back_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
-    return (3.194 * vh, 2.222 * vh, 20.972 * vh, 7.917 * vh)
+    return 3.194 * vh, 2.222 * vh, 20.972 * vh, 7.917 * vh
+
+
+def get_nav_button_home_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return 20.972 * vh, 2.222 * vh, 45 * vh, 7.917 * vh
+
+
+def get_nav_button_sub_home_rect(viewport):
+    vw, vh = util.get_vwvh(viewport)
+    return 20.972 * vh, 7.917 * vh, 30 * vh, 30 * vh
 
 
 def check_setting_scene(img):
@@ -55,9 +65,10 @@ def check_setting_scene(img):
     logger.logtext('mse=%f' % mse)
     return mse < 200
 
+
 def get_setting_back_rect(viewport):
     vw, vh = util.get_vwvh(viewport)
-    return (4.722 * vh, 3.750 * vh, 19.444 * vh, 8.333 * vh)
+    return 4.722 * vh, 3.750 * vh, 19.444 * vh, 8.333 * vh
 
 
 def find_close_button(img):

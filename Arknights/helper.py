@@ -165,7 +165,7 @@ class ArknightsHelper(object):
         self.adb.touch_tap((xx, yy))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def tap_rect(self, rc):
+    def tap_rect(self, rc, wait_time=None):
         hwidth = (rc[2] - rc[0]) / 2
         hheight = (rc[3] - rc[1]) / 2
         midx = rc[0] + hwidth
@@ -175,7 +175,10 @@ class ArknightsHelper(object):
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
         self.adb.touch_tap((tapx, tapy))
-        self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
+        if wait_time is None:
+            self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
+        else:
+            self.__wait(wait_time, MANLIKE_FLAG=True)
 
     def tap_quadrilateral(self, pts):
         pts = np.asarray(pts)
@@ -188,6 +191,14 @@ class ArknightsHelper(object):
         finalpt = m + halfvec * bddiff
         self.adb.touch_tap(tuple(int(x) for x in finalpt))
         self.__wait(TINY_WAIT, MANLIKE_FLAG=True)
+
+    def tap_bot_navi(self, item_id):
+        if not isinstance(item_id, int) or item_id < 0 or item_id > 6:
+            raise ValueError("item_id must be an integer between 0 and 6.")
+        delta = 100 / 7
+        corners = [i * delta for i in range(8)]
+        vw, vh = imgreco.util.get_vwvh(self.viewport)
+        self.tap_rect((corners[item_id] * vw, 89.815 * vh, corners[item_id + 1] * vw, 99.815 * vh))
 
     def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
         if crop is None:
@@ -273,7 +284,6 @@ class ArknightsHelper(object):
                 logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
         return c_id, remain
-
 
     def can_perform_refill(self):
         if not self.use_refill:
@@ -514,7 +524,8 @@ class ArknightsHelper(object):
             # 检查是否有返回按钮
             if imgreco.common.check_nav_button(screenshot):
                 logger.info('发现返回按钮，点击返回')
-                self.tap_rect(imgreco.common.get_nav_button_back_rect(self.viewport))
+                self.tap_rect(imgreco.common.get_nav_button_home_rect(self.viewport), wait_time=0.5)
+                self.tap_rect(imgreco.common.get_nav_button_sub_home_rect(self.viewport), wait_time=1)
                 self.__wait(SMALL_WAIT)
                 # 点击返回按钮之后重新检查
                 continue
@@ -796,13 +807,12 @@ class ArknightsHelper(object):
         self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
         self.__wait(TINY_WAIT)
         if path[0] == 'main':
-            vw, vh = imgreco.util.get_vwvh(self.viewport)
-            self.tap_rect((14.316*vw, 89.815*vh, 28.462*vw, 99.815*vh))
+            self.tap_bot_navi(1)
             self.find_and_tap_episode_by_ocr(int(path[1][2:]))
             self.find_and_tap_stage_by_ocr(path[1], path[2])
         elif path[0] == 'material' or path[0] == 'soc':
             logger.info('选择类别')
-            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
+            self.tap_bot_navi(4)
             self.find_and_tap_daily(path[0], path[1])
             self.find_and_tap(path[1], path[2])
         else:

@@ -150,6 +150,11 @@ commands (prefix abbreviation accepted):
         +R/-R 是否使用源石回复理智（需要同时开启 +r）
     auto [+-rR[N]] stage1 count1 [stage2 count2] ...
         按顺序挑战指定关卡特定次数直到理智不足
+    plan weekplan_file
+        根据当前日期以及曜日计划进行刷图
+        weekplan_file: 自定义的曜日刷图计划
+            共包含7行，每行格式为: “星期X -> stage1 count1 [stage2 count2] ...”
+            样例格式见 weekplan.txt 请使用UTF-8编码
     collect
         收集每日任务和每周任务奖励
     recruit [tags ...]

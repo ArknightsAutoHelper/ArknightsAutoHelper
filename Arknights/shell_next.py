@@ -225,6 +225,52 @@ def auto(argv):
     return 0
 
 
+def plan(argv):
+    """
+    plan weekplan_file
+        根据当前日期以及曜日计划进行刷图
+        weekplan_file: 自定义的曜日刷图计划
+            共包含7行，每行格式为: “星期X -> stage1 count1 [stage2 count2] ...”
+            样例格式见 weekplan.txt 请使用UTF-8编码
+    """
+    import datetime
+
+    file = argv[1]
+    p = {}
+    with open(file, 'r', encoding="utf-8") as f:
+        line = f.readline()
+        week_day = {
+            0: '星期一',
+            1: '星期二',
+            2: '星期三',
+            3: '星期四',
+            4: '星期五',
+            5: '星期六',
+            6: '星期日',
+        }
+        while line != "":
+            line = line.split(" -> ")
+            day, args = line
+            arglist = args.split(" ")
+            if len(arglist) % 2 != 0:
+                print('曜日计划格式为: \"星期X -> stage1 count1 [stage2 count2] ...\"')
+                return 1
+            it = iter(arglist)
+            tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
+            p[day] = tasks
+            line = f.readline()
+    today = week_day[datetime.date.today().weekday()]
+    plan_today = p[today]
+
+    helper, context = _create_helper(show_toggle=True)
+    with context:
+        helper.main_handler(
+            clear_tasks=False,
+            task_list=plan_today,
+            auto_close=False
+        )
+
+
 def collect(argv):
     """
     collect
@@ -328,8 +374,8 @@ def exit(argv):
     sys.exit()
 
 
-global_cmds = [quick, auto, collect, recruit, interactive, help]
-interactive_cmds = [connect, quick, auto, collect, recruit, exit]
+global_cmds = [quick, auto, plan, collect, recruit, interactive, help]
+interactive_cmds = [connect, quick, auto, plan, collect, recruit, exit]
 
 def match_cmd(first, avail_cmds):
     targetcmd = [x for x in avail_cmds if x.__name__.startswith(first)]
