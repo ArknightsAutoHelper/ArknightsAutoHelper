@@ -49,11 +49,6 @@ def get_nav_button_home_rect(viewport):
     return 20.972 * vh, 2.222 * vh, 45 * vh, 7.917 * vh
 
 
-def get_nav_button_sub_home_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
-    return 20.972 * vh, 7.917 * vh, 30 * vh, 30 * vh
-
-
 def check_setting_scene(img):
     vw, vh = util.get_vwvh(img.size)
     icon1 = img.crop((4.722 * vh, 3.750 * vh, 19.444 * vh, 8.333 * vh)).convert('RGB')

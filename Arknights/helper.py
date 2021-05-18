@@ -18,6 +18,7 @@ import imgreco.main
 import imgreco.task
 import imgreco.map
 import imgreco.imgops
+import imgreco.navi
 import penguin_stats.reporter
 from connector import auto_connect
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
@@ -510,7 +511,6 @@ class ArknightsHelper(object):
         if smobj.mistaken_delegation and config.get('behavior/mistaken_delegation/skip', True):
             raise StopIteration()
 
-
     def back_to_main(self):  # 回到主页
         logger.info("正在返回主页")
         retry_count = 0
@@ -525,7 +525,7 @@ class ArknightsHelper(object):
             if imgreco.common.check_nav_button(screenshot):
                 logger.info('发现返回按钮，点击返回')
                 self.tap_rect(imgreco.common.get_nav_button_home_rect(self.viewport), wait_time=0.5)
-                self.tap_rect(imgreco.common.get_nav_button_sub_home_rect(self.viewport), wait_time=1)
+                self.find_and_tap_top_nav_sub_home()
                 self.__wait(SMALL_WAIT)
                 # 点击返回按钮之后重新检查
                 continue
@@ -799,6 +799,24 @@ class ArknightsHelper(object):
                 self.find_and_tap_daily(partition, target, recursion=recursion+1)
             else:
                 logger.error('未找到目标，是否未开放关卡？')
+
+    def find_and_tap_top_nav_sub_home(self):
+        img = self.adb.screenshot()
+        pos, pr = imgreco.navi.match_template(img, "navi/root.png")
+        if pr < 0.9:
+            logger.error("未识别到首页按钮")
+            raise RuntimeError("未识别到首页按钮")
+        self.adb.touch_tap(pos, offsets=(5, 5))
+        self.__wait(1)
+
+    def find_and_tap_top_nav_sub_terminal(self):
+        img = self.adb.screenshot()
+        pos, pr = imgreco.navi.match_template(img, "navi/terminal.png")
+        if pr < 0.9:
+            logger.error("未识别到终端按钮")
+            raise RuntimeError("未识别到终端按钮")
+        self.adb.touch_tap(pos, offsets=(5, 5))
+        self.__wait(1)
 
     def goto_stage_by_ocr(self, stage):
         path = stage_path.get_stage_path(stage)
