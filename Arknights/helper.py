@@ -63,10 +63,10 @@ class ArknightsHelper(object):
         self.adb = None
         if adb_host is not None or device_connector is not None:
             self.connect_device(device_connector, adb_serial=adb_host)
-        if self.adb is None:
-            self.connect_device(auto_connect())
         if frontend is None:
             frontend = DummyFrontend()
+            if self.adb is None:
+                self.connect_device(auto_connect())
         self.frontend = frontend
         self.frontend.attach(self)
         self.operation_time = []
