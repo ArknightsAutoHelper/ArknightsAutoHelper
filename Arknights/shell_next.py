@@ -159,16 +159,7 @@ def _connect_adb(args):
             device = ADBConnector(device_name)
     else:
         serial = args[0]
-        try:
-            device = ADBConnector(serial)
-        except RuntimeError as e:
-            if e.args and isinstance(e.args[0], bytes) and b'not found' in e.args[0]:
-                if ':' in serial and serial.split(':')[-1].isdigit():
-                    print('adb connect', serial)
-                    ADBConnector.paranoid_connect(serial)
-                    device = ADBConnector(serial)
-                    return
-            raise
+        device = ADBConnector(serial)
 
 
 def _ensure_device():

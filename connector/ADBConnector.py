@@ -213,6 +213,15 @@ class ADBConnector:
         self.last_screenshot = None
         self.screencap_impl = None
         self.screen_size = (0, 0)
+        try:
+            session = self.device_session_factory()
+        except RuntimeError as e:
+            if e.args and isinstance(e.args[0], bytes) and b'not found' in e.args[0]:
+                if ':' in adb_serial and adb_serial.split(':')[-1].isdigit():
+                    logger.info('adb connect %s', adb_serial)
+                    ADBConnector.paranoid_connect(adb_serial)
+                else:
+                    raise
         self.device_identifier = self.get_device_identifier()
         self.config_key = 'adb-%s' % self.device_identifier
         self.screenshot_rotate = 0
