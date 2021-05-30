@@ -89,6 +89,7 @@ class OcrEngine(ABC):
     def __init__(self, lang, **kwargs):
         self.lang = lang
         self.kwargs = kwargs
+        self.features = ()
 
-    def recognize(self, image, ppi=70, *, hints=None):
+    def recognize(self, image, ppi=70, hints=None, **kwargs):
         raise NotImplementedError()

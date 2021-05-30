@@ -41,23 +41,21 @@ def _basicGeneral(image, options):
     data = {}
     data['image'] = base64.b64encode(image).decode()
     data.update(options)
-    t = time.monotonic()
-    tdiff = t - _basicGeneral.last_call
-    if tdiff < 0.4:
-        # QPS limit
-        time.sleep(0.4 - tdiff)
-    resp = requests.post('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic', data=data, params={'access_token': _get_token()})
-    resp.raise_for_status()
-    resp = resp.json()
-    if 'error_code' in resp:
-        raise RuntimeError(resp['error_msg'])
-    _basicGeneral.last_call = time.monotonic()
+    while True:
+        resp = requests.post('https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic', data=data, params={'access_token': _get_token()})
+        resp.raise_for_status()
+        resp = resp.json()
+        if 'error_code' in resp:
+            if resp['error_code'] == 18:
+                time.sleep(1)
+                continue
+            raise RuntimeError('%d: %s' % (resp['error_code'], resp['error_msg']))
+        break
     return resp
 
-_basicGeneral.last_call = 0
 
 class BaiduOCR(OcrEngine):
-    def recognize(self, image, ppi=70, *, hints=None):
+    def recognize(self, image, ppi=70, hints=None, **kwargs):
         # line = 0
         # if hints is None:
         #     hints = []

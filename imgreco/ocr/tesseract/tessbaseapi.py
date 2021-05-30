@@ -130,7 +130,7 @@ class BaseAPI:
         return hocrbytes
 
     def set_variable(self, name, value):
-        return TessBaseAPISetVariable(self.baseapi, name.encode(), value.encode())
+        return TessBaseAPISetVariable(self.baseapi, name.encode(), None if value is None else value.encode())
 
 
 if __name__ == '__main__':
