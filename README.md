@@ -47,14 +47,12 @@ pip install -r requirements.txt
 
 #### 二进制包（Windows）
 
-:wink: 从 nightly.link 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
+从 Actions artifacts 或 nightly.link 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
 
-[ninthDevilHAUNSTER/ArknightsAutoHelper](https://nightly.link/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/pyinstaller-win/master)
+* [![Windows binary package](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml/badge.svg)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml) （:wink: 需要登录 GitHub）
 
-:satisfied: 从 Actions artifacts 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
 
-[![make PyInstaller packaged release](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/make%20PyInstaller%20packaged%20release/badge.svg?branch=master)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions?query=workflow%3A%22make+PyInstaller+packaged+release%22+is%3Asuccess)
-
+* [ninthDevilHAUNSTER/ArknightsAutoHelper](https://nightly.link/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/pyinstaller-win/master) （:satisfied: 无需登录）
 
 
 #### OCR 依赖
