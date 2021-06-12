@@ -127,6 +127,8 @@ def check_charseq(string, seq):
 def fix_stage_name(s):
     if s.startswith('0') and not s.startswith('0-'):
         return True, 'O' + s[1:]
+    elif s.startswith('-0'):
+        return True, 'O' + s[2:]
     elif s.startswith('R--'):
         return True, 'RI-' + s[3:]
     return False, s
