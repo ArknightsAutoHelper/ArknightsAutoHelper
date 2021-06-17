@@ -22,10 +22,10 @@ ark_material_net = _load_net()
 def _load_index():
     with resources.open_file('inventory/index_itemid_relation.json') as f:
         data = json.load(f)
-        return data['idx2id'], data['id2idx'], data['idx2name']
+        return data['idx2id'], data['id2idx'], data['idx2name'], data['idx2type']
 
 
-idx2id, id2idx, idx2name = _load_index()
+idx2id, id2idx, idx2name, idx2type = _load_index()
 
 
 def convert_pil_screen(pil_screen):
@@ -124,7 +124,7 @@ def get_item_id(cv_img):
     out = out.flatten()
     probs = common.softmax(out)
     classId = np.argmax(out)
-    return probs[classId], idx2id[classId], idx2name[classId]
+    return probs[classId], idx2id[classId], idx2name[classId], idx2type[classId]
 
 
 def get_quantity(num_img):
@@ -165,9 +165,9 @@ def get_all_item_in_screen(screen):
     item_count_map = {}
     for item_img in imgs:
         logger.logimage(convert_to_pil(item_img['item_img']))
-        prob, item_id, item_name = get_item_id(item_img['middle_img'])
-        logger.logtext('item_id: %s, item_name: %s, prob: %s' % (item_id, item_name, prob))
-        if item_id == 'other':
+        prob, item_id, item_name, item_type = get_item_id(item_img['middle_img'])
+        logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
+        if item_id == 'other' or item_type == 'ACTIVITY_ITEM':
             continue
         quantity = get_quantity(item_img['num_img'])
         item_count_map[item_id] = quantity

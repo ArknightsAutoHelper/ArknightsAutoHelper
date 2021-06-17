@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 
 import numpy as np
+import cv2
+import json
 # from skimage.measure import compare_mse
 from PIL import Image
 
@@ -10,6 +12,48 @@ from util.richlog import get_logger
 from . import imgops
 from . import minireco
 from . import resources
+from . import common
+
+
+@lru_cache(1)
+def _load_net():
+    with resources.open_file('inventory/ark_material.onnx') as f:
+        data = f.read()
+        net = cv2.dnn.readNetFromONNX(data)
+        return net
+
+
+@lru_cache(1)
+def _load_index():
+    with resources.open_file('inventory/index_itemid_relation.json') as f:
+        data = json.load(f)
+        return data['idx2id'], data['id2idx'], data['idx2name'], data['idx2type']
+
+
+def crop_item_middle_img(cv_item_img):
+    # radius 60
+    img_h, img_w = cv_item_img.shape[:2]
+    ox, oy = img_w // 2, img_h // 2
+    y1 = int(oy - 40)
+    y2 = int(oy + 20)
+    x1 = int(ox - 30)
+    x2 = int(ox + 30)
+    return cv_item_img[y1:y2, x1:x2]
+
+
+def get_item_id(cv_img):
+    mid_img = crop_item_middle_img(cv_img)
+    ark_material_net = _load_net()
+    idx2id, id2idx, idx2name, idx2type = _load_index()
+    blob = cv2.dnn.blobFromImage(mid_img)
+    ark_material_net.setInput(blob)
+    out = ark_material_net.forward()
+
+    # Get a class with a highest score.
+    out = out.flatten()
+    probs = common.softmax(out)
+    classId = np.argmax(out)
+    return probs[classId], idx2id[classId], idx2name[classId], idx2type[classId]
 
 
 @dataclass
@@ -89,8 +133,11 @@ def tell_item(itemimg, with_quantity=True):
         logger.logtext('matched %s with mse %f' % (itemname, score))
         name = itemname
     else:
-        logger.logtext('no match')
-        low_confidence = True
-        name = None
+        prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg))
+        logger.logtext(f'dnn matched {name} with prob {prob}')
+        if prob < 0.8 or item_id == 'other':
+            logger.logtext('no match')
+            low_confidence = True
+            name = None
 
     return RecognizedItem(name, quantity, low_confidence)
