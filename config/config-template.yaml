@@ -88,6 +88,11 @@ behavior:
     skip: true
 
 plan:
+  # 计算刷图计划的方式
+  # 'online' 从企鹅物流接口获取刷图计划
+  # 'local-aog' 本地计算刷图计划, 使用 aog 推荐的关卡优化, 需要额外安装 scipy 依赖
+  calc_mode: 'online'
+
   # 刷图计划执行完毕后，用剩余理智刷这个关卡
 #  idle_stage: '1-7'
 

@@ -56,14 +56,14 @@ def get_cache_time():
 @lru_cache(1)
 def get_all_materials():
     items = get_all_items()
-    materials = list(filter(lambda x: x['itemType'] == 'MATERIAL', items))
+    materials = list(filter(lambda x: x['itemType'] in ['MATERIAL', 'ARKPLANNER'], items))
     return sorted(materials, key=lambda k: k['rarity'], reverse=True)
 
 
 @lru_cache(1)
 def get_main_stage_map():
     stages = get_all_stages()
-    main_stages = list(filter(lambda x: x['stageType'] == 'MAIN', stages))
+    main_stages = list(filter(lambda x: x['stageType'] in ('MAIN', 'SUB'), stages))
     stage_map = {}
     for stage in main_stages:
         stage_map[stage['stageId']] = stage

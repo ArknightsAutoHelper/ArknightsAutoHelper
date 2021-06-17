@@ -1,6 +1,7 @@
 from penguin_stats import arkplanner
 import json
 import math
+import config
 
 
 if __name__ == '__main__':
@@ -31,17 +32,30 @@ if __name__ == '__main__':
     if c.lower() == 'y':
         from Arknights.shell_next import _create_helper
         owned = _create_helper()[0].get_inventory_items()
+    calc_mode = config.get('plan/calc_mode', 'online')
     print('正在获取刷图计划...')
-    plan = arkplanner.get_plan(required, owned)
+    if calc_mode == 'online':
+        plan = arkplanner.get_plan(required, owned)
+    elif calc_mode == 'local-aog':
+        from penguin_stats.MaterialPlanning import MaterialPlanning
+        mp = MaterialPlanning()
+        plan = mp.get_plan(requirement_dct=required, deposited_dct=owned)
+    else:
+        raise RuntimeError(f'不支持的模式: {calc_mode}')
     main_stage_map = arkplanner.get_main_stage_map()
     stage_task_list = []
     print(plan)
     print('刷图计划:')
     for stage in plan['stages']:
-        stage_info = main_stage_map[stage['stage']]
+        if calc_mode == 'online':
+            stage_info = main_stage_map[stage['stage']]
+            stage_code = stage_info['code']
+        else:
+            stage_info = stage
+            stage_code = stage_info['stage']
         count = math.ceil(float(stage['count']))
-        print('关卡 [%s] 次数 %s' % (stage_info['code'], count))
-        stage_task_list.append({'stage': stage_info['code'], 'count': count})
+        print('关卡 [%s] 次数 %s' % (stage_code, count))
+        stage_task_list.append({'stage': stage_code, 'count': count})
     print('预计消耗理智:', plan['cost'])
     save_data = {
         'required': required,

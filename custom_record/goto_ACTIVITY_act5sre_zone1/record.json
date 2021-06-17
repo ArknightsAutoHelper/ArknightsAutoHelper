@@ -1,31 +1,31 @@
 {
     "back_to_main": true,
-    "description": "覆潮之下 - 荒败盐风",
+    "description": "沃伦姆德的薄暮 - 议事高塔",
     "prefer_mode": "match_template",
     "records": [
         {
             "img": "step0.png",
             "point": [
-                1139,
-                186
+                1146,
+                185
             ],
             "raise_exception": true,
             "repeat": 1,
             "threshold": 0.7,
             "type": "tap",
-            "wait_seconds_after_touch": 3
+            "wait_seconds_after_touch": 2
         },
         {
             "img": "step1.png",
             "point": [
-                1115,
-                450
+                1181,
+                367
             ],
             "raise_exception": true,
             "repeat": 1,
             "threshold": 0.7,
             "type": "tap",
-            "wait_seconds_after_touch": 1
+            "wait_seconds_after_touch": 2
         }
     ],
     "screen_height": 720,
