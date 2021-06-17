@@ -77,9 +77,9 @@ def crop_char_img(img):
     last_x = None
     res = []
     for x in range(0, w):
-        for y in range(0, h):
+        for y in range(0, h - 1):
             has_black = False
-            if img[y][x] < 127:
+            if img[y][x] < 127 and img[y+1][x] < 127:
                 has_black = True
                 if not last_x:
                     last_x = x
