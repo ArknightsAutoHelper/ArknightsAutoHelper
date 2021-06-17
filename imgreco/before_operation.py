@@ -51,6 +51,9 @@ def recognize(img):
     if fixup:
         logger.logtext('fixed to ' + opidtext)
 
+    nofriendshiplist = ['OF-F']
+    no_friendship = any(opidtext.startswith(header) for header in nofriendshiplist)
+
     delegateimg = img.crop((100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh)).convert('L')
     template = resources.load_image_cached('before_operation/delegation_checked.png', 'L')
     logger.logimage(delegateimg)
@@ -76,6 +79,7 @@ def recognize(img):
     return {
         'AP': aptext,
         'consume_ap': consume_ap,
+        'no_friendship': no_friendship,
         'operation': opidtext,
         'delegated': delegated,
         'consume': int(consumetext) if consumetext.isdigit() else None

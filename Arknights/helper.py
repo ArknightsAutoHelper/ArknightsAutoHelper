@@ -399,7 +399,7 @@ class ArknightsHelper(object):
                 smobj.state = on_level_up_popup
                 return
 
-            if smobj.prepare_reco['consume_ap']:
+            if smobj.prepare_reco['consume_ap'] and not smobj.prepare_reco['no_friendship']:
                 detector = imgreco.end_operation.check_end_operation
             else:
                 detector = imgreco.end_operation.check_end_operation_alt
