@@ -1,13 +1,13 @@
 {
     "back_to_main": true,
-    "description": "沃伦姆德的薄暮 - 议事高塔",
+    "description": "沃伦姆德的薄暮·复刻 - 议事高塔",
     "prefer_mode": "match_template",
     "records": [
         {
             "img": "step0.png",
             "point": [
-                1146,
-                185
+                1175,
+                186
             ],
             "raise_exception": true,
             "repeat": 1,
@@ -18,8 +18,8 @@
         {
             "img": "step1.png",
             "point": [
-                1181,
-                367
+                1183,
+                372
             ],
             "raise_exception": true,
             "repeat": 1,

@@ -121,6 +121,10 @@ def convert_to_pil(cv_img, color_code=cv.COLOR_BGR2RGB):
     return Image.fromarray(cv.cvtColor(cv_img, color_code))
 
 
+def convert_to_cv(pil_img, color_code=cv.COLOR_BGR2RGB):
+    return cv.cvtColor(np.asarray(pil_img), color_code)
+
+
 def softmax(x):
     """Compute softmax values for each sets of scores in x."""
     e_x = np.exp(x - np.max(x))
