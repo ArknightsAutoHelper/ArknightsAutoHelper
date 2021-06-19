@@ -48,8 +48,16 @@ if not os.path.exists(logs):
 
 dirty = False
 
+def _create_config_file():
+    with open(config_template, 'r', encoding='utf-8') as f:
+        loader = yaml.load_all(f)
+        next(loader) # discard first document (used for comment)
+        ydoc = next(loader)
+    with open(config_file, 'w', encoding='utf-8') as f:
+        yaml.dump(ydoc, f)
+
 if not os.path.exists(config_file):
-    shutil.copy(config_template, config_file)
+    _create_config_file()
 
 with open(config_file, 'r', encoding='utf-8') as f:
     _ydoc = yaml.load(f)

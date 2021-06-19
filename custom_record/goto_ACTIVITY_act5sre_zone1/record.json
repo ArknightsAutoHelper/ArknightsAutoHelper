@@ -1,31 +1,31 @@
 {
     "back_to_main": true,
-    "description": "前往遗尘漫步活动关卡",
+    "description": "沃伦姆德的薄暮·复刻 - 议事高塔",
     "prefer_mode": "match_template",
     "records": [
         {
             "img": "step0.png",
             "point": [
-                1161,
-                172
+                1175,
+                186
             ],
             "raise_exception": true,
             "repeat": 1,
             "threshold": 0.7,
             "type": "tap",
-            "wait_seconds_after_touch": 3
+            "wait_seconds_after_touch": 2
         },
         {
             "img": "step1.png",
             "point": [
-                1177,
-                545
+                1183,
+                372
             ],
             "raise_exception": true,
             "repeat": 1,
             "threshold": 0.7,
             "type": "tap",
-            "wait_seconds_after_touch": 1
+            "wait_seconds_after_touch": 2
         }
     ],
     "screen_height": 720,

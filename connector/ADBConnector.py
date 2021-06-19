@@ -84,6 +84,8 @@ def check_adb_alive():
         version = int(sess.service('host:version').read_response().decode(), 16)
         logger.debug('ADB server version %d', version)
         return True
+    except socket.timeout:
+        return False
     except ConnectionRefusedError:
         return False
     except RuntimeError:
@@ -191,7 +193,10 @@ class _ScreenCapImplReverseLoopback:
 
     __call__ = screencap
 
-_host_session_factory = lambda: ADBClientSession(config.ADB_SERVER)
+
+def _host_session_factory(timeout=None):
+    ensure_adb_alive()
+    return ADBClientSession(config.ADB_SERVER, timeout)
 
 class ADBConnector:
     def __init__(self, adb_serial):
@@ -208,6 +213,15 @@ class ADBConnector:
         self.last_screenshot = None
         self.screencap_impl = None
         self.screen_size = (0, 0)
+        try:
+            session = self.device_session_factory()
+        except RuntimeError as e:
+            if e.args and isinstance(e.args[0], bytes) and b'not found' in e.args[0]:
+                if ':' in adb_serial and adb_serial.split(':')[-1].isdigit():
+                    logger.info('adb connect %s', adb_serial)
+                    ADBConnector.paranoid_connect(adb_serial)
+                else:
+                    raise
         self.device_identifier = self.get_device_identifier()
         self.config_key = 'adb-%s' % self.device_identifier
         self.screenshot_rotate = 0

@@ -52,7 +52,7 @@ class WindowsOcrEngine(OcrEngine):
             raise ValueError('unsupported language')
         self.winengine = WinRTOcrEngine.TryCreateFromLanguage(lang)
 
-    def recognize(self, img, ppi=70, *, hints=None):
+    def recognize(self, img, ppi=70, hints=None, **kwargs):
         if hints == None:
             hints = []
         if OcrHint.SINGLE_LINE in hints:

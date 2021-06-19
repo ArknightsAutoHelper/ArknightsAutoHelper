@@ -17,20 +17,5 @@ def get_stage_path(stage):
     return None
 
 
-def is_stage_supported(stage):
-    path = get_stage_path(stage)
-    if path is None:
-        return False
-    if path[0] in ('main', 'material', 'soc'):
-        partition = path[1]
-        import resources.imgreco.map_vectors as map_vectors
-        if partition in map_vectors.stage_maps:
-            return path[2] in map_vectors.stage_maps[partition]
-        return False
-    else:
-        # FIXME: support for material and soc stages
-        return False
-
-
 def is_stage_supported_ocr(stage):
     return stage in known_stages_ocr and not is_invalid_stage(stage)

@@ -19,7 +19,8 @@ import imgreco.task
 import imgreco.map
 import imgreco.imgops
 import penguin_stats.reporter
-from connector.ADBConnector import ADBConnector
+from connector import auto_connect
+from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from . import stage_path
 from .frontend import DummyFrontend
 from Arknights.click_location import *
@@ -64,6 +65,8 @@ class ArknightsHelper(object):
             self.connect_device(device_connector, adb_serial=adb_host)
         if frontend is None:
             frontend = DummyFrontend()
+            if self.adb is None:
+                self.connect_device(auto_connect())
         self.frontend = frontend
         self.frontend.attach(self)
         self.operation_time = []
@@ -390,7 +393,6 @@ class ArknightsHelper(object):
             t = monotonic() - smobj.operation_start
 
             logger.info('已进行 %.1f s，判断是否结束', t)
-            
             screenshot = self.adb.screenshot()
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 logger.info("等级提升")
@@ -398,11 +400,17 @@ class ArknightsHelper(object):
                 smobj.state = on_level_up_popup
                 return
 
-            if smobj.prepare_reco['consume_ap']:
+            if smobj.prepare_reco['consume_ap'] and not smobj.prepare_reco['no_friendship']:
                 detector = imgreco.end_operation.check_end_operation
             else:
                 detector = imgreco.end_operation.check_end_operation_alt
-            if detector(screenshot):
+            end_flag = detector(screenshot)
+            if not end_flag and t > 300:
+                if imgreco.end_operation.check_end_operation2(screenshot):
+                    self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
+                    screenshot = self.adb.screenshot()
+                    end_flag = imgreco.end_operation.check_end_operation_alt(screenshot)
+            if end_flag:
                 logger.info('战斗结束')
                 self.operation_time.append(t)
                 crop = imgreco.end_operation.get_still_check_rect(self.viewport)
@@ -552,6 +560,8 @@ class ArknightsHelper(object):
             retry_count += 1
             if retry_count > max_retry:
                 raise RuntimeError('未知画面')
+            logger.info('未知画面，尝试重新识别 {}/{} 次'.format(retry_count, max_retry))
+            self.__wait(3)
         logger.info("已回到主页")
 
     def module_battle(self,  # 完整的战斗模块
@@ -559,10 +569,8 @@ class ArknightsHelper(object):
                       set_count=1000):  # 作战次数
         logger.debug("helper.module_battle")
         c_id = c_id.upper()
-        if config.get('behavior/use_ocr_goto_stage', False) and stage_path.is_stage_supported_ocr(c_id):
+        if stage_path.is_stage_supported_ocr(c_id):
             self.goto_stage_by_ocr(c_id)
-        elif stage_path.is_stage_supported(c_id):
-            self.goto_stage(c_id)
         else:
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
@@ -765,34 +773,22 @@ class ArknightsHelper(object):
             self.tap_rect((*(pos - offset), *(pos + offset)))
         else:
             if recursion == 0:
-                logger.info('目标可能在可视区域右侧，向左拖动')
                 originX = self.viewport[0] // 2 + randint(-100, 100)
                 originY = self.viewport[1] // 2 + randint(-100, 100)
-                self.adb.touch_swipe2((originX, originY), (-self.viewport[0] * 0.2, 0), 400)
+                if partition == 'material':
+                    logger.info('目标可能在可视区域左侧，向右拖动')
+                    offset = self.viewport[0] * 0.2
+                elif partition == 'soc':
+                    logger.info('目标可能在可视区域右侧，向左拖动')
+                    offset = -self.viewport[0] * 0.2
+                else:
+                    logger.error('未知类别')
+                    raise StopIteration()
+                self.adb.touch_swipe2((originX, originY), (offset, 0), 400)
                 self.__wait(2)
                 self.find_and_tap_daily(partition, target, recursion=recursion+1)
             else:
                 logger.error('未找到目标，是否未开放关卡？')
-
-    def goto_stage(self, stage):
-        if not stage_path.is_stage_supported(stage):
-            logger.error('不支持的关卡：%s', stage)
-            raise ValueError(stage)
-        path = stage_path.get_stage_path(stage)
-        self.back_to_main()
-        logger.info('进入作战')
-        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
-        self.__wait(3)
-        if path[0] == 'main':
-            self.find_and_tap('episodes', path[1])
-            self.find_and_tap(path[1], path[2])
-        elif path[0] == 'material' or path[0] == 'soc':
-            logger.info('选择类别')
-            self.tap_rect(imgreco.map.get_daily_menu_entry(self.viewport, path[0]))
-            self.find_and_tap_daily(path[0], path[1])
-            self.find_and_tap(path[1], path[2])
-        else:
-            raise NotImplementedError()
 
     def goto_stage_by_ocr(self, stage):
         path = stage_path.get_stage_path(stage)
@@ -916,8 +912,8 @@ class ArknightsHelper(object):
 
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
                              description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
-        # FIXME 检查设备是否有 root 权限
-        record_dir = os.path.join('custom_record/', record_name)
+        record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
+                                  os.path.join('custom_record/', record_name))
         if os.path.exists(record_dir):
             c = input('已存在同名的记录, y 覆盖, n 退出: ')
             if c.strip().lower() != 'y':
@@ -941,7 +937,7 @@ class ArknightsHelper(object):
         }
         half_roi = roi_size // 2
         logger.info('滑动屏幕以退出录制.')
-        logger.info('start recording...')
+        logger.info('开始录制, 请点击相关区域...')
         sock = self.adb.device_session_factory().shell_stream('getevent')
         f = sock.makefile('rb')
         while True:
@@ -990,15 +986,15 @@ class ArknightsHelper(object):
                 logger.info(f'record: {record}')
                 records.append(record)
                 if wait_seconds_after_touch:
-                    logger.info(f'wait {wait_seconds_after_touch}s...')
+                    logger.info(f'请等待 {wait_seconds_after_touch}s...')
                     self.__wait(wait_seconds_after_touch)
 
-                logger.info('go ahead...')
+                logger.info('继续...')
             elif len(point_list) > 1:
                 # 滑动时跳出循环
                 c = input('是否退出录制[Y/n]:')
                 if c.strip().lower() != 'n':
-                    logger.info('stop recording...')
+                    logger.info('停止录制...')
                     break
                 else:
                     # todo 处理屏幕滑动
@@ -1008,7 +1004,8 @@ class ArknightsHelper(object):
 
     def replay_custom_record(self, record_name, mode=None, back_to_main=None):
         from PIL import Image
-        record_dir = os.path.join('custom_record/', record_name)
+        record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
+                                  os.path.join('custom_record/', record_name))
         if not os.path.exists(record_dir):
             logger.error(f'未找到相应的记录: {record_name}')
             raise RuntimeError(f'未找到相应的记录: {record_name}')

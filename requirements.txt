@@ -1,7 +1,7 @@
 coloredlogs==15.0
 numpy==1.20.1
 opencv-python==4.5.1.48
-Pillow==8.1.1
+Pillow==8.2.0
 requests==2.25.1
 ruamel.yaml==0.16.12
 colorama==0.4.4; sys_platform == 'win32'
@@ -11,3 +11,4 @@ bottle-websocket==0.2.9
 # not using pywebview on win32 python >= 3.9 as one dependency (pythonnet) has no binary wheel (yet)
 # we will fallback to a customized Chrome/Chromium/Edge
 pywebview==3.4; sys_platform != 'win32' or python_version < '3.9'
+textdistance==4.2.1

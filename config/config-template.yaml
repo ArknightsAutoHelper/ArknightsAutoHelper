@@ -1,3 +1,9 @@
+---
+
+此文件为配置文件模板，更新时将覆盖。
+配置文件为 config.yaml，首次运行时自动生成。
+
+---
 device:
   # ADB server 的端口。部分模拟器为避免冲突可能会将 ADB server 开在其他端口，
   # 此时可以更改此设置以利用模拟器自带的 ADB server。
@@ -81,10 +87,12 @@ behavior:
     # 结算/放弃后，是否跳过失误关卡
     skip: true
 
-  # 启用 ocr 前往关卡
-  use_ocr_goto_stage: false
-
 plan:
+  # 计算刷图计划的方式
+  # 'online' 从企鹅物流接口获取刷图计划
+  # 'local-aog' 本地计算刷图计划, 使用 aog 推荐的关卡优化, 需要额外安装 scipy 依赖
+  calc_mode: 'online'
+
   # 刷图计划执行完毕后，用剩余理智刷这个关卡
 #  idle_stage: '1-7'
 

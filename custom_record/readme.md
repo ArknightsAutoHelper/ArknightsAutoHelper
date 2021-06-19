@@ -1,7 +1,7 @@
 ## 1. 创建操作记录
 
 
-执行 helper 的 create_custom_record 方法, 需要有 root 权限.
+执行 helper 的 create_custom_record 方法, 目前仅在 mumu 模拟器上进行了测试.
 
 ```python
 from Arknights.helper import ArknightsHelper
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     "wait_seconds_after_touch": 5,
     "repeat": 11,                 # 重复次数, 默认为 1
     "raise_exception": false,     # 未匹配时是否抛出异常, 默认 true
-    "threshold": 0.95             # 匹配相似度阈值, 默认 0.9
+    "threshold": 0.95             # 匹配相似度阈值, 默认 0.7
 }
 ```
 
@@ -53,23 +53,6 @@ if __name__ == '__main__':
 
 
 ## 2. 使用操作记录
-
-
-<details><summary>刷经验本</summary>
-
-```python
-from Arknights.helper import ArknightsHelper
-
-
-if __name__ == '__main__':
-    helper = ArknightsHelper()
-    helper.replay_custom_record('goto_ls')
-    stage_linear = ['LS-1', 'LS-2', 'LS-3', 'LS-4', 'LS-5']
-    helper.find_and_tap_stage_by_ocr(None, 'LS-5', stage_linear)
-    helper.module_battle_slim('LS-5', 1000)
-```
-
-</details>
 
 
 <details><summary>收信用点</summary>
