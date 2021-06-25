@@ -1,4 +1,5 @@
 from io import BytesIO
+from logging import basicConfig
 import os
 import logging.config
 from random import randint
@@ -108,10 +109,15 @@ def ensure_adb_alive():
     for adbbin in adb_binaries:
         try:
             logger.debug('trying %r', adbbin)
-            subprocess.run([adbbin, 'start-server'], check=True)
+            if os.name == 'nt' and config.background:
+                si = subprocess.STARTUPINFO(dwFlags=subprocess.STARTF_USESHOWWINDOW, wShowWindow=subprocess.SW_HIDE)
+                subprocess.run([adbbin, 'start-server'], check=True, startupinfo=si)
+            else:
+                subprocess.run([adbbin, 'start-server'], check=True)
             # wait for the newly started ADB server to probe emulators
             time.sleep(0.5)
-            return True
+            if check_adb_alive():
+                return
         except FileNotFoundError:
             pass
         except subprocess.CalledProcessError:

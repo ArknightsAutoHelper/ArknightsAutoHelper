@@ -28,6 +28,7 @@ except ImportError:
     version = 'UNKNOWN'
 
 
+background = False
 ADB_ROOT = os.path.join(root, 'ADB', sys.platform)
 SCREEN_SHOOT_SAVE_PATH = os.path.join(root, 'screenshot')
 config_file = os.path.join(CONFIG_PATH, 'config.yaml')
