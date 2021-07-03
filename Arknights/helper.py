@@ -328,7 +328,7 @@ class ArknightsHelper(object):
                 logger.error(ap_text + '不足 无法继续')
                 if recoresult['consume_ap'] and self.can_perform_refill():
                     logger.info('尝试回复理智')
-                    self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
+                    self.tap_rect(recoresult['start_button'])
                     self.__wait(SMALL_WAIT)
                     screenshot = self.adb.screenshot()
                     refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
@@ -351,11 +351,11 @@ class ArknightsHelper(object):
 
             if not recoresult['delegated']:
                 logger.info('设置代理指挥')
-                self.tap_rect(imgreco.before_operation.get_delegate_rect(self.viewport))
+                self.tap_rect(recoresult['delegate_button'])
                 return  # to on_prepare state
 
             logger.info("理智充足 开始行动")
-            self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
+            self.tap_rect(recoresult['start_button'])
             smobj.prepare_reco = recoresult
             smobj.state = on_troop
 
@@ -399,11 +399,7 @@ class ArknightsHelper(object):
                 smobj.state = on_level_up_popup
                 return
 
-            if smobj.prepare_reco['consume_ap'] and not smobj.prepare_reco['no_friendship']:
-                detector = imgreco.end_operation.check_end_operation
-            else:
-                detector = imgreco.end_operation.check_end_operation_alt
-            end_flag = detector(screenshot)
+            end_flag = imgreco.end_operation.check_end_operation(smobj.prepare_reco['style'], not smobj.prepare_reco['no_friendship'], screenshot)
             if not end_flag and t > 300:
                 if imgreco.end_operation.check_end_operation2(screenshot):
                     self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
@@ -462,7 +458,7 @@ class ArknightsHelper(object):
             reportresult = penguin_stats.reporter.ReportResult.NotReported
             try:
                 # 掉落识别
-                drops = imgreco.end_operation.recognize(screenshot)
+                drops = imgreco.end_operation.recognize(smobj.prepare_reco['style'], screenshot)
                 logger.debug('%s', repr(drops))
                 logger.info('掉落识别结果：%s', format_recoresult(drops))
                 log_total = len(self.loots)
