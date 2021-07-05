@@ -84,10 +84,10 @@
                 <div class="d-flex flex-row align-items-center">
                   <b-form-input size="sm" id="refill-count" v-model="maxRefillCount" min="0" max="9999" type="number" style="width: 5em"></b-form-input>次
                   <b-button-group size="sm" class="ml-2">
-                    <b-button variant="outline-secondary" @click="maxRefillCount=9" v-b-tooltip.hover title="每周获得的理智药剂数量" >9</b-button>
+                    <b-button variant="outline-secondary" @click="maxRefillCount=9; refillWithItem=true" v-b-tooltip.hover title="每周获得的理智药剂数量" >9</b-button>
                     <b-button variant="outline-secondary" @click="maxRefillCount--" :disabled="maxRefillCount==0">－</b-button>
-                    <b-button variant="outline-secondary" @click="maxRefillCount++">＋</b-button>
-                    <b-button variant="outline-secondary" @click="maxRefillCount=9999">∞</b-button>
+                    <b-button variant="outline-secondary" @click="maxRefillCount++; refillWithItem=true">＋</b-button>
+                    <b-button variant="outline-secondary" @click="maxRefillCount=9999; refillWithItem=true">∞</b-button>
                   </b-button-group>
                 </div>
               </b-form-group>
@@ -134,8 +134,8 @@
 
     <div class="log-console bg-dark text-light">
       <div id="detailed-console" v-show="consoleExpanded" ref="consoleContainer"></div>
-      <div id="status-line">
-        <b-button size="sm" squared @click="toggleConsole"><b-icon :icon="consoleExpanded ? 'chevron-bar-down' : 'chevron-bar-up'"/></b-button><div id="last-console-line" class="ml-2"><span class="align-middle">{{lastConsoleLine}}</span></div></div>
+      <div id="status-line" @click="toggleConsole">
+        <b-button size="sm" squared><b-icon :icon="consoleExpanded ? 'chevron-bar-down' : 'chevron-bar-up'"/></b-button><div id="last-console-line" class="ml-2"><span class="align-middle">{{lastConsoleLine}}</span></div></div>
       </div>
   <b-modal id="connect-device" title="连接设备" @ok="confirmConnectDevice">
     TODO 协议: adb
@@ -163,14 +163,8 @@
   </b-modal>
 
   <div id="alert-container">
-    <b-toast visible fade dismissible v-for="alert in alerts" v-bind:key="alert.id" :title="alert.title" :variant="alert.level" no-auto-hide @hidden="clearAlert(alert.id)">
+    <b-toast visible fade dismissible v-for="alert in alerts" v-bind:key="alert.id" :title="alert.title" :variant="alert.level" @hidden="clearAlert(alert.id)">
       <p class="alert-text">{{alert.message}}</p>
-      <div class="alert-text" v-if="alert.details">
-        <b-link href="javascript:;" @click="alert.expand = !alert.expand"><b-icon :icon="alert.expand ? 'chevron-down' : 'chevron-right'"/><span class="ml-1">Details</span></b-link>
-        <b-collapse v-model="alert.expand">
-          <p class="alert-text">{{alert.details}}</p>
-        </b-collapse>
-      </div>
     </b-toast>
   </div>
 
@@ -282,7 +276,7 @@ export default class App extends Vue {
   }
 
   addConsoleLine (text, level="info") {
-    this.lastConsoleLine = text.split("\n").pop()
+    this.lastConsoleLine = text.trimEnd().split("\n").pop()
     let newelm = document.createElement("p")
     newelm.innerText = text
     newelm.classList.add("log-" + level)
@@ -538,7 +532,12 @@ export default class App extends Vue {
       let exc = obj.exception
       let err = new Error(exc.message)
       err.stack = exc.trace
-      this.showAlert({level: "error", title: "Exception in RPC invocation ", message: "Invocation: " + JSON.stringify({action: callrecord.action, args: callrecord.args}) + "\n" + exc.message, details: exc.trace})
+      this.showAlert({level: "error", title: "Exception in RPC invocation ", message: "Invocation: " + JSON.stringify({action: callrecord.action, args: callrecord.args}) + "\n" + exc.message})
+      this.addConsoleLine(exc.message.join(), 'error')
+      this.addConsoleLine(exc.trace, 'error')
+      if (!this.consoleExpanded) {
+        this.toggleConsole()
+      }
       callrecord.reject(err)
     }
   }
@@ -659,6 +658,7 @@ html, body {
     margin: 0;
     line-height: 1.2em;
     white-space: pre-wrap;
+    word-break: break-all;
 }
 
 #detailed-console .log-error {
