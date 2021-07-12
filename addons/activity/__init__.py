@@ -110,7 +110,7 @@ def get_stage(target_stage_code):
 
 def get_zone_description(zone_id):
     activity_id = zone_id.split('_')[0]
-    activities = update_activities()
+    activities = get_activities()
     act_name = activities[activity_id]['name']
     zones = get_zones()
     zone_name = zones[zone_id]['zoneNameSecond']
@@ -121,18 +121,16 @@ def check_activity_available(zone_id):
     activity_id = zone_id.split('_')[0]
     activities = get_activities()
     if activity_id not in activities:
-        return False
-    activity_info = activities[activity_id]
+        activities = update_activities(use_cdn=False)
+        if activity_id not in activities:
+            return False
     cur_time = time.time()
-    if activity_info['startTime'] < cur_time < activity_info['endTime']:
-        return True
-    activities = update_activities(use_cdn=False)
     activity_info = activities[activity_id]
     return activity_info['startTime'] < cur_time < activity_info['endTime']
 
 
 class ActivityAddOn(BaseAddOn):
-    def run(self, target_stage_code, repeat_times=1000):
+    def run(self, target_stage_code, repeat_times=1000, allow_extra_stage_icons=False):
         target_stage_code = target_stage_code.upper()
         target_stage, stage_linear = get_stage(target_stage_code)
         all_items_map = arkplanner.get_all_items_map()
