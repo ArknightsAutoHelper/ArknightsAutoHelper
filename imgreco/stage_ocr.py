@@ -122,16 +122,16 @@ def invert_cv_gray_img_color(img):
 
 def cut_tag(screen, w, pt):
     img_h, img_w = screen.shape[:2]
-    tag_w = 130
-    tag = thresholding(screen[pt[1] - 1:pt[1] + 40, pt[0] + w + 3:pt[0] + tag_w + w])
+    tag_w, tag_h = 130, 36
+    tag = thresholding(screen[pt[1] - 1:pt[1] + tag_h, pt[0] + w + 3:pt[0] + tag_w + w])
     # 130 像素不一定能将 tag 截全，所以再检查一次看是否需要拓宽 tag 长度
     for i in range(3):
-        for j in range(40):
+        for j in range(tag_h):
             if tag[j][tag_w - 4 - i] < 127:
-                tag_w = 160
+                tag_w = 155
                 if pt[0] + w + tag_w >= img_w:
                     return None
-                tag = thresholding(screen[pt[1] - 1:pt[1] + 40, pt[0] + w + 3:pt[0] + tag_w + w])
+                tag = thresholding(screen[pt[1] - 1:pt[1] + tag_h, pt[0] + w + 3:pt[0] + tag_w + w])
                 break
     return tag
 
@@ -223,12 +223,18 @@ def do_img_ocr(pil_img):
 
 stage_icon1 = pil_to_cv_gray_img(resources.load_image('stage_ocr/stage_icon1.png'))
 stage_icon2 = pil_to_cv_gray_img(resources.load_image('stage_ocr/stage_icon2.png'))
+stage_icon_ex1 = pil_to_cv_gray_img(resources.load_image('stage_ocr/stage_icon_ex1.png'))
+normal_icons = [stage_icon1, stage_icon2]
+extra_icons = [stage_icon_ex1]
 
 
-def recognize_all_screen_stage_tags(pil_screen):
+def recognize_all_screen_stage_tags(pil_screen, allow_extra_icons=False):
     tags_map = {}
-    for tag in recognize_stage_tags(pil_screen, stage_icon1):
-        tags_map[tag['tag_str']] = tag['pos']
-    for tag in recognize_stage_tags(pil_screen, stage_icon2):
-        tags_map[tag['tag_str']] = tag['pos']
+    if allow_extra_icons:
+        for icon in extra_icons:
+            for tag in recognize_stage_tags(pil_screen, icon, 0.75):
+                tags_map[tag['tag_str']] = tag['pos']
+    for icon in normal_icons:
+        for tag in recognize_stage_tags(pil_screen, icon):
+            tags_map[tag['tag_str']] = tag['pos']
     return tags_map
