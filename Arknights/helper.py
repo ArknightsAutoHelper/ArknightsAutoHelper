@@ -404,7 +404,7 @@ class ArknightsHelper(object):
                 if imgreco.end_operation.check_end_operation2(screenshot):
                     self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
                     screenshot = self.adb.screenshot()
-                    end_flag = imgreco.end_operation.check_end_operation_alt(screenshot)
+                    end_flag = imgreco.end_operation.check_end_operation_main(screenshot)
             if end_flag:
                 logger.info('战斗结束')
                 self.operation_time.append(t)
@@ -733,6 +733,11 @@ class ArknightsHelper(object):
         while True:
             screenshot = self.adb.screenshot()
             tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot)
+            if not tags_map:
+                tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot, allow_extra_icons=True)
+                if not tags_map:
+                    logger.error('未能定位关卡地图')
+                    raise RuntimeError('recognition failed')
             logger.debug('tags map: ' + repr(tags_map))
             pos = tags_map.get(target)
             if pos:

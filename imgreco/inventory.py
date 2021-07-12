@@ -7,6 +7,7 @@ import json
 from util.richlog import get_logger
 
 logger = get_logger(__name__)
+exclude_items = {'32001', 'other'}
 
 
 def _load_net():
@@ -167,7 +168,7 @@ def get_all_item_in_screen(screen):
         logger.logimage(convert_to_pil(item_img['item_img']))
         prob, item_id, item_name, item_type = get_item_id(item_img['middle_img'])
         logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
-        if item_id == 'other' or item_type == 'ACTIVITY_ITEM':
+        if item_id in exclude_items or item_type == 'ACTIVITY_ITEM':
             continue
         quantity = get_quantity(item_img['num_img'])
         item_count_map[item_id] = quantity
