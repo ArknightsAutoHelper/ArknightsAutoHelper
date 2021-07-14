@@ -1,138 +1,146 @@
 <template>
   <div id="app">
-    <div id="columns-container">
+    <b-container id="columns-container">
 
-      <b-card title="Arknights Auto Helper" :sub-title="version" class="status-card">
-        <b-input-group class="mt-3">
-          <b-input-group-prepend is-text>
-            <b-icon icon="plug-fill" />设备
-          </b-input-group-prepend>
-          <b-input-group-append class="flex-grow-1">
-            <b-dropdown :text="deviceName" right class="flex-grow-1">
-              <b-dropdown-item disabled><b>可用设备</b></b-dropdown-item>
-              <b-dropdown-item v-for="dev in availiableDevices" v-bind:key="dev" @click="connectDevice(dev)">{{dev}}</b-dropdown-item>
-              <b-dropdown-divider/>
-              <b-dropdown-item v-b-modal.connect-device>连接设备</b-dropdown-item>
-            </b-dropdown>
-          </b-input-group-append>
-        </b-input-group>
+      <b-row class="justify-content-md-center" no-gutters cols="1" cols-sm="1" cols-md="2" cols-lg="3" cols-xl="4">
+        <b-col sm xl="3">
+          <b-card title="Arknights Auto Helper" :sub-title="version" class="status-card">
+            <b-input-group class="mt-3">
+              <b-input-group-prepend is-text>
+                <b-icon icon="plug-fill" />设备
+              </b-input-group-prepend>
+              <b-input-group-append class="flex-grow-1">
+                <b-dropdown :text="deviceName" right class="flex-grow-1">
+                  <b-dropdown-item disabled><b>可用设备</b></b-dropdown-item>
+                  <b-dropdown-item v-for="dev in availiableDevices" v-bind:key="dev" @click="connectDevice(dev)">{{dev}}</b-dropdown-item>
+                  <b-dropdown-divider/>
+                  <b-dropdown-item v-b-modal.connect-device>连接设备</b-dropdown-item>
+                </b-dropdown>
+              </b-input-group-append>
+            </b-input-group>
 
-        <div class="mt-3">任务队列
-          <div class="float-right" v-b-tooltip.hover title="移除选中项">
-              <b-button size="sm" variant="outline-danger" :disabled="selectedPendingJob.length == 0" @click="dequeueSelectedJobs"><b-icon-trash/></b-button>
-          </div>
-        </div>
-        <b-form-select class="mt-1" v-model="selectedPendingJob" :options="pendingJobs" multiple :select-size="8"></b-form-select>
-        <b-button block class="mt-1" size="sm"
-          :variant="canPauseJob ? 'warning' : 'success'"
-          :disabled="!(canPauseJob || canResumeJobQueue)"
-          @click="toggleQueueState"
-          ><b-icon 
-          :icon="canPauseJob ? 'pause-fill' : 'play-fill'"
-          />{{canPauseJob ? '暂停' : (appRunning ? '继续' : '启动')}}队列</b-button>
-        <div class="mt-3">运行状态</div>
-        <b-input-group>
-          <b-input-group-prepend is-text>
-            <b-icon icon="arrow-right"/>
-          </b-input-group-prepend>
-          <b-form-input readonly :value="currentJobTitle"></b-form-input>
-        </b-input-group>
-        <b-input-group class="mt-1">
-          <b-input-group-prepend is-text>
-            <b-icon icon="pause-circle" v-show="!appRunning"/>
-            <b-icon icon="stopwatch" v-show="appRunning && workerWaiting"/>
-            <b-spinner small v-show="appRunning && !workerWaiting"/>
-          </b-input-group-prepend>
-            <b-form-input readonly :value="timerText"></b-form-input>
-          <b-input-group-append>
-            <b-button variant="info" title="跳过当前等待时间" :disabled="!(appRunning && workerWaiting && allowSkipWait)" @click="skipWait"><b-icon-skip-forward-fill/></b-button>
-            <b-button variant="outline-danger" title="停止助手" :disabled="!appRunning" @click="interruptWorker"><b-icon-x-octagon size="sm"/></b-button>
-          </b-input-group-append>
-        </b-input-group>
-        <template v-if="debug">
-          <b-form-checkbox v-model="appRunning">app running</b-form-checkbox>
-          <b-form-checkbox v-model="workerWaiting">worker waiting</b-form-checkbox>
-          <b-form-checkbox v-model="allowSkipWait">allow skip wait</b-form-checkbox>
-          <button @click="loots.push(['至纯源石', 1919])">add loot</button>
-        </template>
-      </b-card>
-
-      <div id="action-cards">
-        <b-card title="快速启动" class="action-card">
-          <b-form class="mt-3">
-            <b-form-group label="关卡" label-for="navigate-option" label-cols="2" >
-              <b-form-radio-group id="navigate-option" v-model="onStage" buttons button-variant="outline-secondary" size="sm">
-                <b-form-radio value="current">当前关卡</b-form-radio>
-                <b-form-radio value="navigate">指定关卡</b-form-radio>
-                <b-button v-if="onStage == 'navigate'" variant="outline-secondary" v-b-modal.choose-stage>{{choosedStage}}</b-button>
-              </b-form-radio-group>
-            </b-form-group>
-              <b-form-group label="次数" label-for="repeat-count" label-cols="2" >
-                <div class="d-flex flex-row align-items-center">
-                  <b-form-input id="repeat-count" v-model="repeatCount" min="0" max="9999" type="number" style="width: 5em"></b-form-input>
-                  <b-button-group size="sm" class="ml-2">
-                    <b-button variant="outline-secondary" @click="repeatCount=1">1</b-button>
-                    <b-button variant="outline-secondary" @click="repeatCount--" :disabled="repeatCount==0"><b-icon-dash/></b-button>
-                    <b-button variant="outline-secondary" @click="repeatCount++"><b-icon-plus/></b-button>
-                    <b-button variant="outline-secondary" @click="repeatCount=9999">∞</b-button>
+            <div class="mt-3">任务队列
+              <div class="float-right" v-b-tooltip.hover title="移除选中项">
+                  <b-button size="sm" variant="outline-danger" :disabled="selectedPendingJob.length == 0" @click="dequeueSelectedJobs"><b-icon-trash/></b-button>
+              </div>
+            </div>
+            <b-form-select class="mt-1" v-model="selectedPendingJob" :options="pendingJobs" multiple :select-size="8"></b-form-select>
+            <b-button block class="mt-1" size="sm"
+              :variant="canPauseJob ? 'warning' : 'success'"
+              :disabled="!(canPauseJob || canResumeJobQueue)"
+              @click="toggleQueueState"
+              ><b-icon 
+              :icon="canPauseJob ? 'pause-fill' : 'play-fill'"
+              />{{canPauseJob ? '暂停' : (appRunning ? '继续' : '启动')}}队列</b-button>
+            <div class="mt-3">运行状态</div>
+            <b-input-group>
+              <b-input-group-prepend is-text>
+                <b-icon icon="arrow-right"/>
+              </b-input-group-prepend>
+              <b-form-input readonly :value="currentJobTitle"></b-form-input>
+            </b-input-group>
+            <b-input-group class="mt-1">
+              <b-input-group-prepend is-text>
+                <b-icon icon="pause-circle" v-show="!appRunning"/>
+                <b-icon icon="stopwatch" v-show="appRunning && workerWaiting"/>
+                <b-spinner small v-show="appRunning && !workerWaiting"/>
+              </b-input-group-prepend>
+                <b-form-input readonly :value="timerText"></b-form-input>
+              <b-input-group-append>
+                <b-button variant="info" title="跳过当前等待时间" :disabled="!(appRunning && workerWaiting && allowSkipWait)" @click="skipWait"><b-icon-skip-forward-fill/></b-button>
+                <b-button variant="outline-danger" title="停止助手" :disabled="!appRunning" @click="interruptWorker"><b-icon-x-octagon size="sm"/></b-button>
+              </b-input-group-append>
+            </b-input-group>
+            <template v-if="debug">
+              <b-form-checkbox v-model="appRunning">app running</b-form-checkbox>
+              <b-form-checkbox v-model="workerWaiting">worker waiting</b-form-checkbox>
+              <b-form-checkbox v-model="allowSkipWait">allow skip wait</b-form-checkbox>
+              <button @click="loots.push(['至纯源石', 1919])">add loot</button>
+            </template>
+          </b-card>
+        </b-col>
+        <b-col sm xl="6">
+          <b-card-group columns class="ml-md-3 mx-lg-3">
+            <b-card title="快速启动" class="action-card">
+              <b-form class="mt-3">
+                <b-form-group label="关卡" label-for="navigate-option" label-cols="2" label-cols-xl="12" >
+                  <b-form-radio-group id="navigate-option" v-model="onStage" buttons button-variant="outline-secondary" size="sm">
+                    <b-form-radio value="current">当前关卡</b-form-radio>
+                    <b-form-radio value="navigate">指定关卡</b-form-radio>
+                    <b-button v-if="onStage == 'navigate'" variant="outline-secondary" v-b-modal.choose-stage>{{choosedStage}}</b-button>
+                  </b-form-radio-group>
+                </b-form-group>
+                  <b-form-group label="次数" label-for="repeat-count" label-cols="2"  label-cols-xl="12" >
+                    <div class="d-flex flex-row align-items-center">
+                      <b-form-input id="repeat-count" v-model="repeatCount" min="0" max="9999" type="number" style="width: 5em"></b-form-input>
+                      <b-button-group size="sm" class="ml-2">
+                        <b-button variant="outline-secondary" @click="repeatCount=1">1</b-button>
+                        <b-button variant="outline-secondary" @click="repeatCount--" :disabled="repeatCount==0"><b-icon-dash/></b-button>
+                        <b-button variant="outline-secondary" @click="repeatCount++"><b-icon-plus/></b-button>
+                        <b-button variant="outline-secondary" @click="repeatCount=9999">∞</b-button>
+                      </b-button-group>
+                    </div>
+                  </b-form-group>
+                  <b-form-checkbox v-model="refillWithItem" name="" switch>使用道具回复体力</b-form-checkbox>
+                  <b-form-checkbox v-model="refillWithOriginium" name="" switch class="mt-1">使用源石回复体力</b-form-checkbox>
+                  <b-form-group size="sm" label="最多回复" label-for="refill-count" label-cols="4" >
+                    <div class="d-flex flex-row align-items-center">
+                      <b-form-input size="sm" id="refill-count" v-model="maxRefillCount" min="0" max="9999" type="number" style="width: 5em"></b-form-input>次
+                      <b-button-group size="sm" class="ml-2">
+                        <b-button variant="outline-secondary" @click="maxRefillCount=9; refillWithItem=true" v-b-tooltip.hover title="每周获得的理智药剂数量" >9</b-button>
+                        <b-button variant="outline-secondary" @click="maxRefillCount--" :disabled="maxRefillCount==0">－</b-button>
+                        <b-button variant="outline-secondary" @click="maxRefillCount++; refillWithItem=true">＋</b-button>
+                        <b-button variant="outline-secondary" @click="maxRefillCount=9999; refillWithItem=true">∞</b-button>
+                      </b-button-group>
+                    </div>
+                  </b-form-group>
+              </b-form>
+              <template #footer>
+                <div class="clearfix">
+                  <b-button-group class="float-right">
+                    <b-button :disabled="appRunning" @click="goJob(getQuickStartJob())">Go</b-button>
+                    <b-button variant="outline-secondary" @click="enqueueJob(getQuickStartJob())">Enqueue</b-button>
                   </b-button-group>
                 </div>
-              </b-form-group>
-              <b-form-checkbox v-model="refillWithItem" name="" switch>使用道具回复体力</b-form-checkbox>
-              <b-form-checkbox v-model="refillWithOriginium" name="" switch class="mt-1">使用源石回复体力</b-form-checkbox>
-              <b-form-group size="sm" label="最多回复" label-for="refill-count" label-cols="4" >
-                <div class="d-flex flex-row align-items-center">
-                  <b-form-input size="sm" id="refill-count" v-model="maxRefillCount" min="0" max="9999" type="number" style="width: 5em"></b-form-input>次
-                  <b-button-group size="sm" class="ml-2">
-                    <b-button variant="outline-secondary" @click="maxRefillCount=9; refillWithItem=true" v-b-tooltip.hover title="每周获得的理智药剂数量" >9</b-button>
-                    <b-button variant="outline-secondary" @click="maxRefillCount--" :disabled="maxRefillCount==0">－</b-button>
-                    <b-button variant="outline-secondary" @click="maxRefillCount++; refillWithItem=true">＋</b-button>
-                    <b-button variant="outline-secondary" @click="maxRefillCount=9999; refillWithItem=true">∞</b-button>
+              </template>
+            </b-card>
+
+            <b-card title="领取任务奖励" class="action-card">
+              <template #footer>
+                <div class="clearfix">
+                  <b-button-group class="float-right">
+                    <b-button :disabled="appRunning" @click="goJob(getCollectJob())">Go</b-button>
+                    <b-button variant="outline-secondary" @click="enqueueJob(getCollectJob())">Enqueue</b-button>
                   </b-button-group>
                 </div>
-              </b-form-group>
-          </b-form>
-          <template #footer>
-            <div class="clearfix">
-              <b-button-group class="float-right">
-                <b-button :disabled="appRunning" @click="goJob(getQuickStartJob())">Go</b-button>
-                <b-button variant="outline-secondary" @click="enqueueJob(getQuickStartJob())">Enqueue</b-button>
-              </b-button-group>
+              </template>
+            </b-card>
+
+            <b-card title="公开招募计算" class="action-card">
+              <template #footer>
+                <div class="clearfix">
+                  <b-button :disabled="appRunning" class="float-right" @click="recruit">Go</b-button>
+                </div>
+              </template>
+            </b-card>
+          </b-card-group>
+        </b-col>
+        <b-col sm md="12" xl="3">
+          <b-card header="战利品" class="status-card">
+            <div class="d-flex flex-row flex-wrap align-content-start">
+              <div class="item-container" v-for="[name, qty] in loots" v-bind:key="name+'x'+qty" v-b-tooltip.hover :title="name">
+                <b-img rounded="circle" :alt="name"  :src="serverbase + 'itemimg/' + encodeURIComponent(name) + '.png'" /><b-badge class="item-qty-badge">{{qty}}</b-badge>
+              </div>
             </div>
-          </template>
-        </b-card>
+          </b-card>
 
-        <b-card title="领取任务奖励" class="action-card">
-          <template #footer>
-            <div class="clearfix">
-              <b-button-group class="float-right">
-                <b-button :disabled="appRunning" @click="goJob(getCollectJob())">Go</b-button>
-                <b-button variant="outline-secondary" @click="enqueueJob(getCollectJob())">Enqueue</b-button>
-              </b-button-group>
-            </div>
-          </template>
-        </b-card>
+        </b-col>
+      </b-row>
 
-        <b-card title="公开招募计算" class="action-card">
-          <template #footer>
-            <div class="clearfix">
-              <b-button :disabled="appRunning" class="float-right" @click="recruit">Go</b-button>
-            </div>
-          </template>
-        </b-card>
-      </div>
-
-      <b-card header="战利品" class="status-card">
-        <div class="d-flex flex-row flex-wrap align-content-start">
-          <div class="item-container" v-for="[name, qty] in loots" v-bind:key="name+'x'+qty" v-b-tooltip.hover :title="name">
-            <b-img rounded="circle" :alt="name"  :src="serverbase + 'itemimg/' + encodeURIComponent(name) + '.png'" /><b-badge class="item-qty-badge">{{qty}}</b-badge>
-          </div>
-        </div>
-      </b-card>
-
-    </div>
+    </b-container>
 
     <div class="log-console bg-dark text-light">
+      <div class="dragger" ref="consoleDragger" v-show="consoleExpanded" ></div>
       <div id="detailed-console" v-show="consoleExpanded" ref="consoleContainer"></div>
       <div id="status-line" @click="toggleConsole">
         <b-button size="sm" squared><b-icon :icon="consoleExpanded ? 'chevron-bar-down' : 'chevron-bar-up'"/></b-button><div id="last-console-line" class="ml-2"><span class="align-middle">{{lastConsoleLine}}</span></div></div>
@@ -269,6 +277,29 @@ export default class App extends Vue {
         }
       }
     })
+
+    let consoleDragger = this.$refs.consoleDragger
+    let consoleContainer = this.$refs.consoleContainer
+    consoleDragger.addEventListener('mousedown', function(e) {
+      e.preventDefault()
+      this.draginitY = e.pageY
+      let elm = consoleDragger
+      let initHeight = consoleContainer.getBoundingClientRect().height
+      let movehandler = function (e) {
+          e.preventDefault()
+          let offsetY = (e.pageY - elm.draginitY)
+          let newHeight = initHeight - offsetY
+          consoleContainer.style.height = newHeight + "px"
+      }
+      document.addEventListener('mousemove', movehandler)
+      let uphandler = function (e) {
+          e.preventDefault()
+          document.removeEventListener('mousemove', movehandler)
+          document.removeEventListener('mouseup', uphandler)
+      }
+      document.addEventListener('mouseup', uphandler)
+    })
+
   }
 
   beforeDestroy() {
@@ -570,8 +601,8 @@ export default class App extends Vue {
 }
 </script>
 
-<style>
-
+<style lang="scss">
+@import "bootstrap";
 html {
   font-size: 11pt;
 }
@@ -599,27 +630,18 @@ html, body {
 }
 
 .action-card {
-  max-width: 40rem;
-  min-width: 20rem;
-  margin: 0.5rem 0.25rem;
+  /* max-width: 40rem; */
+  // min-width: 20rem;
+  margin: 0.5rem 0;
   /* flex: 114514; */
 }
 
 .status-card {
-  min-width: 20rem;
-  max-width: 20rem;
-  margin: 0.5rem 0.25rem;
-  flex-grow: 1;
+  min-width: 18rem;
+  /* max-width: 20rem; */
+  margin: 0.5rem 0;
+  // flex-grow: 1;
   min-height: 10rem;
-}
-
-#action-cards {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  flex: 114514;
-  align-content: flex-start;
 }
 
 .log-console {
@@ -629,6 +651,13 @@ html, body {
   bottom: 0;
   z-index: 9999;
   box-shadow: 0 0 1rem rgba(0, 0, 0, 0.375);
+  .dragger {
+    position: absolute;
+    width: 100%;
+    height: 8px;
+    top: -8px;
+    cursor: ns-resize;
+  }
 }
 
 #detailed-console {
@@ -636,6 +665,8 @@ html, body {
   color: #c5c8c6;
   font-family: monospace;
   height: 16em;
+  min-height: 2em;
+  max-height: 90vh;
   overflow-y: scroll;
 }
 
@@ -685,7 +716,7 @@ html, body {
 }
 
 .item-container {
-  margin: 0 0.5em;
+  margin: 0.25em 0.5em;
   position: relative;
 }
 
@@ -693,5 +724,20 @@ html, body {
   position: absolute;
   right: 0;
   bottom: 0;
+}
+
+.card-columns {
+  @include media-breakpoint-only(sm) {
+    column-count: 1;
+  }
+  @include media-breakpoint-only(md) {
+    column-count: 1;
+  }
+  @include media-breakpoint-only(lg) {
+    column-count: 1;
+  }
+  @include media-breakpoint-only(xl) {
+    column-count: 2;
+  }
 }
 </style>
