@@ -12,7 +12,17 @@ sys.modules['FixTk'] = None
 
 a = Analysis(['akhelper.py'],
              binaries=[],
-             datas=[('resources.zip', '.'), ('config/config-template.yaml', 'config'), ('config/device-config.schema.json', 'config'), ('config/logging.yaml', 'config'), ('LICENSE', '.'), ('README.md', '.'), ('ADB', 'ADB'), ('webgui2/dist', 'web')],
+             datas=[
+                ('resources.zip', '.'),
+                ('config/config-template.yaml', 'config'),
+                ('config/device-config.schema.json', 'config'),
+                ('config/logging.yaml', 'config'),
+                ('LICENSE', '.'),
+                ('README.md', '.'),
+                ('ADB', 'ADB'),
+                ('webgui2/dist', 'web'),
+                ('extra_items/README.md', 'extra_items'),
+            ],
              hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr', 'connector.fixups.adb_connect', 'connector.fixups.probe_bluestacks_hyperv'],
              hookspath=[],
              runtime_hooks=[],
