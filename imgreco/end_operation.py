@@ -21,6 +21,7 @@ class RecognizeSession:
         self.low_confidence = False
         self.vh = 0
         self.vw = 0
+        self.learn_unrecognized = False
 
 
 def tell_stars(starsimg):
@@ -68,7 +69,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         itemimg = groupimg.crop((itemwidth * i, 0.000 * vh, itemwidth * (i+1), 18.981 * vh))
         # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
         itemimg = itemimg.crop((0.093 * vh, 0, 19.074 * vh, itemimg.height))
-        recognized_item = item.tell_item(itemimg, session)
+        recognized_item = item.tell_item(itemimg, with_quantity=True, learn_unrecognized=session.learn_unrecognized)
         if recognized_item.low_confidence:
             session.low_confidence = True
         result.append((recognized_item.name, recognized_item.quantity))
@@ -200,16 +201,16 @@ def get_dismiss_level_up_popup_rect(viewport):
 get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
 
 
-def recognize(style, im):
+def recognize(style, im, learn_unrecognized_item=False):
     if style == 'main':
-        return recognize_main(im)
+        return recognize_main(im, learn_unrecognized_item)
     elif style == 'interlocking':
-        return recognize_interlocking(im)
+        return recognize_interlocking(im, learn_unrecognized_item)
     else:
         raise ValueError(style)
 
 
-def recognize_main(im):
+def recognize_main(im, learn_unrecognized_item):
     import time
     t0 = time.monotonic()
     vw, vh = util.get_vwvh(im.size)
@@ -281,6 +282,7 @@ def recognize_main(im):
     session = RecognizeSession()
     session.vw = vw
     session.vh = vh
+    session.learn_unrecognized = learn_unrecognized_item
 
     for group in imggroups:
         groupresult = tell_group(group, session, linetop, linebottom)

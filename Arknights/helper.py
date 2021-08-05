@@ -262,9 +262,9 @@ class ArknightsHelper(object):
                 if count != set_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
-                        self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                        self.__wait(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
                     else:
-                        self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
+                        self.__wait(BIG_WAIT, MANLIKE_FLAG=True, allow_skip=True)
         except StopIteration:
             # count: succeeded count
             logger.error('未能进行第 %d 次作战', count + 1)
@@ -458,7 +458,7 @@ class ArknightsHelper(object):
             reportresult = penguin_stats.reporter.ReportResult.NotReported
             try:
                 # 掉落识别
-                drops = imgreco.end_operation.recognize(smobj.prepare_reco['style'], screenshot)
+                drops = imgreco.end_operation.recognize(smobj.prepare_reco['style'], screenshot, True)
                 logger.debug('%s', repr(drops))
                 logger.info('掉落识别结果：%s', format_recoresult(drops))
                 log_total = len(self.loots)

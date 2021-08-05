@@ -12,12 +12,14 @@ import ruamel.yaml
 
 yaml = ruamel.yaml.YAML()
 bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+use_state_separation = None
 if bundled:
     root = sys._MEIPASS
-    CONFIG_PATH = os.path.join(root, 'config')
+    # FIXME: macOS app bundle outside /Applications
+    config_template_path = os.path.join(root, 'config')
 else:
-    CONFIG_PATH = os.path.realpath(os.path.dirname(__file__))
-    root = os.path.realpath(os.path.join(CONFIG_PATH, '..'))
+    config_template_path = os.path.realpath(os.path.dirname(__file__))
+    root = os.path.realpath(os.path.join(config_template_path, '..'))
 
 try:
     if not bundled and os.path.exists(os.path.join(root, '.git')):
@@ -27,14 +29,25 @@ try:
 except ImportError:
     version = 'UNKNOWN'
 
+if use_state_separation is None:
+    # TODO: check for writable base directory
+    use_state_separation = False
+
+if use_state_separation:
+    # TODO: use platform application state directory, copy skeleton
+    writable_root = '\0placeholder'
+else:
+    writable_root = root
 
 background = False
 ADB_ROOT = os.path.join(root, 'ADB', sys.platform)
-SCREEN_SHOOT_SAVE_PATH = os.path.join(root, 'screenshot')
+SCREEN_SHOOT_SAVE_PATH = os.path.join(writable_root, 'screenshot')
+CONFIG_PATH = os.path.join(writable_root, 'config')
+extra_items_path = os.path.join(writable_root, 'extra_items')
 config_file = os.path.join(CONFIG_PATH, 'config.yaml')
-config_template = os.path.join(CONFIG_PATH, 'config-template.yaml')
+config_template = os.path.join(config_template_path, 'config-template.yaml')
 logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
-logs = os.path.join(root, 'log')
+logs = os.path.join(writable_root, 'log')
 use_archived_resources = not os.path.isdir(os.path.join(root, 'resources'))
 if use_archived_resources:
     resource_archive = os.path.join(root, 'resources.zip')
@@ -70,9 +83,11 @@ def _get_instance_id_win32():
     CreateMutex = k32.CreateMutexW
     CloseHandle = k32.CloseHandle
     ERROR_ALREADY_EXISTS = 183
+    from zlib import crc32
+    path_hash = crc32(os.path.realpath(config_file).encode())
     i = 0
     while True:
-        name = 'Global\\ArknightsAutoHelper.%d' % i
+        name = 'Global\\ArknightsAutoHelper.%08X.%d' % (path_hash, i)
         import ctypes
         mutex = ctypes.c_void_p(CreateMutex(None, True, name))
         err = ctypes.get_last_error()
@@ -207,9 +222,9 @@ def get_instance_id():
 
     _instanceid = _get_instance_id()
     if _instanceid == 0:
-        logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.log')
+        logfile = os.path.join(logs, 'ArknightsAutoHelper.log')
     else:
-        logfile = os.path.join(root, 'log', 'ArknightsAutoHelper.%d.log' % _instanceid)
+        logfile = os.path.join(logs, 'ArknightsAutoHelper.%d.log' % _instanceid)
 
     with open(logging_config_file, 'r', encoding='utf-8') as f:
         logging.config.dictConfig(yaml.load(f))

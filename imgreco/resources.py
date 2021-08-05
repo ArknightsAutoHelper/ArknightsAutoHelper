@@ -8,10 +8,28 @@ from PIL import Image
 
 import config
 
+class ResourceArchiveIndex:
+    def __init__(self, archive, archive_path):
+        self.archive = archive
+        self.archive_path = archive_path
+    def open(self):
+        return self.archive.open(self.archive_path, 'r')
+    def __hash__(self):
+        return hash((ResourceArchiveIndex, self.archive, self.archive_path))
+
+class FileSystemIndex:
+    def __init__(self, path):
+        self.path = path
+    def open(self):
+        return open(self.path, 'rb')
+    def __hash__(self):
+        return hash((FileSystemIndex, self.path))
+
 if config.use_archived_resources:
     import zipfile
     root = 'resources/imgreco'
     archive = zipfile.ZipFile(open(config.resource_archive, 'rb'), 'r')
+
     filelist = archive.namelist()
 
     def get_path(names):
@@ -19,6 +37,10 @@ if config.use_archived_resources:
 
     def _open_file(path):
         return archive.open(path)
+
+    def _get_index(names):
+        archive_path = get_path(names)
+        return ResourceArchiveIndex(archive, archive_path)
 
     def get_entries(base):
         prefix = 'resources/imgreco/' + base + '/'
@@ -37,10 +59,14 @@ if config.use_archived_resources:
                     files.append(name)
         return dirs, files
 else:
-    root = os.path.join(config.root, 'resources', 'imgreco')
+    root = os.path.join(config.resource_root, 'imgreco')
 
     def get_path(names):
         return os.path.join(root, *names)
+
+    def _get_index(names):
+        path = get_path(names)
+        return FileSystemIndex(os.path.join(root, path))
 
     def _open_file(path):
         return open(path, 'rb')
@@ -52,10 +78,15 @@ else:
         return ([], [])
 
 
-def open_file(respath):
+def resolve(respath):
     names = respath.split('/')
-    path = get_path(names)
-    return _open_file(path)
+    return _get_index(names)
+
+
+def open_file(respath):
+    if hasattr(respath, 'open'):
+        return respath.open()
+    return resolve(respath).open()
 
 
 def load_image(name, mode=None):

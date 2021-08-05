@@ -42,7 +42,7 @@ def event_preprocess(stage: str, items: List[Tuple[str, str, int]], exclude_from
     for itemrecord in items:
         group, name, qty = itemrecord
 
-        if name in FIXED_QUANTITY:
+        if name in FIXED_QUANTITY or name.startswith('@'):
             # 不加入汇报列表
             continue
             

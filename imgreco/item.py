@@ -81,22 +81,11 @@ def load_data():
     reco = minireco.MiniRecognizer(model, minireco.compare_ccoeff)
     return SimpleNamespace(itemmats=iconmats, num_recognizer=reco, itemmask=itemmask)
 
-@lru_cache()
-def all_known_items():
-    result = {}
-    for prefix in ['items', 'items/archive', 'items/not-loot']:
-        _, files = resources.get_entries(prefix)
-        for filename in files:
-            itemname = filename[:-4] if filename.endswith('.png') else filename
-            path = prefix + '/' + filename
-            result[itemname] = path
-    return result
 
-
-def tell_item(itemimg, with_quantity=True):
+def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
     logger = get_logger(__name__)
     logger.logimage(itemimg)
-    cached = load_data()
+    from . import itemdb
     # l, t, r, b = scaledwh(80, 146, 90, 28)
     # print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)
     # numimg = itemimg.crop(scaledwh(80, 146, 90, 28)).convert('L')
@@ -109,7 +98,7 @@ def tell_item(itemimg, with_quantity=True):
         if numimg is not None:
             numimg = imgops.clear_background(numimg, 120)
             logger.logimage(numimg)
-            numtext, score = cached.num_recognizer.recognize2(numimg, subset='0123456789万')
+            numtext, score = itemdb.num_recognizer.recognize2(numimg, subset='0123456789万')
             logger.logtext('quantity: %s, minscore: %f' % (numtext, score))
             if score < 0.2:
                 low_confidence = True
@@ -118,10 +107,10 @@ def tell_item(itemimg, with_quantity=True):
 
     # scale = 48/itemimg.height
     img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
-    img4reco[cached.itemmask] = 0
+    img4reco[itemdb.itemmask] = 0
 
     scores = []
-    for name, templ in cached.itemmats.items():
+    for name, templ in itemdb.itemmats.items():
         scores.append((name, imgops.compare_mse(img4reco, templ)))
 
     scores.sort(key=lambda x: x[1])
@@ -139,5 +128,8 @@ def tell_item(itemimg, with_quantity=True):
             logger.logtext('no match')
             low_confidence = True
             name = None
+
+    if name is None and learn_unrecognized:
+        name = itemdb.add_item(itemimg)
 
     return RecognizedItem(name, quantity, low_confidence)
