@@ -129,7 +129,7 @@
           <b-card header="战利品" class="status-card">
             <div class="d-flex flex-row flex-wrap align-content-start">
               <div class="item-container" v-for="[name, qty] in loots" v-bind:key="name+'x'+qty" v-b-tooltip.hover :title="name">
-                <b-img rounded="circle" :alt="name"  :src="serverbase + 'itemimg/' + encodeURIComponent(name) + '.png'" /><b-badge class="item-qty-badge">{{qty}}</b-badge>
+                <b-img class="item-icon" :alt="name"  :src="serverbase + 'itemimg/' + encodeURIComponent(name) + '.png'" /><b-badge class="item-qty-badge">{{qty}}</b-badge>
               </div>
             </div>
           </b-card>
@@ -718,6 +718,12 @@ html, body {
 .item-container {
   margin: 0.25em 0.5em;
   position: relative;
+}
+
+.item-icon {
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
 }
 
 .item-qty-badge {
