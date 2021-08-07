@@ -95,9 +95,8 @@ class PenguinStatsReporter:
                 self.stage_map[s.code] = s
             for i in items:
                 self.item_map[i.name] = i
-            import imgreco.item
-            recognizer_data = imgreco.item.load_data()
-            unrecognized_items = (set(self.item_map.keys())) - (set(imgreco.item.all_known_items()) | set(EXTRA_KNOWN_ITEMS))
+            import imgreco.itemdb
+            unrecognized_items = (set(self.item_map.keys())) - (set(imgreco.itemdb.all_known_items) | set(EXTRA_KNOWN_ITEMS))
             if unrecognized_items:
                 logger.warn('企鹅数据中存在未识别的物品：%s', ', '.join(unrecognized_items))
                 logger.warn('为避免产生统计偏差，已禁用汇报功能')
