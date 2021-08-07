@@ -202,6 +202,10 @@ get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
 
 
 def recognize(style, im, learn_unrecognized_item=False):
+    width, height = im.size
+    if height != 720:
+        scale = height / 720
+        im = im.resize((int(width/scale), 720), Image.ANTIALIAS)
     if style == 'main':
         return recognize_main(im, learn_unrecognized_item)
     elif style == 'interlocking':
