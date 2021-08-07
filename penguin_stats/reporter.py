@@ -141,8 +141,9 @@ class PenguinStatsReporter:
 
         try:
             flattenitems = list(event_preprocess(recoresult['operation'], flattenitems, exclude_from_validation))
+            report_special_item = config.get('reporting/report_special_item', False)
             for item in flattenitems:
-                if item[3] == 'special_report_item' and not config.get('reporting/report_special_item', False):
+                if item[3] == 'special_report_item' and not report_special_item:
                     logger.error('掉落中包含特殊汇报的物品, 请前往企鹅物流阅读相关说明, 符合条件后可以将配置中的 '
                                  'reporting/report_special_item 改为 true 汇报掉落')
                     raise RuntimeError('不汇报特殊物品.')
