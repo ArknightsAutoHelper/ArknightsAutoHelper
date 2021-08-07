@@ -79,7 +79,8 @@ def crop_item_middle_img(cv_item_img):
     return cv_item_img[y1:y2, x1:x2]
 
 
-def get_item_id(cv_img):
+def get_item_id(cv_img, box_size=137):
+    cv_img = cv2.resize(cv_img, (box_size, box_size))
     mid_img = crop_item_middle_img(cv_img)
     ark_material_net, idx2id, id2idx, idx2name, idx2type = _load_net()
     blob = cv2.dnn.blobFromImage(mid_img)
