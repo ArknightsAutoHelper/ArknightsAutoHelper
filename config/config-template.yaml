@@ -65,6 +65,8 @@ ocr:
 reporting:
   # 是否将关卡掉落上传到企鹅数据 (penguin-stats.io)
   enabled: false
+  # 汇报特殊物品
+  report_special_item: true
 
   # 企鹅数据的用户 ID
   # > 用户 ID 仅用来标记您的上传身份。在不同设备上使用此 ID 登录，可让掉落数据集中于一个账号下，方便管理上传以及查看个人掉落数据。

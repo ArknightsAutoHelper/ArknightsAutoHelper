@@ -58,7 +58,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         session.low_confidence = True
 
     if groupname == '幸运掉落':
-        return (groupname, [('(家具)', 1)])
+        return (groupname, [('(家具)', 1, 'furni')])
 
     vw, vh = session.vw, session.vh
     itemwidth = 20.370 * vh
@@ -72,7 +72,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         recognized_item = item.tell_item(itemimg, with_quantity=True, learn_unrecognized=session.learn_unrecognized)
         if recognized_item.low_confidence:
             session.low_confidence = True
-        result.append((recognized_item.name, recognized_item.quantity))
+        result.append((recognized_item.name, recognized_item.quantity, recognized_item.item_type))
     return (groupname, result)
 
 

@@ -2,31 +2,10 @@ import numpy as np
 import cv2
 from . import item, imgops, util
 from PIL import Image
-from . import resources, common
-import json
 from util.richlog import get_logger
 
 logger = get_logger(__name__)
-exclude_items = {'32001', 'other'}
-
-
-def _load_net():
-    with resources.open_file('inventory/ark_material.onnx') as f:
-        data = f.read()
-        net = cv2.dnn.readNetFromONNX(data)
-        return net
-
-
-ark_material_net = _load_net()
-
-
-def _load_index():
-    with resources.open_file('inventory/index_itemid_relation.json') as f:
-        data = json.load(f)
-        return data['idx2id'], data['id2idx'], data['idx2name'], data['idx2type']
-
-
-idx2id, id2idx, idx2name, idx2type = _load_index()
+exclude_items = {'32001', 'other', '3401'}
 
 
 def convert_pil_screen(pil_screen):
@@ -79,16 +58,15 @@ def get_all_item_img_in_screen(pil_screen):
                 canny_img = cv2.Canny(gray_img, 60, 180)
                 if np.sum(canny_img) < 200:
                     continue
-                cv_item_img2 = crop_item_middle_img(cv_item_img)
                 # use original size for better quantity recognition
                 ratio = img_h / pil_screen.height
                 original_item_img = pil_screen.crop((int(xf / ratio), int(yf / ratio), int((xf+itemreco_box_size)/ratio), int((yf+itemreco_box_size)/ratio)))
                 numimg = imgops.scalecrop(original_item_img, 0.39, 0.71, 0.82, 0.84).convert('L')
-                res.append({'item_img': cv_item_img, 'num_img': numimg, 'middle_img': cv_item_img2})
+                res.append({'item_img': cv_item_img, 'num_img': numimg})
                 cv2.rectangle(dbg_screen, (x, y), (x+itemreco_box_size, y+itemreco_box_size), (255,0,0), 2)
         offset_x += item_dx
     for x, y, r in circles:
-        cv2.circle(dbg_screen, (x, y), int(r), (0, 0, 255), 2)
+        cv2.circle(dbg_screen, (int(x), int(y)), int(r), (0, 0, 255), 2)
 
     logger.logimage(convert_to_pil(dbg_screen))
     return res
@@ -100,32 +78,9 @@ def get_circles(gray_img, min_radius=56, max_radius=68):
     return circles[0]
 
 
-def crop_item_middle_img(cv_item_img):
-    # radius 60
-    img_h, img_w = cv_item_img.shape[:2]
-    ox, oy = img_w // 2, img_h // 2
-    y1 = int(oy - 40)
-    y2 = int(oy + 20)
-    x1 = int(ox - 30)
-    x2 = int(ox + 30)
-    return cv_item_img[y1:y2, x1:x2]
-
-
 def show_img(cv_img):
     cv2.imshow('test', cv_img)
     cv2.waitKey()
-
-
-def get_item_id(cv_img):
-    blob = cv2.dnn.blobFromImage(cv_img)
-    ark_material_net.setInput(blob)
-    out = ark_material_net.forward()
-
-    # Get a class with a highest score.
-    out = out.flatten()
-    probs = common.softmax(out)
-    classId = np.argmax(out)
-    return probs[classId], idx2id[classId], idx2name[classId], idx2type[classId]
 
 
 def get_quantity(num_img):
@@ -166,7 +121,7 @@ def get_all_item_in_screen(screen):
     item_count_map = {}
     for item_img in imgs:
         logger.logimage(convert_to_pil(item_img['item_img']))
-        prob, item_id, item_name, item_type = get_item_id(item_img['middle_img'])
+        prob, item_id, item_name, item_type = item.get_item_id(item_img['item_img'])
         logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
         if item_id in exclude_items or item_type == 'ACTIVITY_ITEM':
             continue
@@ -176,6 +131,27 @@ def get_all_item_in_screen(screen):
         # show_img(item_img['item_img'])
     logger.logtext('item_count_map: %s' % item_count_map)
     return item_count_map
+
+
+def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_types=None, only_normal_items=True):
+    if exclude_item_ids is None:
+        exclude_item_ids = exclude_items
+    if exclude_item_types is None:
+        exclude_item_types = {'ACTIVITY_ITEM'}
+    imgs = get_all_item_img_in_screen(screen)
+    res = []
+    for item_img in imgs:
+        logger.logimage(convert_to_pil(item_img['item_img']))
+        prob, item_id, item_name, item_type = item.get_item_id(item_img['item_img'])
+        logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
+        if item_id in exclude_item_ids or item_type in exclude_item_types:
+            continue
+        if only_normal_items and (not item_id.isdigit() or len(item_id) < 5 or item_type != 'MATERIAL'):
+            continue
+        quantity = get_quantity(item_img['num_img'])
+        res.append({'itemId': item_id, 'itemName': item_name, 'itemType': item_type, 'quantity': quantity})
+    logger.logtext('res: %s' % res)
+    return res
 
 
 def get_inventory_rect(viewport):

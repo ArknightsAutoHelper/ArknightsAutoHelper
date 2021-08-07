@@ -1,6 +1,6 @@
 coloredlogs==15.0
 numpy==1.20.1
-opencv-python==4.5.1.48
+opencv-python==4.5.3.56
 Pillow==8.2.0
 requests==2.25.1
 ruamel.yaml==0.16.12

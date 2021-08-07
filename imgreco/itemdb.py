@@ -10,6 +10,10 @@ def _update_mat_collection(collection, name, img):
     mat[itemmask] = 0
     collection[name] = mat
 
+
+resources_known_items = {}
+
+
 def load():
     from . import resources
     from . import minireco
@@ -25,7 +29,6 @@ def load():
     reco = minireco.MiniRecognizer(model, minireco.compare_ccoeff)
     num_recognizer=reco
 
-    resources_known_items = {}
     for prefix in ['items', 'items/archive', 'items/not-loot']:
         _, files = resources.get_entries(prefix)
         for filename in files:
