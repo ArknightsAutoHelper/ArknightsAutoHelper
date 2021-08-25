@@ -566,6 +566,7 @@ class ArknightsHelper(object):
         c_id = c_id.upper()
         if stage_path.is_stage_supported_ocr(c_id):
             self.goto_stage_by_ocr(c_id)
+            self.__wait(TINY_WAIT, MANLIKE_FLAG=False)
         else:
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
