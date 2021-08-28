@@ -42,13 +42,16 @@ if __name__ == '__main__':
         plan = mp.get_plan(requirement_dct=required, deposited_dct=owned)
     else:
         raise RuntimeError(f'不支持的模式: {calc_mode}')
-    main_stage_map = arkplanner.get_main_stage_map()
     stage_task_list = []
     print(plan)
     print('刷图计划:')
     for stage in plan['stages']:
         if calc_mode == 'online':
-            stage_info = main_stage_map[stage['stage']]
+            stages = arkplanner.get_all_stages()
+            stage_map = {s['stageId']: s for s in stages}
+            stage_id = stage['stage']
+            stage_id = stage_id[:-5] if stage_id.endswith('_perm') else stage_id
+            stage_info = stage_map[stage_id]
             stage_code = stage_info['code']
         else:
             stage_info = stage
