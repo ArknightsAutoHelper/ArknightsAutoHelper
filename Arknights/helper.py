@@ -97,6 +97,8 @@ class ArknightsHelper(object):
             self.adb = None
             return
         self.viewport = self.adb.screen_size
+        if self.adb.screenshot_rotate %180:
+            self.viewport = (self.viewport[1], self.viewport[0])
         if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
             title = '设备当前分辨率（%dx%d）不符合要求' % (self.viewport[0], self.viewport[1])
             body = '需要宽高比等于或大于 16∶9，且渲染高度不小于 720。'

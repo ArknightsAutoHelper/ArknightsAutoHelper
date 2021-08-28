@@ -95,6 +95,7 @@ class WebHostBrowser:
     def start(self, url, width=None, height=None):
         import webbrowser
         webbrowser.open_new(url)
+        self.wait_handle = None
         self.poll_interval = 60
 
 def auto_host():
