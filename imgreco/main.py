@@ -178,6 +178,28 @@ def get_credit_item(img, index):
         # FIXME: implement with feature matching?
         raise NotImplementedError('unsupported aspect ratio')
 
+# 领取信用
+def get_state(img, index):
+    """
+    :returns: [0][1]
+              [3][2]
+    """
+    aspect = Fraction(*img.size)
+    vw, vh = util.get_vwvh(img)
+    if aspect == Fraction(16, 9):
+        credit_items = {1: (np.array((1047 / 12.8 * vw, 37 / 7.2 * vh)), np.array((1047 / 12.8 * vw, 37 / 7.2 * vh)),
+                            np.array((1047 / 12.8 * vw, 37 / 7.2 * vh)), np.array((1047 / 12.8 * vw, 37 / 7.2 * vh))),
+                        2: (np.array((881 / 12.8 * vw, 39 / 7.2 * vh)), np.array((881 / 12.8 * vw, 39 / 7.2 * vh)),
+                            np.array((881 / 12.8 * vw, 39 / 7.2 * vh)), np.array((881 / 12.8 * vw, 39 / 7.2 * vh))),
+                        }
+        return credit_items[index]
+    else:
+        # FIXME: implement with feature matching?
+        raise NotImplementedError('unsupported aspect ratio')
+
+
+
+
 def get_building_blocks(img, index):
     """
     :returns: [0][1]

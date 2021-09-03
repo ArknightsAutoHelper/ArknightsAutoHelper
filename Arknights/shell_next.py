@@ -224,8 +224,9 @@ def collect(argv):
     """
     helper, context = _create_helper()
     with context:
-        helper.get_building_new()
-        helper.get_credit_new()
+        if "no_build" not in argv:
+            helper.get_building_new()
+            helper.get_credit_new()
         helper.clear_task()
         #上面是可以的
         #在这里修改

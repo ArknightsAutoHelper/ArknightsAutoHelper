@@ -32,7 +32,7 @@ from Arknights import frontend
 logger = logging.getLogger('helper')
 coloredlogs.install(
     fmt=' Ξ %(message)s',
-    #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
+    # fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
     datefmt='%H:%M:%S',
     level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
     level='INFO')
@@ -50,9 +50,10 @@ def format_recoresult(recoresult):
     result = None
     with guard(logger):
         result = '[%s] %s' % (recoresult['operation'],
-            '; '.join('%s: %s' % (grpname, ', '.join('%sx%s' % (item_name_guard(itemtup[0]), item_qty_guard(itemtup[1]))
-            for itemtup in grpcont))
-            for grpname, grpcont in recoresult['items']))
+                              '; '.join('%s: %s' % (
+                              grpname, ', '.join('%sx%s' % (item_name_guard(itemtup[0]), item_qty_guard(itemtup[1]))
+                                                 for itemtup in grpcont))
+                                        for grpname, grpcont in recoresult['items']))
     if result is None:
         result = '<发生错误>'
     return result
@@ -97,7 +98,7 @@ class ArknightsHelper(object):
             self.adb = None
             return
         self.viewport = self.adb.screen_size
-        if self.adb.screenshot_rotate %180:
+        if self.adb.screenshot_rotate % 180:
             self.viewport = (self.viewport[1], self.viewport[0])
         if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
             title = '设备当前分辨率（%dx%d）不符合要求' % (self.viewport[0], self.viewport[1])
@@ -106,10 +107,12 @@ class ArknightsHelper(object):
             if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
                 body = '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
                 img = self.adb.screenshot()
-                imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
+                imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH,
+                                       'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
                 img.save(imgfile)
                 import json
-                details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self.adb.config_key))
+                details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (
+                imgfile, json.dumps(self.adb.config_key))
             for msg in [title, body, details]:
                 if msg is not None:
                     logger.warn(msg)
@@ -212,7 +215,7 @@ class ArknightsHelper(object):
             screenshot = screenshot2
             if mse < minerr:
                 minerr = mse
-            if not message_shown and t1-t0 > 10:
+            if not message_shown and t1 - t0 > 10:
                 logger.info("等待画面静止")
         if raise_for_timeout:
             raise RuntimeError("%d 秒内画面未静止，最小误差=%d，阈值=%d" % (timeout, minerr, threshold))
@@ -276,7 +279,6 @@ class ArknightsHelper(object):
 
         return c_id, remain
 
-
     def can_perform_refill(self):
         if not self.use_refill:
             return False
@@ -299,6 +301,7 @@ class ArknightsHelper(object):
         import imgreco.end_operation
 
         smobj = ArknightsHelper.operation_once_state()
+
         def on_prepare(smobj):
             count_times = 0
             while True:
@@ -401,7 +404,8 @@ class ArknightsHelper(object):
                 smobj.state = on_level_up_popup
                 return
 
-            end_flag = imgreco.end_operation.check_end_operation(smobj.prepare_reco['style'], not smobj.prepare_reco['no_friendship'], screenshot)
+            end_flag = imgreco.end_operation.check_end_operation(smobj.prepare_reco['style'],
+                                                                 not smobj.prepare_reco['no_friendship'], screenshot)
             if not end_flag and t > 300:
                 if imgreco.end_operation.check_end_operation2(screenshot):
                     self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
@@ -498,7 +502,6 @@ class ArknightsHelper(object):
         if smobj.mistaken_delegation and config.get('behavior/mistaken_delegation/skip', True):
             raise StopIteration()
 
-
     def back_to_main(self):  # 回到主页
         logger.info("正在返回主页")
         retry_count = 0
@@ -572,9 +575,9 @@ class ArknightsHelper(object):
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
         return self.module_battle_slim(c_id,
-                                set_count=set_count,
-                                check_ai=True,
-                                sub=True)
+                                       set_count=set_count,
+                                       check_ai=True,
+                                       sub=True)
 
     def main_handler(self, task_list, clear_tasks=False, auto_close=True):
         if len(task_list) == 0:
@@ -605,7 +608,7 @@ class ArknightsHelper(object):
             self.__wait(TINY_WAIT)
             screenshot = self.adb.screenshot()
         self.clear_task_worker()
-        logger.info('切换到每周任务') #默认进入见习任务或每日任务，因此无需检测，直接切换即可
+        logger.info('切换到每周任务')  # 默认进入见习任务或每日任务，因此无需检测，直接切换即可
         self.tap_rect(imgreco.task.get_weekly_task_rect(screenshot, hasbeginner))
         self.clear_task_worker()
 
@@ -631,7 +634,6 @@ class ArknightsHelper(object):
         result = recruit_calc.calculate(tags)
         logger.debug('计算结果：%s', repr(result))
         return result
-
 
     def find_and_tap(self, partition, target):
         lastpos = None
@@ -686,10 +688,10 @@ class ArknightsHelper(object):
             logger.error(f'未能定位章节区域, target: {target}')
             raise RuntimeError('recognition failed')
         vw, vh = imgreco.util.get_vwvh(self.viewport)
-        episode_tag_rect = tuple(map(int, (35.185*vh, 39.259*vh, 50.093*vh, 43.056*vh)))
-        next_ep_region_rect = (5.833*vh, 69.167*vh, 11.944*vh, 74.815*vh)
-        prev_ep_region_rect = (5.833*vh, 15.370*vh, 11.944*vh, 21.481*vh)
-        current_ep_rect = (50*vw+19.907*vh, 28.426*vh, 50*vw+63.426*vh, 71.944*vh)
+        episode_tag_rect = tuple(map(int, (35.185 * vh, 39.259 * vh, 50.093 * vh, 43.056 * vh)))
+        next_ep_region_rect = (5.833 * vh, 69.167 * vh, 11.944 * vh, 74.815 * vh)
+        prev_ep_region_rect = (5.833 * vh, 15.370 * vh, 11.944 * vh, 21.481 * vh)
+        current_ep_rect = (50 * vw + 19.907 * vh, 28.426 * vh, 50 * vw + 63.426 * vh, 71.944 * vh)
         episode_move = (400 * self.viewport[1] / 1080)
 
         while True:
@@ -788,7 +790,7 @@ class ArknightsHelper(object):
                     raise StopIteration()
                 self.adb.touch_swipe2((originX, originY), (offset, 0), 400)
                 self.__wait(2)
-                self.find_and_tap_daily(partition, target, recursion=recursion+1)
+                self.find_and_tap_daily(partition, target, recursion=recursion + 1)
             else:
                 logger.error('未找到目标，是否未开放关卡？')
 
@@ -800,7 +802,7 @@ class ArknightsHelper(object):
         self.__wait(TINY_WAIT)
         if path[0] == 'main':
             vw, vh = imgreco.util.get_vwvh(self.viewport)
-            self.tap_rect((14.316*vw, 89.815*vh, 28.462*vw, 99.815*vh))
+            self.tap_rect((14.316 * vw, 89.815 * vh, 28.462 * vw, 99.815 * vh))
             self.find_and_tap_episode_by_ocr(int(path[1][2:]))
             self.find_and_tap_stage_by_ocr(path[1], path[2])
         elif path[0] == 'material' or path[0] == 'soc':
@@ -810,9 +812,6 @@ class ArknightsHelper(object):
             self.find_and_tap(path[1], path[2])
         else:
             raise NotImplementedError()
-
-
-
 
     def get_credit(self):
         logger.debug("helper.get_credit")
@@ -839,7 +838,7 @@ class ArknightsHelper(object):
     def get_building_new(self):
         logger.debug("helper.get_building_new")
         screenshot = self.adb.screenshot()
-        #。。。。。。。
+        # 。。。。。。。
         logger.info('开始自动基建')
         logger.info('点击基建选项')
         logger.info('开始收菜')
@@ -861,16 +860,16 @@ class ArknightsHelper(object):
         self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
         self.__wait(SMALL_WAIT)
         self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
-        #下面是基建排班，有点难写
+        # 下面是基建排班，有点难写
         self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))#退出来
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))  # 退出来
 
         # 。。。。。。。以上为完成收菜的部分
-        #进入左上角
+        # 进入左上角
 
-        for i in range(1,10):
+        for i in range(1, 10):
             logger.info('轮班：%d' % i)
-            self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot,i))
+            self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, i))
             self.__wait(TINY_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, -2))
             self.__wait(SMALL_WAIT)
@@ -878,11 +877,11 @@ class ArknightsHelper(object):
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
             self.__wait(SMALL_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot,1))
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 1))
             self.__wait(TINY_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot,2))
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 2))
             self.__wait(TINY_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot,3))
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 3))
             self.__wait(TINY_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, 4))
             self.__wait(TINY_WAIT)
@@ -892,11 +891,11 @@ class ArknightsHelper(object):
             self.__wait(TINY_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
             self.__wait(SMALL_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_back2(screenshot))#上面没有问题
+            self.tap_quadrilateral(imgreco.main.get_back2(screenshot))  # 上面没有问题
 
-        for i in range(10,14):
+        for i in range(10, 14):
             logger.info('轮班：%d' % i)
-            self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot,i))
+            self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, i))
             self.__wait(SMALL_WAIT)
             logger.info('点击中间')
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, -2))
@@ -914,11 +913,17 @@ class ArknightsHelper(object):
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
             self.__wait(SMALL_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot,1))
+            if i != 10:
+                self.tap_quadrilateral(imgreco.main.get_state(screenshot, 1))  # 先点击心情
+                self.__wait(TINY_WAIT)
+                self.tap_quadrilateral(imgreco.main.get_state(screenshot, 2))  # 再来一个工作状态
+                self.__wait(TINY_WAIT)
+                pass
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 1))
             self.__wait(TINY_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot,2))
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 2))
             self.__wait(TINY_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot,3))
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 3))
             self.__wait(TINY_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, 4))
             self.__wait(TINY_WAIT)
@@ -930,19 +935,19 @@ class ArknightsHelper(object):
 
         self.__wait(SMALL_WAIT)
         logger.info('返回主界面')
-        self.tap_quadrilateral(imgreco.main.get_back2(screenshot))#返回主界面
+        self.tap_quadrilateral(imgreco.main.get_back2(screenshot))  # 返回主界面
         self.__wait(SMALL_WAIT)
         self.tap_quadrilateral(imgreco.main.get_back2_yes(screenshot))  # 返回主界面
-        #卡掉三个
-        #打开设施信息
+        # 卡掉三个
+        # 打开设施信息
         # self.tap_quadrilateral(imgreco.main.get_back2(screenshot))
         # self.__wait(SMALL_WAIT)
         # self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, 2))
-        #dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
-        #这里写一下自己的代码，说不定可以有用
+        # dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
+        # 这里写一下自己的代码，说不定可以有用
         pass
 
-    def get_credit_new(self):#清空信用商店
+    def get_credit_new(self):  # 清空信用商店
         logger.debug("helper.get_credit_new")
         screenshot = self.adb.screenshot()
         logger.info("进入采购中心")
@@ -952,13 +957,13 @@ class ArknightsHelper(object):
         self.__wait(SMALL_WAIT)
         self.tap_quadrilateral(imgreco.main.get_credit_daily(screenshot))
         self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))#再点两下
+        self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))  # 再点两下
         self.__wait(SMALL_WAIT)
         self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))
         logger.info("开始购买商品")
-        for i in range(1,5):
+        for i in range(1, 5):
             self.__wait(SMALL_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_credit_item(screenshot,i))
+            self.tap_quadrilateral(imgreco.main.get_credit_item(screenshot, i))
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_credit_shopping_check(screenshot))
             self.__wait(SMALL_WAIT)
@@ -968,10 +973,7 @@ class ArknightsHelper(object):
         self.__wait(SMALL_WAIT)
         self.tap_quadrilateral(imgreco.main.get_back(screenshot))
 
-        #购买货物
-
-
-
+        # 购买货物
 
     def get_building(self):
         logger.debug("helper.get_building")
@@ -990,7 +992,7 @@ class ArknightsHelper(object):
         self.tap_quadrilateral(imgreco.main.get_my_sell_task_1(screenshot))
         self.__wait(SMALL_WAIT + 1)
         self.tap_quadrilateral(imgreco.main.get_my_sell_tasklist(screenshot))
-        self.__wait(SMALL_WAIT -1 )
+        self.__wait(SMALL_WAIT - 1)
         sell_count = 0
         while sell_count <= 6:
             screenshot = self.adb.screenshot()
@@ -1027,7 +1029,7 @@ class ArknightsHelper(object):
         while True:
             move = -randint(self.viewport[0] // 6, self.viewport[0] // 5)
             self.__swipe_screen(move)
-            self.adb.touch_swipe2((self.viewport[0]//2, self.viewport[1] - 50), (1, 1), 10)
+            self.adb.touch_swipe2((self.viewport[0] // 2, self.viewport[1] - 50), (1, 1), 10)
             screen_items = imgreco.inventory.get_all_item_details_in_screen(screenshot)
             screen_item_ids = set([item['itemId'] for item in screen_items])
             screen_items_map = {item['itemId']: item['quantity'] for item in screen_items}
