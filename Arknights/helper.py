@@ -811,6 +811,9 @@ class ArknightsHelper(object):
         else:
             raise NotImplementedError()
 
+
+
+
     def get_credit(self):
         logger.debug("helper.get_credit")
         logger.info("领取信赖")
@@ -832,6 +835,143 @@ class ArknightsHelper(object):
             building_count = building_count + 1
             logger.info('访问第 %s 位好友', building_count)
         logger.info('信赖领取完毕')
+
+    def get_building_new(self):
+        logger.debug("helper.get_building_new")
+        screenshot = self.adb.screenshot()
+        #。。。。。。。
+        logger.info('开始自动基建')
+        logger.info('点击基建选项')
+        logger.info('开始收菜')
+
+        self.tap_quadrilateral(imgreco.main.get_building_button(screenshot))
+        self.__wait(MEDIUM_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_1(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+        #下面是基建排班，有点难写
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))#退出来
+
+        # 。。。。。。。以上为完成收菜的部分
+        #进入左上角
+
+        for i in range(1,10):
+            logger.info('轮班：%d' % i)
+            self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot,i))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -2))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_setting_block(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot,1))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot,2))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot,3))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 4))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 5))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 6))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_back2(screenshot))#上面没有问题
+
+        for i in range(10,14):
+            logger.info('轮班：%d' % i)
+            self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot,i))
+            self.__wait(SMALL_WAIT)
+            logger.info('点击中间')
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -2))
+            self.__wait(SMALL_WAIT)
+            logger.info('选择人物界面')
+            self.tap_quadrilateral(imgreco.main.get_setting_block(screenshot))
+            self.__wait(SMALL_WAIT)
+            logger.info('进入界面')
+            self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
+            self.__wait(SMALL_WAIT)
+            logger.info('清理')
+            self.tap_quadrilateral(imgreco.main.get_back2_clear(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot,1))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot,2))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot,3))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 4))
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 5))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_back2(screenshot))
+
+        self.__wait(SMALL_WAIT)
+        logger.info('返回主界面')
+        self.tap_quadrilateral(imgreco.main.get_back2(screenshot))#返回主界面
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_back2_yes(screenshot))  # 返回主界面
+        #卡掉三个
+        #打开设施信息
+        # self.tap_quadrilateral(imgreco.main.get_back2(screenshot))
+        # self.__wait(SMALL_WAIT)
+        # self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, 2))
+        #dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
+        #这里写一下自己的代码，说不定可以有用
+        pass
+
+    def get_credit_new(self):#清空信用商店
+        logger.debug("helper.get_credit_new")
+        screenshot = self.adb.screenshot()
+        logger.info("进入采购中心")
+        self.tap_quadrilateral(imgreco.main.get_shopping_center(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_credit_daily(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))#再点两下
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))
+        logger.info("开始购买商品")
+        for i in range(1,5):
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_credit_item(screenshot,i))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_credit_shopping_check(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_credit_shopping_check(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))
+        self.__wait(SMALL_WAIT)
+        self.tap_quadrilateral(imgreco.main.get_back(screenshot))
+
+        #购买货物
+
+
+
 
     def get_building(self):
         logger.debug("helper.get_building")
