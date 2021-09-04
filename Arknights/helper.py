@@ -817,6 +817,7 @@ class ArknightsHelper(object):
         logger.debug("helper.get_credit")
         logger.info("领取信赖")
         self.back_to_main()
+        self.__wait(SMALL_WAIT)
         screenshot = self.adb.screenshot()
         logger.info('进入好友列表')
         self.tap_quadrilateral(imgreco.main.get_friend_corners(screenshot))
@@ -835,47 +836,87 @@ class ArknightsHelper(object):
             logger.info('访问第 %s 位好友', building_count)
         logger.info('信赖领取完毕')
 
+    # def get_test(self):
+    #     logger.info("testing")
+    #     screenshot = self.adb.screenshot()
+    #     color=imgreco.main.get_color(screenshot,400,360)
+    #     logger.info("颜色："+str(color))
+    #     pass
     def get_building_new(self):
         logger.debug("helper.get_building_new")
         screenshot = self.adb.screenshot()
         # 。。。。。。。
-        logger.info('开始自动基建')
-        logger.info('点击基建选项')
-        logger.info('开始收菜')
-
+        self.back_to_main()
+        self.__wait(MEDIUM_WAIT)
         self.tap_quadrilateral(imgreco.main.get_building_button(screenshot))
         self.__wait(MEDIUM_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_1(screenshot))
+        logger.info('开始自动基建')
+        logger.info('点击基建选项')
+        screenshot = self.adb.screenshot()
         self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
-        self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
-        self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
-        self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))
-        self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
-        self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
-        self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
-        # 下面是基建排班，有点难写
-        self.__wait(SMALL_WAIT)
-        self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))  # 退出来
+        if imgreco.main.get_color_is_white(screenshot):
+            logger.info('开始收菜')
+            self.tap_quadrilateral(imgreco.main.get_my_build_task_1(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+            self.__wait(MEDIUM_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_my_build_task_1(screenshot))
+            self.__wait(SMALL_WAIT)
+            screenshot = self.adb.screenshot()
+            self.__wait(SMALL_WAIT)
+            if imgreco.main.get_color_is_white(screenshot):
+                logger.info('开始收菜2')
+                self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))
+                self.__wait(SMALL_WAIT)
+                self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+                self.__wait(SMALL_WAIT)
+                self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+                self.__wait(SMALL_WAIT)
+                self.tap_quadrilateral(imgreco.main.get_my_build_task_clear(screenshot))
+                # 下面是基建排班，有点难写
+                self.__wait(SMALL_WAIT)
+                self.tap_quadrilateral(imgreco.main.get_my_build_task_2(screenshot))  # 退出来
 
         # 。。。。。。。以上为完成收菜的部分
         # 进入左上角
-
-        for i in range(1, 10):
+        self.__wait(MEDIUM_WAIT)
+        for i in range(1, 11):
             logger.info('轮班：%d' % i)
             self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, i))
-            self.__wait(TINY_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -2))
             self.__wait(SMALL_WAIT)
+            logger.info('点击屏幕中间')
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -2))
+            self.__wait(TINY_WAIT)
             self.tap_quadrilateral(imgreco.main.get_setting_block(screenshot))
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
+            self.__wait(SMALL_WAIT)
+            logger.info('清理人员')
+            self.tap_quadrilateral(imgreco.main.get_back2_clear(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
+            self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_state(screenshot, 1))  # 点击心情
+            self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_state(screenshot, 2))  # 点击工作状态
+
+            # 点击筛选
+            self.tap_quadrilateral(imgreco.main.get_choose_rest(screenshot, 1))
+            self.__wait(SMALL_WAIT)
+            screenshot = self.adb.screenshot()
+            self.__wait(SMALL_WAIT)
+            if imgreco.main.get_color_is_black(screenshot):
+                self.tap_quadrilateral(imgreco.main.get_choose_rest(screenshot, 2))  # 点击未进驻
+                self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_choose_rest(screenshot, 3))  # 点确定
+            self.__wait(SMALL_WAIT)
+            screenshot = self.adb.screenshot()
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, 1))
             self.__wait(TINY_WAIT)
@@ -885,19 +926,23 @@ class ArknightsHelper(object):
             self.__wait(TINY_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, 4))
             self.__wait(TINY_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 5))
-            self.__wait(TINY_WAIT)
-            self.tap_quadrilateral(imgreco.main.get_character(screenshot, 6))
-            self.__wait(TINY_WAIT)
+            if i==10:
+                self.tap_quadrilateral(imgreco.main.get_character(screenshot, 5))
+                self.__wait(TINY_WAIT)
+            # self.tap_quadrilateral(imgreco.main.get_character(screenshot, 6))
+            # self.__wait(TINY_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
+            self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_back2(screenshot))  # 上面没有问题
+            self.__wait(SMALL_WAIT)
 
-        for i in range(10, 14):
+        for i in range(11, 14):
             logger.info('轮班：%d' % i)
             self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, i))
             self.__wait(SMALL_WAIT)
-            logger.info('点击中间')
+            logger.info('点击屏幕中间')
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, -2))
             self.__wait(SMALL_WAIT)
             logger.info('选择人物界面')
@@ -906,7 +951,7 @@ class ArknightsHelper(object):
             logger.info('进入界面')
             self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
             self.__wait(SMALL_WAIT)
-            logger.info('清理')
+            logger.info('清理人员')
             self.tap_quadrilateral(imgreco.main.get_back2_clear(screenshot))
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
@@ -914,11 +959,26 @@ class ArknightsHelper(object):
             self.tap_quadrilateral(imgreco.main.get_clear_working(screenshot))
             self.__wait(SMALL_WAIT)
             if i != 10:
-                self.tap_quadrilateral(imgreco.main.get_state(screenshot, 1))  # 先点击心情
+                ################
+                self.tap_quadrilateral(imgreco.main.get_state(screenshot, 2))  # 点击工作状态
                 self.__wait(TINY_WAIT)
-                self.tap_quadrilateral(imgreco.main.get_state(screenshot, 2))  # 再来一个工作状态
+                self.tap_quadrilateral(imgreco.main.get_state(screenshot, 1))
+                # 再点击心情
                 self.__wait(TINY_WAIT)
-                pass
+                self.tap_quadrilateral(imgreco.main.get_state(screenshot, 1))  # 再点击心情
+                self.__wait(TINY_WAIT)
+                #点击筛选
+                self.tap_quadrilateral(imgreco.main.get_choose_rest(screenshot, 1))
+                self.__wait(TINY_WAIT)
+                screenshot = self.adb.screenshot()
+                self.__wait(TINY_WAIT)
+                if imgreco.main.get_color_is_black(screenshot):
+                    self.tap_quadrilateral(imgreco.main.get_choose_rest(screenshot, 2))  # 点击未进驻
+                    self.__wait(TINY_WAIT)
+                self.tap_quadrilateral(imgreco.main.get_choose_rest(screenshot, 3))  # 点确定
+                self.__wait(SMALL_WAIT)
+                ################
+            logger.info('选择人物')
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, 1))
             self.__wait(TINY_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, 2))
@@ -931,13 +991,17 @@ class ArknightsHelper(object):
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
             self.__wait(SMALL_WAIT)
+            self.tap_quadrilateral(imgreco.main.get_character(screenshot, -1))
+            self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_back2(screenshot))
+            self.__wait(SMALL_WAIT)
 
         self.__wait(SMALL_WAIT)
         logger.info('返回主界面')
         self.tap_quadrilateral(imgreco.main.get_back2(screenshot))  # 返回主界面
         self.__wait(SMALL_WAIT)
         self.tap_quadrilateral(imgreco.main.get_back2_yes(screenshot))  # 返回主界面
+        self.__wait(MEDIUM_WAIT)
         # 卡掉三个
         # 打开设施信息
         # self.tap_quadrilateral(imgreco.main.get_back2(screenshot))
@@ -950,6 +1014,8 @@ class ArknightsHelper(object):
     def get_credit_new(self):  # 清空信用商店
         logger.debug("helper.get_credit_new")
         screenshot = self.adb.screenshot()
+        self.back_to_main()
+        self.__wait(SMALL_WAIT)
         logger.info("进入采购中心")
         self.tap_quadrilateral(imgreco.main.get_shopping_center(screenshot))
         self.__wait(SMALL_WAIT)
@@ -961,7 +1027,7 @@ class ArknightsHelper(object):
         self.__wait(SMALL_WAIT)
         self.tap_quadrilateral(imgreco.main.get_credit_center(screenshot))
         logger.info("开始购买商品")
-        for i in range(1, 5):
+        for i in range(0, 5):
             self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_credit_item(screenshot, i))
             self.__wait(SMALL_WAIT)
