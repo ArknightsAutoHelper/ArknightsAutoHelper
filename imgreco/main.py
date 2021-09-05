@@ -164,18 +164,18 @@ def get_credit_item(img, index):
     vw, vh = util.get_vwvh(img)
     if aspect == Fraction(16, 9):
         credit_items = {
-            0: (np.array((143 / 12.8 * vw, 268 / 7.2 * vh)), np.array((143 / 12.8 * vw, 268 / 7.2 * vh)),
-                np.array((143 / 12.8 * vw, 268 / 7.2 * vh)), np.array((143 / 12.8 * vw, 268 / 7.2 * vh))),
-            1: (np.array((271 / 12.8 * vw, 148 / 7.2 * vh)), np.array((505 / 12.8 * vw, 154 / 7.2 * vh)),
-                np.array((499 / 12.8 * vw, 378 / 7.2 * vh)), np.array((266 / 12.8 * vw, 379 / 7.2 * vh))),
-            2: (np.array((526 / 12.8 * vw, 148 / 7.2 * vh)), np.array((756 / 12.8 * vw, 157 / 7.2 * vh)),
-                np.array((752 / 12.8 * vw, 379 / 7.2 * vh)), np.array((520 / 12.8 * vw, 375 / 7.2 * vh))),
-            3: (np.array((774 / 12.8 * vw, 148 / 7.2 * vh)), np.array((1004 / 12.8 * vw, 157 / 7.2 * vh)),
-                np.array((1001 / 12.8 * vw, 375 / 7.2 * vh)), np.array((780 / 12.8 * vw, 378 / 7.2 * vh))),
-            4: (np.array((1028 / 12.8 * vw, 154 / 7.2 * vh)), np.array((1259 / 12.8 * vw, 153 / 7.2 * vh)),
-                np.array((1256 / 12.8 * vw, 375 / 7.2 * vh)), np.array((1035 / 12.8 * vw, 376 / 7.2 * vh))),
-            5: (np.array((19 / 12.8 * vw, 408 / 7.2 * vh)), np.array((248 / 12.8 * vw, 409 / 7.2 * vh)),
-                np.array((250 / 12.8 * vw, 628 / 7.2 * vh)), np.array((20 / 12.8 * vw, 630 / 7.2 * vh))),
+            0: (np.array((136 / 12.8 * vw, 273 / 7.2 * vh)), np.array((136 / 12.8 * vw, 273 / 7.2 * vh)),
+                np.array((136 / 12.8 * vw, 273 / 7.2 * vh)), np.array((136 / 12.8 * vw, 273 / 7.2 * vh))),
+            1: (np.array((388 / 12.8 * vw, 267 / 7.2 * vh)), np.array((388 / 12.8 * vw, 267 / 7.2 * vh)),
+                np.array((388 / 12.8 * vw, 267 / 7.2 * vh)), np.array((388 / 12.8 * vw, 267 / 7.2 * vh))),
+            2: (np.array((643 / 12.8 * vw, 264 / 7.2 * vh)), np.array((643 / 12.8 * vw, 264 / 7.2 * vh)),
+                np.array((643 / 12.8 * vw, 264 / 7.2 * vh)), np.array((643 / 12.8 * vw, 264 / 7.2 * vh))),
+            3: (np.array((900 / 12.8 * vw, 259 / 7.2 * vh)), np.array((900 / 12.8 * vw, 259 / 7.2 * vh)),
+                np.array((900 / 12.8 * vw, 259 / 7.2 * vh)), np.array((900 / 12.8 * vw, 259 / 7.2 * vh))),
+            4: (np.array((1149 / 12.8 * vw, 270 / 7.2 * vh)), np.array((1149 / 12.8 * vw, 270 / 7.2 * vh)),
+                np.array((1149 / 12.8 * vw, 270 / 7.2 * vh)), np.array((1149 / 12.8 * vw, 270 / 7.2 * vh))),
+            5: (np.array((127 / 12.8 * vw, 523 / 7.2 * vh)), np.array((127 / 12.8 * vw, 523 / 7.2 * vh)),
+                np.array((127 / 12.8 * vw, 523 / 7.2 * vh)), np.array((127 / 12.8 * vw, 523 / 7.2 * vh))),
 
         }
         return credit_items[index]
@@ -214,28 +214,28 @@ def get_building_blocks(img, index):
     if aspect == Fraction(16, 9):
         credit_items = {1: (np.array((145 / 12.8 * vw, 316 / 7.2 * vh)), np.array((145 / 12.8 * vw, 316 / 7.2 * vh)),
                             np.array((145 / 12.8 * vw, 316 / 7.2 * vh)), np.array((145 / 12.8 * vw, 316 / 7.2 * vh))),
-                        2: (np.array((175 / 12.8 * vw, 261 / 7.2 * vh)), np.array((365 / 12.8 * vw, 265 / 7.2 * vh)),
-                            np.array((361 / 12.8 * vw, 355 / 7.2 * vh)), np.array((173 / 12.8 * vw, 351 / 7.2 * vh))),
+                        2: (np.array((278 / 12.8 * vw, 315 / 7.2 * vh)), np.array((278 / 12.8 * vw, 315 / 7.2 * vh)),
+                            np.array((278 / 12.8 * vw, 315 / 7.2 * vh)), np.array((278 / 12.8 * vw, 315 / 7.2 * vh))),
 
-                        3: (np.array((404 / 12.8 * vw, 273 / 7.2 * vh)), np.array((557 / 12.8 * vw, 270 / 7.2 * vh)),
-                            np.array((563 / 12.8 * vw, 339 / 7.2 * vh)), np.array((401 / 12.8 * vw, 340 / 7.2 * vh))),
+                        3: (np.array((485 / 12.8 * vw, 316 / 7.2 * vh)), np.array((485 / 12.8 * vw, 316 / 7.2 * vh)),
+                            np.array((485 / 12.8 * vw, 316 / 7.2 * vh)), np.array((485 / 12.8 * vw, 316 / 7.2 * vh))),
 
-                        4: (np.array((4 / 12.8 * vw, 382 / 7.2 * vh)), np.array((35 / 12.8 * vw, 379 / 7.2 * vh)),
-                            np.array((31 / 12.8 * vw, 439 / 7.2 * vh)), np.array((6 / 12.8 * vw, 435 / 7.2 * vh))),
+                        4: (np.array((13 / 12.8 * vw, 415 / 7.2 * vh)), np.array((13 / 12.8 * vw, 415 / 7.2 * vh)),
+                            np.array((13 / 12.8 * vw, 415 / 7.2 * vh)), np.array((13 / 12.8 * vw, 415 / 7.2 * vh))),
 
-                        5: (np.array((92 / 12.8 * vw, 381 / 7.2 * vh)), np.array((245 / 12.8 * vw, 381 / 7.2 * vh)),
-                            np.array((239 / 12.8 * vw, 447 / 7.2 * vh)), np.array((98 / 12.8 * vw, 445 / 7.2 * vh))),
+                        5: (np.array((166 / 12.8 * vw, 412 / 7.2 * vh)), np.array((166 / 12.8 * vw, 412 / 7.2 * vh)),
+                            np.array((166 / 12.8 * vw, 412 / 7.2 * vh)), np.array((166 / 12.8 * vw, 412 / 7.2 * vh))),
 
-                        6: (np.array((340 / 12.8 * vw, 406 / 7.2 * vh)), np.array((340 / 12.8 * vw, 406 / 7.2 * vh)),
-                            np.array((340 / 12.8 * vw, 406 / 7.2 * vh)), np.array((340 / 12.8 * vw, 406 / 7.2 * vh))),
+                        6: (np.array((380 / 12.8 * vw, 415 / 7.2 * vh)), np.array((380 / 12.8 * vw, 415 / 7.2 * vh)),
+                            np.array((380 / 12.8 * vw, 415 / 7.2 * vh)), np.array((380 / 12.8 * vw, 415 / 7.2 * vh))),
 
-                        7: (np.array((142 / 12.8 * vw, 496 / 7.2 * vh)), np.array((142 / 12.8 * vw, 496 / 7.2 * vh)),
-                            np.array((142 / 12.8 * vw, 496 / 7.2 * vh)), np.array((142 / 12.8 * vw, 496 / 7.2 * vh))),
+                        7: (np.array((65 / 12.8 * vw, 520 / 7.2 * vh)), np.array((65 / 12.8 * vw, 520 / 7.2 * vh)),
+                            np.array((65 / 12.8 * vw, 520 / 7.2 * vh)), np.array((65 / 12.8 * vw, 520 / 7.2 * vh))),
 
-                        8: (np.array((266 / 12.8 * vw, 523 / 7.2 * vh)), np.array((266 / 12.8 * vw, 523 / 7.2 * vh)),
-                            np.array((266 / 12.8 * vw, 523 / 7.2 * vh)), np.array((266 / 12.8 * vw, 523 / 7.2 * vh))),
-                        9: (np.array((478 / 12.8 * vw, 513 / 7.2 * vh)), np.array((478 / 12.8 * vw, 513 / 7.2 * vh)),
-                            np.array((478 / 12.8 * vw, 513 / 7.2 * vh)), np.array((478 / 12.8 * vw, 513 / 7.2 * vh))),
+                        8: (np.array((281 / 12.8 * vw, 519 / 7.2 * vh)), np.array((281 / 12.8 * vw, 519 / 7.2 * vh)),
+                            np.array((281 / 12.8 * vw, 519 / 7.2 * vh)), np.array((281 / 12.8 * vw, 519 / 7.2 * vh))),
+                        9: (np.array((484 / 12.8 * vw, 526 / 7.2 * vh)), np.array((484 / 12.8 * vw, 526 / 7.2 * vh)),
+                            np.array((484 / 12.8 * vw, 526 / 7.2 * vh)), np.array((484 / 12.8 * vw, 526 / 7.2 * vh))),
                         # 中枢
                         10: (np.array((861 / 12.8 * vw, 153 / 7.2 * vh)), np.array((861 / 12.8 * vw, 153 / 7.2 * vh)),
                              np.array((861 / 12.8 * vw, 153 / 7.2 * vh)), np.array((861 / 12.8 * vw, 153 / 7.2 * vh))),
