@@ -229,13 +229,13 @@ def get_building_blocks(img, index):
                         6: (np.array((380 / 12.8 * vw, 415 / 7.2 * vh)), np.array((380 / 12.8 * vw, 415 / 7.2 * vh)),
                             np.array((380 / 12.8 * vw, 415 / 7.2 * vh)), np.array((380 / 12.8 * vw, 415 / 7.2 * vh))),
 
-                        7: (np.array((65 / 12.8 * vw, 520 / 7.2 * vh)), np.array((65 / 12.8 * vw, 520 / 7.2 * vh)),
-                            np.array((65 / 12.8 * vw, 520 / 7.2 * vh)), np.array((65 / 12.8 * vw, 520 / 7.2 * vh))),
+                        7: (np.array((62 / 12.8 * vw, 496 / 7.2 * vh)), np.array((65 / 12.8 * vw, 496 / 7.2 * vh)),
+                            np.array((62 / 12.8 * vw, 496 / 7.2 * vh)), np.array((65 / 12.8 * vw, 496 / 7.2 * vh))),
 
-                        8: (np.array((281 / 12.8 * vw, 519 / 7.2 * vh)), np.array((281 / 12.8 * vw, 519 / 7.2 * vh)),
-                            np.array((281 / 12.8 * vw, 519 / 7.2 * vh)), np.array((281 / 12.8 * vw, 519 / 7.2 * vh))),
-                        9: (np.array((484 / 12.8 * vw, 526 / 7.2 * vh)), np.array((484 / 12.8 * vw, 526 / 7.2 * vh)),
-                            np.array((484 / 12.8 * vw, 526 / 7.2 * vh)), np.array((484 / 12.8 * vw, 526 / 7.2 * vh))),
+                        8: (np.array((268 / 12.8 * vw, 496 / 7.2 * vh)), np.array((268 / 12.8 * vw, 496 / 7.2 * vh)),
+                            np.array((268 / 12.8 * vw, 496 / 7.2 * vh)), np.array((268 / 12.8 * vw, 496 / 7.2 * vh))),
+                        9: (np.array((484 / 12.8 * vw, 496 / 7.2 * vh)), np.array((484 / 12.8 * vw, 496 / 7.2 * vh)),
+                            np.array((484 / 12.8 * vw, 496 / 7.2 * vh)), np.array((484 / 12.8 * vw, 496 / 7.2 * vh))),
                         # 中枢
                         10: (np.array((861 / 12.8 * vw, 153 / 7.2 * vh)), np.array((861 / 12.8 * vw, 153 / 7.2 * vh)),
                              np.array((861 / 12.8 * vw, 153 / 7.2 * vh)), np.array((861 / 12.8 * vw, 153 / 7.2 * vh))),

@@ -978,6 +978,8 @@ class ArknightsHelper(object):
 
         for i in range(11, 14):#宿舍排班
             logger.info('轮班：%d' % i)
+            self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, i))#点击两次
+            self.__wait(SMALL_WAIT)
             self.tap_quadrilateral(imgreco.main.get_building_blocks(screenshot, i))
             self.__wait(SMALL_WAIT)
             logger.info('点击屏幕中间')
