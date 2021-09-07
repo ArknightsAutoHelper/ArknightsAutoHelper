@@ -51,6 +51,7 @@ def retry_get(url, max_retry=5, timeout=3):
 
 def update_net():
     local_cache_time = 0
+    os.makedirs(os.path.dirname(index_file), exist_ok=True)
     if os.path.exists(index_file):
         with open(index_file, 'r', encoding='utf-8') as f:
             local_rel = json.load(f)
