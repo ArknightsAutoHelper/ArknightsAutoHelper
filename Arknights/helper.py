@@ -880,14 +880,12 @@ class ArknightsHelper(object):
 
         items = []
         last_screen_items = None
-        move = -randint(self.viewport[0] // 5, self.viewport[0] // 4)
+        move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
         self.__swipe_screen(move)
-        self.adb.touch_swipe2((self.viewport[0] // 2, self.viewport[1] - 50), (1, 1), 10)
         screenshot = self.adb.screenshot()
         while True:
-            move = -randint(self.viewport[0] // 6, self.viewport[0] // 5)
+            move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
             self.__swipe_screen(move)
-            self.adb.touch_swipe2((self.viewport[0]//2, self.viewport[1] - 50), (1, 1), 10)
             screen_items = imgreco.inventory.get_all_item_details_in_screen(screenshot)
             screen_item_ids = set([item['itemId'] for item in screen_items])
             screen_items_map = {item['itemId']: item['quantity'] for item in screen_items}
