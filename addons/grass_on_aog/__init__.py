@@ -60,6 +60,18 @@ def load_aog_cache():
     return update_aog_cache()
 
 
+def order_stage(item):
+    if item['lowest_ap_stages']['normal'] and item['lowest_ap_stages']['event']:
+        stage_type = 'lowest_ap_stages'
+    elif item['balanced_stages']['normal'] and item['balanced_stages']['event']:
+        stage_type = 'balanced_stages'
+    else:
+        stage_type = 'drop_rate_first_stages'
+    event = item[stage_type]['event'][0]
+    normal = item[stage_type]['normal'][0]
+    return event if event['efficiency'] >= normal['efficiency'] else normal
+
+
 class GrassAddOn(BaseAddOn):
     def run(self, **kwargs):
         print('加载库存信息...')
@@ -83,8 +95,8 @@ class GrassAddOn(BaseAddOn):
         for t3_item in t3_items:
             if t3_item['name'] == l[0]['name']:
                 # print(t3_item)
-                normal_stage_info = t3_item['lowest_ap_stages']['normal'][0]
-                stage = normal_stage_info['code']
+                stage_info = order_stage(t3_item)
+                stage = stage_info['code']
                 print('aog stage:', stage)
                 break
         try:
