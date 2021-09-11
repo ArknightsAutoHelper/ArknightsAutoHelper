@@ -1,8 +1,8 @@
 coloredlogs==15.0
-numpy==1.20.1
+numpy==1.21.2
 opencv-python==4.5.3.56
 Pillow==8.2.0
-requests==2.25.1
+requests==2.26.0
 ruamel.yaml==0.16.12
 colorama==0.4.4; sys_platform == 'win32'
 ./vendor/penguin_client
@@ -12,4 +12,3 @@ bottle-websocket==0.2.9
 # we will fallback to a customized Chrome/Chromium/Edge
 pywebview==3.4; sys_platform != 'win32' or python_version < '3.9'
 textdistance==4.2.1
-cnocr==1.2.2

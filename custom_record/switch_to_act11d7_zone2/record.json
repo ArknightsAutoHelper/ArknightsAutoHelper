@@ -1,0 +1,21 @@
+{
+    "back_to_main": false,
+    "description": "switch_to_act11d7_zone2",
+    "prefer_mode": "match_template",
+    "records": [
+        {
+            "img": "step0.png",
+            "point": [
+                1122,
+                647
+            ],
+            "raise_exception": true,
+            "repeat": 1,
+            "threshold": 0.7,
+            "type": "tap",
+            "wait_seconds_after_touch": 1
+        }
+    ],
+    "screen_height": 720,
+    "screen_width": 1280
+}
