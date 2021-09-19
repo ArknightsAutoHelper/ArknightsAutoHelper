@@ -686,9 +686,9 @@ class ArknightsHelper(object):
             logger.error(f'未能定位章节区域, target: {target}')
             raise RuntimeError('recognition failed')
         vw, vh = imgreco.util.get_vwvh(self.viewport)
-        episode_tag_rect = tuple(map(int, (35.185*vh, 39.259*vh, 50.093*vh, 43.056*vh)))
-        next_ep_region_rect = (5.833*vh, 69.167*vh, 11.944*vh, 74.815*vh)
-        prev_ep_region_rect = (5.833*vh, 15.370*vh, 11.944*vh, 21.481*vh)
+        episode_tag_rect = tuple(map(int, (34.861*vh, 40.139*vh, 50.139*vh, 43.194*vh)))
+        next_ep_region_rect = (6.389*vh, 73.750*vh, 33.889*vh, 80.417*vh)
+        prev_ep_region_rect = (6.389*vh, 15.556*vh, 33.889*vh, 22.083*vh)
         current_ep_rect = (50*vw+19.907*vh, 28.426*vh, 50*vw+63.426*vh, 71.944*vh)
         episode_move = (400 * self.viewport[1] / 1080)
 
