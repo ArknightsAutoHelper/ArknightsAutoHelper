@@ -300,7 +300,7 @@ class Image:
         newmat = cv2.resize(self._mat, (int(size[0]), int(size[1])), interpolation=resample)
         return Image(newmat, self.mode)
 
-    def save(self, fp, format=None, params=None):
+    def save(self, fp, format=None, imwrite_params=None, **params):
         filename = ""
         open_fp = False
         if isPath(fp):
@@ -325,7 +325,9 @@ class Image:
         with context:
             if format is None:
                 format = os.path.splitext(filename)[1].lower()
-            buf = self.imencode(format, params)
+            if not format:
+                format = 'png'
+            buf = self.imencode(format, imwrite_params)
             fp.write(buf)
 
     def imencode(self, format='png', params=None):
