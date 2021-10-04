@@ -18,9 +18,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m venv venv64
-        venv64\Scripts\pip install --upgrade pip wheel setuptools
-        venv64\Scripts\pip install -r requirements.txt
-        venv64\Scripts\pip install pyinstaller pythonnet
+        venv64\Scripts\python -m pip install --upgrade pip wheel setuptools
+        venv64\Scripts\python -m pip install -r requirements.txt
+        venv64\Scripts\python -m pip install pyinstaller pythonnet
       shell: cmd
     - name: Make package
       shell: cmd
