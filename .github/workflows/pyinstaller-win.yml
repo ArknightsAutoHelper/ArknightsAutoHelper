@@ -5,32 +5,6 @@ on:
     branches: [ master ]
 
 jobs:
-  build-win-x86:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.9 x86
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9
-        architecture: x86
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m venv venv32
-        venv32\Scripts\pip install -r requirements.txt
-        venv32\Scripts\pip install pyinstaller
-      shell: cmd
-    - name: Make package
-      shell: cmd
-      run: |
-        venv32\Scripts\python packaging/makepackage.py --version-suffix -ci-%GITHUB_RUN_NUMBER%
-    - name: Upload artifact
-      uses: actions/upload-artifact@v2.1.4
-      with:
-        name: akhelper-cp39-win32
-        path: dist/akhelper.zip
-        
   build-win-amd64:
     runs-on: windows-latest
     steps:
@@ -42,10 +16,10 @@ jobs:
         architecture: x64
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip wheel setuptools
         python -m venv venv64
         venv64\Scripts\pip install -r requirements.txt
-        venv64\Scripts\pip install pyinstaller
+        venv64\Scripts\pip install pyinstaller pythonnet
       shell: cmd
     - name: Make package
       shell: cmd
