@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 import json
 # from skimage.measure import compare_mse
-from PIL import Image
+from util import cvimage as Image
 import requests
 import os
 

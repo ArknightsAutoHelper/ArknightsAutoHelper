@@ -337,3 +337,10 @@ class Image:
             return buf
         else:
             raise cv2.error('imencode failed')
+
+    def show(self):
+        native = self.convert('native')
+        import multiprocessing
+        from . import _cvimage_imshow_helper
+        title = f'Image: {self.width}x{self.height} {self.mode} {self.dtype}'
+        multiprocessing.Process(target=_cvimage_imshow_helper.imshow, args=(title, native.array)).start()

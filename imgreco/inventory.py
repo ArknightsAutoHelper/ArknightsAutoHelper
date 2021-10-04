@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 from . import item, imgops, util
-from PIL import Image
+from util import cvimage as Image
 from util.richlog import get_logger
 
 logger = get_logger(__name__)

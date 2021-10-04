@@ -4,7 +4,7 @@ from functools import lru_cache
 import importlib.util
 
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 import config
 

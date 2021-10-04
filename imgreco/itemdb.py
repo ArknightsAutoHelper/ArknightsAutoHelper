@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 def _update_mat_collection(collection, name, img):
     global itemmask

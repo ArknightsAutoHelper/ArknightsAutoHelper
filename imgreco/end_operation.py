@@ -3,7 +3,7 @@ import math
 
 import cv2
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 from util.richlog import get_logger
 from . import imgops

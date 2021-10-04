@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image, ImageFont
+from util import cvimage as Image, ImageFont
 
 
 def fuck(fontname, fontsize, text, savefile):

@@ -1,7 +1,7 @@
 import sys
 
 if len(sys.argv) > 1:
-    from PIL import Image
+    from util import cvimage as Image
     import imgreco
     obj = imgreco
     objname = '.'.join(sys.argv[1:-1])

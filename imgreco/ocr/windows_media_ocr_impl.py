@@ -1,4 +1,6 @@
-from PIL import ImageOps
+import cv2
+import numpy as np
+from util import cvimage as Image
 
 from rotypes import HSTRING
 from rotypes.Windows.Globalization import Language
@@ -56,8 +58,8 @@ class WindowsOcrEngine(OcrEngine):
         if hints == None:
             hints = []
         if OcrHint.SINGLE_LINE in hints:
-            img = ImageOps.expand(img, 32, fill=img.getpixel((0, 0)))
-
+            img2 = cv2.copyMakeBorder(np.asarray(img), 32, 32, 32, 32, cv2.BORDER_REPLICATE)
+            img = Image(img2, img.mode)
         swbmp = _swbmp_from_pil_image(img)
         return _dump_ocrresult(self.winengine.RecognizeAsync(swbmp).wait())
 

@@ -2,7 +2,7 @@ import logging
 
 import cv2 as cv
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 from . import imgops, util
 from . import resources

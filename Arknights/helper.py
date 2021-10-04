@@ -1003,7 +1003,7 @@ class ArknightsHelper(object):
             json.dump(record_data, f, ensure_ascii=False, indent=4, sort_keys=True)
 
     def replay_custom_record(self, record_name, mode=None, back_to_main=None):
-        from PIL import Image
+        from util import cvimage as Image
         record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
                                   os.path.join('custom_record/', record_name))
         if not os.path.exists(record_dir):

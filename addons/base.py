@@ -4,7 +4,7 @@ from Arknights.helper import ArknightsHelper
 from abc import ABC, abstractmethod
 import time
 import cv2
-from PIL import Image
+from util import cvimage as Image
 import numpy as np
 
 from imgreco import util

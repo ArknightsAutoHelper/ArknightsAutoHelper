@@ -12,7 +12,7 @@ import contextlib
 import importlib
 import collections.abc
 
-from PIL import Image
+from util import cvimage as Image
 import numpy as np
 import cv2
 
