@@ -1,14 +1,13 @@
-coloredlogs==15.0
+coloredlogs==15.0.1
 numpy==1.21.2
 opencv-python==4.5.3.56
-Pillow==8.3.2
 requests==2.26.0
-ruamel.yaml==0.16.12
+ruamel.yaml==0.17.16
 colorama==0.4.4; sys_platform == 'win32'
 ./vendor/penguin_client
 bottle==0.12.19
 bottle-websocket==0.2.9
 # not using pywebview on win32 python >= 3.9 as one dependency (pythonnet) has no binary wheel (yet)
 # we will fallback to a customized Chrome/Chromium/Edge
-pywebview==3.4; sys_platform != 'win32' or python_version < '3.9'
+pywebview==3.5; sys_platform != 'win32' or python_version < '3.9'
 textdistance==4.2.1
