@@ -10,7 +10,7 @@ from . import imgops
 from . import item
 from . import minireco
 from . import resources
-from . import util
+from . import common
 
 logger = get_logger(__name__)
 
@@ -140,7 +140,7 @@ def roundint(x):
 
 
 def check_level_up_popup(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
 
     lvl_up_img = img.crop((50*vw-48.796*vh, 47.685*vh, 50*vw-23.148*vh, 56.019*vh)).convert('L')  # 等级提升
     lvl_up_img = imgops.enhance_contrast(lvl_up_img, 216, 255)
@@ -158,14 +158,14 @@ def check_end_operation(style, friendship, img):
             raise NotImplementedError()
 
 def check_end_operation_main_friendship(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     template = resources.load_image_cached('end_operation/friendship.png', 'RGB')
     operation_end_img = img.crop((117.083*vh, 64.306*vh, 121.528*vh, 69.583*vh)).convert('RGB')
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
     return mse < 3251
 
 def check_end_operation_main(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     template = resources.load_image_cached('end_operation/end.png', 'L')
     operation_end_img = img.crop((4.722 * vh, 80.278 * vh, 56.389 * vh, 93.889 * vh)).convert('L')
     operation_end_img = imgops.enhance_contrast(operation_end_img, 225, 255)
@@ -173,7 +173,7 @@ def check_end_operation_main(img):
     return mse < 6502
 
 def check_end_operation_interlocking_friendship(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     return imgops.compare_region_mse(img, (100*vw-34.907*vh, 55.185*vh, 100*vw-30.556*vh, 60.370*vh), 'end_operation/interlocking/friendship.png', logger=logger)
 
 def check_end_operation2(img, threshold=0.8):
@@ -189,12 +189,12 @@ def check_end_operation2(img, threshold=0.8):
 
 
 def get_end2_rect(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     return 38.594 * vw, 88.056 * vh, 61.484 * vw, 95.694 * vh
 
 
 def get_dismiss_level_up_popup_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (100 * vw - 67.315 * vh, 16.019 * vh, 100 * vw - 5.185 * vh, 71.343 * vh)
 
 
@@ -213,7 +213,7 @@ def recognize(style, im, learn_unrecognized_item=False):
 def recognize_main(im, learn_unrecognized_item):
     import time
     t0 = time.monotonic()
-    vw, vh = util.get_vwvh(im.size)
+    vw, vh = common.get_vwvh(im.size)
 
     lower = im.crop((0, 61.111 * vh, 100 * vw, 100 * vh))
     logger.logimage(lower)
@@ -302,7 +302,7 @@ def recognize_interlocking(im):
     import time
     t0 = time.monotonic()
     from . import stage_ocr
-    vw, vh = util.get_vwvh(im.size)
+    vw, vh = common.get_vwvh(im.size)
     operation_id = im.crop((100*vw-26.204*vh, 21.852*vh, 100*vw-9.907*vh, 26.204*vh)).convert('L')
     thr = int(0.833*vh)
     left, _, _, _ = imgops.cropbox_blackedge2(operation_id, x_threshold=0.833*vh)
@@ -370,7 +370,7 @@ def recognize_interlocking(im):
 
 
 def get_still_check_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (68.241 * vh, 61.111 * vh, 100 * vw, 100 * vh)
 
 

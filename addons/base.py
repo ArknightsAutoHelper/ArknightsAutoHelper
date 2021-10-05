@@ -7,7 +7,7 @@ import cv2
 from util import cvimage as Image
 import numpy as np
 
-from imgreco import util
+from imgreco import common
 
 
 def cv2pil(cv_img):
@@ -33,7 +33,7 @@ class BaseAddOn(ABC):
         if helper is None:
             helper = ArknightsHelper()
         self.helper = helper
-        self.vw, self.vh = util.get_vwvh(self.helper.viewport)
+        self.vw, self.vh = common.get_vwvh(self.helper.viewport)
 
     @abstractmethod
     def run(self, **kwargs):

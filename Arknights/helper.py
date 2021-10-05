@@ -685,7 +685,7 @@ class ArknightsHelper(object):
         if target_region is None:
             logger.error(f'未能定位章节区域, target: {target}')
             raise RuntimeError('recognition failed')
-        vw, vh = imgreco.util.get_vwvh(self.viewport)
+        vw, vh = imgreco.common.get_vwvh(self.viewport)
         episode_tag_rect = tuple(map(int, (34.861*vh, 40.139*vh, 50.139*vh, 43.194*vh)))
         next_ep_region_rect = (6.389*vh, 73.750*vh, 33.889*vh, 80.417*vh)
         prev_ep_region_rect = (6.389*vh, 15.556*vh, 33.889*vh, 22.083*vh)
@@ -799,7 +799,7 @@ class ArknightsHelper(object):
         self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
         self.__wait(TINY_WAIT)
         if path[0] == 'main':
-            vw, vh = imgreco.util.get_vwvh(self.viewport)
+            vw, vh = imgreco.common.get_vwvh(self.viewport)
             self.tap_rect((14.316*vw, 89.815*vh, 28.462*vw, 99.815*vh))
             self.find_and_tap_episode_by_ocr(int(path[1][2:]))
             self.find_and_tap_stage_by_ocr(path[1], path[2])

@@ -198,5 +198,5 @@ def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_t
 
 
 def get_inventory_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return 100 * vw - 17.361 * vh, 81.944 * vh, 100 * vw - 6.111 * vh, 96.806 * vh

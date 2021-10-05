@@ -5,7 +5,7 @@ from util import cvimage as Image
 from util.richlog import get_logger
 from . import imgops
 from . import resources
-from . import util
+from . import common
 from . import ocr
 
 LOGFILE = 'recruit.html'
@@ -22,7 +22,7 @@ def remove_unknown_chars(s, known_chars):
 
 def get_recruit_tags(img):
     import textdistance
-    vw, vh = util.get_vwvh(img)
+    vw, vh = common.get_vwvh(img)
     tagimgs = [
         img.crop((50*vw-36.481*vh, 50.185*vh, 50*vw-17.315*vh, 56.111*vh)).convert('L'),
         img.crop((50*vw-13.241*vh, 50.185*vh, 50*vw+6.111*vh, 56.111*vh)).convert('L'),

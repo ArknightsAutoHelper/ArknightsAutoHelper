@@ -8,7 +8,7 @@ from util.richlog import get_logger
 from . import imgops
 from . import minireco
 from . import resources
-from . import util
+from . import common
 
 logger = get_logger(__name__)
 
@@ -20,7 +20,7 @@ def load_data():
 
 @lru_cache(1)
 def recognize(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
 
     # if imgops.compare_region_mse(img, (43.333*vh, 86.111*vh, 50.185*vh, 95.093*vh), 'before_operation/interlocking/interlocking_tag.png', threshold=650, logger=logger):
     #     return recognize_interlocking(img)
@@ -94,7 +94,7 @@ def recognize(img):
 
 
 def recognize_interlocking(img):
-    vw, vh = util.get_vwvh(img)
+    vw, vh = common.get_vwvh(img)
 
     consume_ap = imgops.compare_region_mse(img, (100*vw-31.944*vh, 2.407*vh, 100*vw-25.648*vh, 8.426*vh), 'before_operation/interlocking/ap_icon.png', logger=logger)
 
@@ -129,7 +129,7 @@ def recognize_interlocking(img):
 
 
 def check_confirm_troop_rect(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     icon1 = img.crop((50 * vw + 57.083 * vh, 64.722 * vh, 50 * vw + 71.389 * vh, 79.167 * vh)).convert('RGB')
     icon2 = resources.load_image_cached('before_operation/operation_start.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
@@ -140,12 +140,12 @@ def check_confirm_troop_rect(img):
 
 
 def get_confirm_troop_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (50 * vw + 55.833 * vh, 52.963 * vh, 50 * vw + 72.778 * vh, 87.361 * vh)
 
 
 def check_ap_refill_type(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     icon1 = img.crop((50*vw-3.241*vh, 11.481*vh, 50*vw+42.685*vh, 17.130*vh)).convert('RGB')
     icon2 = resources.load_image_cached('before_operation/refill_with_item.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
@@ -178,12 +178,12 @@ def check_ap_refill_type(img):
 
 
 def get_ap_refill_confirm_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (50*vw+49.537*vh, 77.222*vh, 50*vw+74.352*vh, 84.815*vh)
 
 
 def get_ap_refill_cancel_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (50*vw+14.259*vh, 77.130*vh, 50*vw+24.352*vh, 83.611*vh)
 
 
