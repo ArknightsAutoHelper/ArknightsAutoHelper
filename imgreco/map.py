@@ -4,7 +4,7 @@ import cv2 as cv
 import numpy as np
 from util import cvimage as Image
 
-from . import imgops, util
+from . import imgops, common
 from . import resources
 
 from resources.imgreco import map_vectors
