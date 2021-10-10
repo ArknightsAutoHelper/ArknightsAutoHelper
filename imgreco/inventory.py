@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from . import item, imgops, util
+from . import item, imgops
 from util import cvimage as Image
 from util.richlog import get_logger
 
