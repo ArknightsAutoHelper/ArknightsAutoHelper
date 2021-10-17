@@ -89,10 +89,13 @@ def open_file(respath):
     return resolve(respath).open()
 
 
-def load_image(name, mode=None):
-    im = Image.open(open_file(name))
-    if mode is not None and im.mode != mode:
-        im = im.convert(mode)
+def load_image(name, mode=None, imread_flags=None):
+    if imread_flags is None:
+        im = Image.open(open_file(name))
+        if mode is not None and im.mode != mode:
+            im = im.convert(mode)
+    else:
+        im = Image.open(open_file(name), imread_flags)
     return im
 
 

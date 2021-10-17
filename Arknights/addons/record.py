@@ -1,16 +1,21 @@
 import os
-import logging
 import re
 import json
 import imgreco.imgops
 
-logger = logging.getLogger(__name__)
+from Arknights.helper import AddonBase
+import config
+from .common import CommonAddon
 
-class RecordAddon:
+record_basedir = os.path.join(config.root, 'custom_record')
+
+class RecordAddon(AddonBase):
+    def on_attach(self):
+        self.register_cli_command('record', self.cli_record, self.cli_record.__doc__)
+
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
                              description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
-        record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
-                                  os.path.join('custom_record/', record_name))
+        record_dir = os.path.join(record_basedir, record_name)
         if os.path.exists(record_dir):
             c = input('已存在同名的记录, y 覆盖, n 退出: ')
             if c.strip().lower() != 'y':
@@ -20,7 +25,7 @@ class RecordAddon:
         os.mkdir(record_dir)
 
         if back_to_main:
-            self.back_to_main()
+            self.addon(CommonAddon).back_to_main()
 
         EVENT_LINE_RE = re.compile(r"(\S+): (\S+) (\S+) (\S+)$")
         records = []
@@ -33,16 +38,16 @@ class RecordAddon:
             'records': records
         }
         half_roi = roi_size // 2
-        logger.info('滑动屏幕以退出录制.')
-        logger.info('开始录制, 请点击相关区域...')
-        sock = self.adb.device_session_factory().shell_stream('getevent')
+        self.logger.info('滑动屏幕以退出录制.')
+        self.logger.info('开始录制, 请点击相关区域...')
+        sock = self.device.device_session_factory().shell_stream('getevent')
         f = sock.makefile('rb')
         while True:
             x = 0
             y = 0
             point_list = []
             touch_down = False
-            screen = self.adb.screenshot()
+            screen = self.device.screenshot()
             while True:
                 line = f.readline().decode('utf-8', 'replace').strip()
                 # print(line)
@@ -67,7 +72,7 @@ class RecordAddon:
                             point_list.append((x, y))
                     elif (etype, ecode, data) == (0, 0, 0):
                         break
-            logger.debug(f'point_list: {point_list}')
+            self.logger.debug(f'point_list: {point_list}')
             if len(point_list) == 1:
                 point = point_list[0]
                 x1 = max(0, point[0] - half_roi)
@@ -80,18 +85,18 @@ class RecordAddon:
                 record = {'point': point, 'img': f'step{step}.png', 'type': 'tap',
                           'wait_seconds_after_touch': wait_seconds_after_touch,
                           'threshold': threshold, 'repeat': 1, 'raise_exception': True}
-                logger.info(f'record: {record}')
+                self.logger.info(f'record: {record}')
                 records.append(record)
                 if wait_seconds_after_touch:
-                    logger.info(f'请等待 {wait_seconds_after_touch}s...')
-                    self.__wait(wait_seconds_after_touch)
+                    self.logger.info(f'请等待 {wait_seconds_after_touch}s...')
+                    self.delay(wait_seconds_after_touch)
 
-                logger.info('继续...')
+                self.logger.info('继续...')
             elif len(point_list) > 1:
                 # 滑动时跳出循环
                 c = input('是否退出录制[Y/n]:')
                 if c.strip().lower() != 'n':
-                    logger.info('停止录制...')
+                    self.logger.info('停止录制...')
                     break
                 else:
                     # todo 处理屏幕滑动
@@ -99,27 +104,33 @@ class RecordAddon:
         with open(os.path.join(record_dir, f'record.json'), 'w', encoding='utf-8') as f:
             json.dump(record_data, f, ensure_ascii=False, indent=4, sort_keys=True)
 
-    def replay_custom_record(self, record_name, mode=None, back_to_main=None):
-        from util import cvimage as Image
-        record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
+    def get_record_path(self, record_name):
+        record_dir = os.path.join(config.root,
                                   os.path.join('custom_record/', record_name))
         if not os.path.exists(record_dir):
-            logger.error(f'未找到相应的记录: {record_name}')
+            return None
+        return record_dir
+
+    def replay_custom_record(self, record_name, mode=None, back_to_main=None):
+        from util import cvimage as Image
+        record_dir = self.get_record_path(record_name)
+        if record_dir is None:
+            self.logger.error(f'未找到相应的记录: {record_name}')
             raise RuntimeError(f'未找到相应的记录: {record_name}')
 
         with open(os.path.join(record_dir, 'record.json'), 'r', encoding='utf-8') as f:
             record_data = json.load(f)
-        logger.info(f'record description: {record_data.get("description")}')
+        self.logger.info(f'record description: {record_data.get("description")}')
         records = record_data['records']
         if mode is None:
             mode = record_data.get('prefer_mode', 'match_template')
         if mode not in ('match_template', 'point'):
-            logger.error(f'不支持的模式: {mode}')
+            self.logger.error(f'不支持的模式: {mode}')
             raise RuntimeError(f'不支持的模式: {mode}')
         if back_to_main is None:
             back_to_main = record_data.get('back_to_main', True)
         if back_to_main:
-            self.back_to_main()
+            self.addon(CommonAddon).back_to_main()
         record_height = record_data['screen_height']
         ratio = record_height / self.viewport[1]
         x, y = 0, 0
@@ -130,7 +141,7 @@ class RecordAddon:
                 threshold = record.get('threshold', 0.7)
                 for _ in range(repeat):
                     if mode == 'match_template':
-                        screen = self.adb.screenshot()
+                        screen = self.device.screenshot()
                         gray_screen = screen.convert('L')
                         if ratio != 1:
                             gray_screen = gray_screen.resize((int(self.viewport[0] * ratio), record_height))
@@ -138,10 +149,10 @@ class RecordAddon:
                         (x, y), r = imgreco.imgops.match_template(gray_screen, template)
                         x = x // ratio
                         y = y // ratio
-                        logger.info(f'(x, y), r, record: {(x, y), r, record}')
+                        self.logger.info(f'(x, y), r, record: {(x, y), r, record}')
                         if r < threshold:
                             if raise_exception:
-                                logger.error('无法识别的图像: ' + record['img'])
+                                self.logger.error('无法识别的图像: ' + record['img'])
                                 raise RuntimeError('无法识别的图像: ' + record['img'])
                             break
                     elif mode == 'point':
@@ -150,6 +161,55 @@ class RecordAddon:
                         x, y = record['point']
                         x = x // ratio
                         y = y // ratio
-                    self.adb.touch_tap((x, y), offsets=(5, 5))
+                    self.device.touch_tap((x, y), offsets=(5, 5))
                     if record.get('wait_seconds_after_touch'):
-                        self.__wait(record['wait_seconds_after_touch'])
+                        self.delay(record['wait_seconds_after_touch'])
+
+    def get_records(self):
+        path, dirs, files = next(os.walk(record_basedir))
+        return [x for x in dirs if os.path.isfile(os.path.join(path, x, 'record.json'))]
+
+    def cli_record(self, argv):
+        """
+        record
+        操作记录模块，使用 record --help 查看帮助。
+        """
+        import argparse
+        parser = argparse.ArgumentParser(prog='record', description='操作记录模块')
+        subparsers = parser.add_subparsers(dest='subcommand', title='subcommands', required=True)
+
+        new_parser = subparsers.add_parser('new', description='录制操作记录')
+        new_parser.add_argument('--prefer-mode', choices=['match_template', 'point'], help='回放模式：模板匹配（match_template）或固定坐标（point）')
+        new_parser.add_argument('--back-to-main', action='store_true', help='是否从主界面开始回放')
+        new_parser.add_argument('--roi-size', type=int, help='模板匹配的大小')
+        new_parser.add_argument('--wait-seconds-after-touch', type=float, help='每次点击后的等待时间')
+        new_parser.add_argument('--description', help='操作记录的额外描述文本')
+        new_parser.add_argument('--threshold', type=float, help='模板匹配的阈值（0-1），越接近 1 代表相似度越高')
+        new_parser.add_argument('NAME', help='记录名称')
+
+        play_parser = subparsers.add_parser('play', description='回放操作记录')
+        play_parser.add_argument('--mode', choices=['match_template', 'point'], help='覆盖录制时选择的模式')
+        play_parser.add_argument('--back-to-main', type=lambda x: x=='true', choices=['true', 'false'], action='store', help='覆盖录制时设置的是否回到主界面')
+        play_parser.add_argument('NAME', help='记录名称')
+
+        list_parser = subparsers.add_parser('list', description='列出已录制的操作记录')
+
+        try:
+            args_ns = parser.parse_args(argv[1:])
+        except SystemExit as e:
+            return e.code
+        
+        subcommand = args_ns.subcommand
+        if subcommand == 'list':
+            print(record_basedir)
+            import shlex
+            for record in self.get_records():
+                print(shlex.quote(record))
+        elif subcommand == 'new':
+            argnames = ['roi_size', 'wait_seconds_after_touch', 'description', 'back_to_main', 'prefer_mode', 'threshold']
+            kwargs = {k: vars(args_ns)[k] for k in argnames if k in args_ns}
+            self.create_custom_record(args_ns.NAME, **kwargs)
+        elif subcommand == 'play':
+            argnames = ['back_to_main', 'mode']
+            kwargs = {k: vars(args_ns)[k] for k in argnames if k in args_ns}
+            self.replay_custom_record(args_ns.NAME, **kwargs)

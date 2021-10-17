@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Tuple
+from typing import Tuple, Annotated
+from numbers import Real
 
 import builtins
 import sys
@@ -163,7 +164,7 @@ class Image:
     def size(self):
         return tuple(self._mat.shape[1::-1])
     
-    def crop(self, rect: Tuple[left, top, right, bottom]):
+    def crop(self, rect: Tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]):
         if rect is None:
             return self.copy()
         left, top, right, bottom = (int(round(x)) for x in rect)

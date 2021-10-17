@@ -10,14 +10,16 @@ from util import cvimage as Image
 import requests
 import os
 
+import config
+
 from util.richlog import get_logger
 from . import imgops
 from . import minireco
 from . import resources
 from . import common
 
-net_file = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'ark_material.onnx')
-index_file = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'index_itemid_relation.json')
+net_file = os.path.join(config.cache_path, 'ark_material.onnx')
+index_file = os.path.join(config.cache_path, 'index_itemid_relation.json')
 
 
 @lru_cache(1)

@@ -1,12 +1,14 @@
-from addons.base import BaseAddOn
 from penguin_stats import arkplanner
 import requests
 from datetime import datetime
 import json
 import os
 import config
-from Arknights.helper import logger
-
+from Arknights.helper import AddonBase
+from random import randint
+from Arknights.helper import AddonBase
+from ...common import CommonAddon
+from ...combat import CombatAddon
 
 desc = f"""
 {__file__}
@@ -19,24 +21,15 @@ aog 地址: https://arkonegraph.herokuapp.com/
 cache_key 控制缓存的频率, 默认每周读取一次库存, 如果需要手动更新缓存, 
 直接删除目录下的 aog_cache.json 和 inventory_items_cache.json 即可.
 
-活动关卡需要安装 cnocr 并将 addons/grass_on_aog/use_start_sp_stage 配置为 true.
 ==================================================================================================
 """
-print(desc)
-
-# 不刷以下材料
-exclude_names = ['固源岩组']
-print('不刷以下材料:', exclude_names)
 
 # cache_key = '%Y-%m-%d'  # cache by day
 cache_key = '%Y--%V'    # cache by week
 
 
-use_start_sp_stage = config.get('addons/grass_on_aog/use_start_sp_stage', False)
-
-
-aog_cache_file = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'aog_cache.json')
-inventory_cache_file = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'inventory_items_cache.json')
+aog_cache_file = os.path.join(config.cache_path, 'aog_cache.json')
+inventory_cache_file = os.path.join(config.cache_path, 'inventory_items_cache.json')
 
 
 def get_items_from_aog_api():
@@ -72,9 +65,19 @@ def order_stage(item):
     return event if event['efficiency'] >= normal['efficiency'] else normal
 
 
-class GrassAddOn(BaseAddOn):
-    def run(self, **kwargs):
-        print('加载库存信息...')
+class GrassAddOn(AddonBase):
+
+    def on_attach(self) -> None:
+        self.register_cli_command('grass', self.run, self.run.__doc__)
+
+    def run(self, argv):
+        """
+        grass
+        一键长草：检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料。
+        """
+        exclude_names = config.get('addons/grass_on_aog/exclude_names', ['固源岩组'])
+        print('不刷以下材料:', exclude_names)
+        self.logger.info('加载库存信息...')
         aog_cache = load_aog_cache()
         my_items = self.load_inventory()
         all_items = arkplanner.get_all_items()
@@ -99,15 +102,7 @@ class GrassAddOn(BaseAddOn):
                 stage = stage_info['code']
                 print('aog stage:', stage)
                 break
-        try:
-            self.helper.module_battle(stage, 1000)
-        except Exception as e:
-            if use_start_sp_stage:
-                from addons.start_sp_stage import StartSpStageAddon
-                logger.info('尝试进入活动关卡')
-                StartSpStageAddon(self.helper).run(stage, 1000)
-            else:
-                raise e
+        self.addon(CombatAddon).module_battle(stage, 1000)
 
     def load_inventory(self):
         if os.path.exists(inventory_cache_file):
@@ -118,11 +113,45 @@ class GrassAddOn(BaseAddOn):
         return self.update_inventory()
 
     def update_inventory(self):
-        data = self.helper.get_inventory_items(True)
+        data = self.get_inventory_items(True)
         data['cacheTime'] = datetime.now().strftime(cache_key)
         with open(inventory_cache_file, 'w') as f:
             json.dump(data, f)
         return data
+
+    def get_inventory_items(self, show_item_name=False):
+        import imgreco.inventory
+
+        self.addon(CommonAddon).back_to_main()
+        self.logger.info("进入仓库")
+        self.tap_rect(imgreco.inventory.get_inventory_rect(self.viewport))
+
+        items = []
+        last_screen_items = None
+        move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
+        self.swipe_screen(move)
+        screenshot = self.device.screenshot()
+        while True:
+            move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
+            self.swipe_screen(move)
+            screen_items = imgreco.inventory.get_all_item_details_in_screen(screenshot)
+            screen_item_ids = set([item['itemId'] for item in screen_items])
+            screen_items_map = {item['itemId']: item['quantity'] for item in screen_items}
+            if last_screen_items == screen_item_ids:
+                self.logger.info("读取完毕")
+                break
+            if show_item_name:
+                name_map = {item['itemName']: item['quantity'] for item in screen_items}
+                self.logger.info('name_map: %s' % name_map)
+            else:
+                self.logger.info('screen_items_map: %s' % screen_items_map)
+            last_screen_items = screen_item_ids
+            items += screen_items
+            # break
+            screenshot = self.device.screenshot()
+        if show_item_name:
+            self.logger.info('items_map: %s' % {item['itemName']: item['quantity'] for item in items})
+        return {item['itemId']: item['quantity'] for item in items}
 
 
 __all__ = ['GrassAddOn']

@@ -1,12 +1,15 @@
+from __future__ import annotations
+from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type
+from numbers import Real
+TupleRect: Tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
+TAddon = TypeVar('TAddon')
+
 import os
-import json
-import re
 import time
 import logging
 from random import randint, uniform, gauss
 from fractions import Fraction
 
-import coloredlogs
 import numpy as np
 
 import config
@@ -14,22 +17,16 @@ import imgreco.imgops
 
 from connector import auto_connect
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
-from .frontend import DummyFrontend
+from .frontend import Frontend, DummyFrontend
 from Arknights.flags import *
 
-from Arknights import frontend
 
 logger = logging.getLogger('helper')
-coloredlogs.install(
-    fmt=' Ξ %(message)s',
-    #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
-    datefmt='%H:%M:%S',
-    level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
-    level='INFO')
 
 
 class AddonMixin:
-    def delay(self, n=10,  # 等待时间中值
+    helper: 'ArknightsHelper'
+    def delay(self, n: Real=10,  # 等待时间中值
                MANLIKE_FLAG=True, allow_skip=False):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
@@ -38,15 +35,23 @@ class AddonMixin:
 
     def mouse_click(self,  # 点击一个按钮
                     XY):  # 待点击的按钮的左上和右下坐标
-        assert (self.viewport == (1280, 720))
+        assert (self.helper.viewport == (1280, 720))
         logger.debug("helper.mouse_click")
         xx = randint(XY[0][0], XY[1][0])
         yy = randint(XY[0][1], XY[1][1])
         logger.info("接收到点击坐标并传递xx:{}和yy:{}".format(xx, yy))
-        self.adb.touch_tap((xx, yy))
+        self.helper.device.touch_tap((xx, yy))
         self.delay(TINY_WAIT, MANLIKE_FLAG=True)
 
-    def tap_rect(self, rc):
+    def tap_point(self, pos, sleep_time=0.5, randomness=(5, 5)):
+        x, y = pos
+        rx, ry = randomness
+        x += randint(-rx, rx)
+        y += randint(-ry, ry)
+        self.helper.device.touch_tap((x, y))
+        self.delay(sleep_time)
+
+    def tap_rect(self, rc: TupleRect):
         hwidth = (rc[2] - rc[0]) / 2
         hheight = (rc[3] - rc[1]) / 2
         midx = rc[0] + hwidth
@@ -55,7 +60,7 @@ class AddonMixin:
         ydiff = max(-1, min(1, gauss(0, 0.2)))
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
-        self.adb.touch_tap((tapx, tapy))
+        self.helper.device.touch_tap((tapx, tapy))
         self.delay(TINY_WAIT, MANLIKE_FLAG=True)
 
     def tap_quadrilateral(self, pts):
@@ -67,14 +72,14 @@ class AddonMixin:
         pt2 = pts[1] if bddiff > 1 else pts[3]
         halfvec = (pt2 - m) / 2
         finalpt = m + halfvec * bddiff
-        self.adb.touch_tap(tuple(int(x) for x in finalpt))
+        self.helper.device.touch_tap(tuple(int(x) for x in finalpt))
         self.delay(TINY_WAIT, MANLIKE_FLAG=True)
 
     def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
         if crop is None:
-            shooter = lambda: self.adb.screenshot(False)
+            shooter = lambda: self.helper.device.screenshot(False)
         else:
-            shooter = lambda: self.adb.screenshot(False).crop(crop)
+            shooter = lambda: self.helper.device.screenshot(False).crop(crop)
         screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
@@ -97,102 +102,149 @@ class AddonMixin:
             raise RuntimeError("%d 秒内画面未静止，最小误差=%d，阈值=%d" % (timeout, minerr, threshold))
         return None
 
-
-
     def swipe_screen(self, move, rand=100, origin_x=None, origin_y=None):
         origin_x = (origin_x or self.viewport[0] // 2) + randint(-rand, rand)
         origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
-        self.adb.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
+        self.helper.device.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
 
 class AddonBase(AddonMixin):
+    alias : ClassVar[Union[str, None]] = None
+
     def __init__(self, helper):
         super().__init__()
-        self.helper = helper
+        self.helper : ArknightsHelper = helper
+        self.logger = logging.getLogger(type(self).__name__)
         self.on_attach()
-    def addon(self, cls):
+
+    def addon(self, cls: Union[str, Type[TAddon]]) -> TAddon:
         return self.helper.addon(cls)
-    def on_attach(self):
+
+    def on_attach(self) -> None:
         """callback"""
 
+    @property
+    def device(self):
+        return self.helper.device
+
+    @property
+    def viewport(self):
+        return self.helper.viewport
+
+    @property
+    def vw(self):
+        return self.helper.vw
+
+    @property
+    def vh(self):
+        return self.helper.vh
+
+    @property
+    def frontend(self):
+        return self.helper.frontend
+
+    def register_cli_command(self, command: str, handler: Callable[[Annotated[Sequence[str], "argv"]], int], help: Union[str, None]=None):
+        if help is None:
+            help = command
+        self.helper._cli_commands.append((command, handler, help))
+
+    def register_gui_handler(self, handler):
+        pass
+
 class ArknightsHelper(AddonMixin):
-    def __init__(self, adb_host=None, device_connector=None, frontend=None):  # 当前绑定到的设备
-        self.adb = None
-        if adb_host is not None or device_connector is not None:
-            self.connect_device(device_connector, adb_serial=adb_host)
+    frontend: Frontend
+    def __init__(self, device_connector=auto_connect, frontend=None):  # 当前绑定到的设备
+        self._device = None
+        if device_connector is None:
+            pass
+        elif device_connector is auto_connect:
+            self.connect_device(auto_connect())
+        else:
+            self.connect_device(device_connector)
         if frontend is None:
             frontend = DummyFrontend()
-            if self.adb is None:
-                self.connect_device(auto_connect())
         self.frontend = frontend
         self.frontend.attach(self)
-        self.operation_time = []
         self.helper = self
-        self.addons = {}
-        if DEBUG_LEVEL >= 1:
-            self.__print_info()
-
+        self._addons = {}
+        self._cli_commands = []
+        self.load_addons()
         logger.debug("成功初始化模块")
 
-    def addon(self, cls):
-        if cls in self.addons:
-            return self.addons[cls]
-        else:
+    def addon(self, cls: Union[str, Type[TAddon]]) -> TAddon:
+        if cls in self._addons:
+            return self._addons[cls]
+        elif type(cls) == type:
+            logger.debug("loading addon %s", cls.__qualname__)
             instance = cls(self)
-            self.addons[cls] = instance
+            self._addons[cls] = instance
+            alias = getattr(instance, 'alias', None)
+            if alias is None:
+                alias = cls.__name__
+            self._addons[alias] = instance
             return instance
+        else:
+            raise TypeError("cls")
 
-    def ensure_device_connection(self):
-        if self.adb is None:
-            raise RuntimeError('not connected to device')
+    @property
+    def device(self):
+        if self._device is None:
+            new_device = self.frontend.request_device_connector()
+            if new_device is None:
+                raise RuntimeError("no device connected")
+            self.connect_device(connector=new_device)
+        return self._device
 
     def connect_device(self, connector=None, *, adb_serial=None):
         if connector is not None:
-            self.adb = connector
+            self._device = connector
         elif adb_serial is not None:
-            self.adb = ADBConnector(adb_serial)
+            self._device = ADBConnector(adb_serial)
         else:
-            self.adb = None
+            self._device = None
             return
-        self.viewport = self.adb.screen_size
-        if self.adb.screenshot_rotate %180:
+        self.viewport: tuple[int, int] = self._device.screen_size
+        if self._device.screenshot_rotate %180:
             self.viewport = (self.viewport[1], self.viewport[0])
+        import imgreco.common
+        self.vw, self.vh = imgreco.common.get_vwvh(self.viewport)
         if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
             title = '设备当前分辨率（%dx%d）不符合要求' % (self.viewport[0], self.viewport[1])
             body = '需要宽高比等于或大于 16∶9，且渲染高度不小于 720。'
             details = None
             if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
                 body = '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
-                img = self.adb.screenshot()
+                img = self._device.screenshot()
                 imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
                 img.save(imgfile)
                 import json
-                details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self.adb.config_key))
+                details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self._device.config_key))
             for msg in [title, body, details]:
                 if msg is not None:
                     logger.warn(msg)
-            frontend.alert(title, body, 'warn', details)
+            self.frontend.alert(title, body, 'warn', details)
 
-    def __print_info(self):
-        logger.info('当前系统信息:')
-        logger.info('分辨率:\t%dx%d', *self.viewport)
-        # logger.info('OCR 引擎:\t%s', ocr.engine.info)
-        logger.info('截图路径:\t%s', config.SCREEN_SHOOT_SAVE_PATH)
+    def load_addons(self):
+        from .addons.common import CommonAddon
+        from .addons.combat import CombatAddon
+        from .addons.recruit import RecruitAddon
+        from .addons.stage_navigator import StageNavigator
+        from .addons.quest import QuestAddon
+        from .addons.record import RecordAddon
+        
+        self.addon(CommonAddon)
+        self.addon(CombatAddon)
+        self.addon(RecruitAddon)
+        self.addon(StageNavigator)
+        self.addon(QuestAddon)
+        self.addon(RecordAddon)
 
-        if config.enable_baidu_api:
-            logger.info('%s',
-                        """百度API配置信息:
-        APP_ID\t{app_id}
-        API_KEY\t{api_key}
-        SECRET_KEY\t{secret_key}
-                        """.format(
-                            app_id=config.APP_ID, api_key=config.API_KEY, secret_key=config.SECRET_KEY
-                        )
-                        )
-
-    def __del(self):
-        self.adb.run_device_cmd("am force-stop {}".format(config.ArkNights_PACKAGE_NAME))
-
-    def destroy(self):
-        self.__del()
-
+        from .addons.contrib.grass_on_aog import GrassAddOn
+        from .addons.contrib.activity import ActivityAddOn
+        self.addon(GrassAddOn)
+        self.addon(ActivityAddOn)
+        try:
+            from .addons.contrib.start_sp_stage import StartSpStageAddon
+            self.addon(StartSpStageAddon)
+        except ImportError:
+            pass

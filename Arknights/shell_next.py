@@ -3,6 +3,8 @@ import sys
 import time
 import signal
 
+import config
+
 from .fancycli import fancywait
 from .fancycli.platform import isatty
 
@@ -31,9 +33,9 @@ class ShellNextFrontend:
             time.sleep(secs)
             return
         if self.show_toggle:
-            togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if self.helper.use_refill else 'OFF')
+            togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if self.helper.addon('combat').use_refill else 'OFF')
             def togglecallback(handler):
-                self.helper.use_refill = not self.helper.use_refill
+                self.helper.addon('combat').use_refill = not self.helper.addon('combat').use_refill
                 handler.label = togglelabel()
             togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
         else:
@@ -41,11 +43,12 @@ class ShellNextFrontend:
         skiphandler = fancywait.KeyHandler('<ENTER>跳过', b'\r', skipcallback)
         skipdummy   = fancywait.KeyHandler('           ', b'', lambda x: None)
         fancywait.fancy_delay(secs, self.statusline, [skiphandler if allow_skip else skipdummy, togglehandler()])
-
+    def request_device_connector(self):
+        _ensure_device()
+        return device
 
 def _create_helper(use_status_line=True, show_toggle=False):
     from Arknights.helper import ArknightsHelper
-    _ensure_device()
     frontend = ShellNextFrontend(use_status_line, show_toggle)
     helper = ArknightsHelper(device_connector=device, frontend=frontend)
     if use_status_line:
@@ -53,36 +56,9 @@ def _create_helper(use_status_line=True, show_toggle=False):
     else:
         from contextlib import nullcontext
         context = nullcontext()
+    frontend.context = context
     return helper, context
 
-def _parse_opt(argv):
-    ops = []
-    if len(argv) >= 2 and argv[1][:1] in ('+', '-'):
-        opts = argv.pop(1)
-        enable_refill = None
-        for i, c in enumerate(opts):
-            if c == '+':
-                enable_refill = True
-            elif c == '-':
-                enable_refill = False
-            elif c == 'r' and enable_refill is not None:
-                def op(helper):
-                    helper.use_refill = enable_refill
-                    helper.refill_with_item = enable_refill
-                ops.append(op)
-            elif c == 'R' and enable_refill is not None:
-                def op(helper):
-                    helper.refill_with_originium = enable_refill
-                ops.append(op)
-            elif c in '0123456789' and enable_refill:
-                num = int(opts[i:])
-                def op(helper):
-                    helper.max_refill_count = num
-                ops.append(op)
-                break
-            else:
-                raise ValueError('unrecognized token: %r in option %r' % (c, opts))
-    return ops
 
 
 class AlarmContext:
@@ -142,8 +118,11 @@ def _connect_adb(args):
         try:
             device = ADBConnector.auto_connect()
         except IndexError:
-            print("检测到多台设备")
             devices = ADBConnector.available_devices()
+            if len(devices) == 0:
+                print("当前无设备连接")
+                raise
+            print("检测到多台设备")
             for i, (serial, status) in enumerate(devices):
                 print("%2d. %s\t[%s]" % (i, serial, status))
             num = 0
@@ -167,92 +146,6 @@ def _ensure_device():
         connect(['connect'])
     device.ensure_alive()
 
-def quick(argv):
-    """
-    quick [+-rR[N]] [n]
-        重复挑战当前画面关卡特定次数或直到理智不足
-        +r/-r 是否自动回复理智，最多回复 N 次
-        +R/-R 是否使用源石回复理智（需要同时开启 +r）
-    """
-
-    ops = _parse_opt(argv)
-    if len(argv) == 2:
-        count = int(argv[1])
-    else:
-        count = 114514
-    helper, context = _create_helper(show_toggle=True)
-    for op in ops:
-        op(helper)
-    with context:
-        helper.module_battle_slim(
-            c_id=None,
-            set_count=count,
-        )
-    return 0
-
-
-def auto(argv):
-    """
-    auto [+-rR[N]] stage1 count1 [stage2 count2] ...
-        按顺序挑战指定关卡特定次数直到理智不足
-    """
-    ops = _parse_opt(argv)
-    arglist = argv[1:]
-    if len(arglist) % 2 != 0:
-        print('usage: auto [+-rR] stage1 count1 [stage2 count2] ...')
-        return 1
-    it = iter(arglist)
-    tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
-
-    helper, context = _create_helper(show_toggle=True)
-    for op in ops:
-        op(helper)
-    with context:
-        helper.main_handler(
-            clear_tasks=False,
-            task_list=tasks,
-            auto_close=False
-        )
-    return 0
-
-
-def collect(argv):
-    """
-    collect
-        收集每日任务和每周任务奖励
-    """
-    helper, context = _create_helper()
-    with context:
-        helper.clear_task()
-    return 0
-
-
-def recruit(argv):
-    """
-    recruit [tags ...]
-        公开招募识别/计算，不指定标签则从截图中识别
-    """
-    from . import recruit_calc
-
-    if 2 <= len(argv) <= 6:
-        tags = argv[1:]
-        result = recruit_calc.calculate(tags)
-    elif len(argv) == 1:
-        helper, context = _create_helper(use_status_line=False)
-        with context:
-            result = helper.recruit()
-    else:
-        print('要素过多')
-        return 1
-
-    colors = ['\033[36m', '\033[90m', '\033[37m', '\033[32m', '\033[93m', '\033[91m']
-    reset = '\033[39m'
-    for tags, operators, rank in result:
-        taglist = ','.join(tags)
-        if rank >= 1:
-            taglist = '\033[96m' + taglist + '\033[39m'
-        print("%s: %s" % (taglist, ' '.join(colors[op[1]] + op[0] + reset for op in operators)))
-
 
 def interactive(argv):
     """
@@ -267,16 +160,20 @@ def interactive(argv):
         import readline
     except ImportError:
         pass
+    if instance_id := config.get_instance_id():
+        title = f"akhelper-{instance_id}"
+    else:
+        title = "akhelper"
     while True:
         try:
             if device is None:
-                prompt = "akhelper> "
+                prompt = f"{title}> "
             else:
-                prompt = "akhelper %s> " % str(device)
+                prompt = f"{title} {str(device)}> "
             cmdline = input(prompt)
             argv = shlex.split(cmdline)
             if len(argv) == 0 or argv[0] == '?' or argv[0] == 'help':
-                print(' '.join(x.__name__ for x in interactive_cmds))
+                print(' '.join(x[0] for x in interactive_cmds))
                 continue
             elif argv[0] == 'exit':
                 break
@@ -300,10 +197,10 @@ argv0 = 'placeholder'
 def helpcmds(cmds):
     print("commands (prefix abbreviation accepted):")
     for cmd in cmds:
-        if cmd.__doc__:
-            print("    " + str(cmd.__doc__.strip()))
+        if cmd[2]:
+            print("    " + str(cmd[2].strip()))
         else:
-            print("    " + cmd.__name__)
+            print("    " + cmd[0])
 
 
 def help(argv):
@@ -318,25 +215,31 @@ def help(argv):
 def exit(argv):
     sys.exit()
 
-
-global_cmds = [quick, auto, collect, recruit, interactive, help]
-interactive_cmds = [connect, quick, auto, collect, recruit, exit]
+helper_cmds = []
+global_cmds = []
+interactive_cmds = []
+helper_instance = None
 
 def match_cmd(first, avail_cmds):
-    targetcmd = [x for x in avail_cmds if x.__name__.startswith(first)]
+    targetcmd = [x for x in avail_cmds if x[0].startswith(first)]
     if len(targetcmd) == 1:
-        return targetcmd[0]
+        return targetcmd[0][1]
     elif len(targetcmd) == 0:
         print("unrecognized command: " + first)
         return None
     else:
         print("ambiguous command: " + first)
-        print("matched commands: " + ','.join(x.__name__ for x in targetcmd))
+        print("matched commands: " + ','.join(x[0] for x in targetcmd))
         return None
 
 def main(argv):
-    global argv0
+    global argv0, helper_instance
+    config.enable_logging()
     argv0 = argv[0]
+    helper_instance, context = _create_helper()
+    
+    global_cmds.extend([*helper_instance._cli_commands, ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
+    interactive_cmds.extend([('connect', connect, connect.__doc__), *helper_instance._cli_commands, ('exit', exit, '')])
     if len(argv) < 2:
         interactive(argv[1:])
         return 1

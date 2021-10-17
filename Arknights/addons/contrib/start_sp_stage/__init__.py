@@ -8,14 +8,18 @@ import cv2
 import numpy as np
 
 import imgreco.main
-from Arknights.helper import logger
-from addons.activity import ActivityAddOn, get_stage_map
-from addons.base import BaseAddOn, pil2cv, crop_cv_by_rect, show_img
-from addons.common_cache import load_game_data
+from Arknights.helper import AddonBase
+from ..activity import ActivityAddOn, get_stage_map
+from ..base import pil2cv, crop_cv_by_rect, show_img
+from ..common_cache import load_game_data
 from imgreco.ocr.cnocr import ocr_and_correct
+from ...common import CommonAddon
+from ...stage_navigator import StageNavigator
+from ...record import RecordAddon
+from imgreco import resources
 
-icon1 = cv2.imread(os.path.join(os.path.realpath(os.path.dirname(__file__)), 'icon1.png'), cv2.IMREAD_GRAYSCALE)
-icon2 = cv2.imread(os.path.join(os.path.realpath(os.path.dirname(__file__)), 'icon2.png'), cv2.IMREAD_GRAYSCALE)
+icon1 = resources.load_image('contrib/start_sp_stage/icon1.png', imread_flags=cv2.IMREAD_GRAYSCALE)
+icon2 = resources.load_image('contrib/start_sp_stage/icon2.png', imread_flags=cv2.IMREAD_GRAYSCALE)
 
 
 special_zone_actions = {
@@ -57,47 +61,46 @@ def crop_image_only_outside(gray_img, raw_img, threshold=128, padding=3):
     return raw_img[row_start - padding:row_end + padding, col_start - padding:col_end + padding]
 
 
-class StartSpStageAddon(BaseAddOn):
-    def __init__(self, helper=None):
-        super(StartSpStageAddon, self).__init__(helper)
-        self.scale = self.helper.viewport[1] / 720
-        if self.helper.viewport != (1280, 720):
-            logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
+class StartSpStageAddon(AddonBase):
+    def on_attach(self):
+        self.addon(StageNavigator).register_navigator(
+            self.__class__.__name__,
+            lambda stage: self.run(stage, query_only=True),
+            lambda stage: self.run(stage, query_only=False)
+        )
 
     def apply_scale(self, value):
         if self.scale == 1:
             return value
         return int(value * self.scale)
 
-    def run(self, stage_code: str, repeat_times: int = 1000, try_current_activity=True):
+    def run(self, stage_code: str, query_only=False):
         stage_code = stage_code.upper()
-        if try_current_activity:
-            try:
-                ActivityAddOn(self.helper).run(stage_code, repeat_times)
-                return
-            except:
-                pass
         stage_code_map, zone_linear_map = get_stage_map()
+        if query_only:
+            return stage_code in stage_code_map
         if stage_code not in stage_code_map:
             raise RuntimeError(f'无效的关卡: {stage_code}')
+        self.scale = self.helper.viewport[1] / 720
+        if self.helper.viewport != (1280, 720):
+            self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         stage = stage_code_map[stage_code]
         activity_id = stage['zoneId'].split('_')[0]
         activity_infos = get_activity_infos()
         activity = activity_infos[activity_id]
-        logger.debug(f'stage: {stage}, activity: {activity}')
+        self.logger.debug(f'stage: {stage}, activity: {activity}')
         self.enter_activity(activity)
         self.after_enter_activity(stage)
         stage_linear = zone_linear_map[stage['zoneId']]
-        logger.info(f"stage zone id: {stage['zoneId']}, stage_linear: {stage_linear}")
-        self.helper.find_and_tap_stage_by_ocr(None, stage_code, stage_linear)
-        self.helper.module_battle_slim(None, repeat_times)
+        self.logger.info(f"stage zone id: {stage['zoneId']}, stage_linear: {stage_linear}")
+        self.addon(StageNavigator).find_and_tap_stage_by_ocr(None, stage_code, stage_linear)
 
     def after_enter_activity(self, stage):
         zone_id = stage['zoneId']
         if zone_id in special_zone_actions:
             zone_act = special_zone_actions[zone_id]
             if zone_act['type'] == 'custom_record':
-                self.helper.replay_custom_record(zone_act['record_name'])
+                self.addon(RecordAddon).replay_custom_record(zone_act['record_name'])
 
     def enter_activity(self, activity):
         vh = self.vh
@@ -119,7 +122,7 @@ class StartSpStageAddon(BaseAddOn):
                 origin_x = random.randint(int(5.833 * vh), int(24.861 * vh))
                 origin_y = random.randint(int(57.222 * vh), int(77.917 * vh))
                 move = -random.randint(int(vh // 5), int(vh // 4))
-                self.helper.adb.touch_swipe2((origin_x, origin_y),
+                self.device.touch_swipe2((origin_x, origin_y),
                                              (random.randint(-20, 20), move), random.randint(900, 1200))
                 act_pos_map = self.get_all_act_pos(crop_flag)
                 if act_name in act_pos_map:
@@ -127,14 +130,17 @@ class StartSpStageAddon(BaseAddOn):
                 if last_acts == act_pos_map.keys():
                     raise RuntimeError(f'找不到相应活动: {act_name}')
                 last_acts = act_pos_map.keys()
-        logger.info(f'switch to {act_name}')
-        self.click(act_pos_map[act_name], 1)
+        self.logger.info(f'switch to {act_name}')
+        self.tap_point(act_pos_map[act_name], 1)
         self.tap_enter_activity()
 
     def tap_back(self):
         vw, vh = self.vw, self.vh
         self.helper.tap_rect((2.222 * vh, 1.944 * vh, 22.361 * vh, 8.333 * vh))
-        time.sleep(0.5)
+        self.delay(0.5)
+
+    def screenshot(self):
+        return self.device.screenshot()
 
     def get_all_act_pos(self, crop=False):
         act_map = {}
@@ -142,7 +148,7 @@ class StartSpStageAddon(BaseAddOn):
         cv_screen = pil2cv(screen)
         for icon in [icon1, icon2]:
             act_map.update(self.get_act_pos_by_icon(cv_screen, icon, crop))
-        logger.info(act_map)
+        self.logger.info(act_map)
         return act_map
 
     def get_act_pos_by_icon(self, cv_screen, icon, crop=False):
@@ -192,27 +198,27 @@ class StartSpStageAddon(BaseAddOn):
 
     def tap_side_story(self):
         vh, vw = self.vh, self.vw
-        logger.info('open side story view')
+        self.logger.info('open side story view')
         self.helper.tap_rect((44.297 * vw, 88.611 * vh, 56.406 * vw, 98.750 * vh))
-        time.sleep(1)
+        self.delay(1)
 
     def tap_branch_line(self):
-        logger.info('open branch line view')
+        self.logger.info('open branch line view')
         vh, vw = self.vh, self.vw
         self.helper.tap_rect((29.375 * vw, 88.611 * vh, 41.719 * vw, 98.750 * vh))
-        time.sleep(1)
+        self.delay(1)
 
     def tap_enter_activity(self):
-        logger.info('enter activity')
+        self.logger.info('enter activity')
         vh, vw = self.vh, self.vw
         self.helper.tap_rect((100 * vw - 24.583 * vh, 69.167 * vh, 100 * vw - 8.750 * vh, 75.556 * vh))
-        time.sleep(1)
+        self.delay(1)
 
     def open_terminal(self):
-        self.helper.back_to_main()
-        logger.info('open terminal')
+        self.addon(CommonAddon).back_to_main()
+        self.logger.info('open terminal')
         self.helper.tap_quadrilateral(imgreco.main.get_ballte_corners(self.screenshot()))
-        time.sleep(1)
+        self.delay(1)
 
 
 if __name__ == '__main__':
