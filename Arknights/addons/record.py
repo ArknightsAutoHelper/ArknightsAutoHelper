@@ -201,7 +201,6 @@ class RecordAddon(AddonBase):
         
         subcommand = args_ns.subcommand
         if subcommand == 'list':
-            print(record_basedir)
             import shlex
             for record in self.get_records():
                 print(shlex.quote(record))

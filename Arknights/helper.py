@@ -1,8 +1,12 @@
 from __future__ import annotations
-from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type
-from numbers import Real
-TupleRect: Tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
-TAddon = TypeVar('TAddon')
+from collections import OrderedDict
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type
+    from numbers import Real
+    TupleRect: Tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
+    TAddon = TypeVar('TAddon')
+del TYPE_CHECKING
 
 import os
 import time
@@ -129,14 +133,17 @@ class AddonBase(AddonMixin):
 
     @property
     def viewport(self):
+        self.helper._ensure_device()
         return self.helper.viewport
 
     @property
     def vw(self):
+        self.helper._ensure_device()
         return self.helper.vw
 
     @property
     def vh(self):
+        self.helper._ensure_device()
         return self.helper.vh
 
     @property
@@ -146,7 +153,7 @@ class AddonBase(AddonMixin):
     def register_cli_command(self, command: str, handler: Callable[[Annotated[Sequence[str], "argv"]], int], help: Union[str, None]=None):
         if help is None:
             help = command
-        self.helper._cli_commands.append((command, handler, help))
+        self.helper._cli_commands[command] = (command, handler, help)
 
     def register_gui_handler(self, handler):
         pass
@@ -167,7 +174,7 @@ class ArknightsHelper(AddonMixin):
         self.frontend.attach(self)
         self.helper = self
         self._addons = {}
-        self._cli_commands = []
+        self._cli_commands = OrderedDict()
         self.load_addons()
         logger.debug("成功初始化模块")
 
@@ -186,14 +193,22 @@ class ArknightsHelper(AddonMixin):
         else:
             raise TypeError("cls")
 
-    @property
-    def device(self):
+    def _ensure_device(self):
         if self._device is None:
             new_device = self.frontend.request_device_connector()
             if new_device is None:
                 raise RuntimeError("no device connected")
             self.connect_device(connector=new_device)
+
+    @property
+    def device(self):
+        self._ensure_device()
         return self._device
+
+    @property
+    def viewport(self):
+        self._ensure_device()
+        return self._viewport
 
     def connect_device(self, connector=None, *, adb_serial=None):
         if connector is not None:
@@ -203,16 +218,16 @@ class ArknightsHelper(AddonMixin):
         else:
             self._device = None
             return
-        self.viewport: tuple[int, int] = self._device.screen_size
+        self._viewport: tuple[int, int] = self._device.screen_size
         if self._device.screenshot_rotate %180:
-            self.viewport = (self.viewport[1], self.viewport[0])
+            self._viewport = (self._viewport[1], self._viewport[0])
         import imgreco.common
         self.vw, self.vh = imgreco.common.get_vwvh(self.viewport)
-        if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
-            title = '设备当前分辨率（%dx%d）不符合要求' % (self.viewport[0], self.viewport[1])
+        if self._viewport[1] < 720 or Fraction(self._viewport[0], self._viewport[1]) < Fraction(16, 9):
+            title = '设备当前分辨率（%dx%d）不符合要求' % (self._viewport[0], self._viewport[1])
             body = '需要宽高比等于或大于 16∶9，且渲染高度不小于 720。'
             details = None
-            if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
+            if Fraction(self._viewport[1], self._viewport[0]) >= Fraction(16, 9):
                 body = '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
                 img = self._device.screenshot()
                 imgfile = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
@@ -234,17 +249,22 @@ class ArknightsHelper(AddonMixin):
         
         self.addon(CommonAddon)
         self.addon(CombatAddon)
-        self.addon(RecruitAddon)
         self.addon(StageNavigator)
+        self.addon(RecruitAddon)
         self.addon(QuestAddon)
         self.addon(RecordAddon)
 
         from .addons.contrib.grass_on_aog import GrassAddOn
-        from .addons.contrib.activity import ActivityAddOn
         self.addon(GrassAddOn)
+
+        from .addons.contrib.activity import ActivityAddOn
         self.addon(ActivityAddOn)
+        
         try:
             from .addons.contrib.start_sp_stage import StartSpStageAddon
             self.addon(StartSpStageAddon)
-        except ImportError:
+        except Exception:
             pass
+
+        from .addons.contrib.plan import PlannerAddOn
+        self.addon(PlannerAddOn)

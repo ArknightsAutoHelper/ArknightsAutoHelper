@@ -38,7 +38,7 @@ class ArknightsShell():
         '''
         usage = 'Usage: %prog [options] arg1 arg2 ...'
         parser = optparse.OptionParser(usage, version='%prog 1.0')
-        parser.add_option("-s", "--module-battle-slim", dest="module_battle_slim",
+        parser.add_option("-s", "--module-battle-slim", dest="combat_on_current_stage",
                           action="store_true", default=False,
                           help="Module Battle Slim Option.\n Ensure the page is correct ")
         parser.add_option("-b", "--module-battle", dest="module_battle",
@@ -56,7 +56,7 @@ class ArknightsShell():
                           help="Clear building if call this option")
         (self.options, _) = parser.parse_args()
 
-        if self.options.module_battle_slim & self.options.module_battle:
+        if self.options.combat_on_current_stage & self.options.module_battle:
             parser.error(
                 self.E_BOLD + "[!] Cannot run scripts in both slim and full mode" + self.E_END
             )
@@ -79,11 +79,11 @@ class ArknightsShell():
             exit(0)
 
     def handler(self):
-        if self.options.module_battle_slim | self.options.module_battle | self.options.clear_daily | self.options.get_credit | self.options.get_building:
+        if self.options.combat_on_current_stage | self.options.module_battle | self.options.clear_daily | self.options.get_credit | self.options.get_building:
             Ark = ArknightsHelper()
-            if self.options.module_battle_slim:
+            if self.options.combat_on_current_stage:
                 id, count = self.task_list.popitem()
-                Ark.module_battle_slim(
+                Ark.combat_on_current_stage(
                     c_id=None,
                     set_count=count,
                 )

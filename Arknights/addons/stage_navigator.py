@@ -1,10 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Callable, Any
+    from typing import Callable, Any, Sequence
 
 from Arknights.helper import AddonBase
 from .common import CommonAddon
+from .combat import CombatAddon, _parse_opt
 from random import randint, uniform
 from Arknights.flags import *
 
@@ -33,19 +34,46 @@ def is_stage_supported_ocr(stage):
 class StageNavigator(AddonBase):
     def on_attach(self) -> None:
         self.extra_handlers: list[tuple[Callable[[str], bool], Callable[[str], Any]]] = []
+        self.handler_cache = {}
+        self.custom_stages = {}
+        self.register_navigator('builtin', self.is_stage_supported_builtin, self.goto_stage_builtin)
+        self.register_cli_command('auto', self.cli_auto, self.cli_auto.__doc__)
 
     def register_navigator(self, tag: str, predicate: Callable[[str], bool], navigator: Callable[[str], Any]):
         self.extra_handlers.append((tag, predicate, navigator))
 
-    def is_stage_supported(self, c_id):
-        result = is_stage_supported_ocr(c_id)
-        if not result:
-            for tag, predicate, handler in self.extra_handlers:
-                self.logger.debug("querying %s for stage %s navigation", tag, c_id)
-                result = predicate(c_id)
-                if result:
-                    break
-        return result
+    def register_custom_stage(self, name: str, handler: Callable[[str, int], Any], ignore_count=False, title=None, description=None):
+        """custom stages are meant to be invoked by user directly and will be unavailable in navigate_and_combat"""
+        self.custom_stages[name] = (handler, ignore_count, title, description)
+        helptxt = self.cli_auto.__doc__.rstrip()
+        append_helptext = ['']
+        for name in self.custom_stages:
+            handler, ignore_count, title, description = self.custom_stages[name]
+            text = f"            {name}"
+            if title is not None:
+                text += f"\t{title}"
+                if description is not None:
+                    text += f": {description}"
+            append_helptext.append(text)
+        helptxt += '\n'.join(append_helptext)
+        self.register_cli_command('auto', self.cli_auto, helptxt)
+
+    def is_stage_supported(self, stage):
+        if stage in self.handler_cache:
+            return True
+        for tag, predicate, handler in self.extra_handlers:
+            self.logger.debug("querying %s for stage %s navigation", tag, stage)
+            result = predicate(stage)
+            if result:
+                self.handler_cache[stage] = handler
+                return True
+        return False
+
+    def goto_stage(self, stage):
+        if not self.is_stage_supported(stage):
+            raise ValueError(stage)
+        handler = self.handler_cache[stage]
+        handler(stage)
 
     def find_and_tap(self, partition, target):
         import imgreco.map
@@ -210,7 +238,11 @@ class StageNavigator(AddonBase):
             else:
                 self.logger.error('未找到目标，是否未开放关卡？')
 
-    def goto_stage(self, stage):
+    def is_stage_supported_builtin(self, c_id):
+        result = is_stage_supported_ocr(c_id)
+        return result
+
+    def goto_stage_builtin(self, stage):
         import imgreco.common
         import imgreco.main
         import imgreco.map
@@ -231,3 +263,79 @@ class StageNavigator(AddonBase):
             self.find_and_tap(path[1], path[2])
         else:
             raise NotImplementedError()
+
+    def navigate_and_combat(self,  # 完整的战斗模块
+                            c_id: str,  # 选择的关卡
+                            set_count=1000):  # 作战次数
+        c_id = c_id.upper()
+        if self.is_stage_supported(c_id):
+            self.goto_stage(c_id)
+        else:
+            self.logger.error('不支持的关卡：%s', c_id)
+            raise ValueError(c_id)
+        return self.addon(CombatAddon).combat_on_current_stage(c_id,
+                                set_count=set_count,
+                                check_ai=True,
+                                sub=True)
+
+    def main_handler(self, task_list: Sequence[tuple[str, int]]):
+        if len(task_list) == 0:
+            self.logger.fatal("任务清单为空!")
+            return
+
+        for c_id, count in task_list:
+            self.logger.info("开始 %s", c_id)
+            if c_id in self.custom_stages:
+                handler, ignore_count, title, description = self.custom_stages[c_id]
+                handler(count)
+            else:
+                flag = self.navigate_and_combat(c_id, count)
+
+        self.logger.info("任务清单执行完毕")
+
+    def parse_stage_desc(self, args):
+        result = []
+        it = iter(args)
+        while True:
+            try:
+                current = next(it)
+            except StopIteration:
+                break
+            if current in self.custom_stages:
+                handler, ignore_count, title, description = self.custom_stages[current]
+                if ignore_count:
+                    result.append((current, None))
+                    continue
+            else:
+                if not self.is_stage_supported(current):
+                    raise ValueError('不支持的关卡：%s' % current)
+            try:
+                count_str = next(it)
+                count = int(count_str)
+            except StopIteration:
+                raise ValueError('count expected after %r' % current)
+            except ValueError:
+                raise ValueError('invalid count: %r' % count)
+            result.append((current, count))
+        return result
+
+    def cli_auto(self, argv):
+        """
+        auto [+-rR[N]] STAGE_DESC [STAGE_DESC]...
+        按顺序挑战指定关卡。
+        STAGE_DESC 可以是：
+            1-7 10\t特定主线、活动关卡（1-7）10 次
+        """
+        ops = _parse_opt(argv)
+        arglist = argv[1:]
+        if len(arglist) == 0:
+            print('usage: auto [+-rR] stage1 count1 [stage2 count2] ...')
+            return 1
+        it = iter(arglist)
+        tasks = self.parse_stage_desc(arglist)
+
+        for op in ops:
+            op(self)
+        with self.helper.frontend.context:
+            self.main_handler(task_list=tasks)
+        return 0

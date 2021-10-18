@@ -54,7 +54,7 @@ class WorkerThread(threading.Thread):
             "worker:set_refill_with_originium": lambda x: setattr(self.helper, 'refill_with_originium', bool(x)),
             "worker:set_max_refill_count": self.set_max_refill_count,
             "worker:module_battle": self.ensure_connector_decorator(lambda stage, count: self.helper.module_battle(stage, int(count))),
-            "worker:module_battle_slim": self.ensure_connector_decorator(lambda count: self.helper.module_battle_slim(set_count=int(count))),
+            "worker:combat_on_current_stage": self.ensure_connector_decorator(lambda count: self.helper.combat_on_current_stage(set_count=int(count))),
             "worker:clear_task": self.ensure_connector_decorator(lambda: self.helper.clear_task()),
             "worker:recruit": self.ensure_connector_decorator(lambda: self.helper.recruit()),
         }

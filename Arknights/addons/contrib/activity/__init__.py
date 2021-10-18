@@ -107,8 +107,8 @@ class ActivityAddOn(AddonBase):
         record_name = f'goto_{target_stage["stageType"]}_{target_stage["zoneId"]}'
         if query_only:
             return self.addon(RecordAddon).get_record_path(record_name)
-        print(f"{target_stage['code']}: {target_stage['name']}, 关卡掉落: {stage_drops}")
-        print(f'执行操作记录 {record_name}')
+        self.logger.info(f"{target_stage['code']}: {target_stage['name']}, 关卡掉落: {stage_drops}")
+        self.logger.info(f'执行操作记录 {record_name}')
         self.addon(RecordAddon).replay_custom_record(record_name)
         self.addon(StageNavigator).find_and_tap_stage_by_ocr(None, target_stage_code, stage_linear)
 

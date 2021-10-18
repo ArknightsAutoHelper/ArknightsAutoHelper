@@ -29,6 +29,7 @@ def item_qty_guard(qty):
 
 def _parse_opt(argv):
     ops = []
+    ops.append(lambda helper: helper.addon('CombatAddon').reset_refill())
     if len(argv) >= 2 and argv[1][:1] in ('+', '-'):
         opts = argv.pop(1)
         enable_refill = None
@@ -39,17 +40,17 @@ def _parse_opt(argv):
                 enable_refill = False
             elif c == 'r' and enable_refill is not None:
                 def op(helper):
-                    helper.addon('combat').use_refill = enable_refill
-                    helper.addon('combat').refill_with_item = enable_refill
+                    helper.addon('CombatAddon').use_refill = enable_refill
+                    helper.addon('CombatAddon').refill_with_item = enable_refill
                 ops.append(op)
             elif c == 'R' and enable_refill is not None:
                 def op(helper):
-                    helper.addon('combat').refill_with_originium = enable_refill
+                    helper.addon('CombatAddon').refill_with_originium = enable_refill
                 ops.append(op)
             elif c in '0123456789' and enable_refill:
                 num = int(opts[i:])
                 def op(helper):
-                    helper.addon('combat').max_refill_count = num
+                    helper.addon('CombatAddon').max_refill_count = num
                 ops.append(op)
                 break
             else:
@@ -58,12 +59,9 @@ def _parse_opt(argv):
 
 
 class CombatAddon(AddonBase):
-    alias = 'combat'
     def on_attach(self):
         self.operation_time = []
-        self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
-        self.refill_with_originium = config.get('behavior/refill_ap_with_originium', False)
-        self.use_refill = self.refill_with_item or self.refill_with_originium
+        self.reset_refill()
         self.loots = {}
         self.use_penguin_report = config.get('reporting/enabled', False)
         if self.use_penguin_report:
@@ -72,9 +70,13 @@ class CombatAddon(AddonBase):
         self.max_refill_count = None
 
         self.register_cli_command('quick', self.cli_quick, self.cli_quick.__doc__)
-        self.register_cli_command('auto', self.cli_auto, self.cli_auto.__doc__)
 
         # self.helper.register_gui_handler(self.gui_handler)
+
+    def reset_refill(self):
+        self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
+        self.refill_with_originium = config.get('behavior/refill_ap_with_originium', False)
+        self.use_refill = self.refill_with_item or self.refill_with_originium
 
     def format_recoresult(self, recoresult):
         result = None
@@ -87,7 +89,7 @@ class CombatAddon(AddonBase):
             result = '<发生错误>'
         return result
 
-    def module_battle_slim(self,
+    def combat_on_current_stage(self,
                            c_id=None,  # 待战斗的关卡编号
                            set_count=1000,  # 战斗次数
                            check_ai=True,  # 是否检查代理指挥
@@ -104,7 +106,7 @@ class CombatAddon(AddonBase):
             True 完成指定次数的作战
             False 理智不足, 退出作战
         '''
-        self.logger.debug("helper.module_battle_slim")
+        self.logger.debug("helper.combat_on_current_stage")
         sub = kwargs["sub"] \
             if "sub" in kwargs else False
         auto_close = kwargs["auto_close"] \
@@ -352,38 +354,6 @@ class CombatAddon(AddonBase):
         if smobj.mistaken_delegation and config.get('behavior/mistaken_delegation/skip', True):
             raise StopIteration()
 
-    def module_battle(self,  # 完整的战斗模块
-                      c_id,  # 选择的关卡
-                      set_count=1000):  # 作战次数
-        self.logger.debug("helper.module_battle")
-        c_id = c_id.upper()
-        from .stage_navigator import StageNavigator
-        if self.addon(StageNavigator).is_stage_supported(c_id):
-            self.addon(StageNavigator).goto_stage(c_id)
-        else:
-            self.logger.error('不支持的关卡：%s', c_id)
-            raise ValueError(c_id)
-        return self.module_battle_slim(c_id,
-                                set_count=set_count,
-                                check_ai=True,
-                                sub=True)
-
-    def main_handler(self, task_list, clear_tasks=False, auto_close=True):
-        if len(task_list) == 0:
-            self.logger.fatal("任务清单为空!")
-            return
-
-        from .stage_navigator import StageNavigator
-        for c_id, count in task_list:
-            if not self.addon(StageNavigator).is_stage_supported(c_id):
-                raise ValueError(c_id)
-
-        for c_id, count in task_list:
-            self.logger.info("开始 %s", c_id)
-            flag = self.module_battle(c_id, count)
-
-        self.logger.info("任务清单执行完毕")
-
     def log_total_loots(self):
         self.logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
 
@@ -403,32 +373,10 @@ class CombatAddon(AddonBase):
         for op in ops:
             op(self)
         with self.helper.frontend.context:
-            self.module_battle_slim(
+            self.combat_on_current_stage(
                 c_id=None,
                 set_count=count,
             )
         return 0
 
 
-    def cli_auto(self, argv):
-        """
-        auto [+-rR[N]] stage1 count1 [stage2 count2] ...
-        按顺序挑战指定关卡特定次数直到理智不足
-        """
-        ops = _parse_opt(argv)
-        arglist = argv[1:]
-        if len(arglist) % 2 != 0:
-            print('usage: auto [+-rR] stage1 count1 [stage2 count2] ...')
-            return 1
-        it = iter(arglist)
-        tasks = [(stage.upper(), int(counts)) for stage, counts in zip(it, it)]
-
-        for op in ops:
-            op(self)
-        with self.helper.frontend.context:
-            self.main_handler(
-                clear_tasks=False,
-                task_list=tasks,
-                auto_close=False
-            )
-        return 0

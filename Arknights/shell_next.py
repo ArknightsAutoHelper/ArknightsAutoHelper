@@ -1,4 +1,5 @@
 import itertools
+import os
 import sys
 import time
 import signal
@@ -33,9 +34,9 @@ class ShellNextFrontend:
             time.sleep(secs)
             return
         if self.show_toggle:
-            togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if self.helper.addon('combat').use_refill else 'OFF')
+            togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if self.helper.addon('CombatAddon').use_refill else 'OFF')
             def togglecallback(handler):
-                self.helper.addon('combat').use_refill = not self.helper.addon('combat').use_refill
+                self.helper.addon('CombatAddon').use_refill = not self.helper.addon('CombatAddon').use_refill
                 handler.label = togglelabel()
             togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
         else:
@@ -157,7 +158,8 @@ def interactive(argv):
     helpcmds(interactive_cmds)
     errorlevel = None
     try:
-        import readline
+        if os.name != 'nt':
+            import readline
     except ImportError:
         pass
     if instance_id := config.get_instance_id():
@@ -238,8 +240,8 @@ def main(argv):
     argv0 = argv[0]
     helper_instance, context = _create_helper()
     
-    global_cmds.extend([*helper_instance._cli_commands, ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
-    interactive_cmds.extend([('connect', connect, connect.__doc__), *helper_instance._cli_commands, ('exit', exit, '')])
+    global_cmds.extend([*helper_instance._cli_commands.values(), ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
+    interactive_cmds.extend([('connect', connect, connect.__doc__), *helper_instance._cli_commands.values(), ('exit', exit, '')])
     if len(argv) < 2:
         interactive(argv[1:])
         return 1

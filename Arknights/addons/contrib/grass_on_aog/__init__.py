@@ -8,7 +8,7 @@ from Arknights.helper import AddonBase
 from random import randint
 from Arknights.helper import AddonBase
 from ...common import CommonAddon
-from ...combat import CombatAddon
+from ...stage_navigator import StageNavigator
 
 desc = f"""
 {__file__}
@@ -68,15 +68,11 @@ def order_stage(item):
 class GrassAddOn(AddonBase):
 
     def on_attach(self) -> None:
-        self.register_cli_command('grass', self.run, self.run.__doc__)
+        self.addon(StageNavigator).register_custom_stage('grass', self.run, ignore_count=True, title='一键长草', description='检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料')
 
     def run(self, argv):
-        """
-        grass
-        一键长草：检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料。
-        """
         exclude_names = config.get('addons/grass_on_aog/exclude_names', ['固源岩组'])
-        print('不刷以下材料:', exclude_names)
+        self.logger.info('不刷以下材料:', exclude_names)
         self.logger.info('加载库存信息...')
         aog_cache = load_aog_cache()
         my_items = self.load_inventory()
@@ -100,9 +96,9 @@ class GrassAddOn(AddonBase):
                 # print(t3_item)
                 stage_info = order_stage(t3_item)
                 stage = stage_info['code']
-                print('aog stage:', stage)
+                self.logger.info('aog stage:', stage)
                 break
-        self.addon(CombatAddon).module_battle(stage, 1000)
+        self.addon(StageNavigator).navigate_and_combat(stage, 1000)
 
     def load_inventory(self):
         if os.path.exists(inventory_cache_file):

@@ -9,7 +9,7 @@ import numpy as np
 
 import imgreco.main
 from Arknights.helper import AddonBase
-from ..activity import ActivityAddOn, get_stage_map
+from ..activity import get_stage_map
 from ..base import pil2cv, crop_cv_by_rect, show_img
 from ..common_cache import load_game_data
 from imgreco.ocr.cnocr import ocr_and_correct
@@ -18,8 +18,8 @@ from ...stage_navigator import StageNavigator
 from ...record import RecordAddon
 from imgreco import resources
 
-icon1 = resources.load_image('contrib/start_sp_stage/icon1.png', imread_flags=cv2.IMREAD_GRAYSCALE)
-icon2 = resources.load_image('contrib/start_sp_stage/icon2.png', imread_flags=cv2.IMREAD_GRAYSCALE)
+icon1 = resources.load_image('contrib/start_sp_stage/icon1.png', imread_flags=cv2.IMREAD_GRAYSCALE).array
+icon2 = resources.load_image('contrib/start_sp_stage/icon2.png', imread_flags=cv2.IMREAD_GRAYSCALE).array
 
 
 special_zone_actions = {
@@ -81,8 +81,8 @@ class StartSpStageAddon(AddonBase):
             return stage_code in stage_code_map
         if stage_code not in stage_code_map:
             raise RuntimeError(f'无效的关卡: {stage_code}')
-        self.scale = self.helper.viewport[1] / 720
-        if self.helper.viewport != (1280, 720):
+        self.scale = self.viewport[1] / 720
+        if self.viewport != (1280, 720):
             self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         stage = stage_code_map[stage_code]
         activity_id = stage['zoneId'].split('_')[0]
