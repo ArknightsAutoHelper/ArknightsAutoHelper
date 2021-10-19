@@ -1,8 +1,8 @@
 from __future__ import annotations
+from typing import Callable, Optional
 import os
 import time
 from dataclasses import dataclass
-from typing import Callable
 
 import penguin_stats.reporter
 import config
@@ -73,10 +73,18 @@ class CombatAddon(AddonBase):
 
         # self.helper.register_gui_handler(self.gui_handler)
 
-    def reset_refill(self):
-        self.refill_with_item = config.get('behavior/refill_ap_with_item', False)
-        self.refill_with_originium = config.get('behavior/refill_ap_with_originium', False)
+    def configure_refill(self, with_item: Optional[bool] = None, with_originium: Optional[bool] = None):
+        if with_item is not None:
+            self.refill_with_item = bool(with_item)
+        if with_originium is not None:
+            self.refill_with_originium = bool(with_originium)
         self.use_refill = self.refill_with_item or self.refill_with_originium
+        return self
+
+    def reset_refill(self):
+        with_item = config.get('behavior/refill_ap_with_item', False)
+        with_originium = config.get('behavior/refill_ap_with_originium', False)
+        return self.configure_refill(with_item, with_originium)
 
     def format_recoresult(self, recoresult):
         result = None
@@ -90,14 +98,10 @@ class CombatAddon(AddonBase):
         return result
 
     def combat_on_current_stage(self,
+                           count=1000,  # 战斗次数
                            c_id=None,  # 待战斗的关卡编号
-                           set_count=1000,  # 战斗次数
-                           check_ai=True,  # 是否检查代理指挥
                            **kwargs):  # 扩展参数:
         '''
-        :param sub 是否为子程序 (是否为module_battle所调用)
-        :param auto_close 是否自动关闭, 默认为 false
-        :param self_fix 是否尝试自动修复, 默认为 false
         :param MAX_TIME 最大检查轮数, 默认在 config 中设置,
             每隔一段时间进行一轮检查判断作战是否结束
             建议自定义该数值以便在出现一定失误,
@@ -106,24 +110,19 @@ class CombatAddon(AddonBase):
             True 完成指定次数的作战
             False 理智不足, 退出作战
         '''
-        self.logger.debug("helper.combat_on_current_stage")
-        sub = kwargs["sub"] \
-            if "sub" in kwargs else False
-        auto_close = kwargs["auto_close"] \
-            if "auto_close" in kwargs else False
-        if set_count == 0:
+        if count == 0:
             return c_id, 0
         self.operation_time = []
         count = 0
         remain = 0
         try:
-            for _ in range(set_count):
+            for _ in range(count):
                 # self.logger.info("开始第 %d 次战斗", count + 1)
                 self.operation_once_statemachine(c_id, )
                 count += 1
                 self.logger.info("第 %d 次作战完成", count)
                 self.frontend.notify('completed-count', count)
-                if count != set_count:
+                if count != count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
                         self.delay(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
@@ -132,7 +131,7 @@ class CombatAddon(AddonBase):
         except StopIteration:
             # count: succeeded count
             self.logger.error('未能进行第 %d 次作战', count + 1)
-            remain = set_count - count
+            remain = count - count
             if remain > 1:
                 self.logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
@@ -374,8 +373,8 @@ class CombatAddon(AddonBase):
             op(self)
         with self.helper.frontend.context:
             self.combat_on_current_stage(
+                count=count,
                 c_id=None,
-                set_count=count,
             )
         return 0
 

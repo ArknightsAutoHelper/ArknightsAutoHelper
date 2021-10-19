@@ -2,7 +2,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type
+    from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type, ForwardRef
     from numbers import Real
     TupleRect: Tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
     TAddon = TypeVar('TAddon')
@@ -173,22 +173,22 @@ class ArknightsHelper(AddonMixin):
         self.frontend = frontend
         self.frontend.attach(self)
         self.helper = self
-        self._addons = {}
+        self.addons: dict[Union[str, Type[TAddon]], TAddon] = {}
         self._cli_commands = OrderedDict()
         self.load_addons()
         logger.debug("成功初始化模块")
 
-    def addon(self, cls: Union[str, Type[TAddon]]) -> TAddon:
-        if cls in self._addons:
-            return self._addons[cls]
+    def addon(self, cls: Union[ForwardRef[Type[TAddon]], Type[TAddon]]) -> TAddon:
+        if cls in self.addons:
+            return self.addons[cls]
         elif type(cls) == type:
             logger.debug("loading addon %s", cls.__qualname__)
             instance = cls(self)
-            self._addons[cls] = instance
+            self.addons[cls] = instance
             alias = getattr(instance, 'alias', None)
             if alias is None:
                 alias = cls.__name__
-            self._addons[alias] = instance
+            self.addons[alias] = instance
             return instance
         else:
             raise TypeError("cls")

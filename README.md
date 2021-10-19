@@ -97,7 +97,7 @@ pip install -r requirements.txt
 ##### ADB server 相关
 
 * 部分模拟器（如 MuMu、BlueStacks）需要自行启动 ADB server。
-* 部分模拟器（如 MuMu）不使用标准模拟器 ADB 端口，ADB server 无法自动探测，需要另行 adb connect。
+* 部分模拟器（如 MuMu、BlueStacks Hyper-V）不使用标准模拟器 ADB 端口，ADB server 无法自动探测，需要另行 adb connect。
 * 部分模拟器（如夜神）会频繁使用自带的旧版本 ADB 挤掉用户自行启动的新版 ADB。
 
 可以参阅[配置说明](#额外设置)以配置自动解决以上问题。
@@ -123,7 +123,7 @@ pip install -r requirements.txt
 
 **报告 issue 时，建议附上日志以便定位问题。**
 
-## 0x02 ArknightsHelper GUI 启动
+## 0x02 ArknightsHelper GUI 启动（当前不可用）
 
 ```
 $ python3 akhelper-gui.pyw
@@ -174,29 +174,6 @@ akhelper> q 5
 akhelper> c
 ```
 
-<details><summary>旧版命令行接口</summary>
-
-```bash
-Usage: ArknightsShell.py [options] arg1 arg2 ...
-
-Options:
-  -h, --help            显示帮助
-  -s, --module-battle-slim
-                        简略战斗模块，请确保页面停留正确
-  -b, --module-battle   主战斗模块
-  -t TASK_LIST, --task-list=TASK_LIST
-                        战斗清单，输入格式: 
-                        用 | 分隔任务序列，最后一个|不需要输入
-                        用 : 分隔关卡名和次数
-                        e.g.:
-                            LS-5:10|CE-5:1
-  -c, --clear-daily     任务执行完毕后自动领取奖励
-
-```
-
-**致各位贡献者**：新功能请优先加到新命令行接口
-</details>
-
 ### 简略战斗模块
 
 快速启动模块需要手动选关。到如下画面，活动关卡你也可以这么刷。
@@ -216,15 +193,6 @@ python3 akhelper.py quick +rR 99
 # 重复刷当前画面关卡 99 次，启用自动回复理智，启用碎石回复理智
 ```
 
-<details><summary>旧版命令行接口</summary>
-
-```bash
-$ python ArknightsShell.py -s -t slim:99
-# 由于是快速启动模式，所以只会执行第一项任务清单，额外输入的任务序列会被忽略。
-```
-
-</details>
-
 *注意*
 
 * 该模块会识别当前理智和关卡理智消耗，理智不足时会自动停止或补充理智（需在配置中启用）
@@ -242,21 +210,9 @@ python3 akhelper.py auto   5-1 2   5-2 3
 # 按顺序刷 5-1 关卡 2 次，5-2 关卡 3 次
 ```
 
-
-<details><summary>旧版命令行接口</summary>
-
-```bash
-$ python ArknightsShell.py -b -t 5-1:2|5-2:3
-```
-
-</details>
-
-
-
-
 ### 通过输入所需材料数量创建刷图计划并执行
 
-`根据材料创建刷图计划.bat` 文件可以通过企鹅物流的接口, 根据输入的材料创建刷图计划 (支持自动获取当前库存):
+`arkplanner` 命令可以通过企鹅物流的接口, 根据输入的材料创建刷图计划 (支持自动获取当前库存):
 
 ```
 # 缓存将在第一次启动脚本时创建, 如果没有新的地图或材料, 这个缓存没必要更新.
@@ -280,40 +236,22 @@ $ python ArknightsShell.py -b -t 5-1:2|5-2:3
 刷图计划已保存至: config/plan.json
 ```
 
-`执行刷图计划.bat` 文件将从上一步生成的 config/plan.json 获取并执行刷图计划. 
+`auto plan` 文件将从上一步生成的 config/plan.json 获取并执行刷图计划. 
 
 如果当前的理智不足以完成刷图计划, 将保存已经刷图的次数, 并在下次运行时恢复.
 
-如果完成刷图计划后, 当前的理智还有剩余, 且 config 中配置了 `plan/idle_stage`, 那么剩余的理智将用来刷这个关卡.
+如果完成刷图计划后, 当前的理智可能还有剩余，可以使用其他命令消耗剩余理智（如使用脚本连续运行命令）。
 
 ## 0x04 ArknightsHelper 自定义脚本启动
 
-请阅读 ArknightsHelper_examples.py.txt 下的代码并编写自定义脚本
+请参考 [scripting_example.pyi](scripting_example.pyi) 编写自定义脚本。
 
-## 0x05 ArknightsHelper GUI 启动
-
-详见 release 分支下的文件
-
-## 0x06 开机自启动批处理&一键开启
-
-`start.bat`文件会启动模拟器并自动登录刷本，完成预定任务后关闭电脑，你也可以把它略作修改当做一键启动。如果想要使用这个批处理，需要以下几步：
-
-1. 根据ArknightsAutoHelper的位置修改第5行和第7行的工作路径和盘符。
-2. 根据自己设备的情况更改`start.bat`中的内容，每一行的作用我都注释出来了，主要就是改个模拟器的路径和密码。B服的小伙伴需要更改下“启动明日方舟”那行的`com.hypergryph.arknights/com.u8.sdk.U8UnityContext`。另外如果机器性能比较差，Timeout的延时也是需要修改的。
-2. 编写`start.py`（这个文件是gitignore的）放到ArknightsAutoHelper里。
-3. 把`start.bat`文件放到系统的“启动”目录下（不懂可以百度）。
-4. 根据自己电脑的情况百度如何定时启动电脑，但你只要做完第三步它就会在每次开机的时候运行了，如果不需要它运行只要在批处理文件运行的前60秒内关掉它即可。
-
-注意：“无限休眠”其实是有时间的，大概是1024秒，**提交这个批处理的时候我也将这个时间改成了60秒**，如果需要可以修改回来。
-
-
-## 0x07 已知问题
+## 0x05 已知问题
 
 * 自动选关功能：点击随机偏移范围大小固定，且与分辨率无关
 * 某些情况下，物品、数量识别会出错
 
-
-## 0x08 自定义开发与TODO
+## 0x06 自定义开发与TODO
 
 ### 关于一些常见的问题
 

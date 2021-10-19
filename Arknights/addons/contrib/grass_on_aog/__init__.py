@@ -5,10 +5,8 @@ import json
 import os
 import config
 from Arknights.helper import AddonBase
-from random import randint
-from Arknights.helper import AddonBase
-from ...common import CommonAddon
 from ...stage_navigator import StageNavigator
+from ...inventory import InventoryAddon
 
 desc = f"""
 {__file__}
@@ -109,46 +107,11 @@ class GrassAddOn(AddonBase):
         return self.update_inventory()
 
     def update_inventory(self):
-        data = self.get_inventory_items(True)
+        data = self.addon(InventoryAddon).get_inventory_items(True)
         data['cacheTime'] = datetime.now().strftime(cache_key)
         with open(inventory_cache_file, 'w') as f:
             json.dump(data, f)
         return data
-
-    def get_inventory_items(self, show_item_name=False):
-        import imgreco.inventory
-
-        self.addon(CommonAddon).back_to_main()
-        self.logger.info("进入仓库")
-        self.tap_rect(imgreco.inventory.get_inventory_rect(self.viewport))
-
-        items = []
-        last_screen_items = None
-        move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
-        self.swipe_screen(move)
-        screenshot = self.device.screenshot()
-        while True:
-            move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
-            self.swipe_screen(move)
-            screen_items = imgreco.inventory.get_all_item_details_in_screen(screenshot)
-            screen_item_ids = set([item['itemId'] for item in screen_items])
-            screen_items_map = {item['itemId']: item['quantity'] for item in screen_items}
-            if last_screen_items == screen_item_ids:
-                self.logger.info("读取完毕")
-                break
-            if show_item_name:
-                name_map = {item['itemName']: item['quantity'] for item in screen_items}
-                self.logger.info('name_map: %s' % name_map)
-            else:
-                self.logger.info('screen_items_map: %s' % screen_items_map)
-            last_screen_items = screen_item_ids
-            items += screen_items
-            # break
-            screenshot = self.device.screenshot()
-        if show_item_name:
-            self.logger.info('items_map: %s' % {item['itemName']: item['quantity'] for item in items})
-        return {item['itemId']: item['quantity'] for item in items}
-
 
 __all__ = ['GrassAddOn']
 

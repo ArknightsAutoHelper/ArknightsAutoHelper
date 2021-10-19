@@ -5,8 +5,8 @@ import math
 import config
 from penguin_stats import arkplanner
 from Arknights.helper import AddonBase
-from ..combat import CombatAddon
 from ..stage_navigator import StageNavigator
+from ..inventory import InventoryAddon
 
 record_path = os.path.join(config.CONFIG_PATH, 'record.json')
 
@@ -45,8 +45,7 @@ class PlannerAddOn(AddonBase):
         owned = {}
         c = input('是否获取当前库存材料数量(y,N):')
         if c.lower() == 'y':
-            from Arknights.shell_next import _create_helper
-            owned = _create_helper()[0].get_inventory_items()
+            owned = self.addon(InventoryAddon).get_inventory_items()
         calc_mode = config.get('plan/calc_mode', 'online')
         print('正在获取刷图计划...')
         if calc_mode == 'online':
@@ -103,18 +102,10 @@ class PlannerAddOn(AddonBase):
                 task['remain'] = remain
                 if remain > 0:
                     self.logger.info('理智不足, 退出计划执行')
-                    has_remain_sanity = False
                     break
             if update_flag:
                 with open(record_path, 'w') as f:
                     json.dump(plan, f, indent=4, sort_keys=True)
                 print('刷图计划已更新至: config/plan.json')
-            if has_remain_sanity and config.get('plan/idle_stage', None) is not None:
-                # todo recheck
-                idle_stage = config.get('plan/idle_stage')
-                self.logger.info('刷图计划已执行完毕, 理智还有剩余, 执行 idle stage [%s]' % idle_stage)
-                self.addon(CombatAddon).refill_with_item = config.get('plan/refill_ap_with_item', False)
-                self.addon(CombatAddon).refill_with_originium = config.get('plan/refill_ap_with_originium', False)
-                self.addon(StageNavigator).navigate_and_combat(idle_stage, 1000)
         else:
             self.logger.error('未能检测到刷图计划')

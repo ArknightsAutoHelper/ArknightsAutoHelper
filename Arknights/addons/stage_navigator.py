@@ -273,10 +273,7 @@ class StageNavigator(AddonBase):
         else:
             self.logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
-        return self.addon(CombatAddon).combat_on_current_stage(c_id,
-                                set_count=set_count,
-                                check_ai=True,
-                                sub=True)
+        return self.addon(CombatAddon).combat_on_current_stage(set_count, c_id)
 
     def main_handler(self, task_list: Sequence[tuple[str, int]]):
         if len(task_list) == 0:
@@ -293,7 +290,7 @@ class StageNavigator(AddonBase):
 
         self.logger.info("任务清单执行完毕")
 
-    def parse_stage_desc(self, args):
+    def parse_target_desc(self, args):
         result = []
         it = iter(args)
         while True:
@@ -321,9 +318,9 @@ class StageNavigator(AddonBase):
 
     def cli_auto(self, argv):
         """
-        auto [+-rR[N]] STAGE_DESC [STAGE_DESC]...
+        auto [+-rR[N]] TARGET_DESC [TARGET_DESC]...
         按顺序挑战指定关卡。
-        STAGE_DESC 可以是：
+        TARGET_DESC 可以是：
             1-7 10\t特定主线、活动关卡（1-7）10 次
         """
         ops = _parse_opt(argv)
@@ -332,7 +329,7 @@ class StageNavigator(AddonBase):
             print('usage: auto [+-rR] stage1 count1 [stage2 count2] ...')
             return 1
         it = iter(arglist)
-        tasks = self.parse_stage_desc(arglist)
+        tasks = self.parse_target_desc(arglist)
 
         for op in ops:
             op(self)

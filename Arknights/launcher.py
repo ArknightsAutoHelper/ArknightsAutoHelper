@@ -1,3 +1,9 @@
+from __future__ import annotations
+from logging import error
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Union
+del TYPE_CHECKING
 import itertools
 import os
 import sys
@@ -148,6 +154,44 @@ def _ensure_device():
     device.ensure_alive()
 
 
+def command_internal(argv: Union[str, list[str]]):
+    if len(argv) == 0 or argv[0] == '?' or argv[0] == 'help':
+        print(' '.join(x[0] for x in interactive_cmds))
+        return 0
+    cmd = match_cmd(argv[0], interactive_cmds)
+    if cmd is not None:
+        with _alarm_context_factory():
+            try:
+                errorlevel = cmd(argv)
+            except (Exception, KeyboardInterrupt) as e:
+                errorlevel = e
+                import traceback
+                traceback.print_exc()
+        return errorlevel
+
+raise_on_error: bool = True
+
+
+def command(cmd: Union[str, list[str]]):
+    if isinstance(cmd, str):
+        import shlex
+        argv = shlex.split(cmd)
+    else:
+        argv = cmd
+    errorlevel = command_internal(argv)
+    if errorlevel != 0 and raise_on_error:
+        raise RuntimeError(errorlevel)
+    return errorlevel
+
+
+def on_error_resume_next():
+    raise_on_error = False
+
+
+def on_error_raise_exception():
+    raise_on_error = True
+
+
 def interactive(argv):
     """
     interactive
@@ -158,6 +202,7 @@ def interactive(argv):
     helpcmds(interactive_cmds)
     errorlevel = None
     try:
+        # prefer conhost line editing over pyreadline on Windows
         if os.name != 'nt':
             import readline
     except ImportError:
@@ -172,28 +217,19 @@ def interactive(argv):
                 prompt = f"{title}> "
             else:
                 prompt = f"{title} {str(device)}> "
-            cmdline = input(prompt)
-            argv = shlex.split(cmdline)
-            if len(argv) == 0 or argv[0] == '?' or argv[0] == 'help':
-                print(' '.join(x[0] for x in interactive_cmds))
+            try:
+                cmdline = input(prompt)
+            except KeyboardInterrupt:
+                print('')
                 continue
-            elif argv[0] == 'exit':
+            except EOFError:
+                print('')  # print newline on EOF
                 break
-            cmd = match_cmd(argv[0], interactive_cmds)
-            if cmd is not None:
-                with _alarm_context_factory():
-                    errorlevel = cmd(argv)
-        except EOFError:
-            print('')  # print newline on EOF
+            errorlevel = command(cmdline)
+        except SystemExit as e:
+            errorlevel = e.code
             break
-        except (Exception, KeyboardInterrupt) as e:
-            errorlevel = e
-            traceback.print_exc()
-            continue
     return errorlevel
-
-
-argv0 = 'placeholder'
 
 
 def helpcmds(cmds):
@@ -203,6 +239,9 @@ def helpcmds(cmds):
             print("    " + str(cmd[2].strip()))
         else:
             print("    " + cmd[0])
+
+
+argv0 = 'placeholder'
 
 
 def help(argv):
@@ -220,7 +259,6 @@ def exit(argv):
 helper_cmds = []
 global_cmds = []
 interactive_cmds = []
-helper_instance = None
 
 def match_cmd(first, avail_cmds):
     targetcmd = [x for x in avail_cmds if x[0].startswith(first)]
@@ -234,14 +272,15 @@ def match_cmd(first, avail_cmds):
         print("matched commands: " + ','.join(x[0] for x in targetcmd))
         return None
 
+config.enable_logging()
+helper, context = _create_helper()
+global_cmds.extend([*helper._cli_commands.values(), ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
+interactive_cmds.extend([('connect', connect, connect.__doc__), *helper._cli_commands.values(), ('exit', exit, '')])
+
+
 def main(argv):
-    global argv0, helper_instance
-    config.enable_logging()
-    argv0 = argv[0]
-    helper_instance, context = _create_helper()
-    
-    global_cmds.extend([*helper_instance._cli_commands.values(), ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
-    interactive_cmds.extend([('connect', connect, connect.__doc__), *helper_instance._cli_commands.values(), ('exit', exit, '')])
+    global argv0
+    argv0 = argv[0]    
     if len(argv) < 2:
         interactive(argv[1:])
         return 1
@@ -253,8 +292,9 @@ def main(argv):
     return 1
 
 
+__all__ = ['helper', 'command', 'on_error_resume_next', 'on_error_raise_exception']
+
 if __name__ == '__main__':
     import sys
     sys.exit(main(sys.argv))
 
-__all__ = ['main']
