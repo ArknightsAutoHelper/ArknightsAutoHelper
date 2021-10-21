@@ -37,25 +37,15 @@ class AddonMixin:
             n = uniform(n - m * 0.5 * n, n + m * n)
         self.helper.frontend.delay(n, allow_skip)
 
-    def mouse_click(self,  # 点击一个按钮
-                    XY):  # 待点击的按钮的左上和右下坐标
-        assert (self.helper.viewport == (1280, 720))
-        logger.debug("helper.mouse_click")
-        xx = randint(XY[0][0], XY[1][0])
-        yy = randint(XY[0][1], XY[1][1])
-        logger.info("接收到点击坐标并传递xx:{}和yy:{}".format(xx, yy))
-        self.helper.device.touch_tap((xx, yy))
-        self.delay(TINY_WAIT, MANLIKE_FLAG=True)
-
-    def tap_point(self, pos, sleep_time=0.5, randomness=(5, 5)):
+    def tap_point(self, pos, post_delay=0.5, randomness=(5, 5)):
         x, y = pos
         rx, ry = randomness
         x += randint(-rx, rx)
         y += randint(-ry, ry)
         self.helper.device.touch_tap((x, y))
-        self.delay(sleep_time)
+        self.delay(post_delay)
 
-    def tap_rect(self, rc: TupleRect):
+    def tap_rect(self, rc: TupleRect, post_delay=1):
         hwidth = (rc[2] - rc[0]) / 2
         hheight = (rc[3] - rc[1]) / 2
         midx = rc[0] + hwidth
@@ -65,9 +55,9 @@ class AddonMixin:
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
         self.helper.device.touch_tap((tapx, tapy))
-        self.delay(TINY_WAIT, MANLIKE_FLAG=True)
+        self.delay(post_delay, MANLIKE_FLAG=True)
 
-    def tap_quadrilateral(self, pts):
+    def tap_quadrilateral(self, pts, post_delay=1):
         pts = np.asarray(pts)
         acdiff = max(0, min(2, gauss(1, 0.2)))
         bddiff = max(0, min(2, gauss(1, 0.2)))
