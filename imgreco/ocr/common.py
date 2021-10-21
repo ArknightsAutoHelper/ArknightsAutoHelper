@@ -1,8 +1,7 @@
-import copy
 from dataclasses import dataclass, field
 from abc import ABC
 from typing import Any, List
-
+from util.cvimage import Rect
 
 def mult_in(needles, haystack):
     for needle in needles:
@@ -16,41 +15,7 @@ class OcrHint:
     SPARSE = 'sparse'
 
 
-class Rect:
-    def __init__(self, x, y, w=0, h=0, *, right=None, bottom=None):
-        self.x = x
-        self.y = y
-        self.width = w
-        self.height = h
-        if right is not None:
-            self.right = right
-        if bottom is not None:
-            self.bottom = bottom
-
-    def __repr__(self):
-        return 'Rect(%d, %d, %d, %d)' % (self.x, self.y, self.width, self.height)
-
-    @property
-    def right(self):
-        return self.x + self.width
-
-    @right.setter
-    def right(self, value):
-        self.width = value - self.x
-
-    @property
-    def bottom(self):
-        return self.y + self.height
-
-    @bottom.setter
-    def bottom(self, value):
-        self.height = value - self.y
-
-    def __iter__(self):
-        return iter((self.x, self.y, self.right(), self.bottom()))
-
-
-@dataclass
+dataclass
 class OcrObject:
     extra: Any = field(default=None, init=False)
 

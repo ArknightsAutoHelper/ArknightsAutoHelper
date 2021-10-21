@@ -1,3 +1,5 @@
+from numbers import Real
+from typing import Optional
 import cv2 as cv
 import numpy as np
 from util import cvimage as Image
@@ -133,6 +135,24 @@ def get_vwvh(size):
     if isinstance(size, tuple):
         return (size[0] / 100, size[1] / 100)
     return (size.width / 100, size.height / 100)
+
+class RegionOfInterest:
+    def __init__(self, template: Optional[Image.Image] =None, bbox_matrix: Optional[np.matrix] = None, native_resolution: Optional[tuple[int, int]] = None):
+        self.template = template
+        self.bbox_matrix = bbox_matrix
+        self.native_resolution = native_resolution
+        self.vw: Real = 0
+        self.vh: Real = 0
+
+    def set_target_viewport(self, width, height):
+        self.vw = width / 100
+        self.vh = height / 100
+
+    @property
+    def bbox(self):
+        left, top, right, bottom = np.asarray(self.bbox_matrix * np.matrix(np.matrix([[self.vw], [self.vh], [1]]))).reshape(4)
+        return Image.Rect(left, top, right=right, bottom=bottom)
+
 
 if __name__ == "__main__":
     import sys
