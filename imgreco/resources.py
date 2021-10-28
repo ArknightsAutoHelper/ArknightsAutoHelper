@@ -1,7 +1,7 @@
 import os
 import pickle
 from functools import lru_cache
-import importlib.util
+import json
 
 import numpy as np
 from util import cvimage as Image
@@ -40,7 +40,11 @@ if config.use_archived_resources:
 
     def _get_index(names):
         archive_path = get_path(names)
-        return ResourceArchiveIndex(archive, archive_path)
+        try:
+            info = archive.getinfo(archive_path)
+            return ResourceArchiveIndex(archive, info.filename)
+        except KeyError:
+            return None
 
     def get_entries(base):
         prefix = 'resources/imgreco/' + base + '/'
@@ -66,7 +70,11 @@ else:
 
     def _get_index(names):
         path = get_path(names)
-        return FileSystemIndex(os.path.join(root, path))
+        fspath = os.path.join(root, path)
+        if os.path.exists(fspath):
+            return FileSystemIndex(fspath)
+        else:
+            return None
 
     def _open_file(path):
         return open(path, 'rb')
@@ -120,3 +128,16 @@ def load_minireco_model(name, filter_chars=None):
         model['data'] = [x for x in model['data'] if x[0] in filter_chars]
         model['chars'] = [x[0] for x in model['data']]
     return model
+
+
+def load_roi(basename, image_mode='RGB'):
+    from .common import RegionOfInterest
+    metafile = basename + '.roi.json'
+    imgfile = basename + '.png'
+    imgfileindex = resolve(imgfile)
+    img = load_image_cached(imgfileindex, image_mode) if imgfileindex is not None else None
+    with open_file(metafile) as f:
+        meta = json.load(f)
+    bbox_matrix = np.asmatrix(meta['bbox_matrix']) if 'bbox_matrix' in meta else None
+    native_resolution = tuple(meta['native_resolution']) if 'native_resolution' in meta else None
+    return RegionOfInterest(template=img, bbox_matrix=bbox_matrix, native_resolution=native_resolution)

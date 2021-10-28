@@ -137,6 +137,14 @@ class Rect:
         if bottom is not None:
             self.bottom = bottom
 
+    @classmethod
+    def from_xywh(cls, x, y, w, h):
+        return cls(x, y, w, h)
+
+    @classmethod
+    def from_ltrb(cls, left, top, right, bottom):
+        return cls(left, top, right=right, bottom=bottom)
+
     @property
     def right(self):
         return self.x + self.width
@@ -358,7 +366,7 @@ class Image:
                 resample = NEAREST
             else:
                 resample = BICUBIC
-        newmat = cv2.resize(self._mat, (int(size[0]), int(size[1])), interpolation=resample)
+        newmat = cv2.resize(self._mat, (int(round(size[0])), int(round(size[1]))), interpolation=resample)
         return Image(newmat, self.mode)
 
     def save(self, fp, format=None, imwrite_params=None, **params):

@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type, ForwardRef
     from numbers import Real
-    TupleRect: Tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
     TAddon = TypeVar('TAddon')
 del TYPE_CHECKING
 
@@ -23,84 +22,9 @@ from connector import auto_connect
 from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from .frontend import Frontend, DummyFrontend
 from Arknights.flags import *
-
+from .mixin import AddonMixin
 
 logger = logging.getLogger('helper')
-
-
-class AddonMixin:
-    helper: 'ArknightsHelper'
-    def delay(self, n: Real=10,  # 等待时间中值
-               MANLIKE_FLAG=True, allow_skip=False):  # 是否在此基础上设偏移量
-        if MANLIKE_FLAG:
-            m = uniform(0, 0.3)
-            n = uniform(n - m * 0.5 * n, n + m * n)
-        self.helper.frontend.delay(n, allow_skip)
-
-    def tap_point(self, pos, post_delay=0.5, randomness=(5, 5)):
-        x, y = pos
-        rx, ry = randomness
-        x += randint(-rx, rx)
-        y += randint(-ry, ry)
-        self.helper.device.touch_tap((x, y))
-        self.delay(post_delay)
-
-    def tap_rect(self, rc: TupleRect, post_delay=1):
-        hwidth = (rc[2] - rc[0]) / 2
-        hheight = (rc[3] - rc[1]) / 2
-        midx = rc[0] + hwidth
-        midy = rc[1] + hheight
-        xdiff = max(-1, min(1, gauss(0, 0.2)))
-        ydiff = max(-1, min(1, gauss(0, 0.2)))
-        tapx = int(midx + xdiff * hwidth)
-        tapy = int(midy + ydiff * hheight)
-        self.helper.device.touch_tap((tapx, tapy))
-        self.delay(post_delay, MANLIKE_FLAG=True)
-
-    def tap_quadrilateral(self, pts, post_delay=1):
-        pts = np.asarray(pts)
-        acdiff = max(0, min(2, gauss(1, 0.2)))
-        bddiff = max(0, min(2, gauss(1, 0.2)))
-        halfac = (pts[2] - pts[0]) / 2
-        m = pts[0] + halfac * acdiff
-        pt2 = pts[1] if bddiff > 1 else pts[3]
-        halfvec = (pt2 - m) / 2
-        finalpt = m + halfvec * bddiff
-        self.helper.device.touch_tap(tuple(int(x) for x in finalpt))
-        self.delay(TINY_WAIT, MANLIKE_FLAG=True)
-
-    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
-        if crop is None:
-            shooter = lambda: self.helper.device.screenshot(False)
-        else:
-            shooter = lambda: self.helper.device.screenshot(False).crop(crop)
-        screenshot = shooter()
-        t0 = time.monotonic()
-        ts = t0 + timeout
-        n = 0
-        minerr = 65025
-        message_shown = False
-        while (t1 := time.monotonic()) < ts:
-            if check_delay > 0:
-                self.delay(check_delay, False, True)
-            screenshot2 = shooter()
-            mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
-            if mse <= threshold:
-                return screenshot2
-            screenshot = screenshot2
-            if mse < minerr:
-                minerr = mse
-            if not message_shown and t1-t0 > 10:
-                logger.info("等待画面静止")
-        if raise_for_timeout:
-            raise RuntimeError("%d 秒内画面未静止，最小误差=%d，阈值=%d" % (timeout, minerr, threshold))
-        return None
-
-    def swipe_screen(self, move, rand=100, origin_x=None, origin_y=None):
-        origin_x = (origin_x or self.viewport[0] // 2) + randint(-rand, rand)
-        origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
-        self.helper.device.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
-
 
 class AddonBase(AddonMixin):
     alias : ClassVar[Union[str, None]] = None
