@@ -1,18 +1,13 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Literal, Optional, Sequence, Union
-from typing_extensions import TypeAlias
+from typing import TYPE_CHECKING, TypedDict
 
-import cv2
-
-from util.cvimage import Rect
 if TYPE_CHECKING:
-    from typing import Annotated
+    from typing import Annotated, Literal, Optional, Sequence, Union
     from numbers import Real
     import imgreco.common
-    TupleRect: TypeAlias = tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
-    RoiDef: TypeAlias = Union[str, imgreco.common.RegionOfInterest]
-
-from typing import TypedDict
+    TupleRect = tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
+    RoiDef = Union[str, imgreco.common.RegionOfInterest]
+    from .helper import ArknightsHelper
 
 class RoiMatchingArgs(TypedDict):
     method: Union[Literal['template_matching'], Literal['compare_mse'], Literal['feature_matching'], None]
@@ -23,7 +18,8 @@ from random import uniform, randint, gauss
 import time
 
 import numpy as np
-
+import cv2
+from util.cvimage import Rect
 import imgreco.common
 import imgreco.imgops
 import imgreco.resources
@@ -32,7 +28,6 @@ from .flags import *
 
 class AddonMixin:
     if TYPE_CHECKING:
-        from .helper import ArknightsHelper
         helper: ArknightsHelper
         logger: logging.Logger
         viewport: tuple[int, int]
