@@ -1,14 +1,15 @@
 from rotypes.inspectable import IInspectable
-from rotypes.idldsl import define_winrt_com_method, runtimeclass, _static_method
+from rotypes.idldsl import define_winrt_com_method, runtimeclass, _static_method, GUID
 from rotypes.winstring import HSTRING
 
-
+@GUID('EA79A752-F7C2-4265-B1BD-C4DEC4E4F080')
 class ILanguage(IInspectable):
-    IID = 'EA79A752-F7C2-4265-B1BD-C4DEC4E4F080'
+    pass
 
 
+@GUID('9B0252AC-0C27-44F8-B792-9793FB66C63E')
 class ILanguageFactory(IInspectable):
-    IID = '9B0252AC-0C27-44F8-B792-9793FB66C63E'
+    pass
 
 
 class Language(runtimeclass, ILanguage):

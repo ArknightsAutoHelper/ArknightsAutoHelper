@@ -23,7 +23,9 @@ def check_hresult(hr):
             raise TypeError("E_NOINTERFACE")
         elif hr == E_BOUNDS:
             raise IndexError  # for old style iterator protocol
-        raise OSError("HRESULT 0x%08X: %s" % (hr & 0xFFFFFFFF, FormatError(hr)))
+        e = OSError("[HRESULT 0x%08X] %s" % (hr & 0xFFFFFFFF, FormatError(hr)))
+        e.winerror = hr & 0xFFFFFFFF
+        raise e
     return hr
 
 
@@ -66,5 +68,9 @@ class GUID(Structure):
         # We make GUID instances hashable, although they are mutable.
         return hash(bytes(self))
 
+    def __call__(self, victim):
+        '''for use as class decorator'''
+        victim.GUID = self
+        return victim
 
 REFGUID = POINTER(GUID)

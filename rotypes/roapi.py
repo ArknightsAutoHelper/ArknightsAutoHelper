@@ -23,7 +23,7 @@ RoInitialize.restype = check_hresult
 @lru_cache()
 def GetActivationFactory(classname, interface=IActivationFactory):
     insp = interface()
-    RoGetActivationFactory(HSTRING(classname), GUID(interface.IID), byref(insp))
+    RoGetActivationFactory(classname, interface.GUID, byref(insp))
     return insp
 
 

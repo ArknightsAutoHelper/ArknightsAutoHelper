@@ -1,4 +1,5 @@
 import ctypes
+import weakref
 
 from .types import check_hresult
 
@@ -25,6 +26,7 @@ class HSTRING(ctypes.c_void_p):
         u16str = s.encode("utf-16-le") + b"\x00\x00"
         u16len = (len(u16str) // 2) - 1
         WindowsCreateString(u16str, ctypes.c_uint32(u16len), ctypes.byref(self))
+        self._finalizer = weakref.finalize(self, WindowsDeleteString, self.value)  # only register finalizer if we created the string
 
     def __str__(self):
         if self.value is None:
@@ -33,10 +35,9 @@ class HSTRING(ctypes.c_void_p):
         ptr = WindowsGetStringRawBuffer(self, ctypes.byref(length))
         return ctypes.wstring_at(ptr, length.value)
 
-    def __del__(self):
-        if self.value is None:
-            return
-        WindowsDeleteString(self)
-
     def __repr__(self):
         return "HSTRING(%s)" % repr(str(self))
+
+    @classmethod
+    def from_param(cls, s):
+        return cls(s)

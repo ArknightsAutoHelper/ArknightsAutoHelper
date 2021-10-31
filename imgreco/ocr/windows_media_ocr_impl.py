@@ -42,14 +42,14 @@ def _swbmp_from_pil_image(img):
 
 def check_supported():
     try:
-        return WinRTOcrEngine.IsLanguageSupported(Language.CreateLanguage(HSTRING('zh-cn')))
+        return WinRTOcrEngine.IsLanguageSupported(Language.CreateLanguage('zh-cn'))
     except Exception:
         return False
 
 class WindowsOcrEngine(OcrEngine):
     def __init__(self, lang, **kwargs):
         super().__init__(lang, **kwargs)
-        lang = Language.CreateLanguage(HSTRING(lang))
+        lang = Language.CreateLanguage(lang)
         if not WinRTOcrEngine.IsLanguageSupported(lang):
             raise ValueError('unsupported language')
         self.winengine = WinRTOcrEngine.TryCreateFromLanguage(lang)

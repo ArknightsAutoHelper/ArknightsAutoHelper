@@ -1,5 +1,5 @@
 from ctypes import WINFUNCTYPE, HRESULT, POINTER, Structure, c_void_p, cast, pointer
-
+import traceback
 from .inspectable import IUnknown
 from .types import REFGUID, VOIDPP, ULONG, GUID, E_NOINTERFACE, S_OK, E_FAIL
 
@@ -26,12 +26,12 @@ def proto(*argtypes, retval=None):
     proto._retval = retval
     return proto
 
-
+IID_IAgileObject = GUID('94ea2b94-e9cc-49e0-c0ff-ee64ca8f5b90')
 class delegatebase:
     @classmethod
     def delegate(cls, func):
         vtbl = _impl_delegate_vtbl()
-        iid = GUID(cls.IID)
+        iid = cls.GUID
 
         def impl_AddRef(this):
             refcnt = _refmap[this][1] + 1
@@ -41,7 +41,7 @@ class delegatebase:
         def impl_QueryInterface(this, refiid, ppunk):
             try:
                 wantiid = refiid.contents
-                if wantiid == GUID(IUnknown.IID) or wantiid == iid:
+                if wantiid == IUnknown.GUID or wantiid == IID_IAgileObject or wantiid == iid:
                     impl_AddRef(this)
                     ppunk[0] = this
                     return S_OK
@@ -62,26 +62,26 @@ class delegatebase:
             def impl_Invoke(this, *args):
                 try:
                     for arg in args:
-                        if isinstance(arg, IUnknown):
-                            arg._own_object = False
+                        if isinstance(arg, IUnknown) and arg.value is not None:
+                            arg._AddRef()
                     retval = func(*args[:-1])
                     args[-1][0] = retval
                     return S_OK
-                except Exception as e:
-                    print(e)
+                except Exception:
+                    traceback.print_exc()
                     return E_FAIL
         else:
             def impl_Invoke(this, *args, **kwargs):
                 if isinstance(this, IUnknown):
-                    this._own_object = False
+                    this._AddRef()
                 try:
                     for arg in args:
-                        if isinstance(arg, IUnknown):
-                            arg._own_object = False
+                        if isinstance(arg, IUnknown) and arg.value is not None:
+                            arg._AddRef()
                     func(*args, **kwargs)
                     return S_OK
-                except Exception as e:
-                    print(e)
+                except Exception:
+                    traceback.print_exc()
                     return E_FAIL
 
         cb = proto(impl_Invoke)
