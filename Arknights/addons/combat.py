@@ -98,7 +98,7 @@ class CombatAddon(AddonBase):
         return result
 
     def combat_on_current_stage(self,
-                           count=1000,  # 战斗次数
+                           desired_count=1000,  # 战斗次数
                            c_id=None,  # 待战斗的关卡编号
                            **kwargs):  # 扩展参数:
         '''
@@ -110,19 +110,19 @@ class CombatAddon(AddonBase):
             True 完成指定次数的作战
             False 理智不足, 退出作战
         '''
-        if count == 0:
+        if desired_count == 0:
             return c_id, 0
         self.operation_time = []
         count = 0
         remain = 0
         try:
-            for _ in range(count):
+            for _ in range(desired_count):
                 # self.logger.info("开始第 %d 次战斗", count + 1)
                 self.operation_once_statemachine(c_id, )
                 count += 1
                 self.logger.info("第 %d 次作战完成", count)
                 self.frontend.notify('completed-count', count)
-                if count != count:
+                if count != desired_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
                         self.delay(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
@@ -131,7 +131,7 @@ class CombatAddon(AddonBase):
         except StopIteration:
             # count: succeeded count
             self.logger.error('未能进行第 %d 次作战', count + 1)
-            remain = count - count
+            remain = desired_count - count
             if remain > 1:
                 self.logger.error('已忽略余下的 %d 次战斗', remain - 1)
 
