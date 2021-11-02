@@ -168,6 +168,7 @@ def command_internal(argv: Union[str, list[str]]):
                 import traceback
                 traceback.print_exc()
         return errorlevel
+    return 1
 
 raise_on_error: bool = True
 
@@ -185,10 +186,12 @@ def command(cmd: Union[str, list[str]]):
 
 
 def on_error_resume_next():
+    global raise_on_error
     raise_on_error = False
 
 
 def on_error_raise_exception():
+    global raise_on_error
     raise_on_error = True
 
 
@@ -197,8 +200,7 @@ def interactive(argv):
     interactive
         进入交互模式，减少按键次数（
     """
-    import shlex
-    import traceback
+    on_error_resume_next()
     helpcmds(interactive_cmds)
     errorlevel = None
     try:

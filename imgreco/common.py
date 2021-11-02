@@ -159,8 +159,8 @@ class RoiMatchingResult:
     score: Real
     threshold: Real
     score_for_max_similarity: Real
-    bbox: Image.Rect
-    context: Any
+    bbox: Optional[Image.Rect] = None
+    context: Any = None
     if TYPE_CHECKING:
         NoMatch: ClassVar[RoiMatchingResult]
 
