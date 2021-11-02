@@ -1,8 +1,8 @@
 coloredlogs==15.0.1
-numpy==1.21.2
-opencv-python==4.5.3.56
+numpy==1.21.3
+opencv-python==4.5.4.58
 requests==2.26.0
-ruamel.yaml==0.17.16
+ruamel.yaml==0.17.17
 colorama==0.4.4; sys_platform == 'win32'
 ./vendor/penguin_client
 bottle==0.12.19
