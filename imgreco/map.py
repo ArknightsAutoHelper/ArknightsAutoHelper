@@ -2,9 +2,9 @@ import logging
 
 import cv2 as cv
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
-from . import imgops, util
+from . import imgops, common
 from . import resources
 
 from resources.imgreco import map_vectors
@@ -45,7 +45,7 @@ def recognize_daily_menu(img, partition):
 
 
 def get_daily_menu_entry(viewport, daily_type):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     if daily_type == 'material' or daily_type == 'soc':
         return 62.656*vw, 90.185*vh, 65.677*vw, 96.019*vh
     else:

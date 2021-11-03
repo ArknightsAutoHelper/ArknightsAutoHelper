@@ -1,31 +1,16 @@
 import numpy as np
 import cv2
-from . import item, imgops, util
-from PIL import Image
-from . import resources, common
-import json
+from . import item, imgops, common
+from util import cvimage as Image
 from util.richlog import get_logger
 
 logger = get_logger(__name__)
+exclude_items = {'32001', 'other', '3401'}
 
-
-def _load_net():
-    with resources.open_file('inventory/ark_material.onnx') as f:
-        data = f.read()
-        net = cv2.dnn.readNetFromONNX(data)
-        return net
-
-
-ark_material_net = _load_net()
-
-
-def _load_index():
-    with resources.open_file('inventory/index_itemid_relation.json') as f:
-        data = json.load(f)
-        return data['idx2id'], data['id2idx'], data['idx2name'], data['idx2type']
-
-
-idx2id, id2idx, idx2name, idx2type = _load_index()
+# circle size 128x128
+item_circle_radius = 64
+itemreco_box_size = 142  # dimension that compatible with imgreco.item
+half_box = itemreco_box_size // 2
 
 
 def convert_pil_screen(pil_screen):
@@ -39,58 +24,104 @@ def convert_pil_screen(pil_screen):
     return cv_screen
 
 
-def get_all_item_img_in_screen(pil_screen):
+def group_pos(ys):
+    tmp = {}
+    for y in ys:
+        flag = True
+        for k, v in tmp.items():
+            if abs(y - k) < 20:
+                v.append(y)
+                flag = False
+                break
+        if flag:
+            tmp[y] = [y]
+    res = [sum(v) // len(v) for v in tmp.values()]
+    res.sort()
+    return res
+
+
+def get_all_item_img_in_screen(pil_screen, use_group_pos=True):
     cv_screen = convert_pil_screen(pil_screen)
     gray_screen = cv2.cvtColor(cv_screen, cv2.COLOR_BGR2GRAY)
     dbg_screen = cv_screen.copy()
-    # pip 仓库中的 python-opencv 4.5.1 的 HoughCircles 会返回一些错误的 y 坐标, anaconda 中的 opencv 则没有这个问题
-    circles : np.ndarray = get_circles(gray_screen)
+    # cv2.HoughCircles seems works fine for now
+    circles: np.ndarray = get_circles(gray_screen)
     img_h, img_w = cv_screen.shape[:2]
     if circles is None:
         return []
     res = []
-    # circle size 128x128
-    item_circle_radius = 64
-    itemreco_box_size = 142        # dimension that compatible with imgreco.item
-    item_dx = 156                  # delta X of two items in inventory
-    center_ys = [191, 381, 570.5]  # center Y of items
-    xs = circles[:, 0]
-    # print(np.mean(circles[:, 2]))
-    xs.sort()
-    dxs = np.diff(xs)
-    center_xs = np.asarray([np.median(x) for x in np.split(xs, np.where(dxs>140)[0]+1)])
-    calautated_offsets = (center_xs - (item_dx / 2)) % item_dx
-    offset_x = int(np.min(calautated_offsets))
-
-    while offset_x < img_w:
-        cv2.line(dbg_screen, (offset_x, 0), (offset_x, img_h-1), (255,0,0), 1)
-        center_x = offset_x + item_dx / 2
-        xf = center_x - itemreco_box_size/2
-        x = int(xf)
-        x2 = x + itemreco_box_size
-        if x2 < img_w:
-            for y in center_ys:
-                yf = y - itemreco_box_size/2
-                y = int(yf)
-                cv_item_img = cv_screen[y:y+itemreco_box_size, x:x+itemreco_box_size]
-                # filter non-item block
-                gray_img = cv2.cvtColor(cv_item_img, cv2.COLOR_BGR2GRAY)
-                canny_img = cv2.Canny(gray_img, 60, 180)
-                if np.sum(canny_img) < 200:
-                    continue
-                cv_item_img2 = crop_item_middle_img(cv_item_img)
-                # use original size for better quantity recognition
-                ratio = img_h / pil_screen.height
-                original_item_img = pil_screen.crop((int(xf / ratio), int(yf / ratio), int((xf+itemreco_box_size)/ratio), int((yf+itemreco_box_size)/ratio)))
-                numimg = imgops.scalecrop(original_item_img, 0.39, 0.71, 0.82, 0.84).convert('L')
-                res.append({'item_img': cv_item_img, 'num_img': numimg, 'middle_img': cv_item_img2})
-                cv2.rectangle(dbg_screen, (x, y), (x+itemreco_box_size, y+itemreco_box_size), (255,0,0), 2)
-        offset_x += item_dx
-    for x, y, r in circles:
-        cv2.circle(dbg_screen, (x, y), int(r), (0, 0, 255), 2)
+    if use_group_pos:
+        center_ys = group_pos(circles[:, 1])
+        center_xs = group_pos(circles[:, 0])
+        for center_x in center_xs:
+            if center_x - half_box < 0 or center_x + half_box > img_w:
+                continue
+            xf = center_x - half_box
+            x = int(xf)
+            x2 = x + itemreco_box_size
+            if x2 < img_w:
+                for center_y in center_ys:
+                    res.append(get_item_img(pil_screen, cv_screen, dbg_screen, center_x, center_y))
+    for center_x, center_y, r in circles:
+        cv2.circle(dbg_screen, (int(center_x), int(center_y)), int(r), (0, 0, 255), 2)
+        if not use_group_pos:
+            res.append(get_item_img(pil_screen, cv_screen, dbg_screen, center_x, center_y))
 
     logger.logimage(convert_to_pil(dbg_screen))
     return res
+
+
+def get_item_img(pil_screen, cv_screen, dbg_screen, center_x, center_y):
+    img_h, img_w = cv_screen.shape[:2]
+    x, y = int(center_x - half_box), int(center_y - half_box)
+    if x < 0 or x + itemreco_box_size > img_w:
+        return None
+    cv_item_img = cv_screen[y:y + itemreco_box_size, x:x + itemreco_box_size]
+
+    # use original size for better quantity recognition
+    ratio = img_h / pil_screen.height
+    original_item_img = pil_screen.crop((int(x / ratio), int(y / ratio), int((x + itemreco_box_size) / ratio),
+                                         int((y + itemreco_box_size) / ratio)))
+    numimg = imgops.scalecrop(original_item_img, 0.39, 0.705, 0.82, 0.85).convert('L')
+    cv2.rectangle(dbg_screen, (x, y), (x + itemreco_box_size, y + itemreco_box_size), (255, 0, 0), 2)
+    return {'item_img': cv_item_img, 'num_img': numimg,
+            'item_pos': (int((x + itemreco_box_size // 2)*ratio), int((y + itemreco_box_size // 2)*ratio))}
+
+
+def remove_holes(img):
+    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for i in range(len(contours)):
+        area = cv2.contourArea(contours[i])
+        if area < 8:
+            cv2.drawContours(img, [contours[i]], 0, 0, -1)
+
+
+def crop_num_img(item_img):
+    img_h, img_w = item_img.shape[:2]
+    l, t, r, b = tuple(map(int, (img_w * 0.39, img_h * 0.68, img_w * 0.82, img_h * 0.87)))
+    return item_img[t:b, l:r]
+
+
+def get_quantity2(item_img):
+    from .ocr.cnocr import cn_ocr
+    num_img = crop_num_img(item_img)
+    num_img = cv2.cvtColor(num_img, cv2.COLOR_RGB2GRAY)
+    num_img[num_img < 173] = 0
+    remove_holes(num_img)
+    num_img = cv2.cvtColor(num_img, cv2.COLOR_GRAY2RGB)
+    logger.logimage(convert_to_pil(num_img))
+    cn_ocr.set_cand_alphabet('0123456789万')
+    res = ''.join(cn_ocr.ocr_for_single_line(num_img)).strip()
+    cn_ocr.set_cand_alphabet(None)
+    logger.logtext(f'get_quantity2: {res}')
+    factor = 1
+    num = None
+    if res.endswith('万'):
+        factor = 10000
+        res = res[:-1]
+    if res.isdigit():
+        num = int(float(res)) * factor
+    return num
 
 
 def get_circles(gray_img, min_radius=56, max_radius=68):
@@ -99,32 +130,9 @@ def get_circles(gray_img, min_radius=56, max_radius=68):
     return circles[0]
 
 
-def crop_item_middle_img(cv_item_img):
-    # radius 60
-    img_h, img_w = cv_item_img.shape[:2]
-    ox, oy = img_w // 2, img_h // 2
-    y1 = int(oy - 40)
-    y2 = int(oy + 20)
-    x1 = int(ox - 30)
-    x2 = int(ox + 30)
-    return cv_item_img[y1:y2, x1:x2]
-
-
 def show_img(cv_img):
     cv2.imshow('test', cv_img)
     cv2.waitKey()
-
-
-def get_item_id(cv_img):
-    blob = cv2.dnn.blobFromImage(cv_img)
-    ark_material_net.setInput(blob)
-    out = ark_material_net.forward()
-
-    # Get a class with a highest score.
-    out = out.flatten()
-    probs = common.softmax(out)
-    classId = np.argmax(out)
-    return probs[classId], idx2id[classId], idx2name[classId], idx2type[classId]
 
 
 def get_quantity(num_img):
@@ -149,25 +157,14 @@ def convert_to_pil(cv_img):
     return Image.fromarray(cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB))
 
 
-def remove_holes(img):
-    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for i in range(len(contours)):
-        (x, y, w, h) = cv2.boundingRect(contours[i])
-        # area = cv2.contourArea(contours[i])
-        # cv2.rectangle()
-        area = np.count_nonzero(img[y:y+h, x:x+w])
-        if area < 28 or area > 100:
-            cv2.drawContours(img, [contours[i]], 0, 0, -1)
-
-
 def get_all_item_in_screen(screen):
     imgs = get_all_item_img_in_screen(screen)
     item_count_map = {}
     for item_img in imgs:
         logger.logimage(convert_to_pil(item_img['item_img']))
-        prob, item_id, item_name, item_type = get_item_id(item_img['middle_img'])
+        prob, item_id, item_name, item_type = item.get_item_id(item_img['item_img'])
         logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
-        if item_id == 'other' or item_type == 'ACTIVITY_ITEM':
+        if item_id in exclude_items or item_type == 'ACTIVITY_ITEM':
             continue
         quantity = get_quantity(item_img['num_img'])
         item_count_map[item_id] = quantity
@@ -177,7 +174,29 @@ def get_all_item_in_screen(screen):
     return item_count_map
 
 
-def get_inventory_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
-    return 100 * vw - 17.361 * vh, 81.944 * vh, 100 * vw - 6.111 * vh, 96.806 * vh
+def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_types=None, only_normal_items=True):
+    if exclude_item_ids is None:
+        exclude_item_ids = exclude_items
+    if exclude_item_types is None:
+        exclude_item_types = {'ACTIVITY_ITEM'}
+    imgs = get_all_item_img_in_screen(screen)
+    res = []
+    for item_img in imgs:
+        logger.logimage(convert_to_pil(item_img['item_img']))
+        prob, item_id, item_name, item_type = item.get_item_id(item_img['item_img'])
+        logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
+        if item_id in exclude_item_ids or item_type in exclude_item_types:
+            continue
+        if only_normal_items and (not item_id.isdigit() or len(item_id) < 5 or item_type != 'MATERIAL'):
+            continue
+        quantity = get_quantity(item_img['num_img'])
+        # get_quantity2(item_img['item_img'])
+        res.append({'itemId': item_id, 'itemName': item_name, 'itemType': item_type,
+                    'quantity': quantity, 'itemPos': item_img['item_pos']})
+    logger.logtext('res: %s' % res)
+    return res
 
+
+def get_inventory_rect(viewport):
+    vw, vh = common.get_vwvh(viewport)
+    return 100 * vw - 17.361 * vh, 81.944 * vh, 100 * vw - 6.111 * vh, 96.806 * vh

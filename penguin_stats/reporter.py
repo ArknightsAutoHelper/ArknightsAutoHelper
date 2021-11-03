@@ -96,8 +96,9 @@ class PenguinStatsReporter:
             for i in items:
                 self.item_map[i.name] = i
             import imgreco.item
-            recognizer_data = imgreco.item.load_data()
-            unrecognized_items = (set(self.item_map.keys())) - (set(imgreco.item.all_known_items()) | set(EXTRA_KNOWN_ITEMS))
+            _, _, idx2name, _ = imgreco.item.load_index_info()
+            unrecognized_items = (set(self.item_map.keys())) - (set(imgreco.item.all_known_items())
+                                                                | set(EXTRA_KNOWN_ITEMS) | set(idx2name))
             if unrecognized_items:
                 logger.warn('企鹅数据中存在未识别的物品：%s', ', '.join(unrecognized_items))
                 logger.warn('为避免产生统计偏差，已禁用汇报功能')
@@ -136,18 +137,23 @@ class PenguinStatsReporter:
         exclude_from_validation = []
 
         flattenitems = [(groupname, *item) for groupname, items in itemgroups for item in items]
-        # [('常规掉落', '固源岩', 1), ...]
+        # [('常规掉落', '固源岩', 1, 'MATERIAL'), ...]
 
         try:
             flattenitems = list(event_preprocess(recoresult['operation'], flattenitems, exclude_from_validation))
+            report_special_item = config.get('reporting/report_special_item', False)
+            for item in flattenitems:
+                if item[3] == 'special_report_item' and not report_special_item:
+                    logger.error('掉落中包含特殊汇报的物品, 请前往企鹅物流阅读相关说明, 符合条件后可以将配置中的 '
+                                 'reporting/report_special_item 改为 true 汇报掉落')
+                    raise RuntimeError('不汇报特殊物品.')
         except:
             logger.error('处理活动道具时出错', exc_info=True)
             return ReportResult.NotReported
-
         typeddrops = []
         dropinfos = stage.drop_infos
         for itemdef in flattenitems:
-            groupname, name, qty = itemdef
+            groupname, name, qty, item_type = itemdef
             if groupname == '首次掉落':
                 logger.info('不汇报首次掉落')
                 return ReportResult.NotReported

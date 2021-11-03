@@ -3,14 +3,14 @@ import math
 
 import cv2
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 from util.richlog import get_logger
 from . import imgops
 from . import item
 from . import minireco
 from . import resources
-from . import util
+from . import common
 
 logger = get_logger(__name__)
 
@@ -21,6 +21,7 @@ class RecognizeSession:
         self.low_confidence = False
         self.vh = 0
         self.vw = 0
+        self.learn_unrecognized = False
 
 
 def tell_stars(starsimg):
@@ -57,7 +58,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         session.low_confidence = True
 
     if groupname == '幸运掉落':
-        return (groupname, [('(家具)', 1)])
+        return (groupname, [('(家具)', 1, 'furni')])
 
     vw, vh = session.vw, session.vh
     itemwidth = 20.370 * vh
@@ -68,10 +69,10 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         itemimg = groupimg.crop((itemwidth * i, 0.000 * vh, itemwidth * (i+1), 18.981 * vh))
         # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
         itemimg = itemimg.crop((0.093 * vh, 0, 19.074 * vh, itemimg.height))
-        recognized_item = item.tell_item(itemimg, session)
+        recognized_item = item.tell_item(itemimg, with_quantity=True, learn_unrecognized=session.learn_unrecognized)
         if recognized_item.low_confidence:
             session.low_confidence = True
-        result.append((recognized_item.name, recognized_item.quantity))
+        result.append((recognized_item.name, recognized_item.quantity, recognized_item.item_type))
     return (groupname, result)
 
 
@@ -139,7 +140,7 @@ def roundint(x):
 
 
 def check_level_up_popup(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
 
     lvl_up_img = img.crop((50*vw-48.796*vh, 47.685*vh, 50*vw-23.148*vh, 56.019*vh)).convert('L')  # 等级提升
     lvl_up_img = imgops.enhance_contrast(lvl_up_img, 216, 255)
@@ -147,22 +148,33 @@ def check_level_up_popup(img):
     return minireco.check_charseq(lvl_up_text, '提升')
 
 
-def check_end_operation(img):
-    vw, vh = util.get_vwvh(img.size)
+def check_end_operation(style, friendship, img):
+    if style == 'main':
+        return check_end_operation_main_friendship(img) if friendship else check_end_operation_main(img)
+    elif style == 'interlocking':
+        if friendship:
+            return check_end_operation_interlocking_friendship(img)
+        else:
+            raise NotImplementedError()
+
+def check_end_operation_main_friendship(img):
+    vw, vh = common.get_vwvh(img.size)
     template = resources.load_image_cached('end_operation/friendship.png', 'RGB')
     operation_end_img = img.crop((117.083*vh, 64.306*vh, 121.528*vh, 69.583*vh)).convert('RGB')
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
     return mse < 3251
 
-
-def check_end_operation_alt(img):
-    vw, vh = util.get_vwvh(img.size)
+def check_end_operation_main(img):
+    vw, vh = common.get_vwvh(img.size)
     template = resources.load_image_cached('end_operation/end.png', 'L')
     operation_end_img = img.crop((4.722 * vh, 80.278 * vh, 56.389 * vh, 93.889 * vh)).convert('L')
     operation_end_img = imgops.enhance_contrast(operation_end_img, 225, 255)
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
     return mse < 6502
 
+def check_end_operation_interlocking_friendship(img):
+    vw, vh = common.get_vwvh(img.size)
+    return imgops.compare_region_mse(img, (100*vw-34.907*vh, 55.185*vh, 100*vw-30.556*vh, 60.370*vh), 'end_operation/interlocking/friendship.png', logger=logger)
 
 def check_end_operation2(img, threshold=0.8):
     cv_screen = np.asarray(img.convert('L'))
@@ -177,22 +189,31 @@ def check_end_operation2(img, threshold=0.8):
 
 
 def get_end2_rect(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     return 38.594 * vw, 88.056 * vh, 61.484 * vw, 95.694 * vh
 
 
 def get_dismiss_level_up_popup_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (100 * vw - 67.315 * vh, 16.019 * vh, 100 * vw - 5.185 * vh, 71.343 * vh)
 
 
 get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
 
 
-def recognize(im):
+def recognize(style, im, learn_unrecognized_item=False):
+    if style == 'main':
+        return recognize_main(im, learn_unrecognized_item)
+    elif style == 'interlocking':
+        return recognize_interlocking(im, learn_unrecognized_item)
+    else:
+        raise ValueError(style)
+
+
+def recognize_main(im, learn_unrecognized_item):
     import time
     t0 = time.monotonic()
-    vw, vh = util.get_vwvh(im.size)
+    vw, vh = common.get_vwvh(im.size)
 
     lower = im.crop((0, 61.111 * vh, 100 * vw, 100 * vh))
     logger.logimage(lower)
@@ -261,6 +282,76 @@ def recognize(im):
     session = RecognizeSession()
     session.vw = vw
     session.vh = vh
+    session.learn_unrecognized = learn_unrecognized_item
+
+    for group in imggroups:
+        groupresult = tell_group(group, session, linetop, linebottom)
+        session.recognized_groups.append(groupresult[0])
+        items.append(groupresult)
+
+    t1 = time.monotonic()
+    if session.low_confidence:
+        logger.logtext('LOW CONFIDENCE')
+    logger.logtext('time elapsed: %f' % (t1 - t0))
+    recoresult['items'] = items
+    recoresult['low_confidence'] = recoresult['low_confidence'] or session.low_confidence
+    return recoresult
+
+
+def recognize_interlocking(im):
+    import time
+    t0 = time.monotonic()
+    from . import stage_ocr
+    vw, vh = common.get_vwvh(im.size)
+    operation_id = im.crop((100*vw-26.204*vh, 21.852*vh, 100*vw-9.907*vh, 26.204*vh)).convert('L')
+    thr = int(0.833*vh)
+    left, _, _, _ = imgops.cropbox_blackedge2(operation_id, x_threshold=0.833*vh)
+    operation_id = operation_id.crop((left-thr, 0, operation_id.width, operation_id.height))
+    logger.logimage(operation_id)
+    operation_id_str = stage_ocr.do_img_ocr(operation_id.convert('RGB')).upper()
+    logger.logtext(operation_id_str)
+    fixup, operation_id_str = minireco.fix_stage_name(operation_id_str)
+    if fixup:
+        logger.logtext('fixed to ' + operation_id_str)
+
+    stars = im.crop((100*vw-41.667*vh, 10.000*vh, 100*vw-11.204*vh, 20.185*vh))
+    logger.logimage(stars)
+    stars_status = tell_stars(stars)
+
+    recoresult = {
+        'operation': operation_id_str,
+        'stars': stars_status,
+        'items': [],
+        'low_confidence': False
+    }
+
+    items = im.crop((100*vw-87.778*vh, 65.000*vh, 100*vw, 89.259*vh))
+    logger.logimage(items)
+    sumx = np.asarray(items.convert('RGB')).sum(axis=2).sum(axis=1)
+    diffx = np.diff(sumx.astype(np.int32))
+    linetop = np.argmax(diffx)+1
+    linebottom = np.argmin(diffx)+1
+    logger.logtext('linetop=%r, linebottom=%r' % (linetop, linebottom))
+    grouping = items.crop((0, linetop, items.width, linebottom))
+    grouping = grouping.resize((grouping.width, 1), Image.BILINEAR)
+    grouping = grouping.convert('L')
+
+    logger.logimage(grouping.resize((grouping.width, 16)))
+
+    d = np.array(grouping, dtype=np.int16)[0]
+    points = [0, *find_jumping(d, 55)]
+    if len(points) % 2 != 0:
+        raise RuntimeError('possibly incomplete item list')
+    finalgroups = list(zip(*[iter(points)] * 2))  # each_slice(2)
+    logger.logtext(repr(finalgroups))
+
+    imggroups = [items.crop((x1, 0, x2, items.height))
+                 for x1, x2 in finalgroups]
+    items = []
+
+    session = RecognizeSession()
+    session.vw = vw
+    session.vh = vh
 
     for group in imggroups:
         groupresult = tell_group(group, session, linetop, linebottom)
@@ -277,8 +368,9 @@ def recognize(im):
 
 
 
+
 def get_still_check_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (68.241 * vh, 61.111 * vh, 100 * vw, 100 * vh)
 
 

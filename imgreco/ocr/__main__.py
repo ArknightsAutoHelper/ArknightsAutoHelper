@@ -10,7 +10,7 @@ import os
 from pprint import pprint
 
 ocr = importlib.import_module(__package__)
-from PIL import Image
+from util import cvimage as Image
 
 if __name__ == '__main__':
     if 'OCR_IMPL' in os.environ:

@@ -18,7 +18,7 @@
 from fractions import Fraction
 
 aspect = Fraction(*img.size)
-vw, vh = util.get_vwvh(img)
+vw, vh = common.get_vwvh(img)
 if aspect == Fraction(16, 9):
     return (a1*vw, b1*vh, c1*vw, d1*vh)
 elif aspect == Fraction(18, 9):

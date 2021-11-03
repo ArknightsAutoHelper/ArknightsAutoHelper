@@ -25,6 +25,8 @@ FIXED_QUANTITY = [
     '手绘标本残页',
     '腐蚀的伊比利亚唱片',
     '通关票券',
+    '赛事奖章',
+    '印象',
 ]
 
 # ONE_OR_NONE = [
@@ -35,12 +37,15 @@ FIXED_QUANTITY = [
 #     '感谢庆典物资补给',
 # ]
 
-def event_preprocess(stage: str, items: List[Tuple[str, str, int]], exclude_from_validation: List):
+report_types = {'MATERIAL', 'CARD_EXP', 'VOUCHER_MGACHA', 'special_report_item'}
+
+
+def event_preprocess(stage: str, items: List[Tuple[str, str, int, str]], exclude_from_validation: List):
     # [('常规掉落', '固源岩', 1), ...]
     for itemrecord in items:
-        group, name, qty = itemrecord
+        group, name, qty, item_type = itemrecord
 
-        if name in FIXED_QUANTITY:
+        if name in FIXED_QUANTITY or item_type not in report_types or name.startswith('@'):
             # 不加入汇报列表
             continue
             

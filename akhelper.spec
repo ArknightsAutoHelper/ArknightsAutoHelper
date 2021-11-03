@@ -12,11 +12,21 @@ sys.modules['FixTk'] = None
 
 a = Analysis(['akhelper.py'],
              binaries=[],
-             datas=[('resources.zip', '.'), ('config/config-template.yaml', 'config'), ('config/device-config.schema.json', 'config'), ('config/logging.yaml', 'config'), ('LICENSE', '.'), ('README.md', '.'), ('ADB', 'ADB'), ('webgui2/dist', 'web')],
+             datas=[
+                ('resources.zip', '.'),
+                ('config/config-template.yaml', 'config'),
+                ('config/device-config.schema.json', 'config'),
+                ('config/logging.yaml', 'config'),
+                ('LICENSE', '.'),
+                ('README.md', '.'),
+                ('ADB', 'ADB'),
+                ('webgui2/dist', 'web'),
+                ('extra_items/README.txt', 'extra_items'),
+            ],
              hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr', 'connector.fixups.adb_connect', 'connector.fixups.probe_bluestacks_hyperv'],
              hookspath=[],
              runtime_hooks=[],
-             excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter', 'resources'],
+             excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter', 'resources', 'packaging'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,
@@ -27,7 +37,7 @@ agui = Analysis(['akhelper-gui.pyw'],
              hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr', 'connector.fixups.adb_connect', 'connector.fixups.probe_bluestacks_hyperv'],
              hookspath=[],
              runtime_hooks=[],
-             excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter', 'resources'],
+             excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter', 'resources', 'packaging'],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,
@@ -59,8 +69,8 @@ def is_crt_binary(name):
             return True
     return False
 
-a.binaries[:] = (x for x in a.binaries if not is_crt_binary(x[0]))
-agui.binaries[:] = (x for x in agui.binaries if not is_crt_binary(x[0]))
+a.binaries[:] = (x for x in a.binaries if not is_crt_binary(x[0]) and 'opencv_videoio' not in x[0])
+agui.binaries[:] = (x for x in agui.binaries if not is_crt_binary(x[0]) and 'opencv_videoio' not in x[0])
 
 coll = COLLECT(exe, a.binaries, a.zipfiles, a.datas, exegui, agui.binaries, agui.zipfiles, agui.datas, strip=False, upx=False, upx_exclude=[], name='akhelper')
 

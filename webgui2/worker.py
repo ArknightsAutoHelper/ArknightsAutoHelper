@@ -10,6 +10,7 @@ from connector.ADBConnector import ADBConnector, ensure_adb_alive
 from util.excutil import format_exception
 from typing import Mapping
 
+config.background = True
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())

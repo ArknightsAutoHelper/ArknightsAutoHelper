@@ -97,6 +97,8 @@ class ArknightsHelper(object):
             self.adb = None
             return
         self.viewport = self.adb.screen_size
+        if self.adb.screenshot_rotate %180:
+            self.viewport = (self.viewport[1], self.viewport[0])
         if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
             title = '设备当前分辨率（%dx%d）不符合要求' % (self.viewport[0], self.viewport[1])
             body = '需要宽高比等于或大于 16∶9，且渲染高度不小于 720。'
@@ -263,9 +265,9 @@ class ArknightsHelper(object):
                 if count != set_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if config.reporter:
-                        self.__wait(SMALL_WAIT, MANLIKE_FLAG=True)
+                        self.__wait(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
                     else:
-                        self.__wait(BIG_WAIT, MANLIKE_FLAG=True)
+                        self.__wait(BIG_WAIT, MANLIKE_FLAG=True, allow_skip=True)
         except StopIteration:
             # count: succeeded count
             logger.error('未能进行第 %d 次作战', count + 1)
@@ -329,7 +331,7 @@ class ArknightsHelper(object):
                 logger.error(ap_text + '不足 无法继续')
                 if recoresult['consume_ap'] and self.can_perform_refill():
                     logger.info('尝试回复理智')
-                    self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
+                    self.tap_rect(recoresult['start_button'])
                     self.__wait(SMALL_WAIT)
                     screenshot = self.adb.screenshot()
                     refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
@@ -352,11 +354,11 @@ class ArknightsHelper(object):
 
             if not recoresult['delegated']:
                 logger.info('设置代理指挥')
-                self.tap_rect(imgreco.before_operation.get_delegate_rect(self.viewport))
+                self.tap_rect(recoresult['delegate_button'])
                 return  # to on_prepare state
 
             logger.info("理智充足 开始行动")
-            self.tap_rect(imgreco.before_operation.get_start_operation_rect(self.viewport))
+            self.tap_rect(recoresult['start_button'])
             smobj.prepare_reco = recoresult
             smobj.state = on_troop
 
@@ -400,16 +402,12 @@ class ArknightsHelper(object):
                 smobj.state = on_level_up_popup
                 return
 
-            if smobj.prepare_reco['consume_ap'] and not smobj.prepare_reco['no_friendship']:
-                detector = imgreco.end_operation.check_end_operation
-            else:
-                detector = imgreco.end_operation.check_end_operation_alt
-            end_flag = detector(screenshot)
+            end_flag = imgreco.end_operation.check_end_operation(smobj.prepare_reco['style'], not smobj.prepare_reco['no_friendship'], screenshot)
             if not end_flag and t > 300:
                 if imgreco.end_operation.check_end_operation2(screenshot):
                     self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
                     screenshot = self.adb.screenshot()
-                    end_flag = imgreco.end_operation.check_end_operation_alt(screenshot)
+                    end_flag = imgreco.end_operation.check_end_operation_main(screenshot)
             if end_flag:
                 logger.info('战斗结束')
                 self.operation_time.append(t)
@@ -463,12 +461,12 @@ class ArknightsHelper(object):
             reportresult = penguin_stats.reporter.ReportResult.NotReported
             try:
                 # 掉落识别
-                drops = imgreco.end_operation.recognize(screenshot)
+                drops = imgreco.end_operation.recognize(smobj.prepare_reco['style'], screenshot, True)
                 logger.debug('%s', repr(drops))
                 logger.info('掉落识别结果：%s', format_recoresult(drops))
                 log_total = len(self.loots)
                 for _, group in drops['items']:
-                    for name, qty in group:
+                    for name, qty, item_type in group:
                         if name is not None and qty is not None:
                             self.loots[name] = self.loots.get(name, 0) + qty
                 self.frontend.notify("combat-result", drops)
@@ -688,10 +686,10 @@ class ArknightsHelper(object):
         if target_region is None:
             logger.error(f'未能定位章节区域, target: {target}')
             raise RuntimeError('recognition failed')
-        vw, vh = imgreco.util.get_vwvh(self.viewport)
-        episode_tag_rect = tuple(map(int, (35.185*vh, 39.259*vh, 50.093*vh, 43.056*vh)))
-        next_ep_region_rect = (5.833*vh, 69.167*vh, 11.944*vh, 74.815*vh)
-        prev_ep_region_rect = (5.833*vh, 15.370*vh, 11.944*vh, 21.481*vh)
+        vw, vh = imgreco.common.get_vwvh(self.viewport)
+        episode_tag_rect = tuple(map(int, (34.861*vh, 40.139*vh, 50.139*vh, 43.194*vh)))
+        next_ep_region_rect = (6.389*vh, 73.750*vh, 33.889*vh, 80.417*vh)
+        prev_ep_region_rect = (6.389*vh, 15.556*vh, 33.889*vh, 22.083*vh)
         current_ep_rect = (50*vw+19.907*vh, 28.426*vh, 50*vw+63.426*vh, 71.944*vh)
         episode_move = (400 * self.viewport[1] / 1080)
 
@@ -738,6 +736,11 @@ class ArknightsHelper(object):
         while True:
             screenshot = self.adb.screenshot()
             tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot)
+            if not tags_map:
+                tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot, allow_extra_icons=True)
+                if not tags_map:
+                    logger.error('未能定位关卡地图')
+                    raise RuntimeError('recognition failed')
             logger.debug('tags map: ' + repr(tags_map))
             pos = tags_map.get(target)
             if pos:
@@ -797,7 +800,7 @@ class ArknightsHelper(object):
         self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.adb.screenshot()))
         self.__wait(TINY_WAIT)
         if path[0] == 'main':
-            vw, vh = imgreco.util.get_vwvh(self.viewport)
+            vw, vh = imgreco.common.get_vwvh(self.viewport)
             self.tap_rect((14.316*vw, 89.815*vh, 28.462*vw, 99.815*vh))
             self.find_and_tap_episode_by_ocr(int(path[1][2:]))
             self.find_and_tap_stage_by_ocr(path[1], path[2])
@@ -871,39 +874,37 @@ class ArknightsHelper(object):
 
     def get_inventory_items(self, show_item_name=False):
         import imgreco.inventory
-        all_items_map = {}
-        if show_item_name:
-            import penguin_stats.arkplanner
-            all_items_map = penguin_stats.arkplanner.get_all_items_map()
 
         self.back_to_main()
         logger.info("进入仓库")
         self.tap_rect(imgreco.inventory.get_inventory_rect(self.viewport))
 
-        items_map = {}
+        items = []
         last_screen_items = None
         move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
         self.__swipe_screen(move)
         screenshot = self.adb.screenshot()
         while True:
-            move = -randint(self.viewport[0] // 3.5, self.viewport[0] // 2.5)
+            move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
             self.__swipe_screen(move)
-            screen_items_map = imgreco.inventory.get_all_item_in_screen(screenshot)
-            if last_screen_items == screen_items_map.keys():
+            screen_items = imgreco.inventory.get_all_item_details_in_screen(screenshot)
+            screen_item_ids = set([item['itemId'] for item in screen_items])
+            screen_items_map = {item['itemId']: item['quantity'] for item in screen_items}
+            if last_screen_items == screen_item_ids:
                 logger.info("读取完毕")
                 break
             if show_item_name:
-                name_map = {all_items_map[k]['name']: screen_items_map[k] for k in screen_items_map.keys()}
+                name_map = {item['itemName']: item['quantity'] for item in screen_items}
                 logger.info('name_map: %s' % name_map)
             else:
                 logger.info('screen_items_map: %s' % screen_items_map)
-            last_screen_items = screen_items_map.keys()
-            items_map.update(screen_items_map)
+            last_screen_items = screen_item_ids
+            items += screen_items
             # break
             screenshot = self.adb.screenshot()
         if show_item_name:
-            logger.info('items_map: %s' % {all_items_map[k]['name']: items_map[k] for k in items_map.keys()})
-        return items_map
+            logger.info('items_map: %s' % {item['itemName']: item['quantity'] for item in items})
+        return {item['itemId']: item['quantity'] for item in items}
 
     def __swipe_screen(self, move, rand=100, origin_x=None, origin_y=None):
         origin_x = (origin_x or self.viewport[0] // 2) + randint(-rand, rand)
@@ -1003,7 +1004,7 @@ class ArknightsHelper(object):
             json.dump(record_data, f, ensure_ascii=False, indent=4, sort_keys=True)
 
     def replay_custom_record(self, record_name, mode=None, back_to_main=None):
-        from PIL import Image
+        from util import cvimage as Image
         record_dir = os.path.join(os.path.realpath(os.path.join(__file__, '../../')),
                                   os.path.join('custom_record/', record_name))
         if not os.path.exists(record_dir):

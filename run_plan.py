@@ -21,7 +21,20 @@ if __name__ == '__main__':
                 continue
             logger.info('准备执行关卡 [%s], 计划次数: %s, 剩余次数: %s' % (task['stage'], task['count'], remain))
             update_flag = True
-            c_id, remain = helper.module_battle(task['stage'], remain)
+            try:
+                c_id, remain = helper.module_battle(task['stage'], remain)
+            except Exception as e:
+                if isinstance(e, ValueError):
+                    if config.get('plan/use_start_sp_stage', False):
+                        logger.info('尝试进入活动关卡')
+                        from addons.start_sp_stage import StartSpStageAddon
+                        c_id, remain = StartSpStageAddon(helper).run(task['stage'], remain)
+                    else:
+                        logger.error(f"不支持普通跳转的关卡 [{task['stage']}], 启用特殊关卡支持需要安装 cnocr "
+                                     f"并将配置中的 plan/use_start_sp_stage 设置为 true")
+                else:
+                    raise e
+
             task['remain'] = remain
             if remain > 0:
                 logger.info('理智不足, 退出计划执行')

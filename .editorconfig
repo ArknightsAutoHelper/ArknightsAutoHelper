@@ -1,0 +1,10 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Windows-style newlines with a newline ending every batch file
+[*.bat]
+end_of_line = crlf
+insert_final_newline = true
+charset = utf-8

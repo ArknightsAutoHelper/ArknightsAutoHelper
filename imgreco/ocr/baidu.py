@@ -3,6 +3,7 @@ import time
 from functools import lru_cache
 from io import BytesIO
 
+import cv2
 #from aip import AipOcr
 import requests
 from config import enable_baidu_api, APP_ID, API_KEY, SECRET_KEY
@@ -67,7 +68,7 @@ class BaiduOCR(OcrEngine):
         imgbytesio = BytesIO()
         if image.mode != 'RGB':
             image = image.convert('RGB')
-        image.save(imgbytesio, format='JPEG', quality=95)
+        image.save(imgbytesio, format='JPEG', imwrite_params=(cv2.IMWRITE_JPEG_QUALITY, 95))
         result = _basicGeneral(imgbytesio.getvalue(), _options(self.lang))
         line = OcrLine([OcrWord(Rect(0, 0), x['words']) for x in result['words_result']])
         result = OcrResult([line])

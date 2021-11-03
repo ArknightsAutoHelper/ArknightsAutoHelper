@@ -2,7 +2,7 @@ from functools import reduce
 
 import cv2 as cv
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 
 
@@ -55,7 +55,7 @@ def crop_blackedge(numimg, value_threshold=127):
     return numimg.crop(thimg.getbbox())
 
 
-def crop_blackedge2(numimg, value_threshold=127, x_threshold=None):
+def cropbox_blackedge2(numimg, value_threshold=127, x_threshold=None):
     thimg = image_threshold(numimg, value_threshold)
 
     if x_threshold is None:
@@ -99,7 +99,13 @@ def crop_blackedge2(numimg, value_threshold=127, x_threshold=None):
 
     if left == right or top == bottom:
         return None
-    return numimg.crop((left, top, right, bottom))
+    return (left, top, right, bottom)
+
+def crop_blackedge2(numimg, value_threshold=127, x_threshold=None):
+    box = cropbox_blackedge2(numimg, value_threshold, x_threshold)
+    if box is None:
+        return None
+    return numimg.crop(box)
 
 
 def scalecrop(img, left, top, right, bottom):
@@ -205,3 +211,18 @@ def _find_homography_test(templ, haystack):
     img = Image.fromarray(img2, 'L')
     print(pts)
     img.show()
+
+
+def compare_region_mse(img, region, template, threshold=3251, logger=None):
+    if isinstance(template, str):
+        from . import resources
+        template = resources.load_image_cached(template, img.mode)
+    img = img.crop(region)
+    mat1, mat2 = uniform_size(img, template)
+    mse = compare_mse(mat1, mat2)
+    if logger is not None:
+        logger.logimage(img)
+        logger.logtext('mse=%f' % mse)
+    if threshold is not None:
+        return mse < threshold
+    return mse

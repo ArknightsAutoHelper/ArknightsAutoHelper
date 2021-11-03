@@ -25,6 +25,13 @@ class RichLogger:
         self.f.write(b'<p><img src="data:image/png;base64,%s" /></p>\n' % imgb64)
         self.f.flush()
 
+    def logfig(self, fig):
+        # matplotlib figure
+        buf = BytesIO()
+        fig.savefig(buf, format='svg')
+        self.f.write(buf.getvalue())
+        self.f.flush()
+
     def logtext(self, text):
         self.ensure_file()
         self.loghtml('<pre>%s</pre>\n' % text)

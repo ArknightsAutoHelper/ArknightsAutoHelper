@@ -2,13 +2,13 @@ import sys
 from functools import lru_cache
 
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 from util.richlog import get_logger
 from . import imgops
 from . import minireco
 from . import resources
-from . import util
+from . import common
 
 logger = get_logger(__name__)
 
@@ -20,7 +20,10 @@ def load_data():
 
 @lru_cache(1)
 def recognize(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
+
+    # if imgops.compare_region_mse(img, (43.333*vh, 86.111*vh, 50.185*vh, 95.093*vh), 'before_operation/interlocking/interlocking_tag.png', threshold=650, logger=logger):
+    #     return recognize_interlocking(img)
 
     apicon1 = img.crop((100*vw-29.722*vh, 2.130*vh, 100*vw-22.593*vh, 8.519*vh)).convert('RGB')
 
@@ -82,23 +85,51 @@ def recognize(img):
         'no_friendship': no_friendship,
         'operation': opidtext,
         'delegated': delegated,
-        'consume': int(consumetext) if consumetext.isdigit() else None
+        'consume': int(consumetext) if consumetext.isdigit() else None,
+        'style': 'main',
+        'delegate_button': (100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh),
+        'start_button': (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
     }
     # print('consumption:', consumetext)
 
 
-def get_delegate_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
-    return (100 * vw - 32.083 * vh, 79.907 * vh, 100 * vw - 5.972 * vh, 84.444 * vh)
+def recognize_interlocking(img):
+    vw, vh = common.get_vwvh(img)
+
+    consume_ap = imgops.compare_region_mse(img, (100*vw-31.944*vh, 2.407*vh, 100*vw-25.648*vh, 8.426*vh), 'before_operation/interlocking/ap_icon.png', logger=logger)
+
+    apimg = img.crop((100*vw-25.278*vh, 2.407*vh, 100*vw-10.093*vh, 8.426*vh)).convert('L')
+    reco_Noto, reco_Novecento = load_data()
+    apimg = imgops.enhance_contrast(apimg, 80, 255)
+    logger.logimage(apimg)
+    aptext, _ = reco_Noto.recognize2(apimg, subset='0123456789/')
+    logger.logtext(aptext)
+
+    delegated = imgops.compare_region_mse(img, (100*vw-32.963*vh, 78.333*vh, 100*vw-5.185*vh, 84.167*vh), 'before_operation/interlocking/delegation_checked.png', logger=logger)
+
+    consumeimg = img.crop((100*vw-11.944*vh, 94.259*vh, 100*vw-5.185*vh, 97.500*vh)).convert('L')
+    consumeimg = imgops.enhance_contrast(consumeimg, 80, 255)
+    logger.logimage(consumeimg)
+    consumetext, minscore = reco_Noto.recognize2(consumeimg, subset='-0123456789')
+    consumetext = ''.join(c for c in consumetext if c in '0123456789')
+    logger.logtext('{}, {}'.format(consumetext, minscore))
 
 
-def get_start_operation_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
-    return (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
+    return {
+        'AP': aptext,
+        'consume_ap': consume_ap,
+        'no_friendship': False,
+        'operation': 'interlocking',
+        'delegated': delegated,
+        'consume': int(consumetext) if consumetext.isdigit() else None,
+        'style': 'interlocking',
+        'delegate_button': (100*vw-32.963*vh, 78.333*vh, 100*vw-5.185*vh, 84.167*vh),
+        'start_button': (100*vw-33.426*vh, 86.296*vh, 100*vw-5.185*vh, 95.000*vh)
+    }
 
 
 def check_confirm_troop_rect(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     icon1 = img.crop((50 * vw + 57.083 * vh, 64.722 * vh, 50 * vw + 71.389 * vh, 79.167 * vh)).convert('RGB')
     icon2 = resources.load_image_cached('before_operation/operation_start.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
@@ -109,12 +140,12 @@ def check_confirm_troop_rect(img):
 
 
 def get_confirm_troop_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (50 * vw + 55.833 * vh, 52.963 * vh, 50 * vw + 72.778 * vh, 87.361 * vh)
 
 
 def check_ap_refill_type(img):
-    vw, vh = util.get_vwvh(img.size)
+    vw, vh = common.get_vwvh(img.size)
     icon1 = img.crop((50*vw-3.241*vh, 11.481*vh, 50*vw+42.685*vh, 17.130*vh)).convert('RGB')
     icon2 = resources.load_image_cached('before_operation/refill_with_item.png', 'RGB')
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
@@ -147,12 +178,12 @@ def check_ap_refill_type(img):
 
 
 def get_ap_refill_confirm_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (50*vw+49.537*vh, 77.222*vh, 50*vw+74.352*vh, 84.815*vh)
 
 
 def get_ap_refill_cancel_rect(viewport):
-    vw, vh = util.get_vwvh(viewport)
+    vw, vh = common.get_vwvh(viewport)
     return (50*vw+14.259*vh, 77.130*vh, 50*vw+24.352*vh, 83.611*vh)
 
 

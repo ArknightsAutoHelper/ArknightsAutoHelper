@@ -121,6 +121,8 @@ def initialize():
     stage_maps_linear['ep08'] = ['R8-1', 'M8-1', 'TR-18', 'R8-2', 'M8-2', 'R8-3', 'M8-3', 'R8-4', 'M8-4', 'R8-5',
                                  'M8-5', 'R8-6', 'R8-7', 'R8-8', 'EG-1', 'M8-6', 'EG-2', 'R8-9', 'M8-7', 'R8-10',
                                  'R8-11', 'M8-8', 'EG-3', 'JT8-1', 'JT8-2', 'JT8-3', 'EG-4', 'END8-1', 'EG-5']
+    stage_maps_linear['ep09'] = ['9-1', '9-2', '9-3', '9-4', '9-5', '9-6', 'TR-19', '9-7', '9-8', '9-9', '9-10', '9-11',
+                                 '9-12', '9-13', 'S9-1', '9-14', '9-15', '9-16', '9-17', '9-18', '9-19']
 
     global _invalid_stages
     _invalid_stages = ['1-2', '1-11', '5-11', '6-13', '6-17', '6-18', '7-1', '7-7', '7-19', '7-20', 'M8-1', 'M8-2',
@@ -136,6 +138,11 @@ def initialize():
         ep2region[i] = 1
         tmp.append(i)
     region2ep[1] = tmp
+    tmp = []
+    for i in range(9, 10):
+        ep2region[i] = 2
+        tmp.append(i)
+    region2ep[2] = tmp
 
 
 def is_invalid_stage(stage):

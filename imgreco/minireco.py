@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image
+from util import cvimage as Image
 
 from . import imgops
 

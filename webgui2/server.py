@@ -47,13 +47,13 @@ def start(port=0):
     @app.route('/itemimg/<name>.png')
     def itemimg(name):
         logger.info('serving file %s', name)
-        import imgreco.resources
-        import imgreco.item
-        items = imgreco.item.all_known_items()
-        respath = items.get(name, None)
-        if respath:
+        import imgreco.itemdb
+        imgreco.itemdb.update_extra_items()
+        items = imgreco.itemdb.all_known_items
+        itemres = items.get(name, None)
+        if itemres:
             bottle.response.content_type = 'image/png'
-            return imgreco.resources.open_file(respath)
+            return itemres.open()
         else:
             return 404
     
@@ -153,7 +153,7 @@ def start(port=0):
         return
     from .webhost import get_host
     host = get_host()
-    host.start(url, 980, 820)
+    host.start(url, 1080, 820)
 
     if host.wait_handle:
         # neither gevent nor pywebview like non-main thread

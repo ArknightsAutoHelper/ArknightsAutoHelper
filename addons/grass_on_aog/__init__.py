@@ -4,6 +4,8 @@ import requests
 from datetime import datetime
 import json
 import os
+import config
+from Arknights.helper import logger
 
 
 desc = f"""
@@ -17,7 +19,7 @@ aog 地址: https://arkonegraph.herokuapp.com/
 cache_key 控制缓存的频率, 默认每周读取一次库存, 如果需要手动更新缓存, 
 直接删除目录下的 aog_cache.json 和 inventory_items_cache.json 即可.
 
-只刷常规关卡, 活动关卡不刷.
+活动关卡需要安装 cnocr 并将 addons/grass_on_aog/use_start_sp_stage 配置为 true.
 ==================================================================================================
 """
 print(desc)
@@ -28,6 +30,9 @@ print('不刷以下材料:', exclude_names)
 
 # cache_key = '%Y-%m-%d'  # cache by day
 cache_key = '%Y--%V'    # cache by week
+
+
+use_start_sp_stage = config.get('addons/grass_on_aog/use_start_sp_stage', False)
 
 
 aog_cache_file = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'aog_cache.json')
@@ -55,6 +60,18 @@ def load_aog_cache():
     return update_aog_cache()
 
 
+def order_stage(item):
+    if item['lowest_ap_stages']['normal'] and item['lowest_ap_stages']['event']:
+        stage_type = 'lowest_ap_stages'
+    elif item['balanced_stages']['normal'] and item['balanced_stages']['event']:
+        stage_type = 'balanced_stages'
+    else:
+        stage_type = 'drop_rate_first_stages'
+    event = item[stage_type]['event'][0]
+    normal = item[stage_type]['normal'][0]
+    return event if event['efficiency'] >= normal['efficiency'] else normal
+
+
 class GrassAddOn(BaseAddOn):
     def run(self, **kwargs):
         print('加载库存信息...')
@@ -78,11 +95,19 @@ class GrassAddOn(BaseAddOn):
         for t3_item in t3_items:
             if t3_item['name'] == l[0]['name']:
                 # print(t3_item)
-                normal_stage_info = t3_item['lowest_ap_stages']['normal'][0]
-                stage = normal_stage_info['code']
+                stage_info = order_stage(t3_item)
+                stage = stage_info['code']
                 print('aog stage:', stage)
                 break
-        self.helper.module_battle(stage, 1000)
+        try:
+            self.helper.module_battle(stage, 1000)
+        except Exception as e:
+            if use_start_sp_stage:
+                from addons.start_sp_stage import StartSpStageAddon
+                logger.info('尝试进入活动关卡')
+                StartSpStageAddon(self.helper).run(stage, 1000)
+            else:
+                raise e
 
     def load_inventory(self):
         if os.path.exists(inventory_cache_file):
