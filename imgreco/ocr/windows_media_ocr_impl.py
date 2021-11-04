@@ -59,7 +59,7 @@ class WindowsOcrEngine(OcrEngine):
             hints = []
         if OcrHint.SINGLE_LINE in hints:
             img2 = cv2.copyMakeBorder(np.asarray(img), 32, 32, 32, 32, cv2.BORDER_REPLICATE)
-            img = Image(img2, img.mode)
+            img = Image.fromarray(img2, img.mode)
         swbmp = _swbmp_from_pil_image(img)
         return _dump_ocrresult(self.winengine.RecognizeAsync(swbmp).wait())
 
