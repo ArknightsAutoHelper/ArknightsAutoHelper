@@ -72,31 +72,86 @@
             width: fit-content;
         }
 
-        .dragger {
-            position: absolute;
-        }
 
-        .vline .dragger {
-            background: rgba(255, 255, 0, 0.8);
-            width: 1vmin;
-            min-width: 8px;
-            height: 1.5vmin;
-            min-height: 16px;
-        }
-
-        .hline .dragger {
-            background: rgba(0, 255, 255, 0.8);
-            width: 1.5vmin;
-            min-width: 16px;
-            height: 1vmin;
-            min-height: 8px;
+        #imgbox {
+            --crop-left: 0px;
+            --crop-top: 0px;
+            --crop-right: 40px;
+            --crop-bottom: 40px;
+            --crop-width: 40px;
+            --crop-height: 40px;
         }
 
         #imgelt {
             image-rendering: optimizespeed;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
-            
+        }
+
+        #croparea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: calc(var(--crop-right) - var(--crop-left));
+            height: calc(var(--crop-bottom) - var(--crop-top));
+            cursor: grab;
+            /* border: solid 1px #ffff00; */
+            transform: translate(var(--crop-left, 0px), var(--crop-top, 0px));
+        }
+
+        .dragging {
+            cursor: grabbing;
+        }
+
+        .dragger {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: rgba(255, 255, 0, 0.6);
+        }
+
+        .dragger-fullwidth {
+            width: 100%;
+        }
+
+        .dragger-fullheight {
+            height: 100%;
+        }
+
+        .dragger-left {
+            left: -6px;
+            cursor: e-resize;
+        }
+
+        .dragger-right {
+            left: 100%;
+            cursor: w-resize;
+        }
+
+        .dragger-top {
+            top: -6px;
+            cursor: n-resize;
+        }
+
+        .dragger-bottom {
+            top: 100%;
+            cursor: s-resize;
+        }
+
+        .dragger-left.dragger-top {
+            cursor: nw-resize;
+        }
+
+        .dragger-right.dragger-top {
+            cursor: ne-resize;
+        }
+
+        .dragger-left.dragger-bottom {
+            cursor: sw-resize;
+        }
+
+        .dragger-right.dragger-bottom {
+            cursor: se-resize;
         }
     </style>
 </head>
@@ -116,23 +171,23 @@
         <pre>(<span id="leftpos">0</span>, <span id="toppos">0</span>, <span id="rightpos">0</span>, <span id="bottompos">0</span>)</pre>
     </div>
     <div class="upperpanel">
-        <div class="imgbox">
+        <div id="imgbox" class="imgbox">
             <img id="imgelt" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAoAAAAGQCAMAAAAJLSEXAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAA1BMVEXDw8PWKQJEAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAB3RJTUUH4wkWABUPg2xSOwAAAQ9JREFUeNrtwQENAAAAwqD3T20PBxQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE8G6b0AAYcvFu4AAAAldEVYdGRhdGU6Y3JlYXRlADIwMTktMDktMjFUMTY6NTc6MzYrMDg6MDD2jxIiAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE5LTA5LTIxVDE2OjIxOjE1KzA4OjAw0DrSugAAAABJRU5ErkJggg==" draggable="false" crossorigin="anonymous" />
-            <div class="line hline" id="hline1">
-                <div class="dragger"></div>
-            </div>
-            <div class="line hline" id="hline2" style="transform: translateY(40px)">
-                <div class="dragger"></div>
-            </div>
-            <div class="line vline" id="vline1">
-                <div class="dragger"></div>
-            </div>
-            <div class="line vline" id="vline2" style="transform: translateX(40px)">
-                <div class="dragger"></div>
+            <div id="croparea">
+                <div id="drag-l" class="dragger dragger-left dragger-fullheight"></div>
+                <div id="drag-t" class="dragger dragger-top dragger-fullwidth"></div>
+                <div id="drag-r" class="dragger dragger-right dragger-fullheight"></div>
+                <div id="drag-b" class="dragger dragger-bottom dragger-fullwidth"></div>
+                <div id="drag-tl" class="dragger dragger-top dragger-left"></div>
+                <div id="drag-tr" class="dragger dragger-top dragger-right"></div>
+                <div id="drag-bl" class="dragger dragger-bottom dragger-left"></div>
+                <div id="drag-br" class="dragger dragger-bottom dragger-right"></div>
             </div>
         </div>
     </div>
-    <img id="cropimg" src="data:," crossorigin="anonymous"/>
+    <img id="cropimg" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" crossorigin="anonymous"/>
+    <p>Save ROI template and metadata to: <button id='dirbtn'>Browse...</button> <span id="savedir">/dev/null</span>
+        <br><input type="text" id="savebasename" placeholder="basename for load_roi"> <button id="savebtn">save image</button></p>
     <script>
         let $ = (x) => document.querySelector(x)
         let $$ = (x) => document.querySelectorAll(x)
@@ -141,7 +196,7 @@
             changefile()
         })
 
-        let absleft, abstop, absright, absbottom
+        let absleft = 0, abstop = 0, absright = 40, absbottom = 40
 
         //              [vw, vh, 1]
         let leftmat = [0, 0, 0]
@@ -155,18 +210,18 @@
             if (num < 0) return base + num.toFixed(3) + '*' + unit
         }
 
-        let updateOutput = function () {
+        function updateOutput() {
             let imgelt = $('#imgelt')
             let vwidth = imgelt.width
             let vheight = imgelt.height
 
-            let hline1top = $('#hline1').getBoundingClientRect().top - imgelt.getBoundingClientRect().top
-            let hline2top = $('#hline2').getBoundingClientRect().top - imgelt.getBoundingClientRect().top;
-            [abstop, absbottom] = [hline1top, hline2top].sort((x, y) => x - y)
+            // let hline1top = $('#hline1').getBoundingClientRect().top - imgelt.getBoundingClientRect().top
+            // let hline2top = $('#hline2').getBoundingClientRect().top - imgelt.getBoundingClientRect().top;
+            // [abstop, absbottom] = [hline1top, hline2top].sort((x, y) => x - y)
 
-            let vline1left = $('#vline1').getBoundingClientRect().left - imgelt.getBoundingClientRect().left
-            let vline2left = $('#vline2').getBoundingClientRect().left - imgelt.getBoundingClientRect().left;
-            [absleft, absright] = [vline1left, vline2left].sort((x, y) => x - y)
+            // let vline1left = $('#vline1').getBoundingClientRect().left - imgelt.getBoundingClientRect().left
+            // let vline2left = $('#vline2').getBoundingClientRect().left - imgelt.getBoundingClientRect().left;
+            // [absleft, absright] = [vline1left, vline2left].sort((x, y) => x - y)
 
             let mode = $('#modesel').selectedOptions[0].value
             if (mode === 'abs') {
@@ -228,79 +283,207 @@
                 }
             }
         }
+        const imgbox = $('#imgbox')
+        const imgelt = $('#imgelt')
 
-        let setX = function (elm, x) {
-            elm.style.transform = 'translateX(' + x.toString() + 'px)'
-        }
-
-        let setY = function (elm, x) {
-            elm.style.transform = 'translateY(' + x.toString() + 'px)'
-        }
-
-        let updateLayout = function () {
-            let imgelt = $('#imgelt')
+        function updateLayout() {
             let vw = imgelt.width / 100
             let vh = imgelt.height / 100
 
             let mat3mul = function (mat1, mat2) {
                 return mat1[0] * mat2[0] + mat1[1] * mat2[1] + mat1[2] * mat2[2]
             }
-            setX($('#vline1'), mat3mul(leftmat, [vw, vh, 1]))
-            setX($('#vline2'), mat3mul(rightmat, [vw, vh, 1]))
-            setY($('#hline1'), mat3mul(topmat, [vw, vh, 1]))
-            setY($('#hline2'), mat3mul(bottommat, [vw, vh, 1]))
+            absleft = mat3mul(leftmat, [vw, vh, 1])
+            absright = mat3mul(rightmat, [vw, vh, 1])
+            abstop = mat3mul(topmat, [vw, vh, 1])
+            absbottom = mat3mul(bottommat, [vw, vh, 1])
+            imgbox.style.setProperty('--crop-left', absleft.toString() + 'px');
+            imgbox.style.setProperty('--crop-right', absright.toString() + 'px');
+            imgbox.style.setProperty('--crop-top', abstop.toString() + 'px');
+            imgbox.style.setProperty('--crop-bottom', absbottom.toString() + 'px');
+            // setX($('#vline1'), mat3mul(leftmat, [vw, vh, 1]))
+            // setX($('#vline2'), mat3mul(rightmat, [vw, vh, 1]))
+            // setY($('#hline1'), mat3mul(topmat, [vw, vh, 1]))
+            // setY($('#hline2'), mat3mul(bottommat, [vw, vh, 1]))
             updateOutput()
         }
 
-
-        for (let elt of $$('.vline')) {
-            elt.addEventListener('mousedown', function (e) {
-                e.preventDefault()
-                this.draginitX = e.pageX
-                let elm = elt
-                let movehandler = function (e) {
-                    e.preventDefault()
-                    let offsetX = (e.pageX - elm.draginitX)
-                    let originaltranslateX = parseFloat(elm.style.transform.replace('translateX(', ''))
-                    if (isNaN(originaltranslateX)) originaltranslateX = 0
-                    let eltX = (originaltranslateX + offsetX).toString() + 'px'
-                    elm.style.transform = 'translateX(' + eltX.toString() + ')'
-                    elm.draginitX = e.pageX
-                    updateOutput()
-                }
-                document.addEventListener('mousemove', movehandler)
-                let uphandler = function (e) {
-                    e.preventDefault()
-                    document.removeEventListener('mousemove', movehandler)
-                    document.removeEventListener('mouseup', uphandler)
-                }
-                document.addEventListener('mouseup', uphandler)
-            })
+        function updateView() {
+            imgbox.style.setProperty('--crop-left', absleft.toString() + 'px');
+            imgbox.style.setProperty('--crop-right', absright.toString() + 'px');
+            imgbox.style.setProperty('--crop-top', abstop.toString() + 'px');
+            imgbox.style.setProperty('--crop-bottom', absbottom.toString() + 'px');
         }
-        for (let elt of $$('.hline')) {
+
+        let setLeft = function(value) {
+            if (value >= absright) {
+                value = absright - 1
+            }
+            if (value < 0) {
+                value = 0
+            }
+            absleft = value
+            updateView()
+            updateOutput()
+        }
+        let setRight = function(value) {
+            if (value <= absleft) {
+                value = absleft + 1
+            }
+            if (value > imgelt.width) {
+                value = imgelt.width
+            }
+            absright = value
+            updateView()
+            updateOutput()
+        }
+        let setTop = function(value) {
+            if (value >= absbottom) {
+                value = absbottom - 1
+            }
+            if (value < 0) {
+                value = 0
+            }
+            abstop = value
+            updateView()
+            updateOutput()
+        }
+        let setBottom = function(value) {
+            if (value <= abstop) {
+                value = abstop + 1
+            }
+            if (value > imgelt.height) {
+                value = imgelt.height
+            }
+            absbottom = value
+            updateView()
+            updateOutput()
+        }
+
+        let fixedX, fixedY
+        function setFixedX(value) {
+            fixedX = value
+        }
+        function setMovingX(value) {
+            if (value < fixedX) {
+                [absleft, absright] = [value, fixedX]
+            } else {
+                [absleft, absright] = [fixedX, value]
+            }
+            if (absleft < 0) absleft = 0;
+            if (absright > imgelt.width) absright = imgelt.width;
+            updateView()
+            updateOutput()
+        }
+
+        function setFixedY(value) {
+            fixedY = value
+        }
+        function setMovingY(value) {
+            if (value < fixedY) {
+                [abstop, absbottom] = [value, fixedY]
+            } else {
+                [abstop, absbottom] = [fixedY, value]
+            }
+            if (abstop < 0) abstop = 0;
+            if (absbottom > imgelt.height) absbottom = imgelt.height;
+            updateView()
+            updateOutput()
+        }
+
+        let addDragHandler = function(elt, handler) {
             elt.addEventListener('mousedown', function (e) {
                 e.preventDefault()
+                e.stopPropagation()
+                this.draginitX = e.pageX
                 this.draginitY = e.pageY
                 let elm = elt
+                handler.enter?.call(handler, e)
+                let originaltranslateX = handler.getX()
+                let originaltranslateY = handler.getY()
+                if (isNaN(originaltranslateX)) originaltranslateX = 0
                 let movehandler = function (e) {
                     e.preventDefault()
-                    let offsetY = (e.pageY - elm.draginitY)
-                    let originaltranslateY = parseFloat(elm.style.transform.replace('translateY(', ''))
-                    if (isNaN(originaltranslateY)) originaltranslateY = 0
-                    let eltY = (originaltranslateY + offsetY).toString() + 'px'
-                    elm.style.transform = 'translateY(' + eltY.toString() + ')'
-                    elm.draginitY = e.pageY
-                    updateOutput()
+                    let offsetX = e.pageX - elm.draginitX
+                    let eltX = originaltranslateX + offsetX
+                    let offsetY = e.pageY - elm.draginitY
+                    let eltY = originaltranslateY + offsetY
+                    // elm.style.transform = 'translateX(' + eltX.toString() + ')'
+                    // document.documentElement.style.setProperty(prop, eltX)
+                    handler.setX(eltX)
+                    handler.setY(eltY)
+                    updateLayout()
                 }
                 document.addEventListener('mousemove', movehandler)
                 let uphandler = function (e) {
                     e.preventDefault()
+                    handler.leave?.call(handler, e)
                     document.removeEventListener('mousemove', movehandler)
                     document.removeEventListener('mouseup', uphandler)
                 }
                 document.addEventListener('mouseup', uphandler)
             })
         }
+
+        let clamp = function (value, lower, upper) {
+            if (value < lower) return lower;
+            if (value > upper) return upper;
+            return value;
+        }
+
+        addDragHandler($("#drag-l"), {enter(){ setFixedX(absright) }, getX: ()=>absleft, getY: ()=>0, setX: setMovingX, setY: (value)=>null})
+        addDragHandler($("#drag-r"), {enter(){ setFixedX(absleft) }, getX: ()=>absright, getY: ()=>0, setX: setMovingX, setY: (value)=>null})
+        addDragHandler($("#drag-t"), {enter(){ setFixedY(absbottom) }, getX: ()=>0, getY: ()=>abstop, setX: (value)=>null, setY: setMovingY})
+        addDragHandler($("#drag-b"), {enter(){ setFixedY(abstop) }, getX: ()=>0, getY: ()=>absbottom, setX: (value)=>null, setY: setMovingY})
+        addDragHandler($("#drag-tl"), {enter(){ setFixedX(absright); setFixedY(absbottom) }, getX: ()=>absleft, getY: ()=>abstop, setX: setMovingX, setY: setMovingY})
+        addDragHandler($("#drag-tr"), {enter(){ setFixedX(absleft); setFixedY(absbottom) }, getX: ()=>absright, getY: ()=>abstop, setX: setMovingX, setY: setMovingY})
+        addDragHandler($("#drag-bl"), {enter(){ setFixedX(absright); setFixedY(abstop) }, getX: ()=>absleft, getY: ()=>absbottom, setX: setMovingX, setY: setMovingY})
+        addDragHandler($("#drag-br"), {enter(){ setFixedX(absleft); setFixedY(abstop) }, getX: ()=>absright, getY: ()=>absbottom, setX: setMovingX, setY: setMovingY})
+        addDragHandler($("#croparea"), {
+            enter(e) {
+                this.width = absright - absleft
+                this.height = absbottom - abstop
+            },
+            getX: ()=>absleft,
+            getY: ()=>abstop,
+            setX(value) {
+                absleft = clamp(value, 0, imgelt.width - this.width)
+                absright = clamp(value + this.width, this.width, imgelt.width)
+                updateView()
+                updateOutput()
+            },
+            setY(value) {
+                abstop = clamp(value, 0, imgelt.height - this.height)
+                absbottom = clamp(value + this.height, this.height, imgelt.height)
+                updateView()
+                updateOutput()
+            }
+        })
+        addDragHandler(imgelt, {
+            enter(e) {
+                let rect = imgelt.getBoundingClientRect()
+                let scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
+                let scrollTop = window.pageYOffset || document.documentElement.scrollTop
+                absleft = e.pageX - (rect.left + scrollLeft)
+                abstop = e.pageY - (rect.top + scrollTop)
+                absright = absleft
+                absbottom = abstop
+                setFixedX(absleft)
+                setFixedY(abstop)
+                updateView()
+                updateOutput()
+            },
+            getX: ()=>absleft,
+            getY: ()=>abstop,
+            setX(value) {
+                setMovingX(value)
+            },
+            setY(value) {
+                setMovingY(value)
+            }
+        })
+
+
         $('#imgelt').addEventListener('load', () => {
             updateLayout()
         })
@@ -330,6 +513,7 @@
             })
         }
 
+        let imageBlob, roimetadata
         $('#cropbtn').addEventListener('click', async function(){
             let width = absright - absleft
             let height = absbottom - abstop
@@ -340,7 +524,12 @@
             // if($('#cropimg').src) {
             //     URL.revokeObjectURL($('#cropimg').src)
             // }
+            roimetadata = JSON.stringify({
+                bbox_matrix: [leftmat, topmat, rightmat, bottommat],
+                native_resolution: [imgelt.width, imgelt.height]
+            })
             canvas.toBlob(blob=>{
+                imageBlob = blob
                 if($('#cropimg').src) {
                     URL.revokeObjectURL($('#cropimg').src)
                 }
@@ -356,6 +545,41 @@
             bottommat = [0, 0, 40]
             updateLayout();
             updateOutput();
+        })
+
+        let dirhandle
+
+        let chooseSaveDir = async function(){
+            dirhandle = await window.showDirectoryPicker()
+            $('#savedir').innerText = dirhandle.name
+        }
+
+        $('#dirbtn').addEventListener('click', chooseSaveDir)
+
+        $('#savebtn').addEventListener('click', async function(){
+            if (imageBlob === undefined || roimetadata === undefined) {
+                alert('crop image first')
+                return
+            }
+            let basename = $("#savebasename").value.trim()
+            if (basename === "") {
+                $("#savebasename").focus()
+                return
+            }
+            if (dirhandle === undefined) {
+                await chooseSaveDir()
+            }
+            let filehandle = await dirhandle.getFileHandle(basename + '.png', {create: true})
+            let stream = await filehandle.createWritable()
+            await stream.truncate(0)
+            await stream.write(imageBlob)
+            stream.close()
+            filehandle = await dirhandle.getFileHandle(basename + '.roi.json', {create: true})
+            stream = await filehandle.createWritable()
+            await stream.truncate(0)
+            await stream.write(roimetadata)
+            stream.close()
+            alert('saved')
         })
 
         let preventDefaults = e => {
