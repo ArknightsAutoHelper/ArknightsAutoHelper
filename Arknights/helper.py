@@ -110,6 +110,7 @@ class ArknightsHelper(object):
                 img.save(imgfile)
                 import json
                 details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self.adb.config_key))
+                self.viewport = (self.viewport[1], self.viewport[0])
             for msg in [title, body, details]:
                 if msg is not None:
                     logger.warn(msg)
