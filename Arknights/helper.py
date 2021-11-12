@@ -314,7 +314,7 @@ class ArknightsHelper(object):
                     break
                 else:
                     count_times += 1
-                    self.__wait(1, False)
+                    self.__wait(TINY_WAIT, False)
                     if count_times <= 7:
                         logger.warning('不在关卡界面')
                         self.__wait(TINY_WAIT, False)
@@ -423,7 +423,7 @@ class ArknightsHelper(object):
                     if config.get('behavior/mistaken_delegation/settle', False):
                         logger.info('以 2 星结算关卡')
                         self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
-                        self.__wait(2)
+                        self.__wait(SMALL_WAIT - 1)
                         smobj.stop = True
                         return
                     else:
@@ -433,7 +433,7 @@ class ArknightsHelper(object):
                         self.wait_for_still_image()
                         self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(screenshot))
                         # FIXME: 理智返还
-                        self.__wait(1)
+                        self.__wait(TINY_WAIT)
                         smobj.stop = True
                         return
                 elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
@@ -542,23 +542,23 @@ class ArknightsHelper(object):
             if dlgtype == 'yesno':
                 if '基建' in ocr or '停止招募' in ocr or '好友列表' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
-                    self.__wait(3)
+                    self.__wait(SMALL_WAIT)
                     continue
                 elif '招募干员' in ocr or '加急' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
-                    self.__wait(3)
+                    self.__wait(SMALL_WAIT)
                     continue
                 else:
                     raise RuntimeError('未适配的对话框')
             elif dlgtype == 'ok':
                 self.tap_rect(imgreco.common.get_dialog_ok_button_rect(screenshot))
-                self.__wait(1)
+                self.__wait(TINY_WAIT)
                 continue
             retry_count += 1
             if retry_count > max_retry:
                 raise RuntimeError('未知画面')
             logger.info('未知画面，尝试重新识别 {}/{} 次'.format(retry_count, max_retry))
-            self.__wait(3)
+            self.__wait(SMALL_WAIT)
         logger.info("已回到主页")
 
     def module_battle(self,  # 完整的战斗模块
@@ -568,6 +568,7 @@ class ArknightsHelper(object):
         c_id = c_id.upper()
         if stage_path.is_stage_supported_ocr(c_id):
             self.goto_stage_by_ocr(c_id)
+            self.__wait(TINY_WAIT, MANLIKE_FLAG=False)
         else:
             logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
@@ -651,7 +652,7 @@ class ArknightsHelper(object):
                 if 0 < pos[0] < self.viewport[0]:
                     logger.info('目标在可视区域内，点击')
                     self.adb.touch_tap(pos, offsets=(5, 5))
-                    self.__wait(3)
+                    self.__wait(SMALL_WAIT)
                     break
                 else:
                     lastpos = pos
@@ -672,7 +673,7 @@ class ArknightsHelper(object):
                             diff = -120
                         diff = max(diff, -originX)
                     self.adb.touch_swipe2((originX, originY), (diff * 0.7 * uniform(0.8, 1.2), 0), max(250, diff / 2))
-                    self.__wait(5)
+                    self.__wait(MEDIUM_WAIT)
                     continue
 
             else:
@@ -745,7 +746,7 @@ class ArknightsHelper(object):
             if pos:
                 logger.info('目标在可视区域内，点击')
                 self.adb.touch_tap(pos, offsets=(5, 5))
-                self.__wait(1)
+                self.__wait(TINY_WAIT)
                 return
 
             known_indices = [partition_map.index(x) for x in tags_map.keys() if x in partition_map]
@@ -763,7 +764,7 @@ class ArknightsHelper(object):
                 logger.error('未能定位关卡地图')
                 raise RuntimeError('recognition failed')
             self.adb.touch_swipe2((originX, originY), (move, max(250, move // 2)))
-            self.__wait(1)
+            self.__wait(TINY_WAIT)
 
     def find_and_tap_daily(self, partition, target, *, recursion=0):
         screenshot = self.adb.screenshot()
@@ -787,7 +788,7 @@ class ArknightsHelper(object):
                     logger.error('未知类别')
                     raise StopIteration()
                 self.adb.touch_swipe2((originX, originY), (offset, 0), 400)
-                self.__wait(2)
+                self.__wait(SMALL_WAIT - 1)
                 self.find_and_tap_daily(partition, target, recursion=recursion+1)
             else:
                 logger.error('未找到目标，是否未开放关卡？')
@@ -850,7 +851,7 @@ class ArknightsHelper(object):
         self.tap_quadrilateral(imgreco.main.get_my_sell_task_1(screenshot))
         self.__wait(SMALL_WAIT + 1)
         self.tap_quadrilateral(imgreco.main.get_my_sell_tasklist(screenshot))
-        self.__wait(SMALL_WAIT -1 )
+        self.__wait(SMALL_WAIT - 1)
         sell_count = 0
         while sell_count <= 6:
             screenshot = self.adb.screenshot()
