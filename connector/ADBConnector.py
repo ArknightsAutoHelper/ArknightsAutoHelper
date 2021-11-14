@@ -134,18 +134,17 @@ class _ScreenCapImplPNG:
         return self.screencap().size
     
     def screencap(self):
-        from PIL import Image as PILImage
+        from PIL import Image as PILImage, ImageCms
         s = self.device_session_factory().exec_stream('screencap -p')
         data = recvall(s, 4194304, True)
         img = PILImage.open(BytesIO(data))
         if self.screenshot_rotate != 0:
             img = img.rotate(self.screenshot_rotate)
         if icc := img.info.get('icc_profile', ''):
-            from PIL import ImageCms
             iccio = BytesIO(icc)
             src_profile = ImageCms.ImageCmsProfile(iccio)
             dst_profile = ImageCms.createProfile('sRGB')
-            img = ImageCms.profileToProfile(img, src_profile, dst_profile)
+            img = ImageCms.profileToProfile(img, src_profile, dst_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC)
         return Image.fromarray(np.asarray(img), img.mode)
 
     __call__ = screencap
