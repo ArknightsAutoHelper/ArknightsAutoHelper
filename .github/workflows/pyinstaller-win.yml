@@ -31,3 +31,17 @@ jobs:
       with:
         name: akhelper-cp39-win_amd64
         path: dist/akhelper.zip
+    - name: Upload build logs
+      uses: actions/upload-artifact@v2.1.4
+      with:
+        name: PyInstaller logs for debugging
+        path: build/akhelper
+    - name: prerelease
+      uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "current-binary-package"
+        prerelease: true
+        title: "Latest Development Build"
+        files: |
+          dist/akhelper.zip
