@@ -9,6 +9,8 @@ import json
 from util import cvimage as Image
 import requests
 import os
+import logging
+import config
 
 from util.richlog import get_logger
 from . import imgops
@@ -16,8 +18,8 @@ from . import minireco
 from . import resources
 from . import common
 
-net_file = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'ark_material.onnx')
-index_file = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'index_itemid_relation.json')
+net_file = os.path.join(config.cache_path, 'ark_material.onnx')
+index_file = os.path.join(config.cache_path, 'index_itemid_relation.json')
 
 
 @lru_cache(1)
@@ -60,7 +62,7 @@ def update_net():
     remote_relation = resp.json()
     if remote_relation['time'] > local_cache_time:
         from datetime import datetime
-        print(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
+        logging.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
         with open(index_file, 'w', encoding='utf-8') as f:
             json.dump(remote_relation, f, ensure_ascii=False)
         resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/ark_material.onnx')

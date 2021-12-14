@@ -10,7 +10,7 @@
                 <b-icon icon="plug-fill" />设备
               </b-input-group-prepend>
               <b-input-group-append class="flex-grow-1">
-                <b-dropdown :text="deviceName" right class="flex-grow-1">
+                <b-dropdown ref="device_dropdown" :text="deviceName" right class="flex-grow-1">
                   <b-dropdown-item disabled><b>可用设备</b></b-dropdown-item>
                   <b-dropdown-item v-for="dev in availiableDevices" v-bind:key="dev" @click="connectDevice(dev)">{{dev}}</b-dropdown-item>
                   <b-dropdown-divider/>
@@ -530,7 +530,7 @@ export default class App extends Vue {
   onNotify(name, value) {
     console.log("update value", name, "=", value)
     switch (name) {
-      case "web:current-device":
+      case "current-device":
         this.deviceName = value.toString()
         break
       case "web:availiable-devices":
@@ -538,6 +538,9 @@ export default class App extends Vue {
         break
       case 'web:version':
         this.version = value.toString()
+        break
+      case 'web:show-devices':
+        this.$refs.device_dropdown.show();
         break
       case 'wait':
         this.onWait(value.duration, value.allow_skip)

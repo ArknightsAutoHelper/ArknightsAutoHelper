@@ -2,8 +2,8 @@ import asyncio
 from ctypes import Structure, c_float, HRESULT, c_int, windll, c_uint32, c_int32, WinError
 
 from rotypes.inspectable import IInspectable, IUnknown
-from rotypes.idldsl import define_winrt_com_method, generics_cache, define_winrt_com_delegate, pinterface_type
-from rotypes import delegate
+from rotypes.idldsl import define_winrt_com_method, generics_cache, define_winrt_com_delegate, pinterface_type, GUID
+from rotypes import delegate, HSTRING
 
 _kernel32 = windll.LoadLibrary('kernel32.dll')
 _CreateEvent = _kernel32.CreateEventW
@@ -22,9 +22,9 @@ class AsyncStatus(c_int32):
     Canceled = 2
     Error = 3
 
-
+@GUID('00000036-0000-0000-C000-000000000046')
 class IAsyncInfo(IInspectable):
-    IID = '00000036-0000-0000-C000-000000000046'
+    pass
 
 
 @generics_cache
@@ -108,17 +108,26 @@ def IReference(T):
     return cls
 
 
+@GUID('30d5a829-7fa4-4026-83bb-d75bae4ea99e')
 class IClosable(IInspectable):
-    IID = '30d5a829-7fa4-4026-83bb-d75bae4ea99e'
+    def __enter__(self):
+        pass
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.Close()
 
 
+@GUID('96369f54-8eb6-48f0-abce-c1b211e627c3')
 class IStringable(IInspectable):
-    IID = '96369f54-8eb6-48f0-abce-c1b211e627c3'
     def __str__(self):
         return str(self.ToString())
 
+
+@generics_cache
+def TypedEventHandler(TSender, TResult):
+    cls = pinterface_type('IAsyncOperationCompletedHandler', GUID(2648818996, 27361, 4576, 132, 225, 24, 169, 5, 188, 197, 63), (TSender, TResult), (IUnknown, delegate.delegatebase))
+    TypedEventHandler.known_types[(TSender, TResult)] = cls
+    define_winrt_com_delegate(cls, TSender, TResult)
+    return cls
 
 define_winrt_com_method(IAsyncInfo, 'get_Id', propget=c_uint32)
 define_winrt_com_method(IAsyncInfo, 'get_Status', propget=c_int)
@@ -128,4 +137,4 @@ define_winrt_com_method(IAsyncInfo, 'Close')
 
 define_winrt_com_method(IClosable, 'Close', vtbl=6)
 
-define_winrt_com_method(IStringable, 'ToString', vtbl=6)
+define_winrt_com_method(IStringable, 'ToString', retval=HSTRING, vtbl=6)

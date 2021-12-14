@@ -1,10 +1,13 @@
-from functools import reduce
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from typing import Union
+
+from dataclasses import dataclass
 
 import cv2 as cv
 import numpy as np
 from util import cvimage as Image
-
-
 
 
 def enhance_contrast(img, lower=90, upper=None):
@@ -166,7 +169,14 @@ def match_template(img, template, method=cv.TM_CCOEFF_NORMED):
     return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), mtresult[maxidx]
 
 
-def find_homography(templ, haystack, *, min_match=10):
+@dataclass
+class FeatureMatchingResult:
+    template_keypooint_count: int
+    matched_keypoint_count: int
+    template_corners: Union[list[tuple[int, int]], np.ndarray, None]
+
+
+def match_feature(templ, haystack, *, min_match=10) -> FeatureMatchingResult:
     templ = np.asarray(templ.convert('L'))
     haystack = np.asarray(haystack.convert('L'))
 
@@ -187,6 +197,8 @@ def find_homography(templ, haystack, *, min_match=10):
         if len(group) >= 2 and group[0].distance < 0.75 * group[1].distance:
             good.append(group[0])
 
+    result = FeatureMatchingResult(len(kp1), len(good))
+
     if len(good) >= min_match:
         src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
         dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
@@ -197,16 +209,14 @@ def find_homography(templ, haystack, *, min_match=10):
         h, w = templ.shape
         pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
         dst = cv.perspectiveTransform(pts, M)
-
+        result.perspective_template_corners = dst
         # img2 = cv.polylines(haystack, [np.int32(dst)], True, 0, 2, cv.LINE_AA)
-        return dst
-    else:
-        raise RuntimeError("Not enough matches are found - %d/%d" % (len(good), min_match))
-        matchesMask = None
+    return result
+
 
 
 def _find_homography_test(templ, haystack):
-    pts = find_homography(templ, haystack)
+    pts = match_feature(templ, haystack).template_corners
     img2 = cv.polylines(np.asarray(haystack.convert('L')), [np.int32(pts)], True, 0, 2, cv.LINE_AA)
     img = Image.fromarray(img2, 'L')
     print(pts)

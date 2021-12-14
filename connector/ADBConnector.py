@@ -134,13 +134,19 @@ class _ScreenCapImplPNG:
         return self.screencap().size
     
     def screencap(self):
+        from PIL import Image as PILImage, ImageCms
         s = self.device_session_factory().exec_stream('screencap -p')
         data = recvall(s, 4194304, True)
-        img = Image.open(BytesIO(data))
+        img = PILImage.open(BytesIO(data))
         if self.screenshot_rotate != 0:
             img = img.rotate(self.screenshot_rotate)
-        return img
-    
+        if icc := img.info.get('icc_profile', ''):
+            iccio = BytesIO(icc)
+            src_profile = ImageCms.ImageCmsProfile(iccio)
+            dst_profile = ImageCms.createProfile('sRGB')
+            img = ImageCms.profileToProfile(img, src_profile, dst_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC)
+        return Image.fromarray(np.asarray(img), img.mode)
+
     __call__ = screencap
 
 class _ScreenCapImplDefault:
@@ -208,11 +214,11 @@ class ADBConnector:
     def __init__(self, adb_serial):
         ensure_adb_alive()
         # os.chdir(ADB_ROOT)
-        self.ADB_ROOT = config.ADB_ROOT
-        self.adb_serial = adb_serial
+        self.device_ROOT = config.ADB_ROOT
+        self.device_serial = adb_serial
         self.host_session_factory = _host_session_factory
         self.rch = None
-        self.device_session_factory = lambda: self.host_session_factory().device(self.adb_serial)
+        self.device_session_factory = lambda: self.host_session_factory().device(self.device_serial)
         self.cache_screenshot = config.get('device/cache_screenshot', True)
         self.last_screenshot_timestamp = 0
         self.last_screenshot_duration = 0
@@ -239,7 +245,7 @@ class ADBConnector:
             self.rch.stop()
 
     def __str__(self):
-        return 'adb:'+self.adb_serial
+        return 'adb:'+self.device_serial
 
     def get_device_identifier(self):
         hostname = self.device_session_factory().exec('getprop net.hostname').decode().strip()
@@ -331,19 +337,9 @@ class ADBConnector:
         logger.debug("output: %s", repr(output))
         return output
 
-    def get_sub_screen(self, image, screen_range):
-        return image.crop(
-            (
-                screen_range[0][0],
-                screen_range[0][1],
-                screen_range[0][0] + screen_range[1][0],
-                screen_range[0][1] + screen_range[1][1]
-            )
-        )
-
 
     def _detect_loopbacks(self):
-        if not (self.adb_serial.startswith('emulator-') or self.adb_serial.startswith('127.0.0.1:')):
+        if not (self.device_serial.startswith('emulator-') or self.device_serial.startswith('127.0.0.1:')):
             return []
         board = self.device_session_factory().exec('getprop ro.product.board')
         if b'goldfish' in board:
@@ -379,7 +375,7 @@ class ADBConnector:
         self.rch = revconn.ReverseConnectionHost()
         self.rch.start()
 
-    def screenshot(self, cached=True):
+    def screenshot(self, cached=True) -> Image.Image:
         t0 = time.monotonic()
         if cached and self.cache_screenshot:
             if self.last_screenshot is not None and t0 - self.last_screenshot_timestamp < self.last_screenshot_duration:

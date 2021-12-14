@@ -4,5 +4,6 @@ if __name__ == '__main__':
     import multiprocessing
     multiprocessing.freeze_support()
     import sys
-    import Arknights.shell_next
-    sys.exit(Arknights.shell_next.main(sys.argv))
+    import Arknights.configure_launcher
+    import automator.launcher
+    sys.exit(automator.launcher.main(sys.argv))

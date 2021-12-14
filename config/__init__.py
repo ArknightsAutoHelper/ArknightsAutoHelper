@@ -43,6 +43,7 @@ background = False
 ADB_ROOT = os.path.join(root, 'ADB', sys.platform)
 SCREEN_SHOOT_SAVE_PATH = os.path.join(writable_root, 'screenshot')
 CONFIG_PATH = os.path.join(writable_root, 'config')
+cache_path = os.path.join(writable_root, 'cache')
 extra_items_path = os.path.join(writable_root, 'extra_items')
 config_file = os.path.join(CONFIG_PATH, 'config.yaml')
 config_template = os.path.join(config_template_path, 'config-template.yaml')
@@ -226,7 +227,24 @@ def get_instance_id():
     else:
         logfile = os.path.join(logs, 'ArknightsAutoHelper.%d.log' % _instanceid)
 
+
+    return _instanceid
+
+logging_enabled = False
+
+def enable_logging():
+    global logging_enabled
+    if logging_enabled:
+        return
+    get_instance_id()
     with open(logging_config_file, 'r', encoding='utf-8') as f:
         logging.config.dictConfig(yaml.load(f))
     logging.debug('ArknightsAutoHelper version %s', version)
-    return _instanceid
+    import coloredlogs
+    coloredlogs.install(
+        fmt=' Ξ %(message)s',
+        #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
+        datefmt='%H:%M:%S',
+        level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
+        level='INFO')
+    logging_enabled = True

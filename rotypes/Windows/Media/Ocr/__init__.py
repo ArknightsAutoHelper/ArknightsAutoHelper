@@ -5,28 +5,33 @@ from rotypes.Windows.Foundation.Collections import IVectorView
 from rotypes.Windows.Globalization import Language
 from rotypes.Windows.Graphics.Imaging import SoftwareBitmap
 from rotypes.inspectable import IInspectable
-from rotypes.idldsl import define_winrt_com_method, _static_propget, _static_method, _non_activatable_init, runtimeclass
+from rotypes.idldsl import define_winrt_com_method, _static_propget, _static_method, _non_activatable_init, runtimeclass, GUID
 from rotypes.winstring import HSTRING
 
 
+@GUID('3C2A477A-5CD9-3525-BA2A-23D1E0A68A1D')
 class IOcrWord(IInspectable):
-    IID = '3C2A477A-5CD9-3525-BA2A-23D1E0A68A1D'
+    pass
 
 
+@GUID('0043A16F-E31F-3A24-899C-D444BD088124')
 class IOcrLine(IInspectable):
-    IID = '0043A16F-E31F-3A24-899C-D444BD088124'
+    pass
 
 
+@GUID('9BD235B2-175B-3D6A-92E2-388C206E2F63')
 class IOcrResult(IInspectable):
-    IID = '9BD235B2-175B-3D6A-92E2-388C206E2F63'
+    pass
 
 
+@GUID('5A14BC41-5B76-3140-B680-8825562683AC')
 class IOcrEngine(IInspectable):
-    IID = '5A14BC41-5B76-3140-B680-8825562683AC'
+    pass
 
 
+@GUID('5BFFA85A-3384-3540-9940-699120D428A8')
 class IOcrEngineStatics(IInspectable):
-    IID = '5BFFA85A-3384-3540-9940-699120D428A8'
+    pass
 
 
 class OcrWord(runtimeclass, IOcrWord):

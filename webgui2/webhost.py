@@ -83,7 +83,7 @@ class WebHostChromePWA:
         import subprocess
         import os
         import config
-        data_dir = os.path.join(config.CONFIG_PATH, "akhelper-gui-datadir")
+        data_dir = os.path.join(config.cache_path, "akhelper-gui-datadir")
         cmd = [self.exe, '--chrome-frame', '--app='+url, '--user-data-dir='+data_dir, '--disable-plugins', '--disable-extensions']
         if width is not None:
             cmd.append('--window-size=%d,%d' % (width, height))

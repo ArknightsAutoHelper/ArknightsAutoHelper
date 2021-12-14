@@ -36,7 +36,7 @@ def get_ballte_corners(img):
         return (
         (64.693 * vw, 16.852 * vh), (82.378 * vw, 14.352 * vh), (82.378 * vw, 37.500 * vh), (64.693 * vw, 37.963 * vh))
     else:
-        return [x[0] for x in imgops.find_homography(resources.load_image_cached('main/terminal.png', 'L'), img)]
+        return [x[0] for x in imgops.match_feature(resources.load_image_cached('main/terminal.png', 'L'), img).template_corners]
 
 
 def get_task_corners(img):
@@ -53,7 +53,7 @@ def get_task_corners(img):
         return (np.array((58.489 * vw, 76.296 * vh)), np.array((72.008 * vw, 78.611 * vh)),
                 np.array((72.008 * vw, 92.685 * vh)), np.array((58.489 * vw, 89.167 * vh)))
     else:
-        return [x[0] for x in imgops.find_homography(resources.load_image_cached('main/quest.png', 'L'), img)]
+        return [x[0] for x in imgops.match_feature(resources.load_image_cached('main/quest.png', 'L'), img).template_corners]
 
 
 # 以下几条用于访问好友基建
@@ -67,7 +67,7 @@ def get_friend_corners(img):
     if aspect == Fraction(16, 9):
         return (np.array((22.734*vw, 76.667*vh)), np.array((33.203*vw, 76.667*vh)), np.array((33.203*vw, 82.083*vh)), np.array((22.734*vw, 82.083*vh)))
     else:
-        return [x[0] for x in imgops.find_homography(resources.load_image_cached('main/friends.png', 'L'), img)]
+        return [x[0] for x in imgops.match_feature(resources.load_image_cached('main/friends.png', 'L'), img).template_corners]
        
 def get_friend_list(img):
     """

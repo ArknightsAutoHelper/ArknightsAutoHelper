@@ -1,5 +1,7 @@
 from __future__ import annotations
-from typing import Tuple
+from dataclasses import dataclass
+from typing import overload
+from numbers import Real
 
 import builtins
 import sys
@@ -118,6 +120,60 @@ def fromarray(array, mode=None):
             mode = 'RGBA'
     return Image(array, mode)
 
+@dataclass
+class Rect:
+    x: Real
+    y: Real
+    width: Real = 0
+    height: Real = 0
+
+    def __init__(self, x, y, w=0, h=0, *, right=None, bottom=None):
+        self.x = x
+        self.y = y
+        self.width = w
+        self.height = h
+        if right is not None:
+            self.right = right
+        if bottom is not None:
+            self.bottom = bottom
+
+    @classmethod
+    def from_xywh(cls, x, y, w, h):
+        return cls(x, y, w, h)
+
+    @classmethod
+    def from_ltrb(cls, left, top, right, bottom):
+        return cls(left, top, right=right, bottom=bottom)
+
+    @property
+    def right(self):
+        return self.x + self.width
+
+    @right.setter
+    def right(self, value):
+        self.width = value - self.x
+
+    @property
+    def bottom(self):
+        return self.y + self.height
+
+    @bottom.setter
+    def bottom(self, value):
+        self.height = value - self.y
+
+    @property
+    def xywh(self):
+        """describe this Rect in tuple of (x, y, width, height)"""
+        return self.x, self.y, self.width, self.height
+
+    @property
+    def ltrb(self):
+        """describe this Rect in tuple of (left, top, right, bottom)"""
+        return self.x, self.y, self.right, self.bottom
+
+    def __iter__(self):
+        return iter((self.x, self.y, self.right(), self.bottom()))
+
 class Image:
     def __init__(self, mat: np.ndarray, mode=None):
         self._mat = mat
@@ -160,15 +216,41 @@ class Image:
         return self._mat.shape[0]
     
     @property
-    def size(self):
+    def size(self) -> tuple[int, int]:
         return tuple(self._mat.shape[1::-1])
+
+    @overload
+    def subview(self, rect: Rect) -> Image:
+        """crop with Rect"""
+        ...
+
+    @overload
+    def subview(self, rect: tuple[Real, Real, Real, Real]) -> Image:
+        """crop with (left, top, right, bottom) tuple"""
+        ...
     
-    def crop(self, rect: Tuple[left, top, right, bottom]):
+    @overload
+    def crop(self, rect: Rect) -> Image:
+        """crop with Rect"""
+        ...
+
+    @overload
+    def crop(self, rect: tuple[Real, Real, Real, Real]) -> Image:
+        """crop with (left, top, right, bottom) tuple"""
+        ...
+
+    def subview(self, rect):
         if rect is None:
-            return self.copy()
-        left, top, right, bottom = (int(round(x)) for x in rect)
-        newmat = self._mat[top:bottom, left:right].copy()
+            return self
+        if isinstance(rect, Rect):
+            left, top, right, bottom = rect.ltrb
+        else:
+            left, top, right, bottom = (int(round(x)) for x in rect)
+        newmat = self._mat[top:bottom, left:right]
         return Image(newmat, self.mode)
+
+    def crop(self, rect):
+        return self.subview(rect).copy()
     
     def convert(self, mode=None, matrix=NotImplemented, dither=NotImplemented, palette=NotImplemented, colors=NotImplemented):
         if matrix is not NotImplemented or dither is not NotImplemented or palette is not NotImplemented or colors is not NotImplemented:
@@ -297,7 +379,7 @@ class Image:
                 resample = NEAREST
             else:
                 resample = BICUBIC
-        newmat = cv2.resize(self._mat, (int(size[0]), int(size[1])), interpolation=resample)
+        newmat = cv2.resize(self._mat, (int(round(size[0])), int(round(size[1]))), interpolation=resample)
         return Image(newmat, self.mode)
 
     def save(self, fp, format=None, imwrite_params=None, **params):

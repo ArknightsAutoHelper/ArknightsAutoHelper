@@ -1,12 +1,13 @@
 from ctypes import c_uint32, c_void_p
 
 import rotypes.Windows.Storage.Streams
-from rotypes.idldsl import define_winrt_com_method, _non_activatable_init, _static_method, runtimeclass
+from rotypes.idldsl import define_winrt_com_method, _non_activatable_init, _static_method, runtimeclass, GUID
 from rotypes.inspectable import IInspectable
 
 
+@GUID('320B7E22-3CB0-4CDF-8663-1D28910065EB')
 class ICryptographicBufferStatics(IInspectable):
-    IID = '320B7E22-3CB0-4CDF-8663-1D28910065EB'
+    pass
 
 
 class CryptographicBuffer(runtimeclass):

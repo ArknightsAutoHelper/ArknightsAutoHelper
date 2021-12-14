@@ -3,9 +3,10 @@ import requests
 import os
 import json
 from datetime import datetime
+import config
 
 penguin_base_url = 'https://penguin-stats.io/PenguinStats'
-cache_path = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'penguin_cache.json')
+cache_path = os.path.join(config.cache_path, 'penguin_cache.json')
 
 
 def update_cache():

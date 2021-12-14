@@ -45,6 +45,9 @@ def parse_hocr(file):
 
 
 class BaseTesseractEngine(OcrEngine, ABC):
-    def __init__(self, lang, **kwargs):
+    def __init__(self, lang, model_name=None, **kwargs):
         super().__init__(lang, **kwargs)
-        self.tesslang = translate_bcp47(lang)
+        if model_name is not None:
+            self.tesslang = model_name
+        else:
+            self.tesslang = translate_bcp47(lang)

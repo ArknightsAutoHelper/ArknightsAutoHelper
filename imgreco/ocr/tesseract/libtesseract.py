@@ -25,13 +25,11 @@ class LibTesseractEngine(BaseTesseractEngine):
             self.baseapi.set_variable('tessedit_pageseg_mode', '7')
         elif OcrHint.SPARSE in hints:
             self.baseapi.set_variable('tessedit_pageseg_mode', '11')
-        if 'char_whitelist' in kwargs:
-            self.baseapi.set_variable('tessedit_char_whitelist', kwargs['char_whitelist'])
+        self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
 
         result = parse_hocr(io.BytesIO(self.baseapi.get_hocr()))
         self.baseapi.set_variable('tessedit_pageseg_mode', '')
-        if 'char_whitelist' in kwargs:
-            self.baseapi.set_variable('tessedit_char_whitelist', '')
+        self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
 
         return result
 
