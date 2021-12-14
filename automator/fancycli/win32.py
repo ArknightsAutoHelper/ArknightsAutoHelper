@@ -26,7 +26,23 @@ GetModuleHandle = k32.GetModuleHandleW
 FlushConsoleInputBuffer = k32.FlushConsoleInputBuffer
 GetFileType = k32.GetFileType
 FILE_TYPE_CHAR = 0x0002
+RtlGetVersion = ctypes.windll.ntdll.RtlGetVersion
 
+class OSVERSIONINFOW(ctypes.Structure):
+    _fields_ = [
+        ('dwOSVersionInfoSize', ctypes.c_ulong),
+        ('dwMajorVersion', ctypes.c_ulong),
+        ('dwMinorVersion', ctypes.c_ulong),
+        ('dwBuildNumber', ctypes.c_ulong),
+        ('dwPlatformId', ctypes.c_ulong),
+        ('szCSDVersion', ctypes.c_wchar * 128),
+    ]
+
+
+def _build_number():
+    info = OSVERSIONINFOW(dwOSVersionInfoSize=ctypes.sizeof(OSVERSIONINFOW))
+    RtlGetVersion(ctypes.byref(info))
+    return info.dwBuildNumber
 
 def getch_timeout(timeout):
     hstdin = GetStdHandle(STD_INPUT_HANDLE)
@@ -96,7 +112,7 @@ def check_control_code():
     hout = GetStdHandle(STD_OUTPUT_HANDLE)
     outmode = ctypes.c_uint32()
 
-    if sys.getwindowsversion().build >= 14393:
+    if _build_number() >= 14393:
         logger.debug('using Windows ENABLE_VIRTUAL_TERMINAL_PROCESSING')
         if not GetConsoleMode(hout, ctypes.byref(outmode)):
             return False

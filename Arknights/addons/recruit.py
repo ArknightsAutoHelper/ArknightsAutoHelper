@@ -1,4 +1,4 @@
-from Arknights.helper import AddonBase
+from automator import AddonBase
 class RecruitAddon(AddonBase):
     def on_attach(self) -> None:
         self.register_cli_command('recruit', self.cli_recruit, self.cli_recruit.__doc__)

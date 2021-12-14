@@ -1,5 +1,7 @@
+# 初始化 launcher
+import Arknights.configure_launcher
 # 使用 command 运行 CLI 界面中的命令
-from Arknights.launcher import command
+from automator.launcher import command
 
 command('connect adb 127.0.0.1:7555')
 command('auto -r 1-7 9999')
@@ -14,7 +16,7 @@ command('auto -r NON_EXIST_STAGE 9999')  # 试图进入不存在的关卡，产�
 command('record play get_credit')        # 由于异常更改了控制流不会被执行
 
 # 可以使用 on_error_resume_next 禁用从 command() 抛出异常
-from Arknights.launcher import on_error_resume_next
+from automator.launcher import on_error_resume_next
 on_error_resume_next()
 
 command('auto -r NON_EXIST_STAGE 9999')  # 试图进入不存在的关卡
@@ -22,13 +24,13 @@ command('record play get_credit')        # 继续执行
 command('auto grass')
 
 # 可以使用 on_error_raise_exception 恢复默认错误处理行为（抛出异常）
-from Arknights.launcher import on_error_raise_exception
+from automator.launcher import on_error_raise_exception
 on_error_raise_exception()
 
 command('auto -r NON_EXIST_STAGE 9999')  # 抛出异常
 
 # 还可以直接调用面向对象的 API
-from Arknights.launcher import helper
+from automator.launcher import helper
 # 几乎所有的与游戏逻辑有关的功能都在 addon 内实现
 helper.addon('StageNavigator').goto_stage('1-7')
 # 或者将 addon 的类实例传给 addon() 以在 IDE 中获得成员提示
@@ -39,4 +41,4 @@ import pprint
 pprint.pprint(helper.addons)
 
 # 可以使用 import * 代替以上四个 from Arknights.launcher import
-from Arknights.launcher import *  # command, helper, on_error_resume_next, on_error_raise_exception
+from automator.launcher import *  # command, helper, on_error_resume_next, on_error_raise_exception

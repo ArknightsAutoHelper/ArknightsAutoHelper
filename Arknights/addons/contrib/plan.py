@@ -4,7 +4,7 @@ import math
 
 import config
 from penguin_stats import arkplanner
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from ..stage_navigator import StageNavigator
 from ..inventory import InventoryAddon
 

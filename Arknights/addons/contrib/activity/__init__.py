@@ -2,7 +2,7 @@ import os
 import time
 
 import config
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from ..common_cache import load_game_data
 from penguin_stats import arkplanner
 

@@ -1,27 +1,26 @@
 from __future__ import annotations
-from logging import error
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Union
+    from automator import BaseAutomator
 del TYPE_CHECKING
-import itertools
 import os
 import sys
 import time
-import signal
 
 import config
 
 from .fancycli import fancywait
 from .fancycli.platform import isatty
 
+helper: BaseAutomator = None
+prompt_prefix = 'akhelper'
 
 def skipcallback(handler):
     raise StopIteration
 
 class ShellNextFrontend:
-    def __init__(self, use_status_line, show_toggle):
-        self.show_toggle = show_toggle
+    def __init__(self, use_status_line,):
         self.use_status_line = use_status_line
         if use_status_line:
             io = sys.stdout.buffer
@@ -39,25 +38,16 @@ class ShellNextFrontend:
         if not self.use_status_line:
             time.sleep(secs)
             return
-        if self.show_toggle:
-            togglelabel = lambda: '<r>切换自动补充理智(%s)' % ('ON' if self.helper.addon('CombatAddon').use_refill else 'OFF')
-            def togglecallback(handler):
-                self.helper.addon('CombatAddon').use_refill = not self.helper.addon('CombatAddon').use_refill
-                handler.label = togglelabel()
-            togglehandler = lambda: fancywait.KeyHandler(togglelabel(), b'r', togglecallback)
-        else:
-            togglehandler = lambda: fancywait.KeyHandler(None, None, None)
         skiphandler = fancywait.KeyHandler('<ENTER>跳过', b'\r', skipcallback)
         skipdummy   = fancywait.KeyHandler('           ', b'', lambda x: None)
-        fancywait.fancy_delay(secs, self.statusline, [skiphandler if allow_skip else skipdummy, togglehandler()])
+        fancywait.fancy_delay(secs, self.statusline, [skiphandler if allow_skip else skipdummy])
     def request_device_connector(self):
         _ensure_device()
         return device
 
-def _create_helper(use_status_line=True, show_toggle=False):
-    from Arknights.helper import ArknightsHelper
-    frontend = ShellNextFrontend(use_status_line, show_toggle)
-    helper = ArknightsHelper(device_connector=device, frontend=frontend)
+def _create_helper(cls, use_status_line=True):
+    frontend = ShellNextFrontend(use_status_line)
+    helper = cls(device_connector=device, frontend=frontend)
     if use_status_line:
         context = frontend.statusline
     else:
@@ -210,9 +200,9 @@ def interactive(argv):
     except ImportError:
         pass
     if instance_id := config.get_instance_id():
-        title = f"akhelper-{instance_id}"
+        title = f"{prompt_prefix}-{instance_id}"
     else:
-        title = "akhelper"
+        title = prompt_prefix
     while True:
         try:
             if device is None:
@@ -274,13 +264,18 @@ def match_cmd(first, avail_cmds):
         print("matched commands: " + ','.join(x[0] for x in targetcmd))
         return None
 
-config.enable_logging()
-helper, context = _create_helper()
-global_cmds.extend([*helper._cli_commands.values(), ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
-interactive_cmds.extend([('connect', connect, connect.__doc__), *helper._cli_commands.values(), ('exit', exit, '')])
+def _configure(prompt, helper_class):
+    config.enable_logging()
+    global prompt_prefix, helper, context
+    prompt_prefix = prompt
+    helper, context = _create_helper(helper_class)
+    global_cmds.extend([*helper._cli_commands.values(), ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
+    interactive_cmds.extend([('connect', connect, connect.__doc__), *helper._cli_commands.values(), ('exit', exit, '')])
 
 
 def main(argv):
+    if helper is None:
+        raise ValueError('launcher not configured')
     global argv0
     argv0 = argv[0]    
     if len(argv) < 2:

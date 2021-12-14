@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     import imgreco.common
     TupleRect = tuple[Annotated[Real, 'left'], Annotated[Real, 'top'], Annotated[Real, 'right'], Annotated[Real, 'bottom']]
     RoiDef = Union[str, imgreco.common.RegionOfInterest]
-    from .helper import ArknightsHelper
+    from .helper import BaseAutomator
 
 class RoiMatchingArgs(TypedDict):
     method: Union[Literal['template_matching'], Literal['compare_mse'], Literal['feature_matching'], None]
@@ -23,12 +23,11 @@ from util.cvimage import Rect
 import imgreco.common
 import imgreco.imgops
 import imgreco.resources
-from .flags import *
 
 
 class AddonMixin:
     if TYPE_CHECKING:
-        helper: ArknightsHelper
+        helper: BaseAutomator
         logger: logging.Logger
         viewport: tuple[int, int]
     def delay(self, n: Real=10,  # 等待时间中值

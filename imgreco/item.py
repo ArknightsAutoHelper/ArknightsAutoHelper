@@ -9,7 +9,7 @@ import json
 from util import cvimage as Image
 import requests
 import os
-
+import logging
 import config
 
 from util.richlog import get_logger
@@ -62,7 +62,7 @@ def update_net():
     remote_relation = resp.json()
     if remote_relation['time'] > local_cache_time:
         from datetime import datetime
-        self.logger.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
+        logging.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
         with open(index_file, 'w', encoding='utf-8') as f:
             json.dump(remote_relation, f, ensure_ascii=False)
         resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/ark_material.onnx')

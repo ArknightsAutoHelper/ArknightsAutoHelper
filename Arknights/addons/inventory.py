@@ -1,5 +1,5 @@
 from random import randint
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from .common import CommonAddon
 
 class InventoryAddon(AddonBase):

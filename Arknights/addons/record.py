@@ -3,7 +3,7 @@ import re
 import json
 import imgreco.imgops
 
-from Arknights.helper import AddonBase
+from automator import AddonBase
 import config
 from .common import CommonAddon
 

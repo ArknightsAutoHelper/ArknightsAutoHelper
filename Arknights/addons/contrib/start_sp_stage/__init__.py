@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 
 import imgreco.main
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from ..activity import get_stage_map
 from ..base import pil2cv, crop_cv_by_rect, show_img
 from ..common_cache import load_game_data

@@ -8,7 +8,7 @@ import penguin_stats.reporter
 import config
 from util.excutil import guard
 
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from Arknights.flags import *
 
 
@@ -373,7 +373,7 @@ class CombatAddon(AddonBase):
             op(self)
         with self.helper.frontend.context:
             self.combat_on_current_stage(
-                count=count,
+                desired_count=count,
                 c_id=None,
             )
         return 0

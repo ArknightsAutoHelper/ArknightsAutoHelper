@@ -1,4 +1,4 @@
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from Arknights.flags import *
 from .common import CommonAddon
 class QuestAddon(AddonBase):

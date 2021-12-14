@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 import os
 import config
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from ...stage_navigator import StageNavigator
 from ...inventory import InventoryAddon
 

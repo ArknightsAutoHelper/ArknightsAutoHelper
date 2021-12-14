@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Callable, Any, Sequence
 
-from Arknights.helper import AddonBase
+from automator import AddonBase
 from .common import CommonAddon
 from .combat import CombatAddon, _parse_opt
 from random import randint, uniform

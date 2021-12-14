@@ -218,6 +218,16 @@ class Image:
     @property
     def size(self) -> tuple[int, int]:
         return tuple(self._mat.shape[1::-1])
+
+    @overload
+    def subview(self, rect: Rect) -> Image:
+        """crop with Rect"""
+        ...
+
+    @overload
+    def subview(self, rect: tuple[Real, Real, Real, Real]) -> Image:
+        """crop with (left, top, right, bottom) tuple"""
+        ...
     
     @overload
     def crop(self, rect: Rect) -> Image:
@@ -229,15 +239,18 @@ class Image:
         """crop with (left, top, right, bottom) tuple"""
         ...
 
-    def crop(self, rect):
+    def subview(self, rect):
         if rect is None:
-            return self.copy()
+            return self
         if isinstance(rect, Rect):
             left, top, right, bottom = rect.ltrb
         else:
             left, top, right, bottom = (int(round(x)) for x in rect)
-        newmat = self._mat[top:bottom, left:right].copy()
+        newmat = self._mat[top:bottom, left:right]
         return Image(newmat, self.mode)
+
+    def crop(self, rect):
+        return self.subview(rect).copy()
     
     def convert(self, mode=None, matrix=NotImplemented, dither=NotImplemented, palette=NotImplemented, colors=NotImplemented):
         if matrix is not NotImplemented or dither is not NotImplemented or palette is not NotImplemented or colors is not NotImplemented:

@@ -38,24 +38,14 @@ class StatusLineFancy(StatusLineBase):
     def __init__(self, io):
         self.op = TermOp(stdinfd)
         self.io = io
-        check_control_code()
 
     def update(self, text):
         with self.op.keep_cursor():
-            self.op.move_to_scroll_area()
-            self.io.write(("\033[0m\033[46m\033[30m\033[K%s\033[K\033[0m" % text).encode('utf-8'))
+            self.io.write(("\r\033[0m\033[K%s\033[0m\033[K\r" % text).encode('utf-8'))
 
     def cleanup(self):
-        self.update('[RUNNING]')
-
-    def startup(self):
-        self.op.set_scroll_area(1)
-        self.update('ArknightsAutoHelper')
-
-    def shutdown(self):
-        self.op.clear_scroll_area()
-        self.op.set_scroll_area(0)
-
+        self.io.write(b'\033[0m\033[2K')
+        self.io.flush()
 
 class StatusLineLegacy(StatusLineBase):
     def __init__(self, io):
@@ -81,7 +71,7 @@ class KeyHandler:
         self.callback = callback
 
 
-if check_control_code() and has_tty_input:
+if has_tty_input and check_control_code():
     logger.debug('has tty input and control code')
     StatusLine = StatusLineFancy
 elif has_tty_input and stdinfd.isatty():
