@@ -372,10 +372,7 @@ class CombatAddon(AddonBase):
         for op in ops:
             op(self)
         with self.helper.frontend.context:
-            self.combat_on_current_stage(
-                desired_count=count,
-                c_id=None,
-            )
+            self.combat_on_current_stage(count)
         return 0
 
 

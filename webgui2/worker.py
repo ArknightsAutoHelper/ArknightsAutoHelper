@@ -56,7 +56,7 @@ class WorkerThread(threading.Thread):
             "worker:set_refill_with_originium": lambda x: self.helper.addon('CombatAddon').configure_refill(with_originium=bool(x)),
             "worker:set_max_refill_count": self.set_max_refill_count,
             "worker:module_battle": self.ensure_connector_decorator(lambda stage, count: self.helper.addon('StageNavigator').navigate_and_combat(stage, int(count))),
-            "worker:module_battle_slim": self.ensure_connector_decorator(lambda count: self.helper.addon('CombatAddon').combat_on_current_stage(set_count=int(count))),
+            "worker:module_battle_slim": self.ensure_connector_decorator(lambda count: self.helper.addon('CombatAddon').combat_on_current_stage(int(count))),
             "worker:clear_task": self.ensure_connector_decorator(lambda: self.helper.addon('QuestAddon').clear_task()),
             "worker:recruit": self.ensure_connector_decorator(lambda: self.helper.addon('RecruitAddon').recruit()),
         }
