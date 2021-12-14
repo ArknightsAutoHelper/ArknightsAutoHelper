@@ -1,8 +1,3 @@
-# next 分支
-
-正在重构中，代码结构随时可能变动。
-
-GUI 当前不可用。
 # Arknights Auto Helper
 
 > 明日方舟辅助脚本，分支说明如下
@@ -21,7 +16,6 @@ GUI 当前不可用。
 * 自动选图（从主界面开始到关卡信息界面）
 * 自动领取任务奖励
 * 公开招募识别
-* 基建查房、一键领取（部分）
 
 ## 0x01 运行须知
 
@@ -123,7 +117,7 @@ pip install -r requirements.txt
 
 **报告 issue 时，建议附上日志以便定位问题。**
 
-## 0x02 ArknightsHelper GUI 启动（当前不可用）
+## 0x02 ArknightsHelper GUI 启动
 
 ```
 $ python3 akhelper-gui.pyw
