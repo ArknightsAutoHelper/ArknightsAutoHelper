@@ -65,7 +65,7 @@ class AddonBase(AddonMixin):
 
 class BaseAutomator(AddonMixin):
     frontend: Frontend
-    def __init__(self, device_connector=auto_connect, frontend=None):  # 当前绑定到的设备
+    def __init__(self, device_connector=None, frontend=None):  # 当前绑定到的设备
         self.frontend = frontend
         self.frontend.attach(self)
         self.helper = self
