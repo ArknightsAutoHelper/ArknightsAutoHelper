@@ -52,13 +52,13 @@ class WorkerThread(threading.Thread):
         self.allowed_calls = {
             "web:connect": self.web_connect,
             "worker:set_enable_refill": lambda x: None,
-            "worker:set_refill_with_item": lambda x: self.helper.addon('CombatAddon').configure_refill(with_item=bool(x)),
-            "worker:set_refill_with_originium": lambda x: self.helper.addon('CombatAddon').configure_refill(with_originium=bool(x)),
+            "worker:set_refill_with_item": lambda x: self.helper.addon('CombatAddon').configure_refill(with_item=bool(x)) and None,
+            "worker:set_refill_with_originium": lambda x: self.helper.addon('CombatAddon').configure_refill(with_originium=bool(x)) and None,
             "worker:set_max_refill_count": self.set_max_refill_count,
-            "worker:module_battle": self.ensure_connector_decorator(lambda stage, count: self.helper.addon('StageNavigator').navigate_and_combat(stage, int(count))),
-            "worker:module_battle_slim": self.ensure_connector_decorator(lambda count: self.helper.addon('CombatAddon').combat_on_current_stage(int(count))),
-            "worker:clear_task": self.ensure_connector_decorator(lambda: self.helper.addon('QuestAddon').clear_task()),
-            "worker:recruit": self.ensure_connector_decorator(lambda: self.helper.addon('RecruitAddon').recruit()),
+            "worker:module_battle": lambda stage, count: self.helper.addon('StageNavigator').navigate_and_combat(stage, int(count)) and None,
+            "worker:module_battle_slim": lambda count: self.helper.addon('CombatAddon').combat_on_current_stage(int(count)) and None,
+            "worker:clear_task": lambda: self.helper.addon('QuestAddon').clear_task() and None,
+            "worker:recruit": lambda: self.helper.addon('RecruitAddon').recruit(),
         }
 
     def notify_availiable_devices(self):
@@ -146,19 +146,7 @@ class WorkerThread(threading.Thread):
         connector_str = str(new_connector)
         self.helper.connect_device(new_connector)
     
-    def ensure_connector(self):
-        return
-        if self.helper.adb is None:
-            new_connector = ADBConnector.auto_connect()
-            self.helper.connect_device(new_connector)
-            self.notify("web:current-device", str(new_connector))
 
-    def ensure_connector_decorator(self, func):
-        def decorated(*args, **kwargs):
-            self.ensure_connector()
-            return func(*args, **kwargs)
-        return decorated
-    
     def set_max_refill_count(self, count):
         self.helper.addon('CombatAddon').refill_count = 0
         self.helper.addon('CombatAddon').max_refill_count = count
