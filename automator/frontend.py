@@ -1,3 +1,4 @@
+from __future__ import annotations
 import time
 from contextlib import AbstractContextManager, nullcontext
 from abc import ABC, abstractmethod
