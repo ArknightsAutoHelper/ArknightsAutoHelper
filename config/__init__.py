@@ -6,7 +6,11 @@ import logging.config
 import os
 import shutil
 import sys
-from collections import Mapping
+
+if sys.version_info[:2] >= (3, 8):
+    from collections.abc import Mapping
+else:
+    from collections import Mapping
 
 import ruamel.yaml
 
