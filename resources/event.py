@@ -37,7 +37,7 @@ FIXED_QUANTITY = [
 #     '感谢庆典物资补给',
 # ]
 
-report_types = {'MATERIAL', 'CARD_EXP', 'VOUCHER_MGACHA', 'special_report_item'}
+report_types = {'MATERIAL', 'CARD_EXP', 'VOUCHER_MGACHA', 'furni', 'special_report_item'}
 
 
 def event_preprocess(stage: str, items: List[Tuple[str, str, int, str]], exclude_from_validation: List):
