@@ -51,7 +51,6 @@ class WorkerThread(threading.Thread):
         self.helper = None
         self.allowed_calls = {
             "web:connect": self.web_connect,
-            "worker:set_enable_refill": lambda x: None,
             "worker:set_refill_with_item": lambda x: self.helper.addon('CombatAddon').configure_refill(with_item=bool(x)) and None,
             "worker:set_refill_with_originium": lambda x: self.helper.addon('CombatAddon').configure_refill(with_originium=bool(x)) and None,
             "worker:set_max_refill_count": self.set_max_refill_count,
