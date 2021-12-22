@@ -173,7 +173,7 @@ def match_template(img, template, method=cv.TM_CCOEFF_NORMED):
 class FeatureMatchingResult:
     template_keypooint_count: int
     matched_keypoint_count: int
-    template_corners: Union[list[tuple[int, int]], np.ndarray, None]
+    template_corners: Union[list[tuple[int, int]], np.ndarray, None] = None
 
 
 def match_feature(templ, haystack, *, min_match=10) -> FeatureMatchingResult:
@@ -209,7 +209,7 @@ def match_feature(templ, haystack, *, min_match=10) -> FeatureMatchingResult:
         h, w = templ.shape
         pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
         dst = cv.perspectiveTransform(pts, M)
-        result.perspective_template_corners = dst
+        result.template_corners = dst
         # img2 = cv.polylines(haystack, [np.int32(dst)], True, 0, 2, cv.LINE_AA)
     return result
 
