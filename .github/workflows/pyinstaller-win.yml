@@ -1,6 +1,7 @@
 name: Windows binary package
 
 on:
+  workflow_dispatch:
   push:
     branches: [ master ]
 
@@ -9,6 +10,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - name: Set up Python 3.9 amd64
       uses: actions/setup-python@v2
       with:
