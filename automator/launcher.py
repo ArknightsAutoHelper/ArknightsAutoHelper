@@ -100,42 +100,51 @@ def connect(argv):
         connector_type = argv[1]
         connector_args = argv[2:]
     else:
-        connector_args = []
+        return _interactive_connect()
     if connector_type == 'adb':
-        _connect_adb(connector_args)
+        return _connect_adb(connector_args)
     else:
         print('unknown connector type:', connector_type)
+    return 1
+
+
+def _interactive_connect():
+    import connector
+    global device
+    try:
+        device = connector.auto_connect()
+    except IndexError:
+        devices = connector.enum_devices()
+        if len(devices) == 0:
+            print("当前无设备连接")
+            raise
+        print("检测到多台设备")
+        for i, (name, *cdr) in enumerate(devices):
+            print("%2d. %s" % (i+1, name))
+        num = 0
+        while True:
+            try:
+                num = int(input("请输入序号选择设备: "))
+                if not 1 <= num < len(devices)+1:
+                    raise ValueError()
+                break
+            except ValueError:
+                print("输入不合法，请重新输入")
+        name, cls, args, binding = devices[num-1]
+        device = cls(*args)
 
 
 def _connect_adb(args):
     from connector.ADBConnector import ADBConnector, ensure_adb_alive
     ensure_adb_alive()
     global device
-    if len(args) == 0:
-        try:
-            device = ADBConnector.auto_connect()
-        except IndexError:
-            devices = ADBConnector.available_devices()
-            if len(devices) == 0:
-                print("当前无设备连接")
-                raise
-            print("检测到多台设备")
-            for i, (serial, status) in enumerate(devices):
-                print("%2d. %s\t[%s]" % (i, serial, status))
-            num = 0
-            while True:
-                try:
-                    num = int(input("请输入序号选择设备: "))
-                    if not 0 <= num < len(devices):
-                        raise ValueError()
-                    break
-                except ValueError:
-                    print("输入不合法，请重新输入")
-            device_name = devices[num][0]
-            device = ADBConnector(device_name)
-    else:
+    if len(args) >= 0:
         serial = args[0]
         device = ADBConnector(serial)
+        return 0
+    else:
+        print('usage: connect adb <serial>')
+        return 1
 
 
 def _ensure_device():

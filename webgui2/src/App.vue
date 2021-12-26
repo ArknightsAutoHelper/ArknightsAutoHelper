@@ -12,7 +12,7 @@
               <b-input-group-append class="flex-grow-1">
                 <b-dropdown ref="device_dropdown" :text="deviceName" right class="flex-grow-1">
                   <b-dropdown-item disabled><b>可用设备</b></b-dropdown-item>
-                  <b-dropdown-item v-for="dev in availiableDevices" v-bind:key="dev" @click="connectDevice(dev)">{{dev}}</b-dropdown-item>
+                  <b-dropdown-item v-for="(name, index) in availiableDevices" v-bind:key="index" @click="connectDevice('list:'+index)">{{name}}</b-dropdown-item>
                   <b-dropdown-divider/>
                   <b-dropdown-item v-b-modal.connect-device>连接设备</b-dropdown-item>
                 </b-dropdown>
@@ -450,8 +450,14 @@ export default class App extends Vue {
     return this.connectDevice("adb:" + this.deviceToConnect)
   }
 
-  connectDevice(dev) {
-    return this.callRemote("web:connect", [dev])
+  async connectDevice(dev) {
+    this.appRunning = true
+    this.workerWaiting = false
+    try {
+      return await this.callRemote("web:connect", [dev])
+    } finally {
+      this.appRunning = false
+    }
   }
 
   setAppIdle() {

@@ -210,6 +210,10 @@ def _host_session_factory(timeout=None):
     ensure_adb_alive()
     return ADBClientSession(config.ADB_SERVER, timeout)
 
+def enum(devices):
+    for serial in ADBConnector.available_devices():
+        devices.append((f'ADB: {serial[0]}', ADBConnector, [serial[0]], 'strong'))
+
 class ADBConnector:
     def __init__(self, adb_serial):
         ensure_adb_alive()

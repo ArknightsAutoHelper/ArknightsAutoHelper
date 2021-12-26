@@ -61,9 +61,9 @@ class WorkerThread(threading.Thread):
         }
 
     def notify_availiable_devices(self):
-        devices = ADBConnector.available_devices()
-        devices = ["adb:"+x[0] for x in devices]
-        self.notify("web:availiable-devices", devices)
+        devices = connector.enum_devices()
+        self.devices = devices
+        self.notify("web:availiable-devices", [x[0] for x in devices])
 
     # threading.Thread
     def run(self):
@@ -75,7 +75,6 @@ class WorkerThread(threading.Thread):
         if config.get_instance_id() != 0:
             version += f" (instance {config.get_instance_id()})"
         self.notify("web:version", version)
-        ensure_adb_alive()
         self.notify_availiable_devices()
         self.helper = Arknights.helper.ArknightsHelper(frontend=self)
         while True:
@@ -139,9 +138,13 @@ class WorkerThread(threading.Thread):
     def web_connect(self, dev:str):
         print(dev.split(':', 1))
         connector_type, cookie = dev.split(':', 1)
-        if connector_type != 'adb':
+        if connector_type == 'list':
+            name, cls, args, binding = self.devices[int(cookie)]
+            new_connector = cls(*args)
+        elif connector_type == 'adb':
+            new_connector = ADBConnector(cookie)
+        else:
             raise KeyError("unknown connector type " + connector_type)
-        new_connector = ADBConnector(cookie)
         connector_str = str(new_connector)
         self.helper.connect_device(new_connector)
     

@@ -4,6 +4,7 @@ from rotypes.types import GUID, REFGUID, check_hresult
 import json
 # import pprint
 import logging
+from ..ADBConnector import ADBConnector
 
 logger = logging.getLogger(__name__)
 if __name__ == '__main__':
@@ -27,11 +28,11 @@ try:
     HcsEnumerateComputeSystems.restype = check_hresult
 
     HcsOpenComputeSystem = vmcompute.HcsOpenComputeSystem
-    HcsOpenComputeSystem.argtypes = (REFGUID, ctypes.POINTER(HCS_SYSTEM), ctypes.POINTER(ctypes.c_wchar_p))
+    HcsOpenComputeSystem.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(HCS_SYSTEM), ctypes.POINTER(ctypes.c_wchar_p))
     HcsOpenComputeSystem.restype = check_hresult
 
     HcsGetComputeSystemProperties = vmcompute.HcsGetComputeSystemProperties
-    HcsGetComputeSystemProperties.argtypes = (HCS_SYSTEM , ctypes.c_void_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
+    HcsGetComputeSystemProperties.argtypes = (HCS_SYSTEM , ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
     HcsGetComputeSystemProperties.restype = check_hresult
 
     HcsCloseComputeSystem = vmcompute.HcsCloseComputeSystem
@@ -75,9 +76,9 @@ except Exception as e:
     availiable = False
 
 if availiable:
-    def run(connector, params):
-        result = False
-        with contextlib.suppress(Exception):
+    from .append import compare_adb_serial
+    def enum(devices):
+        with contextlib.nullcontext():
             response = ctypes.c_wchar_p()
             HcsEnumerateComputeSystems('{"State":"Running"}', ctypes.byref(response), None)
             runningsystems = json.loads(ctypes.wstring_at(response))
@@ -88,7 +89,7 @@ if availiable:
                 return
             runningids = [GUID(x['RuntimeId']) for x in runningsystems]
             
-            HcnEnumerateEndpoints('{"VirtualNetworkName":"BluestacksNetwork"}', ctypes.byref(response), None)
+            HcnEnumerateEndpoints(None, ctypes.byref(response), None)
             endpoints = json.loads(ctypes.wstring_at(response))
             CoTaskMemFree(response)
             logger.debug("endpoints: %r", endpoints)
@@ -103,24 +104,32 @@ if availiable:
                 jdoc = ctypes.wstring_at(response)
                 CoTaskMemFree(response)
                 obj = json.loads(jdoc)
+                # print(obj)
                 # logger.debug("HcnQueryEndpointProperties(%r) => %r", guid, jdoc)
                 # pprint.pprint(obj)
                 HcnCloseEndpoint(nethandle)
-                if GUID(obj.get("VirtualMachine")) not in runningids:
+                if obj.get('VirtualNetworkName', None) not in ('BluestacksNetowrk', 'BluestacksNxt'):
+                    continue
+                if (vmguid := GUID(obj.get("VirtualMachine"))) not in runningids:
                     continue
                 if policies := obj.get("Policies", None):
                     for policy in policies:
                         if policy.get("InternalPort", None) == 5555:
                             port = policy['ExternalPort']
-                            logger.info("found bluestacks hyperv adb port %s", port)
-                            connector.paranoid_connect('127.0.0.1:%d' % port)
-                            result = True
-        return result
+                            logger.debug("found bluestacks hyperv adb port %s for vm %s", port, vmguid)
+                            adb_serial = '127.0.0.1:%d' % port
+                            vmname = [x.get('Id') for x in runningsystems if GUID(x.get('RuntimeId')) == vmguid][0]
+                            for i, defs in enumerate(devices):
+                                if defs[1] is ADBConnector and len(defs[2]) == 1:
+                                    if compare_adb_serial(defs[2][0], adb_serial):
+                                        devices.pop(i)
+                            devices.append((f'ADB: {adb_serial} (BlueStacks: {vmname})', ADBConnector, [adb_serial], 'strong'))
 else:
-    def run(connector, params):
-        logger.debug("fixup not availiable")
-        return False
-
+    def enum(devices):
+        pass
 
 if __name__ == '__main__':
-    run(None)
+    devices = []
+    enum(devices)
+    from pprint import pprint
+    pprint(devices)
