@@ -109,7 +109,7 @@ def connect(argv):
 
 
 def _interactive_connect():
-    import connector
+    from automator import connector
     global device
     try:
         device = connector.auto_connect()
@@ -135,7 +135,7 @@ def _interactive_connect():
 
 
 def _connect_adb(args):
-    from connector.ADBConnector import ADBConnector, ensure_adb_alive
+    from automator.connector.ADBConnector import ADBConnector, ensure_adb_alive
     ensure_adb_alive()
     global device
     if len(args) >= 0:

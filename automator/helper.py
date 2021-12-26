@@ -10,8 +10,8 @@ import logging
 
 
 
-from connector import auto_connect
-from connector.ADBConnector import ADBConnector
+from .connector import auto_connect
+from .connector.ADBConnector import ADBConnector
 from .frontend import Frontend, DummyFrontend
 from .mixin import AddonMixin
 

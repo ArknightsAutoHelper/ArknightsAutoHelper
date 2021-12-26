@@ -6,8 +6,8 @@ import queue as threading_Queue
 
 import Arknights.helper
 import config
-import connector
-from connector.ADBConnector import ADBConnector, ensure_adb_alive
+from automator import connector
+from automator.connector.ADBConnector import ADBConnector, ensure_adb_alive
 from util.excutil import format_exception
 from typing import Mapping
 
