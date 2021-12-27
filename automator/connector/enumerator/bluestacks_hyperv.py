@@ -108,7 +108,7 @@ if availiable:
                 # logger.debug("HcnQueryEndpointProperties(%r) => %r", guid, jdoc)
                 # pprint.pprint(obj)
                 HcnCloseEndpoint(nethandle)
-                if obj.get('VirtualNetworkName', None) not in ('BluestacksNetowrk', 'BluestacksNxt'):
+                if obj.get('VirtualNetworkName', None) not in ('BluestacksNetwork', 'BluestacksNxt'):
                     continue
                 if (vmguid := GUID(obj.get("VirtualMachine"))) not in runningids:
                     continue
