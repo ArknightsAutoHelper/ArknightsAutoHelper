@@ -241,8 +241,11 @@ def enable_logging():
     if logging_enabled:
         return
     get_instance_id()
+    old_handlers = logging.root.handlers[:]
     with open(logging_config_file, 'r', encoding='utf-8') as f:
         logging.config.dictConfig(yaml.load(f))
+    for h in old_handlers:
+        logging.root.addHandler(h)
     logging.debug('ArknightsAutoHelper version %s', version)
     import coloredlogs
     coloredlogs.install(
@@ -252,3 +255,5 @@ def enable_logging():
         level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
         level='INFO')
     logging_enabled = True
+    if os.path.getmtime(config_file) < os.path.getmtime(config_template):
+        logging.warning('配置文件模板 config-template.yaml 已更新，请检查配置文件 config.yaml 是否需要更新')

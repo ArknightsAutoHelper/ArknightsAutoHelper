@@ -16,6 +16,34 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 logger.propagate = False
+
+class PendingHandler(logging.Handler):
+    terminator = '\n'
+
+    def __init__(self):
+        super().__init__()
+        self.records = []
+        self.output = None
+
+    def attach(self, output: logging.Handler):
+        self.output = output
+        for record in self.records:
+            self.output.emit(record)
+        self.records.clear()
+
+    def flush(self):
+        if self.output is not None:
+            self.output.flush()
+
+    def emit(self, record: logging.LogRecord):
+        if self.output is None:
+            self.records.append(record)
+        else:
+            self.output.emit(record)
+
+loghandler = PendingHandler()
+loghandler.setLevel(logging.INFO)
+logging.root.addHandler(loghandler)
 config.enable_logging()
 
 class WebHandler(logging.Handler):
@@ -68,9 +96,8 @@ class WorkerThread(threading.Thread):
     # threading.Thread
     def run(self):
         print("starting worker thread")
-        loghandler = WebHandler(self.output)
-        loghandler.setLevel(logging.INFO)
-        logging.root.addHandler(loghandler)
+        realhandler = WebHandler(self.output)
+        loghandler.attach(realhandler)
         version = config.version
         if config.get_instance_id() != 0:
             version += f" (instance {config.get_instance_id()})"
