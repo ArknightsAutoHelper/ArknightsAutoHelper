@@ -12,11 +12,11 @@ from automator import AddonBase
 from ..activity import get_stage_map
 from ..base import pil2cv, crop_cv_by_rect, show_img
 from ..common_cache import load_game_data
-from imgreco.ocr.cnocr import ocr_and_correct
 from ...common import CommonAddon
 from ...stage_navigator import StageNavigator
 from ...record import RecordAddon
-from imgreco import resources
+from imgreco import resources, ocr
+from util import cvimage as Image
 
 icon1 = resources.load_image('contrib/start_sp_stage/icon1.png', imread_flags=cv2.IMREAD_GRAYSCALE).array
 icon2 = resources.load_image('contrib/start_sp_stage/icon2.png', imread_flags=cv2.IMREAD_GRAYSCALE).array
@@ -59,6 +59,43 @@ def crop_image_only_outside(gray_img, raw_img, threshold=128, padding=3):
     col_start, col_end = mask0.argmax(), n - mask0[::-1].argmax()
     row_start, row_end = mask1.argmax(), m - mask1[::-1].argmax()
     return raw_img[row_start - padding:row_end + padding, col_start - padding:col_end + padding]
+
+
+def ocr_for_single_line(img, cand_alphabet: str = None, engine=None):
+    if engine is None:
+        from imgreco import ocr
+        engine = ocr.acquire_engine_global_cached('zh-cn')
+    from util import cvimage as Image
+    extra_args = {}
+    if cand_alphabet:
+        extra_args['char_whitelist'] = cand_alphabet
+    res = engine.recognize(Image.fromarray(img), hints=[ocr.OcrHint.SINGLE_LINE], **extra_args).text.replace(' ', '')
+    return res
+
+
+def search_in_list(s_list, x, min_score=0.5):
+    import textdistance
+    max_sim = -1
+    res = None
+    if (isinstance(s_list, set) or isinstance(s_list, map)) and x in s_list:
+        return x, 1
+    for s in s_list:
+        if s == x:
+            return x, 1
+        sim = textdistance.sorensen(s, x)
+        if sim > max_sim:
+            max_sim = sim
+            res = s
+    if min_score <= max_sim:
+        return res, max_sim
+
+
+def ocr_and_correct(img, s_list, cand_alphabet: str = None, min_score=0.5, log_level=None):
+    ocr_str = ocr_for_single_line(img, cand_alphabet)
+    res = search_in_list(s_list, ocr_str, min_score)
+    if log_level:
+        logging.log(log_level, f'ocr_str, res: {ocr_str, res}')
+    return res[0] if res else None
 
 
 class StartSpStageAddon(AddonBase):
@@ -189,7 +226,8 @@ class StartSpStageAddon(AddonBase):
                 tag_img = cv2.resize(tag_img, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
             # show_img(tag_img)
             # conv-lite-fc has better accuracy, but it is slower than densenet-lite-fc.
-            name = ocr_and_correct(tag_img, available_activity, model_name='densenet-lite-fc', log_level=logging.INFO)
+            name = ocr_and_correct(tag_img, available_activity, cand_alphabet=''.join(set(c for s in available_activity for c in s)), log_level=logging.INFO)
+            print(name)
             if name:
                 res[name] = (int(l + 85 * self.scale), int(t + 20 * self.scale))
             cv2.rectangle(dbg_screen, (l, t), (l + tw, t + th), (255, 255, 0), 2)

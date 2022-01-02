@@ -103,16 +103,18 @@ def crop_num_img(item_img):
 
 
 def get_quantity2(item_img):
-    from .ocr.cnocr import cn_ocr
+    from . import ocr
+    engine = ocr.acquire_engine_global_cached('zh-cn')
     num_img = crop_num_img(item_img)
     num_img = cv2.cvtColor(num_img, cv2.COLOR_RGB2GRAY)
     num_img[num_img < 173] = 0
     remove_holes(num_img)
     num_img = cv2.cvtColor(num_img, cv2.COLOR_GRAY2RGB)
     logger.logimage(convert_to_pil(num_img))
-    cn_ocr.set_cand_alphabet('0123456789万')
-    res = ''.join(cn_ocr.ocr_for_single_line(num_img)).strip()
-    cn_ocr.set_cand_alphabet(None)
+    # cn_ocr.set_cand_alphabet('0123456789万')
+    res = engine.recognize(convert_to_pil(num_img), hints=[ocr.OcrHint.SINGLE_LINE], char_whitelist='0123456789万').text.replace(' ', '')
+    # res = ''.join(cn_ocr.ocr_for_single_line(num_img)).strip()
+    # cn_ocr.set_cand_alphabet(None)
     logger.logtext(f'get_quantity2: {res}')
     factor = 1
     num = None
