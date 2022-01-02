@@ -12,7 +12,7 @@ def enum_devices():
         try:
             enumerator_module = importlib.import_module('.enumerator.' + name, __name__)
             enumerator_module.enum(result)
-        except ImportError:
+        except:
             pass
     return result
 

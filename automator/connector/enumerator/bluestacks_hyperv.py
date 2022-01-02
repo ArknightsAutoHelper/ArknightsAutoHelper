@@ -1,6 +1,5 @@
 import contextlib
 import ctypes
-from rotypes.types import GUID, REFGUID, check_hresult
 import json
 # import pprint
 import logging
@@ -13,6 +12,7 @@ if __name__ == '__main__':
 
 
 try:
+    from rotypes.types import GUID, REFGUID, check_hresult
     HCS_SYSTEM = ctypes.POINTER(ctypes.c_void_p)
     HCN_NETWORK = ctypes.POINTER(ctypes.c_void_p)
     HCN_ENDPOINT = ctypes.POINTER(ctypes.c_void_p)
@@ -78,7 +78,7 @@ except Exception as e:
 if availiable:
     from .append import compare_adb_serial
     def enum(devices):
-        with contextlib.nullcontext():
+        with contextlib.suppress(Exception):
             response = ctypes.c_wchar_p()
             HcsEnumerateComputeSystems('{"State":"Running"}', ctypes.byref(response), None)
             runningsystems = json.loads(ctypes.wstring_at(response))
