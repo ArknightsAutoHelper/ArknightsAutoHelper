@@ -1,13 +1,6 @@
-# Arknights Auto Helper
+# ![icon](webgui2/public/carrot.png) Arknights Auto Helper
 
-> 明日方舟辅助脚本，分支说明如下
-
-| 分支    | 说明    |
-|:----|:----|
-| master |~~开发者认为的~~ 稳定版本|
-| dev |开发、测试新功能的分支|
-|release |目前可以应用的GUI版本|
-| shaobao_adb |经过封装可以移植的ADB方法类|
+明日方舟辅助脚本
 
 功能说明：
 
@@ -46,9 +39,11 @@ pip install -r requirements.txt
 
 #### 二进制包（Windows）
 
-从 Actions artifacts 或 nightly.link 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
+从 Releases、Actions artifacts 或 nightly.link 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
 
-* [![Windows binary package](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml/badge.svg)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml) （:wink: 需要登录 GitHub）
+* [Releases](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/current-binary-package)
+
+* Actions: [![Windows binary package](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml/badge.svg)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml) （:wink: 需要登录 GitHub）
 
 
 * [ninthDevilHAUNSTER/ArknightsAutoHelper](https://nightly.link/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/pyinstaller-win/master) （:satisfied: 无需登录）
