@@ -243,7 +243,7 @@ class Image:
         if rect is None:
             return self
         if isinstance(rect, Rect):
-            left, top, right, bottom = rect.ltrb
+            left, top, right, bottom = (int(round(x)) for x in rect.ltrb)
         else:
             left, top, right, bottom = (int(round(x)) for x in rect)
         newmat = self._mat[top:bottom, left:right]

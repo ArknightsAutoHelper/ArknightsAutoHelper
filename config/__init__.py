@@ -252,7 +252,7 @@ def enable_logging():
         fmt=' Ξ %(message)s',
         #fmt=' %(asctime)s ! %(funcName)s @ %(filename)s:%(lineno)d ! %(levelname)s # %(message)s',
         datefmt='%H:%M:%S',
-        level_styles={'warning': {'color': 'green'}, 'error': {'color': 'red'}},
+        level_styles={'warning': {'color': 'yellow'}, 'error': {'color': 'red'}},
         level='INFO')
     logging_enabled = True
     if os.path.getmtime(config_file) < os.path.getmtime(config_template):

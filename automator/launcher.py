@@ -13,6 +13,8 @@ import config
 from .fancycli import fancywait
 from .fancycli.platform import isatty
 
+config.enable_logging()
+
 helper: BaseAutomator = None
 prompt_prefix = 'akhelper'
 
@@ -274,7 +276,6 @@ def match_cmd(first, avail_cmds):
         return None
 
 def _configure(prompt, helper_class):
-    config.enable_logging()
     global prompt_prefix, helper, context
     prompt_prefix = prompt
     helper, context = _create_helper(helper_class)

@@ -97,6 +97,7 @@
             cursor: grab;
             /* border: solid 1px #ffff00; */
             transform: translate(var(--crop-left, 0px), var(--crop-top, 0px));
+            will-change: transform;
         }
 
         .dragging {
@@ -108,6 +109,7 @@
             width: 6px;
             height: 6px;
             background-color: rgba(255, 255, 0, 0.6);
+            backdrop-filter: invert(1);
         }
 
         .dragger-fullwidth {

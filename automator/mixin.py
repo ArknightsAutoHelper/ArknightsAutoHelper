@@ -45,7 +45,10 @@ class AddonMixin:
         self.helper.device.touch_tap((x, y))
         self.delay(post_delay)
 
-    def tap_rect(self, rc: TupleRect, post_delay=1):
+    def tap_rect(self, rc: Union[TupleRect, Rect], post_delay=1):
+        if isinstance(rc, Rect):
+            rc = rc.ltrb
+        self.logger.debug('tap_rect %r', rc)
         hwidth = (rc[2] - rc[0]) / 2
         hheight = (rc[3] - rc[1]) / 2
         midx = rc[0] + hwidth
@@ -108,20 +111,25 @@ class AddonMixin:
     def _localize_roi(self, roi: imgreco.common.RegionOfInterest):
         return roi.with_target_viewport(*self.viewport)
 
-    def _ensure_roi(self, roidef: RoiDef) -> imgreco.common.RegionOfInterest:
+    def _ensure_roi(self, roidef: RoiDef, mode) -> imgreco.common.RegionOfInterest:
         if isinstance(roidef, str):
-            return self.load_roi(roidef)
+            return self.load_roi(roidef, mode)
         else:
             return self._localize_roi(roidef)
 
-    def match_roi(self, roi: RoiDef, fixed_position: bool = True, method: Literal["template_matching", "mse", "sift", None] = None) -> imgreco.common.RoiMatchingResult:
-        roi = self._ensure_roi(roi)
-        screenshot = self.helper.device.screenshot()
+    def match_roi(self, roi: RoiDef, fixed_position: bool = True, method: Literal["template_matching", "mse", "sift", None] = None, mode='RGB', screenshot=None) -> imgreco.common.RoiMatchingResult:
+        roi = self._ensure_roi(roi, mode)
+        if screenshot is None:
+            screenshot = self.helper.device.screenshot()
+        if screenshot.mode != mode:
+            screenshot = screenshot.convert(mode)
         result = imgreco.common.RoiMatchingResult()
         if fixed_position:
             result.bbox = roi.bbox
             compare = screenshot.crop(roi.bbox)
             template, compare = imgreco.imgops.uniform_size(roi.template, compare)
+            if method is None:
+                method = 'mse'
             if method == 'mse':
                 result.score = imgreco.imgops.compare_mse(template, compare)
                 result.score_for_max_similarity = 0
@@ -143,13 +151,15 @@ class AddonMixin:
                 raise RuntimeError("unsupported matching method %s for fixed-position ROI" % method)
 
         else:
+            if method is None:
+                method = 'template_matching'
             if method == 'template_matching':
-                scaled_template = roi.template.resize(roi.bbox.width, roi.bbox.height)
-                point, score = imgreco.imgops.match_template(screenshot, scaled_template, result)
+                scaled_template = roi.template.resize((roi.bbox.width, roi.bbox.height))
+                point, score = imgreco.imgops.match_template(screenshot, scaled_template)
                 result.score = score
                 result.score_for_max_similarity = 1
                 result.threshold = 0.8
-                result.bbox = Rect(point[0], point[1], point[0] + scaled_template.width, point[1] + scaled_template.height)
+                result.bbox = Rect.from_xywh(point[0], point[1], scaled_template.width, scaled_template.height)
                 return result
             elif method == 'sift':
                 feature_result = imgreco.imgops.match_feature(roi.template, screenshot)

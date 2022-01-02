@@ -23,7 +23,7 @@ def check_get_item_popup(img):
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     # print(mse, icon1.size)
     logger.logimage(icon1)
-    logger.logtext('mse=%f' % mse)
+    logger.logtext('check_get_item_popup mse=%f' % mse)
     return mse < 2000
 
 
@@ -38,10 +38,10 @@ def check_nav_button(img):
     icon2 = resources.load_image_cached('common/navbutton.png', 'RGB')
 
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
-    mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
+    ccoeff = imgops.compare_ccoeff(np.asarray(icon1), np.asarray(icon2))
     logger.logimage(icon1)
-    logger.logtext('check_nav_button mse=%f' % mse)
-    return mse < 800
+    logger.logtext('check_nav_button ccoeff=%f' % ccoeff)
+    return ccoeff > 0.8
 
 
 def get_nav_button_back_rect(viewport):
@@ -57,7 +57,7 @@ def check_setting_scene(img):
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     logger.logimage(icon1)
-    logger.logtext('mse=%f' % mse)
+    logger.logtext('check_setting_scene mse=%f' % mse)
     return mse < 200
 
 def get_setting_back_rect(viewport):
@@ -142,12 +142,14 @@ def get_vwvh(size):
 
 @dataclass
 class RegionOfInterest:
-    template: Optional[Image.Image]
-    bbox_matrix: Optional[np.matrix]
-    native_resolution: Optional[tuple[int, int]]
-    bbox: Optional[Image.Rect]
+    template: Optional[Image.Image] = None
+    bbox_matrix: Optional[np.matrix] = None
+    native_resolution: Optional[tuple[int, int]] = None
+    bbox: Optional[Image.Rect] = None
 
     def with_target_viewport(self, width, height):
+        if self.bbox_matrix is None:
+            return self
         vw = width / 100
         vh = height / 100
         left, top, right, bottom = np.asarray(self.bbox_matrix * np.matrix(np.matrix([[vw], [vh], [1]]))).reshape(4)
@@ -156,9 +158,9 @@ class RegionOfInterest:
 
 @dataclass
 class RoiMatchingResult:
-    score: Real
-    threshold: Real
-    score_for_max_similarity: Real
+    score: Real = None
+    threshold: Real = None
+    score_for_max_similarity: Real = None
     bbox: Optional[Image.Rect] = None
     context: Any = None
     if TYPE_CHECKING:
@@ -166,12 +168,12 @@ class RoiMatchingResult:
 
     def __bool__(self):
         if self.threshold > self.score_for_max_similarity:
-            return self.score < self.threshold
+            return bool(self.score < self.threshold)
         elif self.threshold <= self.score_for_max_similarity:
-            return self.score > self.threshold
+            return bool(self.score > self.threshold)
 
     def with_threshold(self, threshold):
-        return RoiMatchingResult(self.score, threshold, self.bbox, self.score_for_max_similarity)
+        return RoiMatchingResult(self.score, threshold, self.bbox, self.score_for_max_similarity, self.context)
 
 RoiMatchingResult.NoMatch = RoiMatchingResult(65025, 1, 0)
 

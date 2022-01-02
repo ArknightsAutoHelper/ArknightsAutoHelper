@@ -36,14 +36,16 @@ class ArknightsHelper(BaseAutomator):
         from .addons.stage_navigator import StageNavigator
         from .addons.quest import QuestAddon
         from .addons.record import RecordAddon
-        
+        from .addons.riic import RIICAddon
+
         self.addon(CommonAddon)
         self.addon(CombatAddon)
         self.addon(StageNavigator)
         self.addon(RecruitAddon)
         self.addon(QuestAddon)
         self.addon(RecordAddon)
-
+        self.addon(RIICAddon)
+        
         from .addons.contrib.grass_on_aog import GrassAddOn
         self.addon(GrassAddOn)
 

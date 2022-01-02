@@ -1,6 +1,7 @@
 from __future__ import annotations
 from collections import OrderedDict
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type, ForwardRef
     TAddon = TypeVar('TAddon')
@@ -14,6 +15,7 @@ from .connector import auto_connect
 from .connector.ADBConnector import ADBConnector
 from .frontend import Frontend, DummyFrontend
 from .mixin import AddonMixin
+from util import richlog
 
 logger = logging.getLogger('helper')
 
@@ -24,6 +26,7 @@ class AddonBase(AddonMixin):
         super().__init__()
         self.helper : BaseAutomator = helper
         self.logger = logging.getLogger(type(self).__name__)
+        self.richlogger = richlog.get_logger(type(self).__name__)
         self.on_attach()
 
     def addon(self, cls: Union[str, Type[TAddon]]) -> TAddon:
@@ -66,6 +69,7 @@ class AddonBase(AddonMixin):
 class BaseAutomator(AddonMixin):
     frontend: Frontend
     def __init__(self, device_connector=None, frontend=None):  # 当前绑定到的设备
+        self.logger = logging.getLogger(type(self).__name__)
         self.frontend = frontend
         self.frontend.attach(self)
         self.helper = self

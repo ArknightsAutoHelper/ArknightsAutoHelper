@@ -1,6 +1,5 @@
-from .ADBConnector import ADBConnector, enum as adb_enum
-
 def enum_devices():
+    from .ADBConnector import ADBConnector, enum as adb_enum
     import config
     always_use_device = config.get('device/adb_always_use_device', None)
     if always_use_device is not None:

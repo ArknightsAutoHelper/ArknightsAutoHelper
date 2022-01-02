@@ -1,6 +1,6 @@
 from io import BytesIO
-from logging import basicConfig
 import os
+import logging
 import logging.config
 from random import randint
 from sys import exc_info

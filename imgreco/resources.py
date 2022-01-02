@@ -136,8 +136,12 @@ def load_roi(basename, image_mode='RGB'):
     imgfile = basename + '.png'
     imgfileindex = resolve(imgfile)
     img = load_image_cached(imgfileindex, image_mode) if imgfileindex is not None else None
-    with open_file(metafile) as f:
-        meta = json.load(f)
-    bbox_matrix = np.asmatrix(meta['bbox_matrix']) if 'bbox_matrix' in meta else None
-    native_resolution = tuple(meta['native_resolution']) if 'native_resolution' in meta else None
+    try:
+        with open_file(metafile) as f:
+            meta = json.load(f)
+        bbox_matrix = np.asmatrix(meta['bbox_matrix']) if 'bbox_matrix' in meta else None
+        native_resolution = tuple(meta['native_resolution']) if 'native_resolution' in meta else None
+    except:
+        bbox_matrix = None
+        native_resolution = None
     return RegionOfInterest(template=img, bbox_matrix=bbox_matrix, native_resolution=native_resolution)
