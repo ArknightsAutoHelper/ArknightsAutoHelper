@@ -23,7 +23,7 @@ jobs:
         python -m venv venv64
         venv64\Scripts\python -m pip install --upgrade pip wheel setuptools
         venv64\Scripts\python -m pip install -r requirements.txt
-        venv64\Scripts\python -m pip install pyinstaller pythonnet
+        venv64\Scripts\python -m pip install pyinstaller pywebview
       shell: cmd
     - name: Make package
       shell: cmd
