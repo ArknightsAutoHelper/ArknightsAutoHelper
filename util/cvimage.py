@@ -239,7 +239,7 @@ class Image:
         """crop with (left, top, right, bottom) tuple"""
         ...
 
-    def subview(self, rect):
+    def subview(self, rect) -> Image:
         if rect is None:
             return self
         if isinstance(rect, Rect):

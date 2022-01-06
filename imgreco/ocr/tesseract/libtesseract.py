@@ -26,7 +26,7 @@ class LibTesseractEngine(BaseTesseractEngine):
         elif OcrHint.SPARSE in hints:
             self.baseapi.set_variable('tessedit_pageseg_mode', '11')
         self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
-
+        self.baseapi.recognize()
         result = parse_hocr(io.BytesIO(self.baseapi.get_hocr()))
         self.baseapi.set_variable('tessedit_pageseg_mode', '')
         self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))

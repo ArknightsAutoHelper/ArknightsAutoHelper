@@ -29,8 +29,7 @@ logger = logging.getLogger(__name__)
 
 def _screencap_to_image(cap, rotate=0):
     w, h, pixels = cap
-    mem = memoryview(pixels)
-    arr = np.frombuffer(mem, dtype=np.uint8)
+    arr = np.frombuffer(pixels, dtype=np.uint8)
     arr = arr.reshape((h, w, 4))
     if rotate == 0:
         pass
@@ -166,13 +165,19 @@ class _ScreenCapImplDefault:
         return w, h
 
     def screencap(self):
-        s = self.device_session_factory().exec_stream('screencap|gzip -1')
-        data = recvall(s, 4194304)
+        t0 = time.perf_counter()
+        s = self.device_session_factory().exec_stream('screencap')
+        header = recvexactly(s, 12)
+        w, h, f = struct.unpack_from('III', header, 0)
+        datalen = w * h * 4
+        data = recvall(s, datalen, True)
         s.close()
-        data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
-        w, h, f = struct.unpack_from('III', data, 0)
+        # data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
         assert (f == 1)
-        return _screencap_to_image((w, h, data[12:]), self.screenshot_rotate)
+        result = _screencap_to_image((w, h, data[:datalen]), self.screenshot_rotate)
+        t = time.perf_counter() - t0
+        print('screencap: %.3fms' % (t * 1000))
+        return result
 
     __call__ = screencap
 

@@ -45,6 +45,7 @@ if libname:
     TessBaseAPICreate = cfunc(tesseract, 'TessBaseAPICreate', ctypes.c_void_p)
     TessBaseAPIInit4 = cfunc(tesseract, 'TessBaseAPIInit4', ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int)
     TessBaseAPISetImage = cfunc(tesseract, 'TessBaseAPISetImage', None, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int)
+    TessBaseAPIRecognize = cfunc(tesseract, 'TessBaseAPIRecognize', ctypes.c_void_p, ctypes.c_void_p)
     TessBaseAPIGetHOCRText = cfunc(tesseract, 'TessBaseAPIGetHOCRText', ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int)
     TessDeleteText = cfunc(tesseract, 'TessDeleteText', None, ctypes.c_void_p)
     TessBaseAPIEnd = cfunc(tesseract, 'TessBaseAPIEnd', None, ctypes.c_void_p)
@@ -122,6 +123,9 @@ class BaseAPI:
         bpp = channels * imgarr.itemsize
         TessBaseAPISetImage(self.baseapi, imgarr.ctypes.data, width, height, bpp, strides[0])
         TessBaseAPISetSourceResolution(self.baseapi, ppi)
+
+    def recognize(self):
+        TessBaseAPIRecognize(self.baseapi, None)
 
     def get_hocr(self):
         ptr = ctypes.c_void_p(TessBaseAPIGetHOCRText(self.baseapi, 0))
