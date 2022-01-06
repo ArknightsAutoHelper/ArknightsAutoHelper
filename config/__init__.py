@@ -38,8 +38,15 @@ if use_state_separation is None:
     use_state_separation = False
 
 if use_state_separation:
-    # TODO: use platform application state directory, copy skeleton
-    writable_root = '\0placeholder'
+    system = sys.platform
+    if system == "win32":
+        # TODO: windows user data dir
+        path = ''
+    elif system == 'darwin':
+        path = os.path.expanduser('~/Library/Preferences')
+    else:
+        path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
+    writable_root = os.path.join(path, 'ArknightsAutoHelper')
 else:
     writable_root = root
 
@@ -52,6 +59,7 @@ extra_items_path = os.path.join(writable_root, 'extra_items')
 config_file = os.path.join(CONFIG_PATH, 'config.yaml')
 config_template = os.path.join(config_template_path, 'config-template.yaml')
 logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
+logging_config_template = os.path.join(config_template_path, 'logging.yaml')
 logs = os.path.join(writable_root, 'log')
 use_archived_resources = not os.path.isdir(os.path.join(root, 'resources'))
 if use_archived_resources:
@@ -62,8 +70,8 @@ else:
     resource_archive = None
     resource_root = os.path.join(root, 'resources')
 
-if not os.path.exists(logs):
-    os.mkdir(logs)
+os.makedirs(CONFIG_PATH, exist_ok=True)
+os.makedirs(logs, exist_ok=True)
 
 dirty = False
 
@@ -242,6 +250,8 @@ def enable_logging():
         return
     get_instance_id()
     old_handlers = logging.root.handlers[:]
+    if not os.path.exists(logging_config_file):
+        shutil.copy2(logging_config_template, logging_config_file)
     with open(logging_config_file, 'r', encoding='utf-8') as f:
         logging.config.dictConfig(yaml.load(f))
     for h in old_handlers:
