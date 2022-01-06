@@ -68,7 +68,7 @@ def resize_char(img):
 def predict(gray_img):
     svm = _load_svm()
     res = svm.predict(np.float32([get_img_feature(gray_img)]))
-    return chr(res[1][0][0])
+    return chr(int(res[1][0][0]))
 
 
 def crop_char_img(img):
