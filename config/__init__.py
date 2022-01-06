@@ -70,7 +70,10 @@ else:
     resource_archive = None
     resource_root = os.path.join(root, 'resources')
 
+os.makedirs(SCREEN_SHOOT_SAVE_PATH, exist_ok=True)
 os.makedirs(CONFIG_PATH, exist_ok=True)
+os.makedirs(cache_path, exist_ok=True)
+os.makedirs(extra_items_path, exist_ok=True)
 os.makedirs(logs, exist_ok=True)
 
 dirty = False
