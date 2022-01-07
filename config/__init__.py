@@ -41,12 +41,12 @@ if use_state_separation:
     system = sys.platform
     if system == "win32":
         # TODO: windows user data dir
-        path = ''
+        platform_appdata_path = os.getenv('LOCALAPPDATA')
     elif system == 'darwin':
-        path = os.path.expanduser('~/Library/Preferences')
+        platform_appdata_path = os.path.expanduser('~/Library/Preferences')
     else:
-        path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
-    writable_root = os.path.join(path, 'ArknightsAutoHelper')
+        platform_appdata_path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
+    writable_root = os.path.join(platform_appdata_path, 'ArknightsAutoHelper')
 else:
     writable_root = root
 
