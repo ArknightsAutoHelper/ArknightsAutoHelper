@@ -1,4 +1,5 @@
 import time
+import itertools
 import numpy as np
 import cv2
 import os
@@ -85,7 +86,7 @@ class RIICAddon(AddonBase):
         self.enter_riic()
         count = 0
         while count < 2:
-            if roi := (self.match_roi('riic/notification', fixed_position=False, method='template_matching'):
+            if roi := self.match_roi('riic/notification', fixed_position=False, method='template_matching'):
                 while True:
                     self.logger.info('发现蓝色通知')
                     self.tap_rect(roi.bbox)
@@ -146,7 +147,7 @@ class RIICAddon(AddonBase):
         image.show()
         print(layout)
 
-    def recognize_operator_select(self, recognize_skill=False):
+    def recognize_operator_select(self, recognize_skill=False, skill_facility_hint=None):
         screenshot = self.device.screenshot().convert('RGB')
         if not (roi := self.match_roi('riic/clear_selection', screenshot=screenshot)):
             raise RuntimeError('not here')
@@ -207,7 +208,7 @@ class RIICAddon(AddonBase):
         self.richlogger.logimage(dbg_screen)
         for o, rc in operators:
             self.richlogger.logimage(o)
-            self.recognize_operator_box(o, recognize_skill)
+            self.recognize_operator_box(o, recognize_skill, skill_facility_hint)
 
         # xs = np.array(xs)
         # xs.sort()
@@ -219,7 +220,8 @@ class RIICAddon(AddonBase):
         # dbg_screen.show()
         t = time.monotonic() - t0
         print("time elapsed:", t)
-    def recognize_operator_box(self, img: Image.Image, recognize_skill=False):
+
+    def recognize_operator_box(self, img: Image.Image, recognize_skill=False, skill_facility_hint=None):
         name_img = img.subview((0, 375, img.width, img.height - 2)).convert('L')
         # name_img = imgops.enhance_contrast(name_img, 90, 220)
         name_img = Image.fromarray(cv2.threshold(name_img.array, 127, 255, cv2.THRESH_BINARY_INV)[1])
@@ -251,7 +253,9 @@ class RIICAddon(AddonBase):
         elif imgops.compare_mse(tagimg, rest) < 3251:
             tag = 'rest'
         
-        if tag:
+        has_room_check = img.subview(Rect.from_xywh(45,2,62,6)).convert('L').array
+        mse = np.mean(np.float_power(has_room_check - 50, 2))
+        if mse < 200:
             room_img = img.subview(Rect.from_xywh(42, 6, 74, 30)).array
             room_img = imgops.enhance_contrast(Image.fromarray(np.max(room_img, axis=2)), 64, 220)
             room_img = Image.fromarray(255 - room_img.array)
@@ -263,8 +267,8 @@ class RIICAddon(AddonBase):
         if recognize_skill:
             skill1_icon = img.subview(Rect.from_xywh(4,285,54,54))
             skill2_icon = img.subview(Rect.from_xywh(67,285,54,54))
-            skill1, score1 = self.recognize_skill(skill1_icon)
-            skill2, score2 = self.recognize_skill(skill2_icon)
+            skill1, score1 = self.recognize_skill(skill1_icon, skill_facility_hint)
+            skill2, score2 = self.recognize_skill(skill2_icon, skill_facility_hint)
         else:
             skill1 = None
             skill2 = None
@@ -273,22 +277,32 @@ class RIICAddon(AddonBase):
         self.richlogger.logtext(repr((name, mood*24, room, tag, skill1, skill2)))
         print(name, mood*24, room, tag, skill1, skill2, sep='\t')
 
-    def recognize_skill(self, icon) -> tuple[str, float]:
+    def recognize_skill(self, icon, facility_hint=None) -> tuple[str, float]:
         self.richlogger.logimage(icon)
         if np.max(icon.array) < 120:
             self.richlogger.logtext('no skill')
-            return None, 0
+            return None, 114514
         from . import bskill_cache
         icon = icon.resize(bskill_cache.icon_size)
-        normal_comparisons = [(name, imgops.compare_ccoeff(icon, template)) for name, template in bskill_cache.normal_icons.items()]
+
+        if facility_hint is not None:
+            normal_filter = lambda name: name.startswith('Bskill_'+facility_hint)
+            dark_filter = lambda name: not normal_filter(name)
+        else:
+            normal_filter = lambda x: True
+            dark_filter = lambda x: True
+        
+        normal_comparisons = [(name, imgops.compare_ccoeff(icon, template)) for name, template in bskill_cache.normal_icons.items() if normal_filter(name)]
         normal_comparisons.sort(key=lambda x: -x[1])
 
-        result = normal_comparisons[0]
-        if result[1] < 0.8:
-            dark_comparisons = [(name, imgops.compare_ccoeff(icon, template)) for name, template in bskill_cache.dark_icons.items()]
+        if not normal_comparisons:
+            result = None, 114514
+        else:
+            result = normal_comparisons[0]
+        if result[1] > 1000:
+            dark_comparisons = [(name, imgops.compare_ccoeff(icon, template)) for name, template in bskill_cache.dark_icons.items() if dark_filter(name)]
             dark_comparisons.sort(key=lambda x: -x[1])
-
-            if dark_comparisons[0][1] < normal_comparisons[0][1]:
+            if dark_comparisons and dark_comparisons[0][1] < result[1]:
                 result = dark_comparisons[0]
 
         if result[1] < 0.8:
