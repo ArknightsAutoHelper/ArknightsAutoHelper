@@ -124,3 +124,4 @@ def fromarray(arr, mode=None, must_share_buffer=False) -> Image.Image:
         channels = 1
     else:
         channels = channels[0]
+    

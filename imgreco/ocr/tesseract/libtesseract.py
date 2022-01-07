@@ -22,10 +22,12 @@ class LibTesseractEngine(BaseTesseractEngine):
         if hints is None:
             hints = []
         if OcrHint.SINGLE_LINE in hints:
-            self.baseapi.set_variable('tessedit_pageseg_mode', '7')
+            self.baseapi.set_variable('tessedit_pageseg_mode', '13')  # PSM 7 for legacy mode, PSM 13 for LSTM mode
         elif OcrHint.SPARSE in hints:
             self.baseapi.set_variable('tessedit_pageseg_mode', '11')
         self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
+        for key, value in kwargs.items():
+            self.baseapi.set_variable(key, value)
         self.baseapi.recognize()
         result = parse_hocr(io.BytesIO(self.baseapi.get_hocr()))
         self.baseapi.set_variable('tessedit_pageseg_mode', '')

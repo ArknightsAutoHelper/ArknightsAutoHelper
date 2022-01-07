@@ -1,18 +1,20 @@
 import time
 import numpy as np
 import cv2
+import os
+import config
 
 from Arknights.addons.common import CommonAddon
 from automator import AddonBase
 from imgreco import imgops, resources, ocr
+import imgreco.ocr.tesseract as tesseract
 import util.cvimage as Image
 from util.cvimage import Rect
+from . import database
+import textdistance
 
-operator_alphabet = '切慕草早维牙火崖帕HE莉桃白刀鸮临空(灰幽耶柏)日者杰葬刻默怀芬地罗巡棘绮微初箱F糖棉娘尼有莱薄消普安恋L赛达哈槐清'+ \
-    '格陨史心水毫翎讯稀登银能惊琴苗M锡宾林近骑古温傀煌l-野琳守俄蓉伦利因梓夫蒂熔雨a炎峰禾凯劳毛义霜1雪汀蜜道玫弦米山砾洛异菈'+ \
-    '爆柳波诗嘉魔奥威峨西食乌3恩娅莓末特露丝客希丽铁马风正烟砂角良泥刺狮月塞击旺境喙香灵屠夕石极见号喉星雅华C哲歌云絮泉赫泡深杜蜡'+ \
-    'e蚺车2丸龙蕾颂芙冬都陈克桑黑X刃法蜂莫黛雷苇莺铃琥药萨n点焰宴暴缇苏舌莎行燧塔卡叶慑使陀芳伊拜瑕坚贝真c蓝兽鲨斯蝎涅浊'+ \
-    '丁娜调战嵯影鲁进提尾吽罪笔兰布之面年猎耀假迭红闪迷绿凛远阿暗鬃断洁笛天卫葚夜W熊松烬巫果德音流蛇爱酸靛铸图神理森羽艾推t尔梅s斑麦四索拉光T知王海毒送贾亚蛰鞭R可狱赤岩金雉蚀师士色孑人比苦豆缠'
+operator_set = set(database.operators)
+operator_alphabet = ''.join(set(c for s in database.operators for c in s))
 
 layout_template = {
     'control_center': (516, 9, 786, 144),
@@ -51,8 +53,10 @@ def transform_rect(rc, M):
 
 class RIICAddon(AddonBase):
     def on_attach(self) -> None:
-        self.ocr = ocr.acquire_engine_global_cached('zh-cn')
+        self.ocr = tesseract.Engine(lang=None, model_name='chi_sim.shs_medium10')
         self.register_cli_command('riic', self.cli_riic, self.cli_riic.__doc__)
+        self.tag = time.time()
+        self.seq = 0
     
     def check_in_riic(self, screenshot=None):
         if self.match_roi('riic/overview', screenshot=screenshot):
@@ -81,8 +85,7 @@ class RIICAddon(AddonBase):
         self.enter_riic()
         count = 0
         while count < 2:
-            if roi := (self.match_roi('riic/notification', fixed_position=False, method='template_matching') or
-                       self.match_roi('riic/dark_notification', fixed_position=False, method='template_matching')):
+            if roi := (self.match_roi('riic/notification', fixed_position=False, method='template_matching'):
                 while True:
                     self.logger.info('发现蓝色通知')
                     self.tap_rect(roi.bbox)
@@ -144,16 +147,26 @@ class RIICAddon(AddonBase):
         print(layout)
 
     def recognize_operator_select(self, recognize_skill=False):
-        if not (roi := self.match_roi('riic/clear_selection')):
+        screenshot = self.device.screenshot().convert('RGB')
+        if not (roi := self.match_roi('riic/clear_selection', screenshot=screenshot)):
             raise RuntimeError('not here')
-        self.tap_rect(roi.bbox)
-        screenshot = imgops.scale_to_height(self.device.screenshot().convert('RGB'), 1080)
+        # self.tap_rect(roi.bbox, post_delay=0)
+        t0 = time.monotonic()
+        screenshot = imgops.scale_to_height(screenshot, 1080)
+
+        highlighted_check = screenshot.subview((605, 530, screenshot.width, 538))
+        self.richlogger.logimage(highlighted_check)
+
+        if (highlighted_check.array == (0, 152, 220)).all(axis=-1).any():
+            self.logger.info('取消选中干员')
+            self.tap_rect(roi.bbox, post_delay=0.2)  # transition animation
+            screenshot = imgops.scale_to_height(self.device.screenshot(cached=False).convert('RGB'), 1080)
         dbg_screen = screenshot.copy()
         xs = []
         operators = []
         cropim = screenshot.array[485:485+37]
         cropim = cv2.cvtColor(cropim, cv2.COLOR_RGB2GRAY)
-        thim = cv2.threshold(cropim, 64, 1, cv2.THRESH_BINARY)[1]
+        thim = cv2.threshold(cropim, 55, 1, cv2.THRESH_BINARY)[1]
         ysum = np.sum(thim, axis=0).astype(np.int16)
         ysumdiff=np.diff(ysum)
         row1xs = np.where(ysumdiff<=ysumdiff.min()+3)[0] + 1
@@ -166,7 +179,7 @@ class RIICAddon(AddonBase):
 
         cropim = screenshot.array[909:909+36]
         cropim = cv2.cvtColor(cropim, cv2.COLOR_RGB2GRAY)
-        thim = cv2.threshold(cropim, 64, 1, cv2.THRESH_BINARY)[1]
+        thim = cv2.threshold(cropim, 55, 1, cv2.THRESH_BINARY)[1]
         ysum = np.sum(thim, axis=0).astype(np.int16)
         ysumdiff=np.diff(ysum)
         row2xs = np.where(ysumdiff<=ysumdiff.min()+3)[0] + 1
@@ -204,11 +217,23 @@ class RIICAddon(AddonBase):
         # for x in dedup_xs:
         #     cv2.line(dbg_screen.array, (x,0), (x,screenshot.height), [255,0,0], 1)
         # dbg_screen.show()
-
+        t = time.monotonic() - t0
+        print("time elapsed:", t)
     def recognize_operator_box(self, img: Image.Image, recognize_skill=False):
-        name_img =  imgops.enhance_contrast(img.subview((0, 375, img.width, img.height)).convert('L'), 90, 220)
-        name_img = Image.fromarray(255 - name_img.array)
-        name = self.ocr.recognize(name_img, ppi=240, hints=[ocr.OcrHint.SINGLE_LINE], char_whitelist=operator_alphabet)
+        name_img = img.subview((0, 375, img.width, img.height - 2)).convert('L')
+        # name_img = imgops.enhance_contrast(name_img, 90, 220)
+        name_img = Image.fromarray(cv2.threshold(name_img.array, 127, 255, cv2.THRESH_BINARY_INV)[1])
+        # name_img = Image.fromarray(255 - name_img.array)
+        # save image for training ocr
+        # name_img.save(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '%d-%04d.png' % (self.tag, self.seq)))
+        self.seq += 1
+        name = self.ocr.recognize(name_img, ppi=240, hints=[ocr.OcrHint.SINGLE_LINE], tessedit_char_whitelist=operator_alphabet)
+        name = name.text.replace(' ', '')
+        if name not in operator_set:
+            comparisions = [(n, textdistance.levenshtein(name, n)) for n in operator_set]
+            comparisions.sort(key=lambda x: x[1])
+            self.logger.debug('%s not in operator set, closest match: %s', name, comparisions[0][0])
+            name = comparisions[0][0]
         mood_img = img.subview(Rect.from_xywh(44, 358, 127, 3)).convert('L').array
         mood_img = np.max(mood_img, axis=0)
         mask = (mood_img >= 200).astype(np.uint8)
@@ -250,27 +275,27 @@ class RIICAddon(AddonBase):
 
     def recognize_skill(self, icon) -> tuple[str, float]:
         self.richlogger.logimage(icon)
-        if np.count_nonzero(icon.array > 100) < 10:
+        if np.max(icon.array) < 120:
             self.richlogger.logtext('no skill')
             return None, 0
         from . import bskill_cache
         icon = icon.resize(bskill_cache.icon_size)
-        normal_comparisons = [(name, imgops.compare_mse(icon, template)) for name, template in bskill_cache.normal_icons.items()]
-        normal_comparisons.sort(key=lambda x: x[1])
+        normal_comparisons = [(name, imgops.compare_ccoeff(icon, template)) for name, template in bskill_cache.normal_icons.items()]
+        normal_comparisons.sort(key=lambda x: -x[1])
 
         result = normal_comparisons[0]
-        if result[1] > 1000:
-            dark_comparisons = [(name, imgops.compare_mse(icon, template)) for name, template in bskill_cache.dark_icons.items()]
-            dark_comparisons.sort(key=lambda x: x[1])
+        if result[1] < 0.8:
+            dark_comparisons = [(name, imgops.compare_ccoeff(icon, template)) for name, template in bskill_cache.dark_icons.items()]
+            dark_comparisons.sort(key=lambda x: -x[1])
 
             if dark_comparisons[0][1] < normal_comparisons[0][1]:
                 result = dark_comparisons[0]
 
-        if result[1] > 1000:
+        if result[1] < 0.8:
             self.richlogger.logtext('no match')
             return None, 0
 
-        self.richlogger.logtext(f'matched {result[0]} with mse {result[1]}')
+        self.richlogger.logtext(f'matched {result[0]} with ccoeff {result[1]}')
 
         return result
 
@@ -289,14 +314,13 @@ class RIICAddon(AddonBase):
             self.collect_all()
             return 0
         elif cmd == 'debug':
-            t0 = time.monotonic()
             self.recognize_operator_select(recognize_skill=True)
-            t1 = time.monotonic()
-            print("time elapsed:", t1-t0)
-            t0 = time.monotonic()
-            self.recognize_operator_select(recognize_skill=True)
-            t1 = time.monotonic()
-            print("time elapsed:", t1-t0)
+            # for i in range(100):
+                # self.recognize_operator_select(recognize_skill=True)
+                # self.swipe_screen(-200)
+            # self.recognize_operator_select(recognize_skill=True)
+        elif cmd == 'debug2':
+            self.recognize_layout()
         else:
             print("unknown command:", cmd)
             return 1
