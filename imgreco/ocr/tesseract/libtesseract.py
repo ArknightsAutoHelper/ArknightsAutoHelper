@@ -33,7 +33,7 @@ class LibTesseractEngine(BaseTesseractEngine):
         if hints is None:
             hints = []
         if OcrHint.SINGLE_LINE in hints:
-            self.baseapi.set_variable('tessedit_pageseg_mode', '13')  # PSM 7 for legacy mode, PSM 13 for LSTM mode
+            self.baseapi.set_variable('tessedit_pageseg_mode', '7')
         elif OcrHint.SPARSE in hints:
             self.baseapi.set_variable('tessedit_pageseg_mode', '11')
         self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
