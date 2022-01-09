@@ -228,7 +228,6 @@ class ADBConnector:
     def __init__(self, adb_serial):
         ensure_adb_alive()
         # os.chdir(ADB_ROOT)
-        self.device_ROOT = config.ADB_ROOT
         self.device_serial = adb_serial
         self.host_session_factory = _host_session_factory
         self.rch = None
