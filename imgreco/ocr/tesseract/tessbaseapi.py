@@ -8,6 +8,14 @@ import platform
 import numpy as np
 
 def resolve_libpath():
+    if sys.platform == 'win32' and 'config' in sys.modules:
+        try:
+            import config
+            vendor_path = config.get_vendor_path('tesseract')
+            if vendor_path not in os.environ['PATH']:
+                os.environ['PATH'] += os.pathsep + vendor_path
+        except:
+            pass
     names = [
         # common library name for UNIX-like systems
         'tesseract',

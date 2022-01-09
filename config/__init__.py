@@ -15,6 +15,9 @@ else:
 import ruamel.yaml
 
 yaml = ruamel.yaml.YAML()
+
+# setup app paths
+
 bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 use_state_separation = None
 if bundled:
@@ -61,8 +64,9 @@ if use_archived_resources:
 else:
     resource_archive = None
     resource_root = os.path.join(root, 'resources')
-
+vendor_root = os.path.join(root, 'vendor')
 tessdata_prefix = os.path.join(root, 'tessdata')
+
 
 ##### end of paths
 
@@ -205,6 +209,9 @@ def set(dig, value):
     current_map[k] = value
     _set_dirty()
 
+debug = get('debug', False)
+
+##### Legacy config values
 
 ADB_SERVER = (lambda host, portstr: (host, int(portstr)))(
     # attempt to not pollute global namespace
@@ -221,6 +228,10 @@ APP_ID = get('ocr/baidu_api/app_id', 'AAAZZZ')
 API_KEY = get('ocr/baidu_api/app_key', 'AAAZZZ')
 SECRET_KEY = get('ocr/baidu_api/app_secret', 'AAAZZZ')
 reporter = get('reporting/enabled', False)
+
+
+##### End of Legacy config values
+
 
 _instanceid = None
 logfile = None
@@ -262,3 +273,21 @@ def enable_logging():
     logging_enabled = True
     if os.path.getmtime(config_file) < os.path.getmtime(config_template):
         logging.warning('配置文件模板 config-template.yaml 已更新，请检查配置文件 config.yaml 是否需要更新')
+
+
+def get_vendor_path(name):
+    import platform
+    base = os.path.join(vendor_root, name)
+    system = platform.system().lower()
+    arch = platform.machine().lower()
+    if system:
+        if arch :
+            path = os.path.join(base, f'{system}_{arch}')
+            if os.path.isdir(path):
+                return path
+        path = os.path.join(base, system)
+        if os.path.isdir(path):
+            return path
+    if os.path.isdir(base):
+        return base
+    raise FileNotFoundError(base)
