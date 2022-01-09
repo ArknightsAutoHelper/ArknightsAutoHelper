@@ -47,7 +47,6 @@ else:
     writable_root = root
 
 background = False
-ADB_ROOT = os.path.join(root, 'ADB', sys.platform)
 SCREEN_SHOOT_SAVE_PATH = os.path.join(writable_root, 'screenshot')
 CONFIG_PATH = os.path.join(writable_root, 'config')
 cache_path = os.path.join(writable_root, 'cache')

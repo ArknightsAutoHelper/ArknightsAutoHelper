@@ -99,7 +99,12 @@ def ensure_adb_alive():
     import subprocess
     adbbin = config.get('device/adb_binary', None)
     if adbbin is None:
-        adb_binaries = ['adb', os.path.join(config.ADB_ROOT, 'adb')]
+        adb_binaries = ['adb']
+        try:
+            bundled_adb = config.get_vendor_path('platform-tools')
+            adb_binaries.append(os.path.join(bundled_adb, 'adb'))
+        except FileNotFoundError:
+            pass
         findadb = find_adb_from_android_sdk()
         if findadb is not None:
             adb_binaries.append(findadb)
