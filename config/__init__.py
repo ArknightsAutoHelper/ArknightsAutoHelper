@@ -62,6 +62,11 @@ else:
     resource_archive = None
     resource_root = os.path.join(root, 'resources')
 
+tessdata_prefix = os.path.join(root, 'tessdata')
+
+##### end of paths
+
+
 if not os.path.exists(logs):
     os.mkdir(logs)
 
