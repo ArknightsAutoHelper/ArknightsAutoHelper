@@ -1,8 +1,11 @@
 import time
-import itertools
-import numpy as np
+from dataclasses import dataclass
+from typing import Optional
+
 import cv2
-import os
+import numpy as np
+import textdistance
+
 import config
 
 from Arknights.addons.common import CommonAddon
@@ -12,35 +15,18 @@ import imgreco.ocr.tesseract as tesseract
 import util.cvimage as Image
 from util.cvimage import Rect
 from . import database
-import textdistance
 
 operator_set = set(database.operators)
 operator_alphabet = ''.join(set(c for s in database.operators for c in s))
 
-layout_template = {
-    'control_center': (516, 9, 786, 144),
-    'meeting_room': (820, 77, 1022, 144),
-
-    'B101':(76.5, 144.5, 210.5, 211),
-    'B102':(211.75, 144.5, 345.75, 211),
-    'B103':(347, 144.5, 481, 211),
-    'dorm1':(516, 144.5, 718, 211),
-    'processing':(887, 144.5, 1022, 211),
-
-    'B201':(9, 212, 144, 278.5),
-    'B202':(144, 212, 279, 278.5),
-    'B203':(280, 212, 414, 278.5),
-    'dorm2':(583, 212, 786, 278.5),
-    'office':(887, 212, 1022, 278.5),
-
-    'B301':(77, 279.5, 211, 346),
-    'B302':(212, 279.5, 346, 346),
-    'B303':(347, 279.5, 481, 346),
-    'dorm3':(516, 279.5, 718, 346),
-    'training':(887, 279.5, 1022, 346),
-
-    'dorm4':(583, 347, 785, 414)
-}
+@dataclass
+class OperatorBox:
+    box: Rect
+    name: str
+    mood: float
+    status: str
+    room: Optional[str]
+    skill_icons: list[str]
 
 def transform_rect(rc, M):
     l, t, r, b = rc
@@ -54,7 +40,7 @@ def transform_rect(rc, M):
 
 class RIICAddon(AddonBase):
     def on_attach(self) -> None:
-        self.ocr = tesseract.Engine(lang=None, model_name='chi_sim.shs_medium10')
+        self.ocr = tesseract.Engine(lang=None, model_name='chi_sim')
         self.register_cli_command('riic', self.cli_riic, self.cli_riic.__doc__)
         self.tag = time.time()
         self.seq = 0
@@ -134,7 +120,7 @@ class RIICAddon(AddonBase):
         print('M=', M)
         layout = {
             name: transform_rect(rect, M)
-            for name, rect in layout_template.items()
+            for name, rect in database.layout_template.items()
         }
         t1 = time.monotonic()
         print('time elapsed:', t1-t0)
@@ -206,10 +192,12 @@ class RIICAddon(AddonBase):
         for o, rc in operators:
             cv2.rectangle(dbg_screen.array, rc.xywh, [255,0,0, 1])
         self.richlogger.logimage(dbg_screen)
+        result = []
         for o, rc in operators:
             self.richlogger.logimage(o)
-            self.recognize_operator_box(o, recognize_skill, skill_facility_hint)
-
+            box = self.recognize_operator_box(o, recognize_skill, skill_facility_hint)
+            box.box = rc
+            result.append(box)
         # xs = np.array(xs)
         # xs.sort()
         # diffs = np.diff(xs)
@@ -220,6 +208,7 @@ class RIICAddon(AddonBase):
         # dbg_screen.show()
         t = time.monotonic() - t0
         print("time elapsed:", t)
+        return result
 
     def recognize_operator_box(self, img: Image.Image, recognize_skill=False, skill_facility_hint=None):
         name_img = img.subview((0, 375, img.width, img.height - 2)).convert('L')
@@ -229,17 +218,21 @@ class RIICAddon(AddonBase):
         # save image for training ocr
         # name_img.save(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '%d-%04d.png' % (self.tag, self.seq)))
         self.seq += 1
-        name = self.ocr.recognize(name_img, ppi=240, hints=[ocr.OcrHint.SINGLE_LINE], tessedit_char_whitelist=operator_alphabet)
-        name = name.text.replace(' ', '')
+        # OcrHint.SINGLE_LINE (PSM 7) will ignore some operator names, use raw line for LSTM (PSM 13) here
+        # the effect of user-words is questionable, it seldom produce improved output (maybe we need LSTM word-dawg instead)
+        ocrresult = self.ocr.recognize(name_img, ppi=240, tessedit_pageseg_mode='13', user_words_suffix='operators-user-words', tessedit_char_whitelist=operator_alphabet)
+        name = ocrresult.text.replace(' ', '')
         if name not in operator_set:
             comparisions = [(n, textdistance.levenshtein(name, n)) for n in operator_set]
             comparisions.sort(key=lambda x: x[1])
             self.logger.debug('%s not in operator set, closest match: %s', name, comparisions[0][0])
+            if comparisions[0][1] == comparisions[1][1]:
+                self.logger.warning('multiple fixes availiable for %r', ocrresult)
             name = comparisions[0][0]
         mood_img = img.subview(Rect.from_xywh(44, 358, 127, 3)).convert('L').array
         mood_img = np.max(mood_img, axis=0)
         mask = (mood_img >= 200).astype(np.uint8)
-        mood = np.count_nonzero(mask) / mask.shape[0]
+        mood = np.count_nonzero(mask) / mask.shape[0] * 24
 
         tagimg = img.subview((35, 209, 155, 262))
         on_shift = resources.load_image_cached('riic/on_shift.png', 'RGB')
@@ -253,14 +246,15 @@ class RIICAddon(AddonBase):
         elif imgops.compare_mse(tagimg, rest) < 3251:
             tag = 'rest'
         
-        has_room_check = img.subview(Rect.from_xywh(45,2,62,6)).convert('L').array
-        mse = np.mean(np.float_power(has_room_check - 50, 2))
+        has_room_check = img.subview(Rect.from_xywh(45,2,62,6)).convert('L')
+        mse = np.mean(np.power(has_room_check.array.astype(np.float32) - 50, 2))
+        self.richlogger.logtext(f'has_room_check mse={mse}')
         if mse < 200:
             room_img = img.subview(Rect.from_xywh(42, 6, 74, 30)).array
             room_img = imgops.enhance_contrast(Image.fromarray(np.max(room_img, axis=2)), 64, 220)
             room_img = Image.fromarray(255 - room_img.array)
             self.richlogger.logimage(room_img)
-            room = self.ocr.recognize(room_img, ppi=240, hints=[ocr.OcrHint.SINGLE_LINE], char_whitelist='0123456789FB')
+            room = self.ocr.recognize(room_img, ppi=240, hints=[ocr.OcrHint.SINGLE_LINE], char_whitelist='0123456789FB').text.replace(' ', '')
         else:
             room = None
 
@@ -273,9 +267,15 @@ class RIICAddon(AddonBase):
             skill1 = None
             skill2 = None
 
+        skill_icons = []
+        if skill1 is not None:
+            skill_icons.append(skill1)
+        if skill2 is not None:
+            skill_icons.append(skill2)
         self.richlogger.logimage(name_img)
-        self.richlogger.logtext(repr((name, mood*24, room, tag, skill1, skill2)))
-        print(name, mood*24, room, tag, skill1, skill2, sep='\t')
+        result = OperatorBox(None, name, mood, tag, room, skill_icons=skill_icons)
+        self.richlogger.logtext(repr(result))
+        return result
 
     def recognize_skill(self, icon, facility_hint=None) -> tuple[str, float]:
         self.richlogger.logimage(icon)
@@ -296,12 +296,14 @@ class RIICAddon(AddonBase):
         normal_comparisons.sort(key=lambda x: -x[1])
 
         if not normal_comparisons:
-            result = None, 114514
+            result = None, 0
         else:
             result = normal_comparisons[0]
-        if result[1] > 1000:
+            self.richlogger.logtext('normal icons set: ' + repr(normal_comparisons[:3]))
+        if result[1] < 0.8:
             dark_comparisons = [(name, imgops.compare_ccoeff(icon, template)) for name, template in bskill_cache.dark_icons.items() if dark_filter(name)]
             dark_comparisons.sort(key=lambda x: -x[1])
+            self.richlogger.logtext('dark icons set: ' + repr(dark_comparisons[:3]))
             if dark_comparisons and dark_comparisons[0][1] < result[1]:
                 result = dark_comparisons[0]
 
@@ -328,11 +330,17 @@ class RIICAddon(AddonBase):
             self.collect_all()
             return 0
         elif cmd == 'debug':
-            self.recognize_operator_select(recognize_skill=True)
+            from pprint import pprint
+            def warmup():
+                return self.recognize_operator_select(recognize_skill=True)
+            def bench():
+                return self.recognize_operator_select(recognize_skill=True)
             # for i in range(100):
                 # self.recognize_operator_select(recognize_skill=True)
                 # self.swipe_screen(-200)
             # self.recognize_operator_select(recognize_skill=True)
+            pprint(warmup())
+            pprint(bench())
         elif cmd == 'debug2':
             self.recognize_layout()
         else:
