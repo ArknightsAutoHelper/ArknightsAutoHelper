@@ -29,6 +29,14 @@ logger = logging.getLogger(__name__)
 
 def _screencap_to_image(cap, rotate=0):
     w, h, pixels = cap
+    if len(pixels) == w * h * 4 + 4:
+        # new format for Android P
+        colorspace = struct.unpack_from('<I', pixels, 4)[0]
+        pixels = pixels[4:]
+    elif len(pixels) == w * h * 4:
+        colorspace = 0
+    else:
+        raise ValueError('screencap short read')
     arr = np.frombuffer(pixels, dtype=np.uint8)
     arr = arr.reshape((h, w, 4))
     if rotate == 0:
@@ -41,6 +49,13 @@ def _screencap_to_image(cap, rotate=0):
         arr = cv2.rotate(arr, cv2.ROTATE_90_CLOCKWISE)
     else:
         raise ValueError('invalid rotate')
+    if colorspace == 2:
+        from PIL import Image as PILImage, ImageCms
+        from imgreco.cms import p3_profile, srgb_profile
+        from util import pil_zerocopy
+        pil_im = PILImage.frombuffer('RGBA', (w, h), arr, 'raw', 'RGBA', 0, 1)
+        srgb_im = ImageCms.profileToProfile(pil_im, p3_profile, srgb_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC)
+        return Image.fromarray(pil_zerocopy.asarray(srgb_im), 'RGBA')
     return Image.fromarray(arr, 'RGBA')
 
 
@@ -158,7 +173,8 @@ class _ScreenCapImplPNG:
             src_profile = ImageCms.ImageCmsProfile(iccio)
             dst_profile = ImageCms.createProfile('sRGB')
             img = ImageCms.profileToProfile(img, src_profile, dst_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC)
-        return Image.fromarray(np.asarray(img), img.mode)
+        from util import pil_zerocopy
+        return Image.fromarray(pil_zerocopy.asarray(img), img.mode)
 
     __call__ = screencap
 
@@ -201,11 +217,11 @@ class _ScreenCapImplDefault:
             header = recvexactly(s, 12)
             w, h, f = struct.unpack_from('III', header, 0)
             datalen = w * h * 4
-            data = recvall(s, datalen, True)
+            data = recvall(s, datalen+4, True)
             s.close()
             # data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
             assert (f == 1)
-            result = _screencap_to_image((w, h, data[:datalen]), self.screenshot_rotate)
+            result = _screencap_to_image((w, h, data[:datalen+4]), self.screenshot_rotate)
         else:
             s = self.device_session_factory().exec_stream(self.command + self.compress_suffix)
             data = recvall(s, 8388608, True)
@@ -215,7 +231,7 @@ class _ScreenCapImplDefault:
             s.close()
             # data = zlib.decompress(data, zlib.MAX_WBITS | 16, 8388608)
             assert (f == 1)
-            result = _screencap_to_image((w, h, data[12:datalen+12]), self.screenshot_rotate)
+            result = _screencap_to_image((w, h, data[12:datalen+12+4]), self.screenshot_rotate)
         t = time.perf_counter() - t0
         logger.debug('screencap: %.3fms', t * 1000)
         return result
