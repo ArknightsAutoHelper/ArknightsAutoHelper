@@ -329,7 +329,7 @@ class RIICAddon(AddonBase):
         if cmd == 'collect':
             self.collect_all()
             return 0
-        elif cmd == 'debug':
+        elif cmd == 'debug_list':
             from pprint import pprint
             def warmup():
                 return self.recognize_operator_select(recognize_skill=True)
@@ -341,7 +341,8 @@ class RIICAddon(AddonBase):
             # self.recognize_operator_select(recognize_skill=True)
             pprint(warmup())
             pprint(bench())
-        elif cmd == 'debug2':
+
+        elif cmd == 'debug_layout':
             self.recognize_layout()
         else:
             print("unknown command:", cmd)
