@@ -145,6 +145,10 @@ class Rect:
     def from_ltrb(cls, left, top, right, bottom):
         return cls(left, top, right=right, bottom=bottom)
 
+    @classmethod
+    def from_center_wh(cls, x, y, width, height):
+        return cls(x - width // 2, y - height // 2, right=x + width // 2, bottom=y + height // 2)
+
     @property
     def right(self):
         return self.x + self.width

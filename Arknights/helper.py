@@ -37,6 +37,7 @@ class ArknightsHelper(BaseAutomator):
         from .addons.quest import QuestAddon
         from .addons.record import RecordAddon
         from .addons.riic import RIICAddon
+        from .addons.roguelike import RoguelikeAddon
 
         self.addon(CommonAddon)
         self.addon(CombatAddon)
@@ -45,13 +46,14 @@ class ArknightsHelper(BaseAutomator):
         self.addon(QuestAddon)
         self.addon(RecordAddon)
         self.addon(RIICAddon)
-        
+        self.addon(RoguelikeAddon)
+
         from .addons.contrib.grass_on_aog import GrassAddOn
         self.addon(GrassAddOn)
 
         from .addons.contrib.activity import ActivityAddOn
         self.addon(ActivityAddOn)
-        
+
         try:
             from .addons.contrib.start_sp_stage import StartSpStageAddon
             self.addon(StartSpStageAddon)
