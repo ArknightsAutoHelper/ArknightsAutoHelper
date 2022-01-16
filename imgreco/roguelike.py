@@ -27,6 +27,7 @@ class RoguelikeOCR:
         self.RECRUIT_CONFIRM2 = (732, 457, 936, 529)
         self.ENTER_CASTLE = (0, 0, 0, 0)
         self.CURRENT_STAGE = (0, 0, 0, 0)
+        self.REFRESH_BUTTON = (1100, 13, 1262, 54)
 
     def check_explore_button_exist(self, img):
         """
@@ -141,6 +142,18 @@ class RoguelikeOCR:
                 return tmp
         return None
 
+    def check_refresh_button_exist(self, img):
+        """
+        检测是否存在刷新按钮
+        """
+        icon1 = img.crop(self.REFRESH_BUTTON).convert('RGB')
+        icon2 = resources.load_image_cached('roguelike/refresh.png', 'RGB')
+        icon1, icon2 = imgops.uniform_size(icon1, icon2)
+        mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
+        logger.logimage(icon1)
+        logger.logtext('refresh mse=%f' % mse)
+        return mse < 5000
+
     @staticmethod
     def _get_rect_by_template(img, template):
         template = resources.load_image_cached(f'roguelike/{template}.png', 'RGB')
@@ -152,10 +165,8 @@ class RoguelikeOCR:
 def main():
     ocr = RoguelikeOCR()
     from PIL import Image
-    screenshot = Image.open(r"C:\Users\chunibyo\Documents\MuMu共享文件夹\MuMu20220116091855.png").convert('RGB')
-    w, h = screenshot.width, screenshot.height
-    screenshot = screenshot.crop((0, h * 0.2, w, h * 0.8))
-    ocr.check_current_stage(screenshot)
+    screenshot = Image.open(r"C:\Users\chunibyo\Documents\MuMu共享文件夹\MuMu20220115222952.png").convert('RGB')
+    ocr.check_refresh_button_exist(screenshot)
 
 
 if __name__ == '__main__':

@@ -14,12 +14,15 @@ class RoguelikeStateMachine:
         self.addon = addon
 
         self.prepare_count = 0
+        self.refresh_count = 0
+        self.refresh_gap_count = 0
 
     def _initialize_machine(self):
         self.states = ["dummy",
                        State(name='prepare', on_enter=['_enter_prepare']),
                        State(name='assault', on_enter=['_enter_assault']),
                        State(name="find_mountain", on_enter=['_enter_find_mountain']),
+                       State(name="refresh_mountain", on_enter=['_enter_refresh_mountain']),
                        State(name="recruit", on_enter=['_enter_recruit']),
                        "stage",
                        "stop"]
@@ -38,8 +41,9 @@ class RoguelikeStateMachine:
 
         # find mountain
         self.machine.add_transition('find_done', 'find_mountain', 'recruit')
-        self.machine.add_transition('find_fail', 'find_mountain', 'find_mountain')
+        self.machine.add_transition('find_fail', 'find_mountain', 'refresh_mountain')
         self.machine.add_transition('stop', 'find_mountain', 'stop')
+        self.machine.add_transition('refresh', 'refresh_mountain', 'find_mountain')
 
         # recruit
         self.machine.add_transition('recruit_done', 'recruit', 'stage')
@@ -101,7 +105,6 @@ class RoguelikeStateMachine:
         self.trigger("assault_done")
 
     def _enter_find_mountain(self):
-        # TODO: refresh
         # 左半屏幕
         screenshot = self.addon.device.screenshot().convert('RGB')
         subarea1 = (0, 0, screenshot.width * 0.8, screenshot.height)
@@ -114,10 +117,34 @@ class RoguelikeStateMachine:
             screenshot = self.addon.device.screenshot().convert('RGB')
             if not self.addon.ocr.check_mountain_exist(screenshot):
                 self.addon.logger.error("山未找到")
+                self.trigger('find_fail')
+                return
+
+        self.refresh_count = 0
+        self.trigger("find_done")
+
+    def _enter_refresh_mountain(self):
+        self.refresh_count += 1
+        if self.refresh_count > 5:
+            self.trigger('stop')
+            return
+
+        self.addon.logger.info('刷新助战列表')
+        move = randint(self.addon.viewport[0] // 4, self.addon.viewport[0] // 3)
+        self.addon.swipe_screen(move)
+        screenshot = self.addon.device.screenshot()
+        while not self.addon.ocr.check_refresh_button_exist(screenshot):
+            if self.refresh_gap_count >= 3:
                 self.trigger('stop')
                 return
 
-        self.trigger("find_done")
+            self.refresh_gap_count += 1
+            self.addon.delay(MEDIUM_WAIT)
+            return
+
+        self.refresh_gap_count = 0
+        self.addon.tap_rect(self.addon.ocr.REFRESH_BUTTON)
+        self.trigger('refresh')
 
     def _enter_recruit(self):
         screenshot = self.addon.device.screenshot().convert('RGB')
