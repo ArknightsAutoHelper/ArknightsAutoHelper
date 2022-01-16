@@ -28,6 +28,7 @@ class RoguelikeOCR:
         self.ENTER_CASTLE = (0, 0, 0, 0)
         self.CURRENT_STAGE = (0, 0, 0, 0)
         self.REFRESH_BUTTON = (1100, 13, 1262, 54)
+        self.ENTER_STAGE = (1071, 401, 1220, 568)
 
     def check_explore_button_exist(self, img):
         """
@@ -114,16 +115,22 @@ class RoguelikeOCR:
         else:
             return False
 
-    def check_current_stage(self, img):
+    def check_current_stage(self, img) -> int:
         """
-        进入古堡按钮
+        检测可见关卡类型
         """
         logger.logimage(img)
         if tmp := self._check_battle(img):
             self.CURRENT_STAGE = tmp
+            return 1
+        elif tmp := self._check_accident(img):
+            self.CURRENT_STAGE = tmp
+            return 2
+        elif tmp := self._check_interlude(img):
+            self.CURRENT_STAGE = tmp
+            return 3
         else:
-            return False
-        return True
+            return 0
 
     def _check_battle(self, img):
         """
@@ -141,6 +148,30 @@ class RoguelikeOCR:
             if score > 0.9:
                 return tmp
         return None
+
+    def _check_accident(self, img):
+        """
+        不期而遇
+        """
+        tmp, score = self._get_rect_by_template(img, "accident")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('accident score=%f' % score)
+        if score > 0.9:
+            return tmp
+        else:
+            return None
+
+    def _check_interlude(self, img):
+        """
+        不期而遇
+        """
+        tmp, score = self._get_rect_by_template(img, "interlude")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('interlude score=%f' % score)
+        if score > 0.9:
+            return tmp
+        else:
+            return None
 
     def check_refresh_button_exist(self, img):
         """
@@ -160,14 +191,3 @@ class RoguelikeOCR:
         result, score = match_template(img, template)
         tmp = Rect.from_center_wh(result[0], result[1], template.width, template.height).ltrb
         return tmp, score
-
-
-def main():
-    ocr = RoguelikeOCR()
-    from PIL import Image
-    screenshot = Image.open(r"C:\Users\chunibyo\Documents\MuMu共享文件夹\MuMu20220115222952.png").convert('RGB')
-    ocr.check_refresh_button_exist(screenshot)
-
-
-if __name__ == '__main__':
-    main()

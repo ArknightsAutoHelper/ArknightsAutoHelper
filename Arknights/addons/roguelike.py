@@ -8,6 +8,48 @@ from Arknights.flags import SMALL_WAIT, TINY_WAIT, MEDIUM_WAIT
 from automator import AddonBase
 
 
+class RoguelikeStageMachine:
+    def __init__(self, addon):
+        self._initialize_machine()
+        self.addon = addon
+
+    def _initialize_machine(self):
+        self.states = ["dummy",
+                       State(name='stage_unknown', on_enter=['_enter_stage_unknown'])]
+        self.machine = Machine(model=self, states=self.states, initial='dummy')
+
+        # dummy
+        self.machine.add_transition('start', 'dummy', 'stage_unknown')
+
+    def _enter_stage_unknown(self):
+        # 选择节点
+        screenshot = self.addon.device.screenshot().convert('RGB')
+        w, h = screenshot.width, screenshot.height
+        subarea = (0, h * 0.2, w, h * 0.8)
+        screenshot = screenshot.crop(subarea)
+        stage = self.addon.ocr.check_current_stage(screenshot)
+        if stage == 0:
+            return
+
+        self.addon.ocr.CURRENT_STAGE = (self.addon.ocr.CURRENT_STAGE[0] + subarea[0],
+                                        self.addon.ocr.CURRENT_STAGE[1] + subarea[1],
+                                        self.addon.ocr.CURRENT_STAGE[2] + subarea[0],
+                                        self.addon.ocr.CURRENT_STAGE[3] + subarea[1])
+        self.addon.tap_rect(self.addon.ocr.CURRENT_STAGE)
+        self.addon.delay(TINY_WAIT)
+        self.addon.tap_rect(self.addon.ocr.ENTER_STAGE)
+
+        if stage == 1:
+            self.addon.logger.info("作战")
+        elif stage == 2:
+            self.addon.logger.info("不期而遇")
+        elif stage == 3:
+            self.addon.logger.info("幕间余兴")
+
+    def _enter_battle_prepare(self):
+        pass
+
+
 class RoguelikeStateMachine:
     def __init__(self, addon):
         self._initialize_machine()
@@ -24,7 +66,7 @@ class RoguelikeStateMachine:
                        State(name="find_mountain", on_enter=['_enter_find_mountain']),
                        State(name="refresh_mountain", on_enter=['_enter_refresh_mountain']),
                        State(name="recruit", on_enter=['_enter_recruit']),
-                       "stage",
+                       State(name="stage", on_enter=['_enter_stage']),
                        "stop"]
         self.machine = Machine(model=self, states=self.states, initial='dummy')
         # dummy
@@ -193,30 +235,18 @@ class RoguelikeStateMachine:
 
         self.trigger("recruit_done")
 
+    def _enter_stage(self):
+        stage_machine = RoguelikeStageMachine(self.addon)
+        stage_machine.start()
+
     def _enter_stop(self):
         self.addon.logger.error("行动结束")
+
 
 class RoguelikeAddon(AddonBase):
     def on_attach(self):
         self.ocr = imgreco.roguelike.RoguelikeOCR()
         self.register_cli_command('roguelike', self.cli_roguelike, self.cli_roguelike.__doc__)
-
-    def _forward_looking_investment(self):
-        self.logger.info("前瞻性投资")
-
-        # 选择节点
-        screenshot = self.device.screenshot().convert('RGB')
-        w, h = screenshot.width, screenshot.height
-        subarea = (0, h * 0.2, w, h * 0.8)
-        screenshot = screenshot.crop(subarea)
-        if not self.ocr.check_current_stage(screenshot):
-            return
-        self.ocr.CURRENT_STAGE = (self.ocr.CURRENT_STAGE[0] + subarea[0],
-                                  self.ocr.CURRENT_STAGE[1] + subarea[1],
-                                  self.ocr.CURRENT_STAGE[2] + subarea[0],
-                                  self.ocr.CURRENT_STAGE[3] + subarea[1])
-        self.tap_rect(self.ocr.CURRENT_STAGE)
-        self.delay(TINY_WAIT)
 
     def cli_roguelike(self, argv) -> int:
         """
@@ -224,6 +254,8 @@ class RoguelikeAddon(AddonBase):
         集成战略
         """
         with self.helper.frontend.context:
+            self.logger.info("前瞻性投资")
+
             self.machine = RoguelikeStateMachine(self)
             self.machine.start()
         return 0
