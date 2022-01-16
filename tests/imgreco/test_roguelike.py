@@ -44,3 +44,10 @@ class RoguelikeOCRTest(unittest.TestCase):
         screenshot = screenshot.crop(subarea)
         result = self.ocr.check_current_stage(screenshot)
         self.assertEqual(result, 3)
+
+    def test_troop(self):
+        screenshot = Image.open(load_image("mountain_troop.png")).convert('RGB')
+        self.assertFalse(self.ocr.check_mountain_exist_in_troop(screenshot))
+
+        screenshot = Image.open(load_image("mountain_troop2.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_mountain_exist_in_troop(screenshot))

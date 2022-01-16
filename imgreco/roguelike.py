@@ -29,6 +29,8 @@ class RoguelikeOCR:
         self.CURRENT_STAGE = (0, 0, 0, 0)
         self.REFRESH_BUTTON = (1100, 13, 1262, 54)
         self.ENTER_STAGE = (1071, 401, 1220, 568)
+        self.TROOP_BUTTON = (190, 145, 252, 210)
+        self.TROOP_CHOOSE_MOUNTAIN = [(507, 97, 722, 186), (65, 520, 280, 609), (1088, 662, 1242, 691)]
 
     def check_explore_button_exist(self, img):
         """
@@ -184,6 +186,18 @@ class RoguelikeOCR:
         logger.logimage(icon1)
         logger.logtext('refresh mse=%f' % mse)
         return mse < 5000
+
+    def check_mountain_exist_in_troop(self, img):
+        """
+        检测编队中是否存在干员
+        """
+        icon1 = img.crop(self.TROOP_BUTTON).convert('RGB')
+        icon2 = resources.load_image_cached('roguelike/mountain_troop.png', 'RGB')
+        icon1, icon2 = imgops.uniform_size(icon1, icon2)
+        mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
+        logger.logimage(icon1)
+        logger.logtext('refresh mse=%f' % mse)
+        return mse > 800
 
     @staticmethod
     def _get_rect_by_template(img, template):

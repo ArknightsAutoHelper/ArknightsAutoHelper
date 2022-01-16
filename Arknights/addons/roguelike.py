@@ -15,11 +15,20 @@ class RoguelikeStageMachine:
 
     def _initialize_machine(self):
         self.states = ["dummy",
-                       State(name='stage_unknown', on_enter=['_enter_stage_unknown'])]
+                       State(name='stage_unknown', on_enter=['_enter_stage_unknown']),
+                       State(name='stage_battle_prepare', on_enter=['_enter_stage_battle_prepare']),
+                       State(name='stage_accident', on_enter=['_enter_stage_accident']),
+                       State(name='stage_interlude', on_enter=['_enter_stage_interlude'])
+                       ]
         self.machine = Machine(model=self, states=self.states, initial='dummy')
 
         # dummy
         self.machine.add_transition('start', 'dummy', 'stage_unknown')
+
+        # stage_unknown
+        self.machine.add_transition('do_battle', 'stage_unknown', 'stage_battle_prepare')
+        self.machine.add_transition('do_accident', 'stage_unknown', 'stage_accident')
+        self.machine.add_transition('do_interlude', 'stage_unknown', 'stage_interlude')
 
     def _enter_stage_unknown(self):
         # 选择节点
@@ -41,13 +50,22 @@ class RoguelikeStageMachine:
 
         if stage == 1:
             self.addon.logger.info("作战")
+            self.trigger('do_battle')
         elif stage == 2:
             self.addon.logger.info("不期而遇")
         elif stage == 3:
             self.addon.logger.info("幕间余兴")
 
-    def _enter_battle_prepare(self):
-        pass
+    def _enter_stage_battle_prepare(self):
+        """
+        战斗准备
+          检测编队是否存在干员
+        """
+        screenshot = self.addon.device.screenshot().convert('RGB')
+        if not self.addon.ocr.check_mountain_exist_in_troop(screenshot):
+            self.addon.tap_rect(self.addon.ocr.TROOP_BUTTON)
+            for i in range(3):
+                self.addon.tap_rect(self.addon.ocr.TROOP_CHOOSE_MOUNTAIN[i])
 
 
 class RoguelikeStateMachine:
