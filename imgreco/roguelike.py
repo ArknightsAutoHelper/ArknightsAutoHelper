@@ -26,6 +26,7 @@ class RoguelikeOCR:
         self.RECRUIT_CONFIRM = (1069, 654, 1251, 699)
         self.RECRUIT_CONFIRM2 = (732, 457, 936, 529)
         self.ENTER_CASTLE = (0, 0, 0, 0)
+        self.CURRENT_STAGE = (0, 0, 0, 0)
 
     def check_explore_button_exist(self, img):
         """
@@ -112,6 +113,34 @@ class RoguelikeOCR:
         else:
             return False
 
+    def check_current_stage(self, img):
+        """
+        进入古堡按钮
+        """
+        logger.logimage(img)
+        if tmp := self._check_battle(img):
+            self.CURRENT_STAGE = tmp
+        else:
+            return False
+        return True
+
+    def _check_battle(self, img):
+        """
+        作战
+        """
+        tmp, score = self._get_rect_by_template(img, "battle")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('battle score=%f' % score)
+        if score > 0.9:
+            return tmp
+        else:
+            tmp, score = self._get_rect_by_template(img, "battle2")
+            logger.logimage(img.crop(tmp))
+            logger.logtext('battle2 score=%f' % score)
+            if score > 0.9:
+                return tmp
+        return None
+
     @staticmethod
     def _get_rect_by_template(img, template):
         template = resources.load_image_cached(f'roguelike/{template}.png', 'RGB')
@@ -123,15 +152,10 @@ class RoguelikeOCR:
 def main():
     ocr = RoguelikeOCR()
     from PIL import Image
-    screenshot = Image.open(r"C:\Users\chunibyo\Documents\MuMu共享文件夹\MuMu20220115215238.png").convert('RGB')
-    subarea1 = (928.0, 506.0, 1018.0, 686.0)
-    screenshot = screenshot.convert('RGB').crop(subarea1)
-    ocr.check_mountain_ok(screenshot)
-    # mountain_position = ocr.MOUNTAIN
-    # w, h = mountain_position[2] - mountain_position[0], mountain_position[3] - mountain_position[1]
-    # click_area = (mountain_position[0] + w * 2.0, mountain_position[1],
-    #               mountain_position[0] + w * 2.5, mountain_position[3])
-    # print(click_area)
+    screenshot = Image.open(r"C:\Users\chunibyo\Documents\MuMu共享文件夹\MuMu20220116091855.png").convert('RGB')
+    w, h = screenshot.width, screenshot.height
+    screenshot = screenshot.crop((0, h * 0.2, w, h * 0.8))
+    ocr.check_current_stage(screenshot)
 
 
 if __name__ == '__main__':
