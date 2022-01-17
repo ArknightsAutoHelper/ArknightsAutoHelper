@@ -2,6 +2,7 @@ import operator
 
 import cv2
 import numpy as np
+from numpy import argmax
 
 from imgreco import common, resources, imgops
 from imgreco.imgops import match_template
@@ -31,6 +32,21 @@ class RoguelikeOCR:
         self.ENTER_STAGE = (1071, 401, 1220, 568)
         self.TROOP_BUTTON = (190, 145, 252, 210)
         self.TROOP_CHOOSE_MOUNTAIN = [(507, 97, 722, 186), (65, 520, 280, 609), (1088, 662, 1242, 691)]
+        self.START_BATTLE_BUTTON = (956, 649, 1234, 700)
+        self.SPEED_UP_BUTTON = (1068, 26, 1133, 84)
+
+        self.MAP_DICT = [
+            {"name": "意外", "action": [((1223, 643), (-507, -320)), ((717, 323), (-342, 6))]},
+            {"name": "驯兽小屋", "action": [((1228, 662), (-796, -182)), ((434, 483), (422, -3))]},
+            {"name": "礼炮小队", "action": [((1219, 642), (-716, -301)), ((512, 338), (351, -5))]},
+            {"name": "与虫为伴", "action": [((1225, 651), (-634, -278)), ((596, 369), (5, -274))]},
+        ]
+
+    def get_map_name(self, num):
+        return self.MAP_DICT[num - 1]["name"]
+
+    def get_map_action(self, num):
+        return self.MAP_DICT[num - 1]["action"]
 
     def check_explore_button_exist(self, img):
         """
@@ -198,6 +214,15 @@ class RoguelikeOCR:
         logger.logimage(icon1)
         logger.logtext('refresh mse=%f' % mse)
         return mse > 800
+
+    def check_battle_map(self, img):
+        result = []
+        for i in range(1, 5):
+            template = resources.load_image_cached(f'roguelike/map{i}.png', 'RGB')
+            feature_result = imgops.match_feature(template, img)
+            score = feature_result.matched_keypoint_count
+            result.append(score)
+        return argmax(result) + 1
 
     @staticmethod
     def _get_rect_by_template(img, template):

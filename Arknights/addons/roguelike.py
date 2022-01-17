@@ -18,7 +18,8 @@ class RoguelikeStageMachine:
                        State(name='stage_unknown', on_enter=['_enter_stage_unknown']),
                        State(name='stage_battle_prepare', on_enter=['_enter_stage_battle_prepare']),
                        State(name='stage_accident', on_enter=['_enter_stage_accident']),
-                       State(name='stage_interlude', on_enter=['_enter_stage_interlude'])
+                       State(name='stage_interlude', on_enter=['_enter_stage_interlude']),
+                       State(name='place_operator', on_enter=['_enter_place_operator']),
                        ]
         self.machine = Machine(model=self, states=self.states, initial='dummy')
 
@@ -29,6 +30,9 @@ class RoguelikeStageMachine:
         self.machine.add_transition('do_battle', 'stage_unknown', 'stage_battle_prepare')
         self.machine.add_transition('do_accident', 'stage_unknown', 'stage_accident')
         self.machine.add_transition('do_interlude', 'stage_unknown', 'stage_interlude')
+
+        # battle
+        self.machine.add_transition('battle_prepare_done', 'stage_battle_prepare', 'place_operator')
 
     def _enter_stage_unknown(self):
         # 选择节点
@@ -66,6 +70,25 @@ class RoguelikeStageMachine:
             self.addon.tap_rect(self.addon.ocr.TROOP_BUTTON)
             for i in range(3):
                 self.addon.tap_rect(self.addon.ocr.TROOP_CHOOSE_MOUNTAIN[i])
+        self.trigger("battle_prepare_done")
+
+    def _enter_place_operator(self):
+        self.addon.tap_rect(self.addon.ocr.START_BATTLE_BUTTON)
+
+        self.addon.delay(SMALL_WAIT)
+        screenshot = self.addon.device.screenshot().convert('RGB')
+        map = self.addon.ocr.check_battle_map(screenshot)
+        self.addon.logger.info(self.addon.ocr.get_map_name(map))
+
+        ((origin1, move1), (origin2, move2)) = self.addon.ocr.get_map_action(map)
+        self.addon.logger.info("放置")
+        self.addon.swipe_screen_from_origin_to_target(origin1, move1)
+        self.addon.delay(TINY_WAIT)
+        self.addon.logger.info("朝向")
+        self.addon.swipe_screen_from_origin_to_target(origin2, move2)
+
+        self.addon.logger.info("两倍速")
+        self.addon.tap_rect(self.addon.ocr.SPEED_UP_BUTTON)
 
 
 class RoguelikeStateMachine:

@@ -51,3 +51,16 @@ class RoguelikeOCRTest(unittest.TestCase):
 
         screenshot = Image.open(load_image("mountain_troop2.png")).convert('RGB')
         self.assertTrue(self.ocr.check_mountain_exist_in_troop(screenshot))
+
+    def test_check_map(self):
+        screenshot = Image.open(load_image("map1.png")).convert('RGB')
+        self.assertEqual(self.ocr.check_battle_map(screenshot), 1)
+
+        screenshot = Image.open(load_image("map2.png")).convert('RGB')
+        self.assertEqual(self.ocr.check_battle_map(screenshot), 2)
+
+        screenshot = Image.open(load_image("map3.png")).convert('RGB')
+        self.assertEqual(self.ocr.check_battle_map(screenshot), 3)
+
+        screenshot = Image.open(load_image("map4.png")).convert('RGB')
+        self.assertEqual(self.ocr.check_battle_map(screenshot), 4)

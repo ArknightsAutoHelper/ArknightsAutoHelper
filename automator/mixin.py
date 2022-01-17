@@ -104,6 +104,9 @@ class AddonMixin:
         origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
         self.helper.device.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
+    def swipe_screen_from_origin_to_target(self, origin, move):
+        self.helper.device.touch_swipe2(origin, move, randint(600, 900))
+
     def load_roi(self, name: str, mode: str) -> imgreco.common.RegionOfInterest:
         roi = imgreco.resources.load_roi(name, mode)
         return self._localize_roi(roi)
