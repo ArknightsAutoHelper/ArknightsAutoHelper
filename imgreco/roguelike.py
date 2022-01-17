@@ -35,6 +35,9 @@ class RoguelikeOCR:
         self.START_BATTLE_BUTTON = (956, 649, 1234, 700)
         self.SPEED_UP_BUTTON = (1068, 26, 1133, 84)
         self.SKILL_BUTTON = (0, 0, 0, 0)
+        self.BATTLE_END = (28, 514, 317, 593)
+        self.BATTLE_END_RUN = (0, 0, 0, 0)
+        self.BATTLE_END_RUN_OK = (0, 0, 0, 0)
 
         self.MAP_DICT = [
             {"name": "意外", "action": [((1223, 643), (-507, -320)), ((717, 323), (-342, 6))], "operator": (642, 325)},
@@ -235,12 +238,43 @@ class RoguelikeOCR:
         return score > 0.8
 
     def check_skill_position(self, img):
-        img = img.convert('RGB')
-        tmp, score = self._get_rect_by_template(img, "skill")
-        logger.logimage(img.crop(tmp))
+        # 干员放置位置不同时，技能图标大小会变化，所以需要使用特征点比较
+        template = resources.load_image_cached(f'roguelike/skill.png', 'RGB')
+        feature_result = imgops.match_feature(template, img)
+        score = feature_result.matched_keypoint_count
+        x, y, w, h = cv2.boundingRect(feature_result.template_corners)
+        tmp = Rect.from_xywh(x, y, w, h).ltrb
+
         logger.logtext('skill score=%f' % score)
-        if score > 0.9:
+        if score > 45:
+            logger.logimage(img.crop(tmp))
             self.SKILL_BUTTON = tmp
+            return True
+        else:
+            return False
+
+    def check_battle_end(self, img):
+        tmp, score = self._get_rect_by_template(img, "battle_end")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('battle_end score=%f' % score)
+        return score > 0.9
+
+    def check_battle_end_run(self, img):
+        tmp, score = self._get_rect_by_template(img, "battle_end_run")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('battle end run score=%f' % score)
+        if score > 0.9:
+            self.BATTLE_END_RUN = tmp
+            return True
+        else:
+            return False
+
+    def check_battle_end_run_ok(self, img):
+        tmp, score = self._get_rect_by_template(img, "battle_end_run_ok")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('battle end run score=%f' % score)
+        if score > 0.9:
+            self.BATTLE_END_RUN_OK = tmp
             return True
         else:
             return False

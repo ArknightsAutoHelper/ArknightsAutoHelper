@@ -75,3 +75,27 @@ class RoguelikeOCRTest(unittest.TestCase):
     def test_check_skill(self):
         screenshot = Image.open(load_image("skill.png")).convert('RGB')
         self.assertTrue(self.ocr.check_skill_position(screenshot))
+
+        screenshot = Image.open(load_image("skill2.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_skill_position(screenshot))
+
+        screenshot = Image.open(load_image("skill_available.png")).convert('RGB')
+        self.assertFalse(self.ocr.check_skill_position(screenshot))
+
+    def test_check_battle_end(self):
+        screenshot = Image.open(load_image("skill.png")).convert('RGB')
+        self.assertFalse(self.ocr.check_battle_end(screenshot))
+
+        screenshot = Image.open(load_image("map1.png")).convert('RGB')
+        self.assertFalse(self.ocr.check_battle_end(screenshot))
+
+        screenshot = Image.open(load_image("battle_end.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_battle_end(screenshot))
+
+    def test_check_battle_end_run(self):
+        screenshot = Image.open(load_image("battle_end_run.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_battle_end_run(screenshot))
+
+    def test_check_battle_end_run_ok(self):
+        screenshot = Image.open(load_image("battle_end_run.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_battle_end_run_ok(screenshot))

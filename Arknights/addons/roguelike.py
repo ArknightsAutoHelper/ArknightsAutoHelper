@@ -4,7 +4,7 @@ from transitions import Machine, State
 
 import imgreco.roguelike
 from Arknights.addons.common import CommonAddon
-from Arknights.flags import SMALL_WAIT, TINY_WAIT, MEDIUM_WAIT
+from Arknights.flags import SMALL_WAIT, TINY_WAIT, MEDIUM_WAIT, BIG_WAIT
 from automator import AddonBase
 
 
@@ -20,6 +20,7 @@ class RoguelikeStageMachine:
                        State(name='stage_accident', on_enter=['_enter_stage_accident']),
                        State(name='stage_interlude', on_enter=['_enter_stage_interlude']),
                        State(name='place_operator', on_enter=['_enter_place_operator']),
+                       State(name='in_battle', on_enter=['_enter_in_battle']),
                        ]
         self.machine = Machine(model=self, states=self.states, initial='dummy')
 
@@ -33,8 +34,12 @@ class RoguelikeStageMachine:
 
         # battle
         self.machine.add_transition('battle_prepare_done', 'stage_battle_prepare', 'place_operator')
+        self.machine.add_transition('place_operator_done', 'place_operator', 'in_battle')
+        self.machine.add_transition('battle_end', 'in_battle', 'stage_unknown')
 
     def _enter_stage_unknown(self):
+        self.addon.delay(MEDIUM_WAIT)
+
         # 选择节点
         screenshot = self.addon.device.screenshot().convert('RGB')
         w, h = screenshot.width, screenshot.height
@@ -95,13 +100,46 @@ class RoguelikeStageMachine:
         if not self.addon.ocr.check_skill_available(screenshot):
             return
         self.addon.tap_point(self.addon.ocr.get_operator(map), post_delay=0.0, randomness=(0, 0))
-        self.addon.delay(TINY_WAIT)
+        self.addon.delay(SMALL_WAIT)
         screenshot = self.addon.device.screenshot().convert('RGB')
         if not self.addon.ocr.check_skill_position(screenshot):
             return
 
         self.addon.logger.info("开启技能")
         self.addon.tap_rect(self.addon.ocr.SKILL_BUTTON)
+
+        self.trigger("place_operator_done")
+
+    def _enter_in_battle(self):
+        count = 0
+        while True:
+            count += 1
+            if count % 3 == 0:
+                self.addon.logger.info("战斗未结束")
+
+            self.addon.delay(BIG_WAIT)
+            screenshot = self.addon.device.screenshot().convert('RGB')
+            if self.addon.ocr.check_battle_end(screenshot):
+                self.addon.logger.info("战斗完成")
+                self.addon.tap_rect(self.addon.ocr.BATTLE_END)
+                self.addon.delay(TINY_WAIT)
+
+                move = -randint(self.addon.viewport[0] // 4, self.addon.viewport[0] // 3)
+                self.addon.swipe_screen(move)
+                self.addon.delay(TINY_WAIT)
+
+                screenshot = self.addon.device.screenshot().convert('RGB')
+                if not self.addon.ocr.check_battle_end_run(screenshot):
+                    return
+                self.addon.tap_rect(self.addon.ocr.BATTLE_END_RUN)
+
+                screenshot = self.addon.device.screenshot().convert('RGB')
+                if not self.addon.ocr.check_battle_end_run_ok(screenshot):
+                    return
+                self.addon.logger.info("什么都不要，走了")
+                self.addon.tap_rect(self.addon.ocr.BATTLE_END_RUN_OK)
+                self.trigger("battle_end")
+                break
 
 
 class RoguelikeStateMachine:
