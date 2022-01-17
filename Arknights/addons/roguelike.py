@@ -90,6 +90,19 @@ class RoguelikeStageMachine:
         self.addon.logger.info("两倍速")
         self.addon.tap_rect(self.addon.ocr.SPEED_UP_BUTTON)
 
+        self.addon.delay(MEDIUM_WAIT)
+        screenshot = self.addon.device.screenshot().convert('RGB')
+        if not self.addon.ocr.check_skill_available(screenshot):
+            return
+        self.addon.tap_point(self.addon.ocr.get_operator(map), post_delay=0.0, randomness=(0, 0))
+        self.addon.delay(TINY_WAIT)
+        screenshot = self.addon.device.screenshot().convert('RGB')
+        if not self.addon.ocr.check_skill_position(screenshot):
+            return
+
+        self.addon.logger.info("开启技能")
+        self.addon.tap_rect(self.addon.ocr.SKILL_BUTTON)
+
 
 class RoguelikeStateMachine:
     def __init__(self, addon):

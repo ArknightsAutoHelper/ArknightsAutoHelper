@@ -64,3 +64,14 @@ class RoguelikeOCRTest(unittest.TestCase):
 
         screenshot = Image.open(load_image("map4.png")).convert('RGB')
         self.assertEqual(self.ocr.check_battle_map(screenshot), 4)
+
+    def test_check_skill_available(self):
+        screenshot = Image.open(load_image("skill_available.png")).convert('RGB')
+        self.ocr.check_skill_available(screenshot)
+
+        screenshot = Image.open(load_image("skill_unavailable.png")).convert('RGB')
+        self.ocr.check_skill_available(screenshot)
+
+    def test_check_skill(self):
+        screenshot = Image.open(load_image("skill.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_skill_position(screenshot))

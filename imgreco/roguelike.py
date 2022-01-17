@@ -34,12 +34,13 @@ class RoguelikeOCR:
         self.TROOP_CHOOSE_MOUNTAIN = [(507, 97, 722, 186), (65, 520, 280, 609), (1088, 662, 1242, 691)]
         self.START_BATTLE_BUTTON = (956, 649, 1234, 700)
         self.SPEED_UP_BUTTON = (1068, 26, 1133, 84)
+        self.SKILL_BUTTON = (0, 0, 0, 0)
 
         self.MAP_DICT = [
-            {"name": "意外", "action": [((1223, 643), (-507, -320)), ((717, 323), (-342, 6))]},
-            {"name": "驯兽小屋", "action": [((1228, 662), (-796, -182)), ((434, 483), (422, -3))]},
-            {"name": "礼炮小队", "action": [((1219, 642), (-716, -301)), ((512, 338), (351, -5))]},
-            {"name": "与虫为伴", "action": [((1225, 651), (-634, -278)), ((596, 369), (5, -274))]},
+            {"name": "意外", "action": [((1223, 643), (-507, -320)), ((717, 323), (-342, 6))], "operator": (642, 325)},
+            {"name": "驯兽小屋", "action": [((1228, 662), (-796, -182)), ((434, 483), (422, -3))], "operator": (645, 471)},
+            {"name": "礼炮小队", "action": [((1219, 642), (-716, -301)), ((512, 338), (351, -5))], "operator": (405, 317)},
+            {"name": "与虫为伴", "action": [((1225, 651), (-634, -278)), ((596, 369), (5, -274))], "operator": (506, 364)},
         ]
 
     def get_map_name(self, num):
@@ -47,6 +48,9 @@ class RoguelikeOCR:
 
     def get_map_action(self, num):
         return self.MAP_DICT[num - 1]["action"]
+
+    def get_operator(self, num):
+        return self.MAP_DICT[num - 1]["operator"]
 
     def check_explore_button_exist(self, img):
         """
@@ -223,6 +227,23 @@ class RoguelikeOCR:
             score = feature_result.matched_keypoint_count
             result.append(score)
         return argmax(result) + 1
+
+    def check_skill_available(self, img):
+        tmp, score = self._get_rect_by_template(img, "skill_icon")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('skill icon score=%f' % score)
+        return score > 0.8
+
+    def check_skill_position(self, img):
+        img = img.convert('RGB')
+        tmp, score = self._get_rect_by_template(img, "skill")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('skill score=%f' % score)
+        if score > 0.9:
+            self.SKILL_BUTTON = tmp
+            return True
+        else:
+            return False
 
     @staticmethod
     def _get_rect_by_template(img, template):
