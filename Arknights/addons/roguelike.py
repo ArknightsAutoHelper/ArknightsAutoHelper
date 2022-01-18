@@ -43,6 +43,9 @@ class RoguelikeStageMachine:
         self.machine.add_transition('accident_end', 'stage_accident', 'stage_unknown')
 
     def _enter_stage_unknown(self):
+        """
+        确定节点类型
+        """
         self.addon.delay(MEDIUM_WAIT)
 
         # 选择节点
@@ -90,6 +93,9 @@ class RoguelikeStageMachine:
         self.trigger("battle_prepare_done")
 
     def _enter_place_operator(self):
+        """
+        放置干员，开启技能
+        """
         self.addon.tap_rect(self.addon.ocr.START_BATTLE_BUTTON)
 
         self.addon.delay(SMALL_WAIT)
@@ -128,6 +134,12 @@ class RoguelikeStageMachine:
         self.trigger("place_operator_done")
 
     def _enter_in_battle(self):
+        """
+        战斗状态检测
+        1. 战斗进行中
+        2. 战斗结束
+        3. 未专三的山概率导致战斗失败
+        """
         count = 0
         while True:
             count += 1
@@ -169,6 +181,9 @@ class RoguelikeStageMachine:
                 break
 
     def _enter_stage_accident(self):
+        """
+        不期而遇 && 幕间余兴
+        """
         self.addon.delay(SMALL_WAIT)
         self.addon.tap_center()
         self.addon.tap_center()
@@ -199,6 +214,9 @@ class RoguelikeStageMachine:
         self.trigger("accident_end")
 
     def _enter_shop(self):
+        """
+        诡异行商
+        """
         screenshot = self.addon.device.screenshot().convert('RGB')
         if not self.addon.ocr.check_investment_exist(screenshot):
             return
@@ -281,6 +299,9 @@ class RoguelikeStateMachine:
         self.trigger("explore_done")
 
     def _enter_assault(self):
+        """
+        分队选择
+        """
         self.addon.logger.info("突击战术分队")
         move = -randint(self.addon.viewport[0] // 4, self.addon.viewport[0] // 3)
         self.addon.swipe_screen(move)
@@ -313,6 +334,9 @@ class RoguelikeStateMachine:
         self.trigger("assault_done")
 
     def _enter_find_mountain(self):
+        """
+        招募好友助战 -- 山
+        """
         # 左半屏幕
         screenshot = self.addon.device.screenshot().convert('RGB')
         subarea1 = (0, 0, screenshot.width * 0.8, screenshot.height)
@@ -332,6 +356,9 @@ class RoguelikeStateMachine:
         self.trigger("find_done")
 
     def _enter_refresh_mountain(self):
+        """
+        刷新助战列表
+        """
         self.refresh_count += 1
         if self.refresh_count > 5:
             self.trigger('stop')
@@ -355,6 +382,9 @@ class RoguelikeStateMachine:
         self.trigger('refresh')
 
     def _enter_recruit(self):
+        """
+        跳过招募其他干员
+        """
         screenshot = self.addon.device.screenshot().convert('RGB')
         self.addon.logger.info("山")
         mountain_position = self.addon.ocr.MOUNTAIN
@@ -402,12 +432,18 @@ class RoguelikeStateMachine:
         self.trigger("recruit_done")
 
     def _enter_stage(self):
+        """
+        关卡流程完成
+        """
         stage_machine = RoguelikeStageMachine(self.addon)
         stage_machine.start()
         self.addon.logger.info("关卡流程结束")
         self.trigger("stop")
 
     def _enter_stop(self):
+        """
+        返回初始状态
+        """
         # TODO: 关卡中放置干员失败时无法正常重启
         self.addon.logger.error("行动结束")
 

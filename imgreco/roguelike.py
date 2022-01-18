@@ -100,6 +100,9 @@ class RoguelikeOCR:
             return False
 
     def check_mountain_exist(self, img):
+        """
+        检测山
+        """
         tmp, score = self._get_rect_by_template(img, "mountain")
         logger.logimage(img.crop(tmp))
         logger.logtext('mountain score=%f' % score)
@@ -116,6 +119,9 @@ class RoguelikeOCR:
         return False
 
     def check_mountain_ok(self, img):
+        """
+        招募山的按钮，分为好友与非好友
+        """
         tmp, score = self._get_rect_by_template(img, "mountain-ok")
         logger.logimage(img.crop(tmp))
         logger.logtext('mountain-ok score=%f' % score)
@@ -243,6 +249,9 @@ class RoguelikeOCR:
         return mse > 800
 
     def check_battle_map(self, img):
+        """
+        检测第一层的作战属于4张地图哪一张
+        """
         result = []
         for i in range(1, 5):
             template = resources.load_image_cached(f'roguelike/map{i}.png', 'RGB')
@@ -252,12 +261,18 @@ class RoguelikeOCR:
         return argmax(result) + 1
 
     def check_skill_available(self, img):
+        """
+        检测技能是否可以释放
+        """
         tmp, score = self._get_rect_by_template(img, "skill_icon")
         logger.logimage(img.crop(tmp))
         logger.logtext('skill icon score=%f' % score)
         return score > 0.8
 
     def check_skill_position(self, img):
+        """
+        检测技能图标
+        """
         # 干员放置位置不同时，技能图标大小会变化，所以需要使用特征点比较
         template = resources.load_image_cached(f'roguelike/skill.png', 'RGB')
         feature_result = imgops.match_feature(template, img)
@@ -274,12 +289,18 @@ class RoguelikeOCR:
             return False
 
     def check_battle_end(self, img):
+        """
+        检测战斗是否成功结束
+        """
         tmp, score = self._get_rect_by_template(img, "battle_end")
         logger.logimage(img.crop(tmp))
         logger.logtext('battle_end score=%f' % score)
         return score > 0.9
 
     def check_battle_end_run(self, img):
+        """
+        战斗结束成功直接逃跑
+        """
         logger.logimage(img)
         tmp, score = self._get_rect_by_template(img, "battle_end_run")
         logger.logimage(img.crop(tmp))
@@ -291,6 +312,9 @@ class RoguelikeOCR:
             return False
 
     def check_battle_end_run_ok(self, img):
+        """
+        战斗结束成功直接逃跑 -- 确认
+        """
         tmp, score = self._get_rect_by_template(img, "battle_end_run_ok")
         logger.logimage(img.crop(tmp))
         logger.logtext('battle end run score=%f' % score)
@@ -301,6 +325,9 @@ class RoguelikeOCR:
             return False
 
     def check_accident_run(self, img):
+        """
+        不期而遇 && 幕间余兴直接逃跑
+        """
         template = resources.load_image_cached('roguelike/accident_run.png', 'RGB')
         templatemat = np.asarray(template)
         mtresult = cv2.matchTemplate(np.asarray(img), templatemat, cv2.TM_CCOEFF_NORMED)
@@ -324,6 +351,9 @@ class RoguelikeOCR:
         return tmp if score > 0.9 else None
 
     def check_investment_exist(self, img):
+        """
+        检测是否存在前瞻投资
+        """
         img = img.crop(self.INVESTMENT_BUTTON)
         tmp, score = self._get_rect_by_template(img, "investment")
         logger.logimage(img.crop(tmp))
@@ -331,6 +361,9 @@ class RoguelikeOCR:
         return score > 0.95
 
     def check_battle_failed(self, img):
+        """
+        检测是否战斗失败
+        """
         tmp, score = self._get_rect_by_template(img, "battle_failed")
         logger.logimage(img.crop(tmp))
         logger.logtext('battle_end score=%f' % score)
