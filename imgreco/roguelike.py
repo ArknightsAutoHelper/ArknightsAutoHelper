@@ -38,10 +38,11 @@ class RoguelikeOCR:
         self.BATTLE_END = (28, 514, 317, 593)
         self.BATTLE_END_RUN = (0, 0, 0, 0)
         self.BATTLE_END_RUN_OK = (0, 0, 0, 0)
+        self.ACCIDENT_OPTION_BUTTON = (0, 0, 0, 0)
 
         self.MAP_DICT = [
             {"name": "意外", "action": [((1223, 643), (-507, -320)), ((717, 323), (-342, 6))], "operator": (642, 325)},
-            {"name": "驯兽小屋", "action": [((1228, 662), (-796, -182)), ((434, 483), (422, -3))], "operator": (645, 471)},
+            {"name": "驯兽小屋", "action": [((1228, 662), (-796, -182)), ((434, 483), (422, -3))], "operator": (287, 472)},
             {"name": "礼炮小队", "action": [((1219, 642), (-716, -301)), ((512, 338), (351, -5))], "operator": (405, 317)},
             {"name": "与虫为伴", "action": [((1225, 651), (-634, -278)), ((596, 369), (5, -274))], "operator": (506, 364)},
         ]
@@ -145,15 +146,16 @@ class RoguelikeOCR:
         检测可见关卡类型
         """
         logger.logimage(img)
-        if tmp := self._check_battle(img):
-            self.CURRENT_STAGE = tmp
-            return 1
-        elif tmp := self._check_accident(img):
+
+        if tmp := self._check_accident(img):
             self.CURRENT_STAGE = tmp
             return 2
         elif tmp := self._check_interlude(img):
             self.CURRENT_STAGE = tmp
             return 3
+        elif tmp := self._check_battle(img):
+            self.CURRENT_STAGE = tmp
+            return 1
         else:
             return 0
 
@@ -260,6 +262,7 @@ class RoguelikeOCR:
         return score > 0.9
 
     def check_battle_end_run(self, img):
+        logger.logimage(img)
         tmp, score = self._get_rect_by_template(img, "battle_end_run")
         logger.logimage(img.crop(tmp))
         logger.logtext('battle end run score=%f' % score)
@@ -278,6 +281,29 @@ class RoguelikeOCR:
             return True
         else:
             return False
+
+    def check_accident_run(self, img):
+        template = resources.load_image_cached('roguelike/accident_run.png', 'RGB')
+        templatemat = np.asarray(template)
+        mtresult = cv2.matchTemplate(np.asarray(img), templatemat, cv2.TM_CCOEFF_NORMED)
+        _y, _x = np.where(np.asarray(mtresult) > 0.7)
+        if _y.size == 0 or _x.size == 0:
+            logger.logimage(img)
+            logger.logtext("识别失败 - 不期而遇")
+            return False
+        else:
+            # 取最下面一个快速过关
+            y, x = np.max(_y), _x[np.argmax(_y)]
+            self.ACCIDENT_OPTION_BUTTON = tmp = (x, y, x + template.width, y + template.height)
+            logger.logimage(img.crop(tmp))
+            logger.logtext("不期而遇")
+            return True
+
+    def get_position_by_resource_name(self, img, template_name):
+        tmp, score = self._get_rect_by_template(img, template_name)
+        logger.logimage(img.crop(tmp))
+        logger.logtext(f'{template_name} =%f' % score)
+        return tmp if score > 0.9 else None
 
     @staticmethod
     def _get_rect_by_template(img, template):

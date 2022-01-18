@@ -96,6 +96,30 @@ class RoguelikeOCRTest(unittest.TestCase):
         screenshot = Image.open(load_image("battle_end_run.png")).convert('RGB')
         self.assertTrue(self.ocr.check_battle_end_run(screenshot))
 
+        screenshot = Image.open(load_image("battle_end_run2.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_battle_end_run(screenshot))
+
     def test_check_battle_end_run_ok(self):
         screenshot = Image.open(load_image("battle_end_run.png")).convert('RGB')
         self.assertTrue(self.ocr.check_battle_end_run_ok(screenshot))
+
+    def test_check_accident_run(self):
+        screenshot = Image.open(load_image("accident_option.png")).convert('RGB')
+        w, h = screenshot.width, screenshot.height
+        subarea = (w * 0.65, h * 0.1, w, h * 0.9)
+        screenshot = screenshot.crop(subarea)
+        self.ocr.check_accident_run(screenshot)
+
+        screenshot = Image.open(load_image("accident_option2.png")).convert('RGB')
+        screenshot = screenshot.crop(subarea)
+        self.ocr.check_accident_run(screenshot)
+        self.assertTrue(True)
+
+    def test_check_accident_run_ok(self):
+        screenshot = Image.open(load_image("accident_run_ok.png")).convert('RGB')
+        self.assertIsNotNone(self.ocr.get_position_by_resource_name(screenshot, "accident_run_ok"))
+        self.assertIsNone(self.ocr.get_position_by_resource_name(screenshot, "accident_run_ok2"))
+
+        screenshot = Image.open(load_image("accident_run_ok2.png")).convert('RGB')
+        self.assertIsNotNone(self.ocr.get_position_by_resource_name(screenshot, "accident_run_ok2"))
+        self.assertIsNone(self.ocr.get_position_by_resource_name(screenshot, "accident_run_ok"))

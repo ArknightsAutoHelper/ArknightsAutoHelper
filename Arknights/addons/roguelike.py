@@ -37,6 +37,9 @@ class RoguelikeStageMachine:
         self.machine.add_transition('place_operator_done', 'place_operator', 'in_battle')
         self.machine.add_transition('battle_end', 'in_battle', 'stage_unknown')
 
+        # accident
+        self.machine.add_transition('accident_end', 'stage_accident', 'stage_unknown')
+
     def _enter_stage_unknown(self):
         self.addon.delay(MEDIUM_WAIT)
 
@@ -62,6 +65,7 @@ class RoguelikeStageMachine:
             self.trigger('do_battle')
         elif stage == 2:
             self.addon.logger.info("不期而遇")
+            self.trigger('do_accident')
         elif stage == 3:
             self.addon.logger.info("幕间余兴")
 
@@ -85,6 +89,7 @@ class RoguelikeStageMachine:
         map = self.addon.ocr.check_battle_map(screenshot)
         self.addon.logger.info(self.addon.ocr.get_map_name(map))
 
+        self.addon.delay(SMALL_WAIT)
         ((origin1, move1), (origin2, move2)) = self.addon.ocr.get_map_action(map)
         self.addon.logger.info("放置")
         self.addon.swipe_screen_from_origin_to_target(origin1, move1)
@@ -95,10 +100,14 @@ class RoguelikeStageMachine:
         self.addon.logger.info("两倍速")
         self.addon.tap_rect(self.addon.ocr.SPEED_UP_BUTTON)
 
+        # TODO: 循环查询
         self.addon.delay(MEDIUM_WAIT)
         screenshot = self.addon.device.screenshot().convert('RGB')
         if not self.addon.ocr.check_skill_available(screenshot):
-            return
+            self.addon.delay(MEDIUM_WAIT)
+            screenshot = self.addon.device.screenshot().convert('RGB')
+            if not self.addon.ocr.check_skill_available(screenshot):
+                return
         self.addon.tap_point(self.addon.ocr.get_operator(map), post_delay=0.0, randomness=(0, 0))
         self.addon.delay(SMALL_WAIT)
         screenshot = self.addon.device.screenshot().convert('RGB')
@@ -126,7 +135,7 @@ class RoguelikeStageMachine:
 
                 move = -randint(self.addon.viewport[0] // 4, self.addon.viewport[0] // 3)
                 self.addon.swipe_screen(move)
-                self.addon.delay(TINY_WAIT)
+                self.addon.delay(SMALL_WAIT)
 
                 screenshot = self.addon.device.screenshot().convert('RGB')
                 if not self.addon.ocr.check_battle_end_run(screenshot):
@@ -141,6 +150,36 @@ class RoguelikeStageMachine:
                 self.trigger("battle_end")
                 break
 
+    def _enter_stage_accident(self):
+        self.addon.delay(SMALL_WAIT)
+        self.addon.tap_point((self.addon.viewport[0] // 2, self.addon.viewport[1] // 2), post_delay=0.0,
+                             randomness=(10, 10))
+        self.addon.tap_point((self.addon.viewport[0] // 2, self.addon.viewport[1] // 2), post_delay=0.0,
+                             randomness=(10, 10))
+
+        self.addon.delay(SMALL_WAIT)
+        screenshot = self.addon.device.screenshot().convert('RGB')
+        w, h = screenshot.width, screenshot.height
+        subarea = (w * 0.65, h * 0.1, w, h * 0.9)
+        screenshot = screenshot.crop(subarea)
+        if not self.addon.ocr.check_accident_run(screenshot):
+            return
+
+        self.addon.ocr.ACCIDENT_OPTION_BUTTON = (self.addon.ocr.ACCIDENT_OPTION_BUTTON[0] + subarea[0],
+                                                 self.addon.ocr.ACCIDENT_OPTION_BUTTON[1] + subarea[1],
+                                                 self.addon.ocr.ACCIDENT_OPTION_BUTTON[2] + subarea[0],
+                                                 self.addon.ocr.ACCIDENT_OPTION_BUTTON[3] + subarea[1])
+        self.addon.logger.info("不期而遇 - 选项")
+        self.addon.tap_rect(self.addon.ocr.ACCIDENT_OPTION_BUTTON)
+
+        subarea = (0, h * 0.2, w, h * 0.8)
+        if self.addon.tap_by_template_name("accident_run_ok", subarea) is None:
+            return
+        self.addon.delay(TINY_WAIT)
+        if self.addon.tap_by_template_name("accident_run_ok2") is None:
+            return
+
+        self.trigger("accident_end")
 
 class RoguelikeStateMachine:
     def __init__(self, addon):
@@ -351,3 +390,17 @@ class RoguelikeAddon(AddonBase):
             self.machine = RoguelikeStateMachine(self)
             self.machine.start()
         return 0
+
+    def tap_by_template_name(self, template_name, subarea=None):
+        screenshot = self.device.screenshot().convert('RGB')
+        if subarea is not None:
+            screenshot = screenshot.crop(subarea)
+
+        tmp = self.ocr.get_position_by_resource_name(screenshot, template_name)
+        if tmp is not None:
+            if subarea is not None:
+                tmp = (tmp[0] + subarea[0], tmp[1] + subarea[1],
+                       tmp[2] + subarea[0], tmp[3] + subarea[1])
+            self.tap_rect(tmp)
+
+        return tmp
