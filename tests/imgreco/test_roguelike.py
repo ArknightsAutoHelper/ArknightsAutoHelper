@@ -45,6 +45,14 @@ class RoguelikeOCRTest(unittest.TestCase):
         result = self.ocr.check_current_stage(screenshot)
         self.assertEqual(result, 3)
 
+    def test_check_shop(self):
+        screenshot = Image.open(load_image("shop.png")).convert('RGB')
+        w, h = screenshot.width, screenshot.height
+        subarea = (0, h * 0.2, w, h * 0.8)
+        screenshot = screenshot.crop(subarea)
+        result = self.ocr.check_current_stage(screenshot)
+        self.assertEqual(result, 4)
+
     def test_troop(self):
         screenshot = Image.open(load_image("mountain_troop.png")).convert('RGB')
         self.assertFalse(self.ocr.check_mountain_exist_in_troop(screenshot))
@@ -123,3 +131,10 @@ class RoguelikeOCRTest(unittest.TestCase):
         screenshot = Image.open(load_image("accident_run_ok2.png")).convert('RGB')
         self.assertIsNotNone(self.ocr.get_position_by_resource_name(screenshot, "accident_run_ok2"))
         self.assertIsNone(self.ocr.get_position_by_resource_name(screenshot, "accident_run_ok"))
+
+    def test_check_investment_exist(self):
+        screenshot = Image.open(load_image("investment.png")).convert('RGB')
+        self.assertTrue(self.ocr.check_investment_exist(screenshot))
+
+        screenshot = Image.open(load_image("investment2.png")).convert('RGB')
+        self.assertFalse(self.ocr.check_investment_exist(screenshot))

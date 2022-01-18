@@ -13,7 +13,6 @@ from util.richlog import get_logger
 logger = get_logger(__name__)
 
 
-# TODO: add unit tests
 class RoguelikeOCR:
     def __init__(self):
         self.EXPLORE_BUTTON = (1065, 515, 1263, 704)
@@ -39,6 +38,8 @@ class RoguelikeOCR:
         self.BATTLE_END_RUN = (0, 0, 0, 0)
         self.BATTLE_END_RUN_OK = (0, 0, 0, 0)
         self.ACCIDENT_OPTION_BUTTON = (0, 0, 0, 0)
+        self.INVESTMENT_BUTTON = (415, 105, 599, 219)
+        self.INVESTMENT_BUTTON2 = [(483, 298, 856, 412), (848, 479, 1113, 509)]
 
         self.MAP_DICT = [
             {"name": "意外", "action": [((1223, 643), (-507, -320)), ((717, 323), (-342, 6))], "operator": (642, 325)},
@@ -147,7 +148,10 @@ class RoguelikeOCR:
         """
         logger.logimage(img)
 
-        if tmp := self._check_accident(img):
+        if tmp := self._check_shop(img):
+            self.CURRENT_STAGE = tmp
+            return 4
+        elif tmp := self._check_accident(img):
             self.CURRENT_STAGE = tmp
             return 2
         elif tmp := self._check_interlude(img):
@@ -166,13 +170,13 @@ class RoguelikeOCR:
         tmp, score = self._get_rect_by_template(img, "battle")
         logger.logimage(img.crop(tmp))
         logger.logtext('battle score=%f' % score)
-        if score > 0.9:
+        if score > 0.95:
             return tmp
         else:
             tmp, score = self._get_rect_by_template(img, "battle2")
             logger.logimage(img.crop(tmp))
             logger.logtext('battle2 score=%f' % score)
-            if score > 0.9:
+            if score > 0.95:
                 return tmp
         return None
 
@@ -183,19 +187,31 @@ class RoguelikeOCR:
         tmp, score = self._get_rect_by_template(img, "accident")
         logger.logimage(img.crop(tmp))
         logger.logtext('accident score=%f' % score)
-        if score > 0.9:
+        if score > 0.95:
             return tmp
         else:
             return None
 
     def _check_interlude(self, img):
         """
-        不期而遇
+        幕间余兴
         """
         tmp, score = self._get_rect_by_template(img, "interlude")
         logger.logimage(img.crop(tmp))
         logger.logtext('interlude score=%f' % score)
-        if score > 0.9:
+        if score > 0.95:
+            return tmp
+        else:
+            return None
+
+    def _check_shop(self, img):
+        """
+        商店
+        """
+        tmp, score = self._get_rect_by_template(img, "shop")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('shop score=%f' % score)
+        if score > 0.95:
             return tmp
         else:
             return None
@@ -304,6 +320,13 @@ class RoguelikeOCR:
         logger.logimage(img.crop(tmp))
         logger.logtext(f'{template_name} =%f' % score)
         return tmp if score > 0.9 else None
+
+    def check_investment_exist(self, img):
+        img = img.crop(self.INVESTMENT_BUTTON)
+        tmp, score = self._get_rect_by_template(img, "investment")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('investment score=%f' % score)
+        return score > 0.95
 
     @staticmethod
     def _get_rect_by_template(img, template):

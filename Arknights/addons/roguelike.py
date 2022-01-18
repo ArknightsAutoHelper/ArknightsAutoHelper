@@ -21,6 +21,7 @@ class RoguelikeStageMachine:
                        State(name='stage_interlude', on_enter=['_enter_stage_interlude']),
                        State(name='place_operator', on_enter=['_enter_place_operator']),
                        State(name='in_battle', on_enter=['_enter_in_battle']),
+                       State(name='stage_shop', on_enter=['_enter_shop'])
                        ]
         self.machine = Machine(model=self, states=self.states, initial='dummy')
 
@@ -31,6 +32,7 @@ class RoguelikeStageMachine:
         self.machine.add_transition('do_battle', 'stage_unknown', 'stage_battle_prepare')
         self.machine.add_transition('do_accident', 'stage_unknown', 'stage_accident')
         self.machine.add_transition('do_interlude', 'stage_unknown', 'stage_interlude')
+        self.machine.add_transition('do_shop', 'stage_unknown', 'stage_shop')
 
         # battle
         self.machine.add_transition('battle_prepare_done', 'stage_battle_prepare', 'place_operator')
@@ -68,6 +70,12 @@ class RoguelikeStageMachine:
             self.trigger('do_accident')
         elif stage == 3:
             self.addon.logger.info("幕间余兴")
+            self.trigger('do_accident')
+        elif stage == 4:
+            self.addon.logger.info("诡异行商")
+            self.trigger('do_shop')
+        else:
+            return
 
     def _enter_stage_battle_prepare(self):
         """
@@ -128,6 +136,7 @@ class RoguelikeStageMachine:
 
             self.addon.delay(BIG_WAIT)
             screenshot = self.addon.device.screenshot().convert('RGB')
+            # TODO: 战斗失败检测
             if self.addon.ocr.check_battle_end(screenshot):
                 self.addon.logger.info("战斗完成")
                 self.addon.tap_rect(self.addon.ocr.BATTLE_END)
@@ -152,10 +161,8 @@ class RoguelikeStageMachine:
 
     def _enter_stage_accident(self):
         self.addon.delay(SMALL_WAIT)
-        self.addon.tap_point((self.addon.viewport[0] // 2, self.addon.viewport[1] // 2), post_delay=0.0,
-                             randomness=(10, 10))
-        self.addon.tap_point((self.addon.viewport[0] // 2, self.addon.viewport[1] // 2), post_delay=0.0,
-                             randomness=(10, 10))
+        self.addon.tap_center()
+        self.addon.tap_center()
 
         self.addon.delay(SMALL_WAIT)
         screenshot = self.addon.device.screenshot().convert('RGB')
@@ -175,11 +182,26 @@ class RoguelikeStageMachine:
         subarea = (0, h * 0.2, w, h * 0.8)
         if self.addon.tap_by_template_name("accident_run_ok", subarea) is None:
             return
-        self.addon.delay(TINY_WAIT)
+
+        self.addon.delay(SMALL_WAIT)
         if self.addon.tap_by_template_name("accident_run_ok2") is None:
             return
 
         self.trigger("accident_end")
+
+    def _enter_shop(self):
+        screenshot = self.addon.device.screenshot().convert('RGB')
+        if not self.addon.ocr.check_investment_exist(screenshot):
+            return
+
+        self.addon.logger.info("前瞻性投资")
+        self.addon.tap_rect(self.addon.ocr.INVESTMENT_BUTTON)
+
+        self.addon.delay(TINY_WAIT)
+        self.addon.tap_rect(self.addon.ocr.INVESTMENT_BUTTON2[0])
+
+        for i in range(20): self.addon.tap_rect(self.addon.ocr.INVESTMENT_BUTTON2[1])
+
 
 class RoguelikeStateMachine:
     def __init__(self, addon):
@@ -369,6 +391,7 @@ class RoguelikeStateMachine:
     def _enter_stage(self):
         stage_machine = RoguelikeStageMachine(self.addon)
         stage_machine.start()
+        self.addon.logger.info("关卡流程结束")
 
     def _enter_stop(self):
         self.addon.logger.error("行动结束")
@@ -404,3 +427,6 @@ class RoguelikeAddon(AddonBase):
             self.tap_rect(tmp)
 
         return tmp
+
+    def tap_center(self):
+        self.tap_point((self.viewport[0] // 2, self.viewport[1] // 2), post_delay=0.0, randomness=(10, 10))
