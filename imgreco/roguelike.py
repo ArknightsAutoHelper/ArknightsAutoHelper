@@ -40,6 +40,8 @@ class RoguelikeOCR:
         self.ACCIDENT_OPTION_BUTTON = (0, 0, 0, 0)
         self.INVESTMENT_BUTTON = (415, 105, 599, 219)
         self.INVESTMENT_BUTTON2 = [(483, 298, 856, 412), (848, 479, 1113, 509)]
+        self.STOP_BUTTON = [(1187, 304, 1280, 422), (589, 617, 682, 687)]
+        self.BATTLE_FAILED_OK_BUTTON = (553, 212, 935, 284)
 
         self.MAP_DICT = [
             {"name": "意外", "action": [((1223, 643), (-507, -320)), ((717, 323), (-342, 6))], "operator": (642, 325)},
@@ -327,6 +329,12 @@ class RoguelikeOCR:
         logger.logimage(img.crop(tmp))
         logger.logtext('investment score=%f' % score)
         return score > 0.95
+
+    def check_battle_failed(self, img):
+        tmp, score = self._get_rect_by_template(img, "battle_failed")
+        logger.logimage(img.crop(tmp))
+        logger.logtext('battle_end score=%f' % score)
+        return score > 0.9
 
     @staticmethod
     def _get_rect_by_template(img, template):

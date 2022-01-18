@@ -136,7 +136,16 @@ class RoguelikeStageMachine:
 
             self.addon.delay(BIG_WAIT)
             screenshot = self.addon.device.screenshot().convert('RGB')
-            # TODO: 战斗失败检测
+
+            if self.addon.ocr.check_battle_failed(screenshot):
+                self.addon.tap_rect(self.addon.ocr.BATTLE_FAILED_OK_BUTTON)
+
+                self.addon.delay(MEDIUM_WAIT)
+                self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[0])
+                self.addon.delay(TINY_WAIT)
+                self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[1])
+                break
+
             if self.addon.ocr.check_battle_end(screenshot):
                 self.addon.logger.info("战斗完成")
                 self.addon.tap_rect(self.addon.ocr.BATTLE_END)
@@ -220,7 +229,8 @@ class RoguelikeStateMachine:
                        State(name="refresh_mountain", on_enter=['_enter_refresh_mountain']),
                        State(name="recruit", on_enter=['_enter_recruit']),
                        State(name="stage", on_enter=['_enter_stage']),
-                       "stop"]
+                       State(name="stop", on_enter=['_enter_stop']),
+                       ]
         self.machine = Machine(model=self, states=self.states, initial='dummy')
         # dummy
         self.machine.add_transition('start', 'dummy', 'prepare')
@@ -243,6 +253,9 @@ class RoguelikeStateMachine:
         # recruit
         self.machine.add_transition('recruit_done', 'recruit', 'stage')
         self.machine.add_transition('stop', 'recruit', 'stop')
+
+        self.machine.add_transition("stop", "stage", "stop")
+        self.machine.add_transition("start", "stop", "prepare")
 
     def _enter_prepare(self):
         """
@@ -392,9 +405,25 @@ class RoguelikeStateMachine:
         stage_machine = RoguelikeStageMachine(self.addon)
         stage_machine.start()
         self.addon.logger.info("关卡流程结束")
+        self.trigger("stop")
 
     def _enter_stop(self):
+        # TODO: 关卡中放置干员失败时无法正常重启
         self.addon.logger.error("行动结束")
+
+        w, h = self.addon.viewport[0], self.addon.viewport[1]
+        subarea = (0, 0, w * 0.5, h * 0.2)
+        self.addon.tap_by_template_name("back", subarea)
+
+        subarea = (w * 0.7, 0, w, h)
+        if self.addon.tap_by_template_name("stop", subarea) is not None:
+            self.addon.tap_rect(self.addon.ocr.RECRUIT_CONFIRM2)
+
+            self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[0])
+            self.addon.delay(TINY_WAIT)
+            self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[1])
+
+        self.trigger("start")
 
 
 class RoguelikeAddon(AddonBase):
