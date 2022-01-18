@@ -473,6 +473,10 @@ class RoguelikeAddon(AddonBase):
         集成战略
         """
         with self.helper.frontend.context:
+            if self.viewport != (1280, 720):
+                self.logger.error("该功能只支持 1280x720 分辨率使用！")
+                return -1
+
             self.logger.info("前瞻性投资")
 
             self.machine = RoguelikeStateMachine(self)
