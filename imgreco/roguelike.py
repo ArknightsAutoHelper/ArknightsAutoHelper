@@ -40,7 +40,7 @@ class RoguelikeOCR:
         self.ACCIDENT_OPTION_BUTTON = (0, 0, 0, 0)
         self.INVESTMENT_BUTTON = (415, 105, 599, 219)
         self.INVESTMENT_BUTTON2 = [(483, 298, 856, 412), (848, 479, 1113, 509)]
-        self.STOP_BUTTON = [(1187, 304, 1280, 422), (589, 617, 682, 687)]
+        self.STOP_BUTTON = [(1187, 304, 1280, 422), (616, 626, 656, 641)]
         self.BATTLE_FAILED_OK_BUTTON = (553, 212, 935, 284)
 
         self.MAP_DICT = [

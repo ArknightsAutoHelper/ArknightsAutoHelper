@@ -121,15 +121,16 @@ class RoguelikeStageMachine:
             self.addon.delay(MEDIUM_WAIT)
             screenshot = self.addon.device.screenshot().convert('RGB')
             if not self.addon.ocr.check_skill_available(screenshot):
-                return
+                self.addon.logger.error("技能未找到")
         self.addon.tap_point(self.addon.ocr.get_operator(map), post_delay=0.0, randomness=(0, 0))
+
         self.addon.delay(SMALL_WAIT)
         screenshot = self.addon.device.screenshot().convert('RGB')
         if not self.addon.ocr.check_skill_position(screenshot):
-            return
-
-        self.addon.logger.info("开启技能")
-        self.addon.tap_rect(self.addon.ocr.SKILL_BUTTON)
+            self.addon.logger.error("技能未开启")
+        else:
+            self.addon.logger.info("开启技能")
+            self.addon.tap_rect(self.addon.ocr.SKILL_BUTTON)
 
         self.trigger("place_operator_done")
 
@@ -155,6 +156,7 @@ class RoguelikeStageMachine:
                 self.addon.delay(MEDIUM_WAIT)
                 self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[0])
                 self.addon.delay(TINY_WAIT)
+                self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[1])
                 self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[1])
                 break
 
@@ -458,8 +460,9 @@ class RoguelikeStateMachine:
             self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[0])
             self.addon.delay(TINY_WAIT)
             self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[1])
+            self.addon.tap_rect(self.addon.ocr.STOP_BUTTON[1])
 
-        self.trigger("start")
+        # self.trigger("start")
 
 
 class RoguelikeAddon(AddonBase):
@@ -480,7 +483,8 @@ class RoguelikeAddon(AddonBase):
             self.logger.info("前瞻性投资")
 
             self.machine = RoguelikeStateMachine(self)
-            self.machine.start()
+            while True:
+                self.machine.start()
         return 0
 
     def tap_by_template_name(self, template_name, subarea=None):
