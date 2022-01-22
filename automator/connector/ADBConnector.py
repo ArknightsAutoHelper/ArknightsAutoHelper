@@ -52,10 +52,8 @@ def _screencap_to_image(cap, rotate=0):
     if colorspace == 2:
         from PIL import Image as PILImage, ImageCms
         from imgreco.cms import p3_profile, srgb_profile
-        from util import pil_zerocopy
         pil_im = PILImage.frombuffer('RGBA', (w, h), arr, 'raw', 'RGBA', 0, 1)
-        srgb_im = ImageCms.profileToProfile(pil_im, p3_profile, srgb_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC)
-        return Image.fromarray(pil_zerocopy.asarray(srgb_im), 'RGBA')
+        ImageCms.profileToProfile(pil_im, p3_profile, srgb_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC, inPlace=True)
     return Image.fromarray(arr, 'RGBA')
 
 
@@ -171,8 +169,8 @@ class _ScreenCapImplPNG:
         if icc := img.info.get('icc_profile', ''):
             iccio = BytesIO(icc)
             src_profile = ImageCms.ImageCmsProfile(iccio)
-            dst_profile = ImageCms.createProfile('sRGB')
-            img = ImageCms.profileToProfile(img, src_profile, dst_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC)
+            from imgreco.cms import srgb_profile
+            ImageCms.profileToProfile(img, src_profile, srgb_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC, inPlace=True)
         from util import pil_zerocopy
         return Image.fromarray(pil_zerocopy.asarray(img), img.mode)
 
