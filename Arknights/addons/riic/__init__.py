@@ -40,6 +40,7 @@ def transform_rect(rc, M):
 
 class RIICAddon(AddonBase):
     def on_attach(self) -> None:
+        self.sync_richlog()
         self.ocr = tesseract.Engine(lang=None, model_name='chi_sim')
         self.register_cli_command('riic', self.cli_riic, self.cli_riic.__doc__)
         self.tag = time.time()
@@ -227,9 +228,8 @@ class RIICAddon(AddonBase):
         if name not in operator_set:
             comparisions = [(n, textdistance.levenshtein(name, n)) for n in operator_set]
             comparisions.sort(key=lambda x: x[1])
-            self.richlogger.logtext('%s not in operator set, closest match: %s' % (name, comparisions[0][0]))
+            self.logger.debug('%s not in operator set, closest match: %s' % (name, comparisions[0][0]))
             if comparisions[0][1] == comparisions[1][1]:
-                self.richlogger.logtext('multiple fixes availiable for %r' % ocrresult)
                 self.logger.warning('multiple fixes availiable for %r', ocrresult)
             name = comparisions[0][0]
         mood_img = img.subview(Rect.from_xywh(44, 358, 127, 3)).convert('L').array
@@ -321,7 +321,7 @@ class RIICAddon(AddonBase):
 
     def enter_room(self, room):
         self.enter_riic()
-        self.richlogger.logtext(f'entering room {room}')
+        self.logger.info(f'进入房间 {room}')
         layout = self.recognize_layout()
         left, top, right, bottom = layout[room]
         if left < 0:

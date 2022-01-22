@@ -19,6 +19,15 @@ from util import richlog
 
 logger = logging.getLogger('helper')
 
+
+class RichLogSyncHandler(logging.Handler):
+    def __init__(self, richlog: richlog.RichLogger):
+        super().__init__()
+        self.richlog = richlog
+
+    def emit(self, record: logging.LogRecord):
+        self.richlog.logtext(f'[{record.levelname}] {record.getMessage()}')
+
 class AddonBase(AddonMixin):
     alias : ClassVar[Union[str, None]] = None
 
@@ -27,6 +36,7 @@ class AddonBase(AddonMixin):
         self.helper : BaseAutomator = helper
         self.logger = logging.getLogger(type(self).__name__)
         self.richlogger = richlog.get_logger(type(self).__name__)
+        self._sync_handler = None
         self.on_attach()
 
     def addon(self, cls: Union[str, Type[TAddon]]) -> TAddon:
@@ -66,6 +76,10 @@ class AddonBase(AddonMixin):
     def register_gui_handler(self, handler):
         pass
 
+    def sync_richlog(self):
+        if self._sync_handler is None:
+            self._sync_handler = RichLogSyncHandler(self.richlogger)
+            self.logger.addHandler(self._sync_handler)
 class BaseAutomator(AddonMixin):
     frontend: Frontend
     def __init__(self, device_connector=None, frontend=None):  # 当前绑定到的设备
