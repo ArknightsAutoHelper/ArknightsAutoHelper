@@ -104,7 +104,7 @@ class AddonMixin:
         origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
         self.helper.device.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
-    def load_roi(self, name: str, mode: str) -> imgreco.common.RegionOfInterest:
+    def load_roi(self, name: str, mode: str = 'RGB') -> imgreco.common.RegionOfInterest:
         roi = imgreco.resources.load_roi(name, mode)
         return self._localize_roi(roi)
     
@@ -117,7 +117,7 @@ class AddonMixin:
         else:
             return self._localize_roi(roidef)
 
-    def match_roi(self, roi: RoiDef, fixed_position: bool = True, method: Literal["template_matching", "mse", "sift", None] = None, mode='RGB', screenshot=None) -> imgreco.common.RoiMatchingResult:
+    def match_roi(self, roi: RoiDef, fixed_position: bool = True, method: Literal["template_matching", "mse", "sift", None] = None, mode='RGB', screenshot=None, matching_mask=None) -> imgreco.common.RoiMatchingResult:
         roi = self._ensure_roi(roi, mode)
         if screenshot is None:
             screenshot = self.helper.device.screenshot()
@@ -161,8 +161,16 @@ class AddonMixin:
                 result.threshold = 0.8
                 result.bbox = Rect.from_xywh(point[0], point[1], scaled_template.width, scaled_template.height)
                 return result
+            elif method == 'mse':
+                scaled_template = roi.template.resize((roi.bbox.width, roi.bbox.height))
+                point, score = imgreco.imgops.match_template(screenshot, scaled_template, method=cv2.TM_SQDIFF_NORMED)
+                result.score = score
+                result.score_for_max_similarity = 0
+                result.threshold = 0.2
+                result.bbox = Rect.from_xywh(point[0], point[1], scaled_template.width, scaled_template.height)
+                return result
             elif method == 'sift':
-                feature_result = imgreco.imgops.match_feature(roi.template, screenshot)
+                feature_result = imgreco.imgops.match_feature(roi.template, screenshot, haystack_mask=matching_mask)
                 result.score = feature_result.matched_keypoint_count
                 result.score_for_max_similarity = feature_result.template_keypooint_count
                 result.threshold = min(feature_result.template_keypooint_count, 10)

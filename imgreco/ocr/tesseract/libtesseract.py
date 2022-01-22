@@ -18,12 +18,18 @@ version = tessbaseapi.version
 class LibTesseractEngine(BaseTesseractEngine):
     def __init__(self, lang, **kwargs):
         super().__init__(lang, **kwargs)
+        vars = {'debug_file': os.devnull}
+        if 'config' in sys.modules:
+            import config
+            if config.debug:
+                del vars['debug_file']
+                vars['log_level'] = '0'
         try:
-            self.baseapi = tessbaseapi.BaseAPI(self.tessdata_prefix, self.tesslang, vars={'debug_file': os.devnull})
+            self.baseapi = tessbaseapi.BaseAPI(self.tessdata_prefix, self.tesslang, vars=vars)
         except UnicodeEncodeError:
             if sys.platform == 'win32':
                 logger.warning('failed to encode tessdata prefix or language in CP_ACP, trying CRT UTF-8 hack')
-                self.baseapi = tessbaseapi.BaseAPI(self.tessdata_prefix, self.tesslang, vars={'debug_file': os.devnull}, win32_use_utf8=True)
+                self.baseapi = tessbaseapi.BaseAPI(self.tessdata_prefix, self.tesslang, vars=vars, win32_use_utf8=True)
             else:
                 raise
         self.features = ('single_line_hint', 'sparse_hint', 'char_whitelist')

@@ -124,17 +124,19 @@ class RIICAddon(AddonBase):
         }
         t1 = time.monotonic()
         print('time elapsed:', t1-t0)
-        image = screenshot.convert('native')
+        image = screenshot.convert('BGR')
 
         for name, rect in layout.items():
-            cv2.rectangle(image.array, Rect.from_ltrb(*rect).xywh, [0, 0, 255], 1)
-            cv2.putText(image.array, name, [rect[0]+2, rect[3]-2], cv2.FONT_HERSHEY_PLAIN, 2, [0,0,255], 2)
+            cv2.rectangle(image.array, Rect.from_ltrb(*rect).xywh, (0, 0, 255), 1)
+            cv2.putText(image.array, name, [rect[0]+2, rect[3]-2], cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
 
-        image.show()
-        print(layout)
+        self.richlogger.logimage(image)
+        # image.show()
+        # print(layout)
+        return layout
 
-    def recognize_operator_select(self, recognize_skill=False, skill_facility_hint=None):
-        screenshot = self.device.screenshot().convert('RGB')
+    def recognize_operator_select(self, deselect=True, recognize_skill=False, skill_facility_hint=None) -> list[OperatorBox]:
+        screenshot = self.device.screenshot(cached=False).convert('RGB')
         if not (roi := self.match_roi('riic/clear_selection', screenshot=screenshot)):
             raise RuntimeError('not here')
         # self.tap_rect(roi.bbox, post_delay=0)
@@ -144,7 +146,7 @@ class RIICAddon(AddonBase):
         highlighted_check = screenshot.subview((605, 530, screenshot.width, 538))
         self.richlogger.logimage(highlighted_check)
 
-        if (highlighted_check.array == (0, 152, 220)).all(axis=-1).any():
+        if deselect and (highlighted_check.array == (0, 152, 220)).all(axis=-1).any():
             self.logger.info('取消选中干员')
             self.tap_rect(roi.bbox, post_delay=0.2)  # transition animation
             screenshot = imgops.scale_to_height(self.device.screenshot(cached=False).convert('RGB'), 1080)
@@ -210,23 +212,24 @@ class RIICAddon(AddonBase):
         print("time elapsed:", t)
         return result
 
-    def recognize_operator_box(self, img: Image.Image, recognize_skill=False, skill_facility_hint=None):
+    def recognize_operator_box(self, img: Image.Image, recognize_skill=False, skill_facility_hint=None) -> OperatorBox:
         name_img = img.subview((0, 375, img.width, img.height - 2)).convert('L')
-        # name_img = imgops.enhance_contrast(name_img, 90, 220)
-        name_img = Image.fromarray(cv2.threshold(name_img.array, 127, 255, cv2.THRESH_BINARY_INV)[1])
-        # name_img = Image.fromarray(255 - name_img.array)
+        name_img = imgops.enhance_contrast(name_img, 90, 220)
+        name_img = imgops.crop_blackedge2(name_img)
+        name_img = Image.fromarray(cv2.copyMakeBorder(255 - name_img.array, 8, 8, 8, 8, cv2.BORDER_CONSTANT, value=[255, 255, 255]))
         # save image for training ocr
         # name_img.save(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '%d-%04d.png' % (self.tag, self.seq)))
         self.seq += 1
         # OcrHint.SINGLE_LINE (PSM 7) will ignore some operator names, use raw line for LSTM (PSM 13) here
         # the effect of user-words is questionable, it seldom produce improved output (maybe we need LSTM word-dawg instead)
-        ocrresult = self.ocr.recognize(name_img, ppi=240, tessedit_pageseg_mode='13', user_words_suffix='operators-user-words', tessedit_char_whitelist=operator_alphabet)
+        ocrresult = self.ocr.recognize(name_img, ppi=240, tessedit_pageseg_mode='13', user_words_file='operators')
         name = ocrresult.text.replace(' ', '')
         if name not in operator_set:
             comparisions = [(n, textdistance.levenshtein(name, n)) for n in operator_set]
             comparisions.sort(key=lambda x: x[1])
-            self.logger.debug('%s not in operator set, closest match: %s', name, comparisions[0][0])
+            self.richlogger.logtext('%s not in operator set, closest match: %s' % (name, comparisions[0][0]))
             if comparisions[0][1] == comparisions[1][1]:
+                self.richlogger.logtext('multiple fixes availiable for %r' % ocrresult)
                 self.logger.warning('multiple fixes availiable for %r', ocrresult)
             name = comparisions[0][0]
         mood_img = img.subview(Rect.from_xywh(44, 358, 127, 3)).convert('L').array
@@ -273,6 +276,7 @@ class RIICAddon(AddonBase):
         if skill2 is not None:
             skill_icons.append(skill2)
         self.richlogger.logimage(name_img)
+        self.richlogger.logtext(repr(ocrresult))
         result = OperatorBox(None, name, mood, tag, room, skill_icons=skill_icons)
         self.richlogger.logtext(repr(result))
         return result
@@ -315,12 +319,76 @@ class RIICAddon(AddonBase):
 
         return result
 
+    def enter_room(self, room):
+        self.enter_riic()
+        self.richlogger.logtext(f'entering room {room}')
+        layout = self.recognize_layout()
+        left, top, right, bottom = layout[room]
+        if left < 0:
+            left = 0
+        if top < 0:
+            top = 0
+        if right > self.viewport[0]:
+            right = self.viewport[0]
+        if bottom > self.viewport[1]:
+            bottom = self.viewport[1]
+        rect = Rect.from_ltrb(left, top, right, bottom)
+        self.richlogger.logtext(f'rect {rect!r}')
+        if rect.width <= 0 or rect.height <= 0:
+            raise ValueError('invalid rect')
+        self.tap_rect(rect)
+        if self.check_in_riic():
+            self.logger.info('等待收取提示消失')
+            self.delay(3)
+            self.tap_rect(rect)
+
+    def enter_operator_selection(self, room='dorm1'):
+        self.enter_room(room)
+        screenshot = self.device.screenshot().convert('RGB')
+        if self.match_roi('riic/clear_operator'):
+            pass
+        elif roi := self.match_roi('riic/operator_button', method='template_matching', fixed_position=False, screenshot=screenshot.subview((0, 0, screenshot.height * 0.18611, screenshot.height))):
+            self.tap_rect(roi.bbox)
+        self.tap_rect(self.load_roi('riic/first_operator_in_list').bbox)
+
+    def shift(self, room, operators):
+        self.enter_operator_selection(room)
+        pending_operators: list = operators[:]
+        last_page_set = set()
+        deselect = True
+        while True:
+            current_page = self.recognize_operator_select(deselect=deselect, recognize_skill=False)
+            current_page_set = set()
+            for op in current_page:
+                current_page_set.add(op.name)
+                if op.name in pending_operators:
+                    self.logger.info('选择干员：%s', op.name)
+                    pending_operators.remove(op.name)
+                    self.tap_rect(op.box, post_delay=0)
+                    deselect = False
+            if len(pending_operators) == 0 or current_page_set == last_page_set:
+                break
+            last_page_set = current_page_set
+            self.swipe_screen(-30 * self.vh)
+            self.delay(1.5, MANLIKE_FLAG=False)
+        if pending_operators:
+            self.logger.warning('未发现干员：%r', pending_operators)
+        self.logger.info('确认换班')
+        self.tap_rect(self.load_roi('riic/confirm_select').bbox)
+        if roi := self.match_roi('riic/confirm_shift', method='mse'):
+            self.logger.info('二次确认换班')
+            self.tap_rect(roi.bbox)
+
+
     def cli_riic(self, argv):
         """
         riic <subcommand>
         基建功能（开发中）
         riic collect
         收取制造站及贸易站
+        riic shift <room> <operator1> <operator2> ...
+        指定干员换班
+        room: B101 B102 B103 B201 B202 B203 B301 B302 B303 dorm1 dorm2 dorm3 dorm4 meeting workshop office
         """
         if len(argv) == 1:
             print("usage: riic <subcommand>")
@@ -329,6 +397,9 @@ class RIICAddon(AddonBase):
         if cmd == 'collect':
             self.collect_all()
             return 0
+        if cmd == 'shift':
+            room, *operators = argv[2:]
+            self.shift(room, operators)
         elif cmd == 'debug_list':
             from pprint import pprint
             def warmup():

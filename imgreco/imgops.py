@@ -157,9 +157,9 @@ def invert_color(img):
     return Image.fromarray(resultmat, img.mode)
 
 
-def match_template(img, template, method=cv.TM_CCOEFF_NORMED):
+def match_template(img, template, method=cv.TM_CCOEFF_NORMED, template_mask=None):
     templatemat = np.asarray(template)
-    mtresult = cv.matchTemplate(np.asarray(img), templatemat, method)
+    mtresult = cv.matchTemplate(np.asarray(img), templatemat, method, mask=template_mask)
     if method == cv.TM_SQDIFF_NORMED or method == cv.TM_SQDIFF:
         selector = np.argmin
     else:
