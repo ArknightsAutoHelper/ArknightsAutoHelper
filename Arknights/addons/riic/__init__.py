@@ -118,13 +118,13 @@ class RIICAddon(AddonBase):
         translatey = M[1,2]
         scale = (scalex+scaley)/2
         M = np.array([[scale, 0, translatex],[0, scale, translatey]])
-        print('M=', M)
+        # print('M=', M)
         layout = {
             name: transform_rect(rect, M)
             for name, rect in database.layout_template.items()
         }
         t1 = time.monotonic()
-        print('time elapsed:', t1-t0)
+        self.logger.debug('time elapsed: %.06f s', t1-t0)
         image = screenshot.convert('BGR')
 
         for name, rect in layout.items():
@@ -210,7 +210,7 @@ class RIICAddon(AddonBase):
         #     cv2.line(dbg_screen.array, (x,0), (x,screenshot.height), [255,0,0], 1)
         # dbg_screen.show()
         t = time.monotonic() - t0
-        print("time elapsed:", t)
+        self.logger.debug("time elapsed: %.06f s", t)
         return result
 
     def recognize_operator_box(self, img: Image.Image, recognize_skill=False, skill_facility_hint=None) -> OperatorBox:
