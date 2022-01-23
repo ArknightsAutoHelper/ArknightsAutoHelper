@@ -1,4 +1,4 @@
-import cv2 as cv
+import cv2
 import numpy as np
 from util import cvimage as Image
 
@@ -31,8 +31,10 @@ def get_recruit_tags(img):
         img.crop((50*vw-13.241*vh, 60.278*vh, 50*vw+6.111*vh, 66.019*vh)).convert('L')
     ]
 
+    tagimgs = [Image.fromarray(cv2.threshold(img.array, 127, 255, cv2.THRESH_BINARY_INV)[1]) for img in tagimgs]
+
     eng = ocr.acquire_engine_global_cached('zh-cn')
-    recognize = lambda img: eng.recognize(imgops.invert_color(img), int(vh * 20), hints=[ocr.OcrHint.SINGLE_LINE], char_whitelist=known_tagchars).text.replace(' ', '')
+    recognize = lambda img: eng.recognize(img, int(vh * 20), hints=[ocr.OcrHint.SINGLE_LINE], char_whitelist=known_tagchars).text.replace(' ', '')
     cookedtags = []
     for img in tagimgs:
         logger.logimage(img)

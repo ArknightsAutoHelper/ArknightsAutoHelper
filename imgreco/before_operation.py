@@ -145,24 +145,17 @@ def get_confirm_troop_rect(viewport):
 
 
 def check_ap_refill_type(img):
+    context = common.ImageRoiMatchingContext(img)
     vw, vh = common.get_vwvh(img.size)
-    icon1 = img.crop((50*vw-3.241*vh, 11.481*vh, 50*vw+42.685*vh, 17.130*vh)).convert('RGB')
-    icon2 = resources.load_image_cached('before_operation/refill_with_item.png', 'RGB')
-    icon1, icon2 = imgops.uniform_size(icon1, icon2)
-    mse1 = imgops.compare_mse(icon1, icon2)
-    logger.logimage(icon1)
 
-    icon1 = img.crop((50*vw+41.574*vh, 11.481*vh, 50*vw+87.315*vh, 17.130*vh)).convert('RGB')
-    icon2 = resources.load_image_cached('before_operation/refill_with_originium.png', 'RGB')
-    icon1, icon2 = imgops.uniform_size(icon1, icon2)
-    mse2 = imgops.compare_mse(icon1, icon2)
+    item_icon = context.match_roi('before_operation/refill_with_item_icon')
+    originium_icon = context.match_roi('before_operation/refill_with_originium_icon')
+    logger.logtext('match item_icon=%r' % (item_icon,))
+    logger.logtext('match originium_icon=%r' % (originium_icon,))
 
-    logger.logimage(icon1)
-    logger.logtext('mse1=%f, mse2=%f' % (mse1, mse2))
-
-    if min(mse1, mse2) > 1500:
+    if not item_icon and not originium_icon:
         return None
-    if mse1 < mse2:
+    if item_icon:
         return 'item'
 
     icon1 = img.crop((50*vw+25.972*vh, 36.250*vh, 50*vw+54.722*vh, 61.250*vh)).convert('RGB')

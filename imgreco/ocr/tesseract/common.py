@@ -1,3 +1,5 @@
+import sys
+import os
 from abc import ABC
 from xml.etree import ElementTree
 from ..common import *
@@ -44,9 +46,20 @@ def parse_hocr(file):
     return OcrResult(ocrlines)
 
 
+def get_datapath():
+    if 'config' in sys.modules:
+        import config
+        return config.tessdata_prefix
+    if 'TESSDATA_PREFIX' in os.environ:
+        return os.environ['TESSDATA_PREFIX']
+    return None
+
 class BaseTesseractEngine(OcrEngine, ABC):
-    def __init__(self, lang, model_name=None, **kwargs):
+    def __init__(self, lang, model_name=None, tessdata_prefix=None, **kwargs):
         super().__init__(lang, **kwargs)
+        if tessdata_prefix is None:
+            tessdata_prefix = get_datapath()
+        self.tessdata_prefix = tessdata_prefix
         if model_name is not None:
             self.tesslang = model_name
         else:

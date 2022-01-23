@@ -144,4 +144,4 @@ def load_roi(basename, image_mode='RGB'):
     except:
         bbox_matrix = None
         native_resolution = None
-    return RegionOfInterest(template=img, bbox_matrix=bbox_matrix, native_resolution=native_resolution)
+    return RegionOfInterest(name=basename, template=img, bbox_matrix=bbox_matrix, native_resolution=native_resolution)

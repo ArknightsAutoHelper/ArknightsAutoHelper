@@ -1,8 +1,12 @@
+import sys
 import io
 import os
 from ..common import *
 from .common import *
+import logging
 from . import tessbaseapi
+
+logger = logging.getLogger(__name__)
 
 is_online = False
 info = "libtesseract"
@@ -14,7 +18,20 @@ version = tessbaseapi.version
 class LibTesseractEngine(BaseTesseractEngine):
     def __init__(self, lang, **kwargs):
         super().__init__(lang, **kwargs)
-        self.baseapi = tessbaseapi.BaseAPI(tessbaseapi.resolve_datapath(), self.tesslang, vars={'debug_file': os.devnull})
+        vars = {'debug_file': os.devnull}
+        if 'config' in sys.modules:
+            import config
+            if config.debug:
+                del vars['debug_file']
+                vars['log_level'] = '0'
+        try:
+            self.baseapi = tessbaseapi.BaseAPI(self.tessdata_prefix, self.tesslang, vars=vars)
+        except UnicodeEncodeError:
+            if sys.platform == 'win32':
+                logger.warning('failed to encode tessdata prefix or language in CP_ACP, trying CRT UTF-8 hack')
+                self.baseapi = tessbaseapi.BaseAPI(self.tessdata_prefix, self.tesslang, vars=vars, win32_use_utf8=True)
+            else:
+                raise
         self.features = ('single_line_hint', 'sparse_hint', 'char_whitelist')
 
     def recognize(self, image, ppi=70, hints=None, **kwargs):
@@ -26,10 +43,14 @@ class LibTesseractEngine(BaseTesseractEngine):
         elif OcrHint.SPARSE in hints:
             self.baseapi.set_variable('tessedit_pageseg_mode', '11')
         self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
-
+        for key, value in kwargs.items():
+            self.baseapi.set_variable(key, value)
+        self.baseapi.recognize()
         result = parse_hocr(io.BytesIO(self.baseapi.get_hocr()))
-        self.baseapi.set_variable('tessedit_pageseg_mode', '')
-        self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
+        self.baseapi.set_variable('tessedit_pageseg_mode', None)
+        self.baseapi.set_variable('tessedit_char_whitelist', None)
+        for key in kwargs:
+            self.baseapi.set_variable(key, None)
 
         return result
 
