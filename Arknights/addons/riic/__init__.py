@@ -47,9 +47,9 @@ class RIICAddon(AddonBase):
         self.seq = 0
     
     def check_in_riic(self, screenshot=None):
-        if self.match_roi('riic/overview', screenshot=screenshot):
+        if self.match_roi('riic/overview', method='template_matching', screenshot=screenshot):
             return True
-        if roi := self.match_roi('riic/pending', screenshot=screenshot):
+        if roi := self.match_roi('riic/pending', method='template_matching', screenshot=screenshot):
             self.logger.info('取消待办事项')
             self.tap_rect(roi.bbox)
             return True
