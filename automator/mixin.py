@@ -18,18 +18,21 @@ from random import uniform, randint, gauss
 import time
 
 import numpy as np
-import cv2
-from util.cvimage import Rect
+from util.cvimage import Image, Rect
 import imgreco.common
 import imgreco.imgops
 import imgreco.resources
 
 
-class AddonMixin:
+class AddonMixin(imgreco.common.RoiMatchingMixin):
     if TYPE_CHECKING:
         helper: BaseAutomator
         logger: logging.Logger
         viewport: tuple[int, int]
+    
+    def _implicit_screenshot(self) -> Image.Image:
+        return self.helper.device.screenshot(False)
+
     def delay(self, n: Real=10,  # 等待时间中值
                MANLIKE_FLAG=True, allow_skip=False):  # 是否在此基础上设偏移量
         if MANLIKE_FLAG:
@@ -103,83 +106,6 @@ class AddonMixin:
         origin_x = (origin_x or self.viewport[0] // 2) + randint(-rand, rand)
         origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
         self.helper.device.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
-
-    def load_roi(self, name: str, mode: str = 'RGB') -> imgreco.common.RegionOfInterest:
-        roi = imgreco.resources.load_roi(name, mode)
-        return self._localize_roi(roi)
-    
-    def _localize_roi(self, roi: imgreco.common.RegionOfInterest):
-        return roi.with_target_viewport(*self.viewport)
-
-    def _ensure_roi(self, roidef: RoiDef, mode) -> imgreco.common.RegionOfInterest:
-        if isinstance(roidef, str):
-            return self.load_roi(roidef, mode)
-        else:
-            return self._localize_roi(roidef)
-
-    def match_roi(self, roi: RoiDef, fixed_position: bool = True, method: Literal["template_matching", "mse", "sift", None] = None, mode='RGB', screenshot=None, matching_mask=None) -> imgreco.common.RoiMatchingResult:
-        roi = self._ensure_roi(roi, mode)
-        if screenshot is None:
-            screenshot = self.helper.device.screenshot()
-        if screenshot.mode != mode:
-            screenshot = screenshot.convert(mode)
-        result = imgreco.common.RoiMatchingResult()
-        if fixed_position:
-            result.bbox = roi.bbox
-            compare = screenshot.crop(roi.bbox)
-            template, compare = imgreco.imgops.uniform_size(roi.template, compare)
-            if method is None:
-                method = 'mse'
-            if method == 'mse':
-                result.score = imgreco.imgops.compare_mse(template, compare)
-                result.score_for_max_similarity = 0
-                result.threshold = 1625
-                return result
-            elif method == 'template_matching':
-                result.score = imgreco.imgops.compare_ccoeff(template, compare)
-                result.score_for_max_similarity = 1
-                result.threshold = 0.8
-                return result
-            elif method == 'sift':
-                feature_result = imgreco.imgops.match_feature(template, compare)
-                result.score = feature_result.matched_keypoint_count
-                result.score_for_max_similarity = feature_result.template_keypooint_count
-                result.threshold = min(feature_result.template_keypooint_count, 10)
-                result.context = feature_result
-                return result
-            else:
-                raise RuntimeError("unsupported matching method %s for fixed-position ROI" % method)
-
-        else:
-            if method is None:
-                method = 'template_matching'
-            if method == 'template_matching':
-                scaled_template = roi.template.resize((roi.bbox.width, roi.bbox.height))
-                point, score = imgreco.imgops.match_template(screenshot, scaled_template)
-                result.score = score
-                result.score_for_max_similarity = 1
-                result.threshold = 0.8
-                result.bbox = Rect.from_xywh(point[0], point[1], scaled_template.width, scaled_template.height)
-                return result
-            elif method == 'mse':
-                scaled_template = roi.template.resize((roi.bbox.width, roi.bbox.height))
-                point, score = imgreco.imgops.match_template(screenshot, scaled_template, method=cv2.TM_SQDIFF_NORMED)
-                result.score = score
-                result.score_for_max_similarity = 0
-                result.threshold = 0.2
-                result.bbox = Rect.from_xywh(point[0], point[1], scaled_template.width, scaled_template.height)
-                return result
-            elif method == 'sift':
-                feature_result = imgreco.imgops.match_feature(roi.template, screenshot, haystack_mask=matching_mask)
-                result.score = feature_result.matched_keypoint_count
-                result.score_for_max_similarity = feature_result.template_keypooint_count
-                result.threshold = min(feature_result.template_keypooint_count, 10)
-                result.context = feature_result
-                x, y, w, h = cv2.boundingRect(feature_result.template_corners)
-                result.bbox = Rect.from_xywh(x, y, w, h)
-                return result
-            else:
-                raise RuntimeError("unsupported matching method %s for non-fixed-position ROI" % method)
 
     def wait_for_roi(self, roi: RoiDef, timeout: Real = 10, threshold=None, **roi_matching_args: RoiMatchingArgs) -> imgreco.common.RoiMatchingResult:
         t0 = time.monotonic()
