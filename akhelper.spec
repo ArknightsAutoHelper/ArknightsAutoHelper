@@ -10,7 +10,12 @@ if not hasattr(sys, '_using_makepackage'):
 
 sys.modules['FixTk'] = None
 
+extra_path = ['vendor/penguin_client']
+hiddenimports = ['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr', 'automator.connector.enumerator.bluestacks_hyperv', 'automator.connector.enumerator.append']
+excludes = ['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter', 'resources', 'packaging', 'matplotlib']
+
 a = Analysis(['akhelper.py'],
+             pathex=extra_path,
              binaries=[],
              datas=[
                 ('resources.zip', '.'),
@@ -25,21 +30,22 @@ a = Analysis(['akhelper.py'],
                 ('webgui2/dist', 'web'),
                 ('extra_items/README.txt', 'extra_items'),
             ],
-             hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr', 'automator.connector.enumerator.bluestacks_hyperv', 'automator.connector.enumerator.append'],
+             hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
-             excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter', 'resources', 'packaging'],
+             excludes=excludes,
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,
              noarchive=False)
 
 agui = Analysis(['akhelper-gui.pyw'],
+             pathex=extra_path,
              binaries=[],
-             hiddenimports=['imgreco.ocr.baidu', 'imgreco.ocr.tesseract', 'imgreco.ocr.windows_media_ocr', 'automator.connector.enumerator.bluestacks_hyperv', 'automator.connector.enumerator.append'],
+             hiddenimports=hiddenimports,
              hookspath=[],
              runtime_hooks=[],
-             excludes=['FixTk', 'tcl', 'tk', '_tkinter', 'tkinter', 'Tkinter', 'resources', 'packaging'],
+             excludes=excludes,
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
              cipher=block_cipher,
