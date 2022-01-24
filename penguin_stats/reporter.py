@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Union
 import config
 from resources.event import EXTRA_KNOWN_ITEMS, event_preprocess
-import vendor.penguin_client.penguin_client as penguin_client
+config.require_vendor_lib('penguin_client', 'penguin_client')
+import penguin_client
 
 
 logger = logging.getLogger('PenguinReporter')

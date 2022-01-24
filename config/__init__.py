@@ -303,3 +303,34 @@ def get_vendor_path(name):
     if os.path.isdir(base):
         return base
     raise FileNotFoundError(base)
+
+class _FixedSpecFinder:
+    def __init__(self, name, spec):
+        self.name = name
+        self.spec = spec
+
+    def find_spec(self, fullname, path, target=None):
+        if fullname == self.name:
+            return self.spec
+        return None
+    
+    def __repr__(self):
+        return f'{self.__class__.__qualname__}({self.name!r}, {self.spec!r})'
+
+def require_vendor_lib(fullname, base_path_relative_to_vendor):
+    import importlib
+    if bundled:
+        importlib.import_module(fullname)
+        return
+    if fullname in sys.modules:
+        return
+    path = os.path.join(vendor_root, base_path_relative_to_vendor)
+    if not os.path.exists(path):
+        raise FileNotFoundError(path)
+    spec = importlib.machinery.PathFinder.find_spec(fullname, [path] + sys.path)
+    if spec is None:
+        raise ModuleNotFoundError(fullname)
+    sys.meta_path.insert(0, _FixedSpecFinder(fullname, spec))
+    # not importing then removing from sys.meta_path, in case of lazy loading
+    # importlib.import_module(fullname)
+    # sys.meta_path.pop()
