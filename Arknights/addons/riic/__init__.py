@@ -95,7 +95,8 @@ class RIICAddon(AddonBase):
         self.logger.info('一键收取完成')
 
     def recognize_layout(self):
-        self.enter_riic()
+        if not self.check_in_riic():
+            raise RuntimeError('not here')
         self.logger.info('正在识别基建布局')
         screenshot = self.device.screenshot()
         
