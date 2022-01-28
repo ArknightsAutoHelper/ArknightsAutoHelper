@@ -3,6 +3,7 @@ from functools import lru_cache
 
 from . import dummy
 from .common import OcrEngine, OcrHint, OcrLine, OcrResult, OcrWord
+import atexit
 
 available_engines = ['tesseract', 'windows_media_ocr', 'baidu']
 """
@@ -48,3 +49,5 @@ def get_config_impl():
 def acquire_engine_global_cached(lang, **kwargs) -> OcrEngine:
     impl = get_config_impl()
     return impl.Engine(lang, **kwargs)
+
+atexit.register(acquire_engine_global_cached.cache_clear)
