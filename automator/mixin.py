@@ -30,7 +30,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         logger: logging.Logger
         viewport: tuple[int, int]
     
-    def _implicit_screenshot(self) -> Image.Image:
+    def _implicit_screenshot(self) -> Image:
         return self.helper.device.screenshot(False)
 
     def delay(self, n: Real=10,  # 等待时间中值
