@@ -3,7 +3,10 @@ import os
 import logging
 import logging.config
 from random import randint
+import random
+import shlex
 from sys import exc_info
+import warnings
 import zlib
 import struct
 import socket
@@ -279,6 +282,76 @@ def enum(devices):
     for serial in ADBConnector.available_devices():
         devices.append((f'ADB: {serial[0]}', ADBConnector, [serial[0]], 'strong'))
 
+
+from .scrcpy.core import Client as ScrcpyClient
+from .scrcpy import const as scrcpy_const
+class ScrcpyInput:
+    def __init__(self, device, displayid):
+        self.scrcpy = ScrcpyClient(device, displayid=displayid)
+        self.scrcpy.start()
+
+    def tap(self, x, y, hold_time=0.07):
+        self.scrcpy.control.tap(int(x), int(y), hold_time)
+
+    def swipe(self, x0, y0, x1, y1, move_duraion=1, hold_before_release=0, interpolation='linear'):
+        if interpolation == 'linear':
+            interpolate = lambda x: x
+        elif interpolation == 'spline':
+            import scipy.interpolate
+            xs = [0, random.uniform(0.7, 0.8), 1, 2]
+            ys = [0, random.uniform(0.9, 0.95), 1, 1]
+            tck = scipy.interpolate.splrep(xs, ys, s=0)
+            interpolate = lambda x: scipy.interpolate.splev(x, tck, der=0)
+        frame_time = 1/100
+
+        start_time = time.perf_counter()
+        end_time = start_time + move_duraion
+        self.scrcpy.control.touch(x0, y0, scrcpy_const.ACTION_DOWN)
+        t1 = time.perf_counter()
+        step_time = t1 - start_time
+        if step_time < frame_time:
+            time.sleep(frame_time - step_time)
+        while True:
+            t0 = time.perf_counter()
+            if t0 > end_time:
+                break
+            time_progress = (t0 - start_time) / move_duraion
+            path_progress = interpolate(time_progress)
+            self.scrcpy.control.touch(int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress), scrcpy_const.ACTION_MOVE)
+            t1 = time.perf_counter()
+            step_time = t1 - t0
+            if step_time < frame_time:
+                time.sleep(frame_time - step_time)
+        self.scrcpy.control.touch(x1, y1, scrcpy_const.ACTION_MOVE)
+        if hold_before_release > 0:
+            time.sleep(hold_before_release)
+        self.scrcpy.control.touch(x1, y1, scrcpy_const.ACTION_UP)
+
+    def text(self, text):
+        self.scrcpy.control.text(text)
+
+class ShellInput:
+    def __init__(self, device: 'ADBConnector', displayid):
+        self.device = device
+        if displayid is not None:
+            self.input_command = f'input -d {displayid}'
+        else:
+            self.input_command = 'input'
+
+    def tap(self, x, y, hold_time=0.07):
+        self.device.run_device_cmd(f'{self.input_command} swipe {x} {y} {x} {y} {hold_time*1000:.0f}')
+
+    def swipe(self, x0, y0, x1, y1, move_duraion=1, hold_before_release=0, interpolation='linear'):
+        if hold_before_release > 0:
+            warnings.warn('hold_before_release is not supported in shell mode, you may experience unexpected inertia scrolling')
+        if interpolation != 'linear':
+            warnings.warn('interpolation mode other than linear is not supported in shell mode')
+        self.device.run_device_cmd(f'{self.input_command} swipe {x0} {y0} {x1} {y1} {move_duraion*1000:.0f}')
+
+    def text(self, text):
+        escaped_text = shlex.quote(text)
+        self.device.run_device_cmd(f'{self.input_command} text {escaped_text}')
+
 class ADBConnector:
     def __init__(self, adb_serial, displayid=None):
         ensure_adb_alive()
@@ -470,13 +543,9 @@ class ADBConnector:
         x1, y1, x2, y2 = origin[0], origin[1], origin[0] + movement[0], origin[1] + movement[1]
 
         logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(*origin, *movement))
-        if self.displayid is not None:
-            command = f'input touchscreen -d {self.displayid} swipe {x1} {y1} {x2} {y2}'
-        else:
-            command = f'input touchscreen swipe {x1} {y1} {x2} {y2}'
-        if duration is not None:
-            command += str(int(duration))
-        self.run_device_cmd(command)
+        if duration is None:
+            duration = 1
+        self.input.swipe(x1, y1, x2, y2, duration)
 
     def touch_tap(self, XY=None, offsets=None):
         # sleep(10)
@@ -489,11 +558,7 @@ class ADBConnector:
             final_Y = XY[1] + randint(-1, 1)
         # 如果你遇到了问题，可以把这百年输出并把日志分享到群里。
         logger.debug("点击坐标:({},{})".format(final_X, final_Y))
-        if self.displayid is not None:
-            command = f'input touchscreen -d {self.displayid} tap {final_X} {final_Y}'
-        else:
-            command = f'input touchscreen tap {final_X} {final_Y}'
-        self.run_device_cmd(command)
+        self.input.tap(final_X, final_Y)
 
     def load_device_config(self):
         import config.device_database
@@ -536,7 +601,15 @@ class ADBConnector:
             else:
                 self.screen_size = (width, height)
 
-
+        input_provider = device_record.get('input', 'scrcpy')
+        try:
+            if input_provider == 'scrcpy':
+                self.input = ScrcpyInput(self, self.displayid)
+        except:
+            logger.debug("scrcpy-server failed, using fallback shell provider", exc_info=True)
+            input_provider = 'shell'
+        if input_provider == 'shell':
+            self.input = ShellInput(self, self.displayid)
 
     def _probe_device_config(self, device_record):
         time_gzipped_raw = 999
@@ -601,6 +674,15 @@ class ADBConnector:
                 else:
                     self.rch.stop()
 
+        try:
+            self.input = ScrcpyInput(self, self.displayid)
+            input_provider = 'scrcpy'
+        except:
+            logger.debug("scrcpy-server failed, using fallback shell provider", exc_info=True)
+            self.input = ShellInput(self, self.displayid)
+            input_provider = 'shell'
+        device_record['input'] = input_provider
+
         device_record['screen_width'] = screenshot.width
         device_record['screen_height'] = screenshot.height
         device_record.save()
@@ -609,3 +691,6 @@ class ADBConnector:
 
     def ensure_alive(self):
         self.device_session_factory().exec(':')
+
+    def push(self, target_path, buf):
+        sock = self.device_session_factory().push(target_path, buf)

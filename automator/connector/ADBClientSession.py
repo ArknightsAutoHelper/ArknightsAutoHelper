@@ -1,6 +1,9 @@
 import socket
 import struct
 import logging
+import time
+
+import numpy as np
 
 from util.socketutil import recvexactly, recvall
 
@@ -29,7 +32,7 @@ class ADBClientSession:
         sock = socket.create_connection(server, timeout=timeout)
         sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         sock.settimeout(None)
-        self.sock = sock
+        self.sock: socket.socket = sock
 
     def close(self):
         self.sock.close()
@@ -105,3 +108,24 @@ class ADBClientSession:
         data = recvall(sock)
         sock.close()
         return data
+
+    def push(self, target_path: str, buffer: 'ReadableBuffer', mode=0o100755, mtime: int = None):
+        """push data to device"""
+        # Python has no type hint for buffer protocol, why?
+        self.service('sync:')
+        request = b'%s,%d' % (target_path.encode(), mode)
+        self.sock.send(b'SEND' + struct.pack("<I", len(request)) + request)
+        sendbuf = np.empty(65536+8, dtype=np.uint8)
+        sendbuf[0:4] = np.frombuffer(b'DATA', dtype=np.uint8)
+        input_arr = np.frombuffer(buffer, dtype=np.uint8)
+        for arr in np.array_split(input_arr, np.arange(65536, input_arr.size, 65536)):
+            sendbuf[4:8].view('<I')[0] = len(arr)
+            sendbuf[8:8+len(arr)] = arr
+            self.sock.sendall(sendbuf[0:8+len(arr)])
+        if mtime is None:
+            mtime = int(time.time())
+        self.sock.sendall(b'DONE' + struct.pack("<I", mtime))
+        response = recvexactly(self.sock, 8)
+        self.sock.close()
+        if response[:4] != b'OKAY':
+            raise RuntimeError('push failed')
