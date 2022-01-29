@@ -1,3 +1,4 @@
+import random
 import time
 from dataclasses import dataclass
 from typing import Optional
@@ -144,14 +145,14 @@ class RIICAddon(AddonBase):
         # self.tap_rect(roi.bbox, post_delay=0)
         t0 = time.monotonic()
         screenshot = imgops.scale_to_height(screenshot, 1080)
+        if deselect:
+            highlighted_check = screenshot.subview((605, 530, screenshot.width, 538))
+            self.richlogger.logimage(highlighted_check)
 
-        highlighted_check = screenshot.subview((605, 530, screenshot.width, 538))
-        self.richlogger.logimage(highlighted_check)
-
-        if deselect and (highlighted_check.array == (0, 152, 220)).all(axis=-1).any():
-            self.logger.info('取消选中干员')
-            self.tap_rect(roi.bbox, post_delay=0.2)  # transition animation
-            screenshot = imgops.scale_to_height(self.device.screenshot(cached=False).convert('RGB'), 1080)
+            if (highlighted_check.array == (0, 152, 220)).all(axis=-1).any():
+                self.logger.info('取消选中干员')
+                self.tap_rect(roi.bbox, post_delay=0.2)  # transition animation
+                screenshot = imgops.scale_to_height(self.device.screenshot(cached=False).convert('RGB'), 1080)
         dbg_screen = screenshot.copy()
         xs = []
         operators = []
@@ -352,8 +353,7 @@ class RIICAddon(AddonBase):
             self.tap_rect(roi.bbox)
         self.tap_rect(self.load_roi('riic/first_operator_in_list').bbox)
 
-    def shift(self, room, operators):
-        self.enter_operator_selection(room)
+    def select_operators(self, operators):
         pending_operators: list = operators[:]
         last_page_set = set()
         deselect = True
@@ -370,10 +370,23 @@ class RIICAddon(AddonBase):
             if len(pending_operators) == 0 or current_page_set == last_page_set:
                 break
             last_page_set = current_page_set
-            self.swipe_screen(-30 * self.vh)
-            self.delay(1.5, MANLIKE_FLAG=False)
+            t0 = time.perf_counter()
+            self.device.input.swipe(
+                random.uniform(85,90)*self.vw, random.uniform(40*self.vh, 60*self.vh),
+                random.uniform(60,65)*self.vh, random.uniform(40*self.vh, 60*self.vh),
+                0.3, hold_before_release=0.3, interpolation='spline')
+            # self.wait_for_still_image(threshold=500, check_delay=0)
+            t1 = time.perf_counter()
+            self.logger.info('滑动耗时 %.3f 秒', t1-t0)
+            # FIXME: overscroll animation
+            time.sleep(0.6)
         if pending_operators:
             self.logger.warning('未发现干员：%r', pending_operators)
+
+
+    def shift(self, room, operators):
+        self.enter_operator_selection(room)
+        self.select_operators(operators)
         self.logger.info('确认换班')
         self.tap_rect(self.load_roi('riic/confirm_select').bbox)
         if roi := self.match_roi('riic/confirm_shift', method='mse'):
