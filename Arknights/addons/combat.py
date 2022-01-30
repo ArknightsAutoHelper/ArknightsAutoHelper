@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass
 
 import penguin_stats.reporter
-import config
+import app
 from util.excutil import guard
 
 from automator import AddonBase
@@ -63,7 +63,7 @@ class CombatAddon(AddonBase):
         self.operation_time = []
         self.reset_refill()
         self.loots = {}
-        self.use_penguin_report = config.get('reporting/enabled', False)
+        self.use_penguin_report = app.config.combat.penguin_stats.enabled
         if self.use_penguin_report:
             self.penguin_reporter = penguin_stats.reporter.PenguinStatsReporter()
         self.refill_count = 0
@@ -82,9 +82,7 @@ class CombatAddon(AddonBase):
         return self
 
     def reset_refill(self):
-        with_item = config.get('behavior/refill_ap_with_item', False)
-        with_originium = config.get('behavior/refill_ap_with_originium', False)
-        return self.configure_refill(with_item, with_originium)
+        return self.configure_refill(False, False)
 
     def format_recoresult(self, recoresult):
         result = None
@@ -124,7 +122,7 @@ class CombatAddon(AddonBase):
                 self.frontend.notify('completed-count', count)
                 if count != desired_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
-                    if config.reporter:
+                    if app.config.combat.penguin_stats.enabled:
                         self.delay(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
                     else:
                         self.delay(BIG_WAIT, MANLIKE_FLAG=True, allow_skip=True)
@@ -273,7 +271,7 @@ class CombatAddon(AddonBase):
                     self.logger.warning('代理指挥出现失误')
                     self.frontend.alert('代理指挥', '代理指挥出现失误', 'warn')
                     smobj.mistaken_delegation = True
-                    if config.get('behavior/mistaken_delegation/settle', False):
+                    if app.config.combat.mistaken_delegation.settle:
                         self.logger.info('以 2 星结算关卡')
                         self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
                         self.delay(2)
@@ -334,7 +332,7 @@ class CombatAddon(AddonBase):
             except Exception as e:
                 self.logger.error('', exc_info=True)
             if self.use_penguin_report and reportresult is penguin_stats.reporter.ReportResult.NotReported:
-                filename = os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '未上报掉落-%d.png' % time.time())
+                filename = os.path.join(app.screenshot_path, '未上报掉落-%d.png' % time.time())
                 with open(filename, 'wb') as f:
                     screenshot.save(f, format='PNG')
                 self.logger.error('未上报掉落截图已保存到 %s', filename)
@@ -350,7 +348,7 @@ class CombatAddon(AddonBase):
             if smobj.state != oldstate:
                 self.logger.debug('state changed to %s', smobj.state.__name__)
 
-        if smobj.mistaken_delegation and config.get('behavior/mistaken_delegation/skip', True):
+        if smobj.mistaken_delegation and app.config.combat.mistaken_delegation.skip:
             raise StopIteration()
 
     def log_total_loots(self):

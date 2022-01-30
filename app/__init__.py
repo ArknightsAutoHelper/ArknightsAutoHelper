@@ -30,9 +30,9 @@ else:
 
 try:
     if not bundled and os.path.exists(os.path.join(root, '.git')):
-        from .scm_version import version
+        from app.scm_version import version
     else:
-        from .release_info import version
+        from app.release_info import version
 except ImportError:
     version = 'UNKNOWN'
 
@@ -54,13 +54,13 @@ else:
     writable_root = root
 
 background = False
-SCREEN_SHOOT_SAVE_PATH = os.path.join(writable_root, 'screenshot')
-CONFIG_PATH = os.path.join(writable_root, 'config')
+screenshot_path = os.path.join(writable_root, 'screenshot')
+config_path = os.path.join(writable_root, 'config')
 cache_path = os.path.join(writable_root, 'cache')
 extra_items_path = os.path.join(writable_root, 'extra_items')
-config_file = os.path.join(CONFIG_PATH, 'config.yaml')
+config_file = os.path.join(config_path, 'config.yaml')
 config_template = os.path.join(config_template_path, 'config-template.yaml')
-logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
+logging_config_file = os.path.join(config_path, 'logging.yaml')
 logging_config_template = os.path.join(config_template_path, 'logging.yaml')
 logs = os.path.join(writable_root, 'log')
 use_archived_resources = not os.path.isdir(os.path.join(root, 'resources'))
@@ -78,8 +78,8 @@ tessdata_prefix = os.path.join(root, 'tessdata')
 ##### end of paths
 
 
-os.makedirs(SCREEN_SHOOT_SAVE_PATH, exist_ok=True)
-os.makedirs(CONFIG_PATH, exist_ok=True)
+os.makedirs(screenshot_path, exist_ok=True)
+os.makedirs(config_path, exist_ok=True)
 os.makedirs(cache_path, exist_ok=True)
 os.makedirs(extra_items_path, exist_ok=True)
 os.makedirs(logs, exist_ok=True)
@@ -100,6 +100,8 @@ if not os.path.exists(config_file):
 with open(config_file, 'r', encoding='utf-8') as f:
     _ydoc = yaml.load(f)
 
+from . import schema
+config = schema.root(_ydoc)
 
 def _get_instance_id_win32():
     import ctypes
@@ -219,25 +221,12 @@ def set(dig, value):
     current_map[k] = value
     _set_dirty()
 
-debug = get('debug', False)
-
 ##### Legacy config values
 
 ADB_SERVER = (lambda host, portstr: (host, int(portstr)))(
     # attempt to not pollute global namespace
-    *(get('device/adb_server', '127.0.0.1:5037').rsplit(':', 1))
+    *(config.devices.adb_server.rsplit(':', 1))
 )
-# enable_adb_host_auto_detect = get('device/enable_adb_host_auto_detect', True)
-# ADB_HOST = get('device/adb_connect', '127.0.0.1:7555')
-ArkNights_PACKAGE_NAME = get('device/package_name', 'com.hypergryph.arknights')
-ArkNights_ACTIVITY_NAME = get('device/activity_name', 'com.u8.sdk.U8UnityContext')
-
-engine = get('ocr/engine', 'auto')
-enable_baidu_api = get('ocr/baidu_api/enabled', False)
-APP_ID = get('ocr/baidu_api/app_id', 'AAAZZZ')
-API_KEY = get('ocr/baidu_api/app_key', 'AAAZZZ')
-SECRET_KEY = get('ocr/baidu_api/app_secret', 'AAAZZZ')
-reporter = get('reporting/enabled', False)
 
 
 ##### End of Legacy config values
@@ -318,7 +307,7 @@ class _FixedSpecFinder:
         return f'{self.__class__.__qualname__}({self.name!r}, {self.spec!r})'
 
 def require_vendor_lib(fullname, base_path_relative_to_vendor):
-    import importlib
+    import importlib.machinery
     if bundled:
         importlib.import_module(fullname)
         return
@@ -334,3 +323,5 @@ def require_vendor_lib(fullname, base_path_relative_to_vendor):
     # not importing then removing from sys.meta_path, in case of lazy loading
     # importlib.import_module(fullname)
     # sys.meta_path.pop()
+
+

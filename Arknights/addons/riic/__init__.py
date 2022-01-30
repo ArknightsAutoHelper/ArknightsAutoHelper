@@ -7,8 +7,6 @@ import cv2
 import numpy as np
 import textdistance
 
-import config
-
 from Arknights.addons.common import CommonAddon
 from automator import AddonBase
 from imgreco import imgops, resources, ocr

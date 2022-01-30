@@ -19,9 +19,9 @@ class LibTesseractEngine(BaseTesseractEngine):
     def __init__(self, lang, **kwargs):
         super().__init__(lang, **kwargs)
         vars = {'debug_file': os.devnull}
-        if 'config' in sys.modules:
-            import config
-            if config.debug:
+        if 'app' in sys.modules:
+            import app
+            if app.config.debug:
                 del vars['debug_file']
                 vars['log_level'] = '0'
         try:

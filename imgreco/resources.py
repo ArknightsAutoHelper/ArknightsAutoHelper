@@ -6,7 +6,7 @@ import json
 import numpy as np
 from util import cvimage as Image
 
-import config
+import app
 
 class ResourceArchiveIndex:
     def __init__(self, archive, archive_path):
@@ -25,10 +25,10 @@ class FileSystemIndex:
     def __hash__(self):
         return hash((FileSystemIndex, self.path))
 
-if config.use_archived_resources:
+if app.use_archived_resources:
     import zipfile
     root = 'resources/imgreco'
-    archive = zipfile.ZipFile(open(config.resource_archive, 'rb'), 'r')
+    archive = zipfile.ZipFile(open(app.resource_archive, 'rb'), 'r')
 
     filelist = archive.namelist()
 
@@ -63,7 +63,7 @@ if config.use_archived_resources:
                     files.append(name)
         return dirs, files
 else:
-    root = os.path.join(config.resource_root, 'imgreco')
+    root = os.path.join(app.resource_root, 'imgreco')
 
     def get_path(names):
         return os.path.join(root, *names)

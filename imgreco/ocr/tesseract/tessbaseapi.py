@@ -8,10 +8,10 @@ import platform
 import numpy as np
 
 def resolve_libpath():
-    if sys.platform == 'win32' and 'config' in sys.modules:
+    if sys.platform == 'win32' and 'app' in sys.modules:
         try:
-            import config
-            vendor_path = config.get_vendor_path('tesseract')
+            import app
+            vendor_path = app.get_vendor_path('tesseract')
             if vendor_path not in os.environ['PATH']:
                 os.environ['PATH'] += os.pathsep + vendor_path
         except:
@@ -37,7 +37,7 @@ def get_default_datapath():
     if platform.system() == 'Windows':
         libpath = resolve_libpath()
         if libpath:
-            return os.path.join(os.path.dirname(libpath), 'tessdata')
+            return os.path.dirname(libpath).joinpath('tessdata')
     return None
 
 

@@ -2,13 +2,13 @@ import os
 import json
 import math
 
-import config
+import app
 from penguin_stats import arkplanner
 from automator import AddonBase
 from ..stage_navigator import StageNavigator
 from ..inventory import InventoryAddon
 
-record_path = os.path.join(config.CONFIG_PATH, 'record.json')
+record_path = os.path.join(app.config_path, 'record.json')
 
 class PlannerAddOn(AddonBase):
     def on_attach(self) -> None:
@@ -46,7 +46,7 @@ class PlannerAddOn(AddonBase):
         c = input('是否获取当前库存材料数量(y,N):')
         if c.lower() == 'y':
             owned = self.addon(InventoryAddon).get_inventory_items()
-        calc_mode = config.get('plan/calc_mode', 'online')
+        calc_mode = app.config.plan.calc_mode
         print('正在获取刷图计划...')
         if calc_mode == 'online':
             plan = arkplanner.get_plan(required, owned)

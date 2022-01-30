@@ -20,18 +20,18 @@ try:
     use_webview = True
 except ImportError:
     use_webview = False
-import config
+import app
 
 
 def start(port=0):
     multiprocessing.set_start_method('spawn')
-    app = bottle.Bottle()
+    bottle_app = bottle.Bottle()
     logger = create_logger('geventwebsocket.logging')
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
     logger.propagate = False
-    if config.bundled:
-        root = os.path.join(config.root, 'web')
+    if app.bundled:
+        root = os.path.join(app.root, 'web')
     else:
         root=os.path.join(os.path.dirname(__file__), 'dist')
     httpsock = gevent.socket.socket(gevent.socket.AF_INET, gevent.socket.SOCK_STREAM)
@@ -40,11 +40,11 @@ def start(port=0):
 
     token = '1145141919'
 
-    @app.route("/")
+    @bottle_app.route("/")
     def serve_root():
         return bottle.static_file("index.html", root)
 
-    @app.route('/itemimg/<name>.png')
+    @bottle_app.route('/itemimg/<name>.png')
     def itemimg(name):
         logger.info('serving file %s', name)
         import imgreco.itemdb
@@ -76,7 +76,7 @@ def start(port=0):
             else:
                 return None
 
-    @app.route("/ws")
+    @bottle_app.route("/ws")
     def rpc_endpoint():
         wsock : geventwebsocket.websocket.WebSocket = bottle.request.environ.get('wsgi.websocket')
         if not wsock:
@@ -139,12 +139,12 @@ def start(port=0):
                 inq.put_nowait(None)
             p.kill()
             
-    @app.route("/<filepath:path>")
+    @bottle_app.route("/<filepath:path>")
     def serve_static(filepath):
         return bottle.static_file(filepath, root)
 
     group = gevent.pool.Pool()
-    server = gevent.pywsgi.WSGIServer(httpsock, app, handler_class=WebSocketHandler, log=logger, spawn=group)
+    server = gevent.pywsgi.WSGIServer(httpsock, bottle_app, handler_class=WebSocketHandler, log=logger, spawn=group)
     url = f'http://{server.address[0]}:{server.address[1]}/?token={token}'
     print(url)
     server_task = gevent.spawn(server.serve_forever)

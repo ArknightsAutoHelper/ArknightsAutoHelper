@@ -47,9 +47,9 @@ def parse_hocr(file):
 
 
 def get_datapath():
-    if 'config' in sys.modules:
-        import config
-        return config.tessdata_prefix
+    if 'app' in sys.modules:
+        import app
+        return app.tessdata_prefix
     if 'TESSDATA_PREFIX' in os.environ:
         return os.environ['TESSDATA_PREFIX']
     return None

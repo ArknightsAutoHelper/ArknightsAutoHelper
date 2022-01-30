@@ -39,16 +39,16 @@ def load():
 
 
 def update_extra_items():
-    import config
+    import app
 
-    new_mtime = os.path.getmtime(config.extra_items_path)
+    new_mtime = os.path.getmtime(app.extra_items_path)
 
     if new_mtime <= update_extra_items.old_mtime:
         return
     from . import resources
-    import time
     from glob import glob
-    extra_files = [(os.path.basename(x)[:-4], resources.FileSystemIndex(x)) for x in glob(os.path.join(config.extra_items_path, '*.png'))]
+    extra_files = [(os.path.basename(x)[:-4], resources.FileSystemIndex(x)) for x in glob(os.path.join(
+        app.extra_items_path, '*.png'))]
     extra_known_items = {}
     extra_itemmats = {}
     for key, value in extra_files:
@@ -71,13 +71,12 @@ update_extra_items.old_mtime = 0
 def add_item(image) -> str:
     import os
     import time
-    from . import resources
-    import config
+    import app
     date = time.strftime('%Y-%m-%d')
     index = add_item.last_index + 1
     while True:
         name = '未知物品-%s-%d' % (date, index)
-        filename = os.path.join(config.extra_items_path, name+'.png')
+        filename = os.path.join(app.extra_items_path, name + '.png')
         if not os.path.exists(filename):
             break
         index += 1

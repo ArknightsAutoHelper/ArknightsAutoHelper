@@ -4,10 +4,10 @@ import json
 import imgreco.imgops
 
 from automator import AddonBase
-import config
+import app
 from .common import CommonAddon
 
-record_basedir = os.path.join(config.root, 'custom_record')
+record_basedir = os.path.join(app.writable_root, 'custom_record')
 
 class RecordAddon(AddonBase):
     def on_attach(self):
@@ -105,7 +105,7 @@ class RecordAddon(AddonBase):
             json.dump(record_data, f, ensure_ascii=False, indent=4, sort_keys=True)
 
     def get_record_path(self, record_name):
-        record_dir = os.path.join(config.root,
+        record_dir = os.path.join(app.root,
                                   os.path.join('custom_record/', record_name))
         if not os.path.exists(record_dir):
             return None

@@ -1,10 +1,8 @@
 import logging
-import json
 from dataclasses import dataclass
-from typing import Union
-import config
+import app
 from resources.event import EXTRA_KNOWN_ITEMS, event_preprocess
-config.require_vendor_lib('penguin_client', 'penguin_client')
+app.require_vendor_lib('penguin_client', 'penguin_client')
 import penguin_client
 
 
@@ -80,7 +78,7 @@ class PenguinStatsReporter:
     def initialize(self):
         if self.initialized is not None:
             return self.initialized
-        if config.version == 'UNKNOWN':
+        if app.version == 'UNKNOWN':
             logger.warn('无法获取程序版本，请通过 git clone 下载源代码')
             logger.warn('为避免产生统计偏差，已禁用汇报功能')
             self.noop = True
@@ -142,7 +140,7 @@ class PenguinStatsReporter:
 
         try:
             flattenitems = list(event_preprocess(recoresult['operation'], flattenitems, exclude_from_validation))
-            report_special_item = config.get('reporting/report_special_item', False)
+            report_special_item = app.config.combat.penguin_stats.report_special_item
             for item in flattenitems:
                 if item[3] == 'special_report_item' and not report_special_item:
                     logger.error('掉落中包含特殊汇报的物品, 请前往企鹅物流阅读相关说明, 符合条件后可以将配置中的 '
@@ -197,13 +195,13 @@ class PenguinStatsReporter:
             server='CN',
             stage_id=stage.stage_id,
             source=REPORT_SOURCE,
-            version=config.version
+            version=app.version
         )
 
 
         client = self.client
         if not self.logged_in:
-            uid = config.get('reporting/penguin_stats_uid', None)
+            uid = app.config.combat.penguin_stats.uid
             if uid is not None:
                 if not self.try_login(uid):
                     # use exclusive client instance to get response cookie
@@ -216,8 +214,8 @@ class PenguinStatsReporter:
                 userid = self.set_login_state_with_last_response_cookie(client.last_response)
                 if userid is not None:
                     logger.info('企鹅数据用户 ID: %s', userid)
-                    config.set('reporting/penguin_stats_uid', userid)
-                    config.save()
+                    app.config.combat.penguin_stats.uid = userid
+                    app.save()
                     logger.info('已写入配置文件')
             return ReportResult.Ok(resp.report_hash)
         except:

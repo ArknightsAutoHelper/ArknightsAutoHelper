@@ -1,11 +1,10 @@
 import os
-from typing import OrderedDict
-import config
+import app
 import copy
 import json
 
 _ydoc = None
-db_file = os.path.join(config.CONFIG_PATH, 'device-config.json')
+db_file = os.path.join(app.config_path, '../config/device-config.json')
 if os.path.exists(db_file):
     with open(db_file, 'r', encoding='utf-8') as f:
         try:

@@ -1,7 +1,7 @@
 import itertools
 import sys
 
-import config  # to initialize sys.path
+import app  # to initialize sys.path
 from resources.recruit_database import recruit_database
 
 

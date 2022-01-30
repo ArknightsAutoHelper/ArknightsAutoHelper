@@ -5,13 +5,13 @@ import multiprocessing
 import queue as threading_Queue
 
 import Arknights.helper
-import config
+import app
 from automator import connector
-from automator.connector.ADBConnector import ADBConnector, ensure_adb_alive
+from automator.connector.ADBConnector import ADBConnector
 from util.excutil import format_exception
 from typing import Mapping
 
-config.background = True
+app.background = True
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
@@ -44,7 +44,7 @@ class PendingHandler(logging.Handler):
 loghandler = PendingHandler()
 loghandler.setLevel(logging.INFO)
 logging.root.addHandler(loghandler)
-config.enable_logging()
+app.enable_logging()
 
 class WebHandler(logging.Handler):
     terminator = '\n'
@@ -98,9 +98,9 @@ class WorkerThread(threading.Thread):
         print("starting worker thread")
         realhandler = WebHandler(self.output)
         loghandler.attach(realhandler)
-        version = config.version
-        if config.get_instance_id() != 0:
-            version += f" (instance {config.get_instance_id()})"
+        version = app.version
+        if app.get_instance_id() != 0:
+            version += f" (instance {app.get_instance_id()})"
         self.notify("web:version", version)
         self.notify_availiable_devices()
         self.helper = Arknights.helper.ArknightsHelper(frontend=self)
