@@ -1,6 +1,7 @@
 from io import BytesIO
 import os
 import logging.config
+from pathlib import Path
 from random import randint
 import random
 import shlex
@@ -72,19 +73,19 @@ def find_adb_from_android_sdk():
 
     try:
         if system == 'Windows':
-            root = os.path.join(os.environ['LOCALAPPDATA'], 'Android', 'Sdk')
+            root = Path(os.environ['LOCALAPPDATA']).joinpath('Android', 'Sdk')
             base = 'adb.exe'
         elif system == 'Linux':
-            root = os.path.join(os.environ['HOME'], 'Android', 'Sdk')
+            root = Path(os.environ['HOME']).joinpath('Android', 'Sdk')
         elif system == 'Darwin':
-            root = os.path.join(os.environ['HOME'], 'Library', 'Android', 'sdk')
+            root = Path(os.environ['HOME']).joinpath('Library', 'Android', 'sdk')
 
         if 'ANDROID_SDK_ROOT' in os.environ:
-            root = os.environ['ANDROID_SDK_ROOT']
+            root = Path(os.environ['ANDROID_SDK_ROOT'])
 
-        adbpath = os.path.join(root, 'platform-tools', base)
+        adbpath = root.joinpath('platform-tools', base)
 
-        if os.path.exists(adbpath):
+        if adbpath.exists():
             return adbpath
 
     except:
@@ -120,7 +121,7 @@ def ensure_adb_alive():
         adb_binaries = ['adb']
         try:
             bundled_adb = app.get_vendor_path('platform-tools')
-            adb_binaries.append(os.path.join(bundled_adb, 'adb'))
+            adb_binaries.append(bundled_adb / 'adb')
         except FileNotFoundError:
             pass
         findadb = find_adb_from_android_sdk()

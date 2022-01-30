@@ -6,7 +6,7 @@ from datetime import datetime
 import app
 
 penguin_base_url = 'https://penguin-stats.io/PenguinStats'
-cache_path = os.path.join(app.cache_path, 'penguin_cache.json')
+cache_path = app.cache_path.joinpath('penguin_cache.json')
 
 
 def update_cache():

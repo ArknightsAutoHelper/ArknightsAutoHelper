@@ -9,8 +9,8 @@ from penguin_stats import arkplanner
 from ...stage_navigator import StageNavigator
 from ...record import RecordAddon
 
-stage_cache_file = os.path.join(app.cache_path, 'stage_cache.json')
-activities_cache_file = os.path.join(app.cache_path, 'activities_cache.json')
+stage_cache_file = app.cache_path.joinpath('stage_cache.json')
+activities_cache_file = app.cache_path.joinpath('activities_cache.json')
 
 
 def get_stage_map(force_update=False):

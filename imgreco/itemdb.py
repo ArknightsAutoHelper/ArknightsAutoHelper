@@ -76,7 +76,7 @@ def add_item(image) -> str:
     index = add_item.last_index + 1
     while True:
         name = '未知物品-%s-%d' % (date, index)
-        filename = os.path.join(app.extra_items_path, name + '.png')
+        filename = app.extra_items_path.joinpath(name + '.png')
         if not os.path.exists(filename):
             break
         index += 1

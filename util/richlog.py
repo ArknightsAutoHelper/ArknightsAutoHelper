@@ -49,5 +49,5 @@ def get_logger(module):
         filename = '%s.html' % module
     else:
         filename = '%s.%d.html' % (module, app.get_instance_id())
-    logger = RichLogger(os.path.join(app.logs, filename), True)
+    logger = RichLogger(app.logs.joinpath(filename), True)
     return logger

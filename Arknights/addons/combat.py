@@ -332,7 +332,7 @@ class CombatAddon(AddonBase):
             except Exception as e:
                 self.logger.error('', exc_info=True)
             if self.use_penguin_report and reportresult is penguin_stats.reporter.ReportResult.NotReported:
-                filename = os.path.join(app.screenshot_path, '未上报掉落-%d.png' % time.time())
+                filename = app.screenshot_path / ('未上报掉落-%d.png' % time.time())
                 with open(filename, 'wb') as f:
                     screenshot.save(f, format='PNG')
                 self.logger.error('未上报掉落截图已保存到 %s', filename)

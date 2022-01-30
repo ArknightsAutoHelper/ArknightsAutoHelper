@@ -8,7 +8,7 @@ from automator import AddonBase
 from ..stage_navigator import StageNavigator
 from ..inventory import InventoryAddon
 
-record_path = os.path.join(app.config_path, 'record.json')
+record_path = app.config_path.joinpath('record.json')
 
 class PlannerAddOn(AddonBase):
     def on_attach(self) -> None:
@@ -84,7 +84,7 @@ class PlannerAddOn(AddonBase):
         print('刷图计划已保存至: config/plan.json')
 
     def run_plan(self, count):
-        if not os.path.exists(record_path):
+        if not record_path.exists():
             self.logger.error('未能检测到刷图计划文件.')
             return
         with open(record_path, 'r') as f:

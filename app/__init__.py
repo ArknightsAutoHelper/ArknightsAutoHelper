@@ -6,11 +6,8 @@ import logging.config
 import os
 import shutil
 import sys
-
-if sys.version_info[:2] >= (3, 8):
-    from collections.abc import Mapping
-else:
-    from collections import Mapping
+from pathlib import Path
+from collections.abc import Mapping
 
 import ruamel.yaml
 
@@ -21,15 +18,14 @@ yaml = ruamel.yaml.YAML()
 bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 use_state_separation = None
 if bundled:
-    root = sys._MEIPASS
+    root = Path(sys._MEIPASS)
     # FIXME: macOS app bundle outside /Applications
-    config_template_path = os.path.join(root, 'config')
 else:
-    config_template_path = os.path.realpath(os.path.dirname(__file__))
-    root = os.path.realpath(os.path.join(config_template_path, '..'))
+    root = Path(__file__).absolute().parent.parent
+config_template_path = root / 'config'
 
 try:
-    if not bundled and os.path.exists(os.path.join(root, '.git')):
+    if not bundled and Path.joinpath(root, '.git').exists():
         from app.scm_version import version
     else:
         from app.release_info import version
@@ -44,35 +40,35 @@ if use_state_separation:
     system = sys.platform
     if system == "win32":
         # TODO: windows user data dir
-        platform_appdata_path = os.getenv('LOCALAPPDATA')
+        platform_appdata_path = Path(os.getenv('LOCALAPPDATA'))
     elif system == 'darwin':
-        platform_appdata_path = os.path.expanduser('~/Library/Preferences')
+        platform_appdata_path = Path(os.path.expanduser('~/Library/Preferences'))
     else:
-        platform_appdata_path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
-    writable_root = os.path.join(platform_appdata_path, 'ArknightsAutoHelper')
+        platform_appdata_path = Path(os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config")))
+    writable_root = platform_appdata_path / 'ArknightsAutoHelper'
 else:
     writable_root = root
 
 background = False
-screenshot_path = os.path.join(writable_root, 'screenshot')
-config_path = os.path.join(writable_root, 'config')
-cache_path = os.path.join(writable_root, 'cache')
-extra_items_path = os.path.join(writable_root, 'extra_items')
-config_file = os.path.join(config_path, 'config.yaml')
-config_template = os.path.join(config_template_path, 'config-template.yaml')
-logging_config_file = os.path.join(config_path, 'logging.yaml')
-logging_config_template = os.path.join(config_template_path, 'logging.yaml')
-logs = os.path.join(writable_root, 'log')
-use_archived_resources = not os.path.isdir(os.path.join(root, 'resources'))
+screenshot_path = Path.joinpath(writable_root, 'screenshot')
+config_path = Path.joinpath(writable_root, 'config')
+cache_path = Path.joinpath(writable_root, 'cache')
+extra_items_path = Path.joinpath(writable_root, 'extra_items')
+config_file = Path.joinpath(config_path, 'config.yaml')
+config_template = Path.joinpath(config_template_path, 'config-template.yaml')
+logging_config_file = Path.joinpath(config_path, 'logging.yaml')
+logging_config_template = Path.joinpath(config_template_path, 'logging.yaml')
+logs = Path.joinpath(writable_root, 'log')
+use_archived_resources = not Path.joinpath(root, 'resources').is_dir()
 if use_archived_resources:
-    resource_archive = os.path.join(root, 'resources.zip')
-    sys.path.append(resource_archive)
-    resource_root = os.path.join(root, 'resources.zip', 'resources')
+    resource_archive = Path.joinpath(root, 'resources.zip')
+    sys.path.append(os.fspath(resource_archive))
+    resource_root = Path.joinpath(root, 'resources.zip', 'resources')
 else:
     resource_archive = None
-    resource_root = os.path.join(root, 'resources')
-vendor_root = os.path.join(root, 'vendor')
-tessdata_prefix = os.path.join(root, 'tessdata')
+    resource_root = Path.joinpath(root, 'resources')
+vendor_root = Path.joinpath(root, 'vendor')
+tessdata_prefix = Path.joinpath(root, 'tessdata')
 
 
 ##### end of paths
@@ -94,7 +90,7 @@ def _create_config_file():
     with open(config_file, 'w', encoding='utf-8') as f:
         yaml.dump(ydoc, f)
 
-if not os.path.exists(config_file):
+if not config_file.exists():
     _create_config_file()
 
 with open(config_file, 'r', encoding='utf-8') as f:
@@ -137,9 +133,9 @@ def _get_instance_id_posix():
     while True:
         try:
             if i == 0:
-                filename = os.path.join(logs, 'ArknightsAutoHelper.log')
+                filename = Path.joinpath(logs, 'ArknightsAutoHelper.log')
             else:
-                filename = os.path.join(logs, 'ArknightsAutoHelper.%d.log' % i)
+                filename = Path.joinpath(logs, 'ArknightsAutoHelper.%d.log' % i)
             f = open(filename, 'a+b')
             f.seek(0)
             import fcntl
@@ -242,9 +238,9 @@ def get_instance_id():
 
     _instanceid = _get_instance_id()
     if _instanceid == 0:
-        logfile = os.path.join(logs, 'ArknightsAutoHelper.log')
+        logfile = Path.joinpath(logs, 'ArknightsAutoHelper.log')
     else:
-        logfile = os.path.join(logs, 'ArknightsAutoHelper.%d.log' % _instanceid)
+        logfile = Path.joinpath(logs, 'ArknightsAutoHelper.%d.log' % _instanceid)
 
 
     return _instanceid
@@ -257,7 +253,7 @@ def enable_logging():
         return
     get_instance_id()
     old_handlers = logging.root.handlers[:]
-    if not os.path.exists(logging_config_file):
+    if not logging_config_file.exists():
         shutil.copy2(logging_config_template, logging_config_file)
     with open(logging_config_file, 'r', encoding='utf-8') as f:
         logging.config.dictConfig(yaml.load(f))
@@ -272,24 +268,24 @@ def enable_logging():
         level_styles={'warning': {'color': 'yellow'}, 'error': {'color': 'red'}},
         level='INFO')
     logging_enabled = True
-    if os.path.getmtime(config_file) < os.path.getmtime(config_template):
+    if config_file.stat().st_mtime < config_template.stat().st_mtime:
         logging.warning('配置文件模板 config-template.yaml 已更新，请检查配置文件 config.yaml 是否需要更新')
 
 
 def get_vendor_path(name):
     import platform
-    base = os.path.join(vendor_root, name)
+    base = Path.joinpath(vendor_root, name)
     system = platform.system().lower()
     arch = platform.machine().lower()
     if system:
         if arch :
-            path = os.path.join(base, f'{system}_{arch}')
-            if os.path.isdir(path):
+            path = Path.joinpath(base, f'{system}_{arch}')
+            if path.is_dir():
                 return path
-        path = os.path.join(base, system)
-        if os.path.isdir(path):
+        path = Path.joinpath(base, system)
+        if path.is_dir():
             return path
-    if os.path.isdir(base):
+    if base.is_dir():
         return base
     raise FileNotFoundError(base)
 
@@ -302,7 +298,7 @@ class _FixedSpecFinder:
         if fullname == self.name:
             return self.spec
         return None
-    
+
     def __repr__(self):
         return f'{self.__class__.__qualname__}({self.name!r}, {self.spec!r})'
 
@@ -313,8 +309,8 @@ def require_vendor_lib(fullname, base_path_relative_to_vendor):
         return
     if fullname in sys.modules:
         return
-    path = os.path.join(vendor_root, base_path_relative_to_vendor)
-    if not os.path.exists(path):
+    path = Path.joinpath(vendor_root, base_path_relative_to_vendor)
+    if not path.exists():
         raise FileNotFoundError(path)
     spec = importlib.machinery.PathFinder.find_spec(fullname, [path] + sys.path)
     if spec is None:

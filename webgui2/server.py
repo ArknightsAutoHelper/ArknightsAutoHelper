@@ -1,3 +1,4 @@
+from pathlib import Path
 from util import unfuck_pythonw
 import sys
 import os
@@ -31,9 +32,9 @@ def start(port=0):
     logger.addHandler(logging.StreamHandler())
     logger.propagate = False
     if app.bundled:
-        root = os.path.join(app.root, 'web')
+        root = app.root.joinpath('web')
     else:
-        root=os.path.join(os.path.dirname(__file__), 'dist')
+        root = Path(__file__).parent.joinpath('dist')
     httpsock = gevent.socket.socket(gevent.socket.AF_INET, gevent.socket.SOCK_STREAM)
     httpsock.bind(('127.0.0.1', port))
     httpsock.listen()

@@ -20,7 +20,7 @@ class ArknightsHelper(BaseAutomator):
             if Fraction(self.viewport[1], self.viewport[0]) >= Fraction(16, 9):
                 body = '屏幕截图可能需要旋转，请尝试在 device-config 中指定旋转角度。'
                 img = self._device.screenshot()
-                imgfile = os.path.join(app.screenshot_path, 'orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
+                imgfile = app.screenshot_path.joinpath('orientation-diagnose-%s.png' % time.strftime("%Y%m%d-%H%M%S"))
                 img.save(imgfile)
                 import json
                 details = '参考 %s 以更正 device-config.json[%s]["screenshot_rotate"]' % (imgfile, json.dumps(self._device.config_key))

@@ -63,14 +63,14 @@ if app.use_archived_resources:
                     files.append(name)
         return dirs, files
 else:
-    root = os.path.join(app.resource_root, 'imgreco')
+    root = app.resource_root.joinpath('imgreco')
 
     def get_path(names):
-        return os.path.join(root, *names)
+        return root.joinpath(*names)
 
     def _get_index(names):
         path = get_path(names)
-        fspath = os.path.join(root, path)
+        fspath = root.joinpath(path)
         if os.path.exists(fspath):
             return FileSystemIndex(fspath)
         else:

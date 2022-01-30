@@ -7,7 +7,7 @@ from automator import AddonBase
 import app
 from .common import CommonAddon
 
-record_basedir = os.path.join(app.writable_root, 'custom_record')
+record_basedir = app.writable_root.joinpath('custom_record')
 
 class RecordAddon(AddonBase):
     def on_attach(self):
@@ -15,8 +15,8 @@ class RecordAddon(AddonBase):
 
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
                              description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
-        record_dir = os.path.join(record_basedir, record_name)
-        if os.path.exists(record_dir):
+        record_dir = record_basedir.joinpath(record_name)
+        if record_dir.exists():
             c = input('已存在同名的记录, y 覆盖, n 退出: ')
             if c.strip().lower() != 'y':
                 return
@@ -81,7 +81,7 @@ class RecordAddon(AddonBase):
                 y2 = min(self.viewport[1] - 1, point[1] + half_roi)
                 roi = screen.crop((x1, y1, x2, y2))
                 step = len(records)
-                roi.save(os.path.join(record_dir, f'step{step}.png'))
+                roi.save(record_dir.joinpath(f'step{step}.png'))
                 record = {'point': point, 'img': f'step{step}.png', 'type': 'tap',
                           'wait_seconds_after_touch': wait_seconds_after_touch,
                           'threshold': threshold, 'repeat': 1, 'raise_exception': True}
@@ -101,13 +101,12 @@ class RecordAddon(AddonBase):
                 else:
                     # todo 处理屏幕滑动
                     continue
-        with open(os.path.join(record_dir, f'record.json'), 'w', encoding='utf-8') as f:
+        with open(record_dir.joinpath('record.json'), 'w', encoding='utf-8') as f:
             json.dump(record_data, f, ensure_ascii=False, indent=4, sort_keys=True)
 
     def get_record_path(self, record_name):
-        record_dir = os.path.join(app.root,
-                                  os.path.join('custom_record/', record_name))
-        if not os.path.exists(record_dir):
+        record_dir = record_basedir.joinpath(record_name)
+        if not record_dir.exists():
             return None
         return record_dir
 
@@ -118,7 +117,7 @@ class RecordAddon(AddonBase):
             self.logger.error(f'未找到相应的记录: {record_name}')
             raise RuntimeError(f'未找到相应的记录: {record_name}')
 
-        with open(os.path.join(record_dir, 'record.json'), 'r', encoding='utf-8') as f:
+        with open(record_dir.joinpath('record.json'), 'r', encoding='utf-8') as f:
             record_data = json.load(f)
         self.logger.info(f'record description: {record_data.get("description")}')
         records = record_data['records']
@@ -145,7 +144,7 @@ class RecordAddon(AddonBase):
                         gray_screen = screen.convert('L')
                         if ratio != 1:
                             gray_screen = gray_screen.resize((int(self.viewport[0] * ratio), record_height))
-                        template = Image.open(os.path.join(record_dir, record['img'])).convert('L')
+                        template = Image.open(record_dir.joinpath(record['img'])).convert('L')
                         (x, y), r = imgreco.imgops.match_template(gray_screen, template)
                         x = x // ratio
                         y = y // ratio

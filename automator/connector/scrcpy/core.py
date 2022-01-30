@@ -112,7 +112,7 @@ class Client:
         # server_root = os.path.abspath(os.path.dirname(__file__))
         # server_file_path = server_root + "/scrcpy-server.jar"
         import app
-        server_file_path = os.path.join(app.get_vendor_path('scrcpy-server-novideo'), 'scrcpy-server-novideo.jar')
+        server_file_path = app.get_vendor_path('scrcpy-server-novideo') / 'scrcpy-server-novideo.jar'
         server_buf = open(server_file_path, 'rb').read()
         self.device.push("/data/local/tmp/scrcpy-server-novideo.jar", server_buf)
         cmdline = 'CLASSPATH=/data/local/tmp/scrcpy-server-novideo.jar app_process /data/local/tmp com.genymobile.scrcpy.Server 1.21 log_level=verbose control=true tunnel_forward=true'

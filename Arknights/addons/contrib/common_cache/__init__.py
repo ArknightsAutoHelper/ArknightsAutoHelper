@@ -15,7 +15,7 @@ common_cache_config = {
 
 
 def get_cache_path(cache_file_name):
-    return os.path.join(app.cache_path, cache_file_name)
+    return app.cache_path.joinpath(cache_file_name)
 
 
 def update_net_cache(cache_file_name, url):

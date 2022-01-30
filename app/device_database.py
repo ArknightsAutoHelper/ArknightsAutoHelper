@@ -4,8 +4,8 @@ import copy
 import json
 
 _ydoc = None
-db_file = os.path.join(app.config_path, '../config/device-config.json')
-if os.path.exists(db_file):
+db_file = app.config_path / 'device-config.json'
+if db_file.exists():
     with open(db_file, 'r', encoding='utf-8') as f:
         try:
             _ydoc = json.load(f)

@@ -18,8 +18,8 @@ from . import minireco
 from . import resources
 from . import common
 
-net_file = os.path.join(app.cache_path, 'ark_material.onnx')
-index_file = os.path.join(app.cache_path, 'index_itemid_relation.json')
+net_file = app.cache_path / 'ark_material.onnx'
+index_file = app.cache_path / 'index_itemid_relation.json'
 
 
 @lru_cache(1)

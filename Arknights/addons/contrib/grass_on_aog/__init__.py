@@ -26,8 +26,8 @@ cache_key 控制缓存的频率, 默认每周读取一次库存, 如果需要手
 cache_key = '%Y--%V'    # cache by week
 
 
-aog_cache_file = os.path.join(app.cache_path, 'aog_cache.json')
-inventory_cache_file = os.path.join(app.cache_path, 'inventory_items_cache.json')
+aog_cache_file = app.cache_path.joinpath('aog_cache.json')
+inventory_cache_file = app.cache_path.joinpath('inventory_items_cache.json')
 
 
 def get_items_from_aog_api():
