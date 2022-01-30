@@ -82,22 +82,34 @@ os.makedirs(logs, exist_ok=True)
 
 dirty = False
 
-def _create_config_file():
-    with open(config_template, 'r', encoding='utf-8') as f:
-        loader = yaml.load_all(f)
-        next(loader) # discard first document (used for comment)
-        ydoc = next(loader)
-    with open(config_file, 'w', encoding='utf-8') as f:
-        yaml.dump(ydoc, f)
+def _save_config(store, file):
+    swpfile = os.fspath(file) + '.saving'
+    with open(swpfile, 'w', encoding='utf-8') as f:
+        yaml.dump(store, f)
+    os.replace(swpfile, config_file)
 
-if not config_file.exists():
-    _create_config_file()
+def _load_config():
+    from . import schema
+    if not config_file.exists():
+        config = schema.root()
+        _save_config(config._store, config_file)
+        return config
+    with open(config_file, 'r', encoding='utf-8') as f:
+        ydoc = yaml.load(f)
+    config_schema_version = ydoc.get('__version__', None)
+    if config_schema_version != schema.root.__version__:
+        if config_schema_version is None:
+            oldfile_suffix = '-legacy.bak'
+        else:
+            oldfile_suffix = f'-schema{config_schema_version}.bak'
+        shutil.copyfile(config_file, str(config_file).removesuffix('.yaml') + oldfile_suffix)
+        from .migration import migrate
+        ydoc = migrate(ydoc)
+        _save_config(ydoc, config_file)
+    config = schema.root(ydoc)
+    return config
 
-with open(config_file, 'r', encoding='utf-8') as f:
-    _ydoc = yaml.load(f)
-
-from . import schema
-config = schema.root(_ydoc)
+config = _load_config()
 
 def _get_instance_id_win32():
     import ctypes
@@ -163,20 +175,15 @@ def _set_dirty():
 
 
 def save():
-    global dirty
-    if dirty:
-        swpfile = config_file + '.saving'
-        with open(swpfile, 'w', encoding='utf-8') as f:
-            yaml.dump(_ydoc, f)
-        os.replace(swpfile, config_file)
-        dirty = False
+    _save_config(config._store, config_file)
+    config._dirty = False
 
 
 def _dig_mapping(dig, create_parent=False):
     if isinstance(dig, str):
         dig = dig.split('/')
     parent_maps = dig[:-1]
-    current_map = _ydoc
+    current_map = config._store
     i = 0
     for k in parent_maps:
         if k not in current_map:
@@ -221,7 +228,7 @@ def set(dig, value):
 
 ADB_SERVER = (lambda host, portstr: (host, int(portstr)))(
     # attempt to not pollute global namespace
-    *(config.devices.adb_server.rsplit(':', 1))
+    *(config.device.adb_server.rsplit(':', 1))
 )
 
 
@@ -312,12 +319,10 @@ def require_vendor_lib(fullname, base_path_relative_to_vendor):
     path = Path.joinpath(vendor_root, base_path_relative_to_vendor)
     if not path.exists():
         raise FileNotFoundError(path)
-    spec = importlib.machinery.PathFinder.find_spec(fullname, [path] + sys.path)
+    spec = importlib.machinery.PathFinder.find_spec(fullname, [os.fspath(path)] + sys.path)
     if spec is None:
         raise ModuleNotFoundError(fullname)
     sys.meta_path.insert(0, _FixedSpecFinder(fullname, spec))
     # not importing then removing from sys.meta_path, in case of lazy loading
     # importlib.import_module(fullname)
     # sys.meta_path.pop()
-
-
