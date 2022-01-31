@@ -1,4 +1,5 @@
 import logging
+import contextlib
 from collections.abc import Mapping
 from typing import Sequence
 from . import schema, schemadef
@@ -28,18 +29,17 @@ def migrate_from_legacy(ydoc: Mapping):
     ydoc['combat'] = schemadef._generate_default_store(schema.root.combat)
     ydoc['stage_navigator'] = schemadef._generate_default_store(schema.root.stage_navigator)
     ydoc['grass_on_aog'] = schemadef._generate_default_store(schema.root.grass_on_aog)
-    try:
+    with contextlib.suppress(KeyError, AttributeError):
         if isinstance(ydoc['device']['extra_enumerators'], Mapping) and 'bluestacks_hyperv' in ydoc['device']['extra_enumerators']:
             ydoc['device']['extra_enumerators']['bluestacks_hyperv'] = True
-    except:
-        pass
-    try:
+    with contextlib.suppress(KeyError, AttributeError):
+        if ydoc['behavior'].get('refill_ap_with_item', False) or ydoc['behavior'].get('refill_ap_with_originium', False):
+            logger.warning('不再支持通过设置 behavior.refill_ap_with_item 和 behavior.refill_ap_with_originium 来控制自动回复体力，请在每次作战时通过 GUI 或命令行设置。')
+    with contextlib.suppress(KeyError, AttributeError):
         old_mistaken_delegation = ydoc['behavior']['mistaken_delegation']
         if isinstance(old_mistaken_delegation, Mapping):
             ydoc['combat']['mistaken_delegation'] = old_mistaken_delegation
             del ydoc['behavior']
-    except:
-        pass
     try:
         old_ocr = ydoc['ocr']
         if isinstance(old_ocr, Mapping):
@@ -52,20 +52,16 @@ def migrate_from_legacy(ydoc: Mapping):
                 ydoc['stage_navigator']['ocr_backend'] = 'dnn'
     except:
         ydoc['ocr'] = schemadef._generate_default_store(schema.root.ocr)
-    try:
+    with contextlib.suppress(KeyError, AttributeError):
         old_reporting = ydoc['reporting']
         if isinstance(old_reporting, Mapping):
             ydoc['combat']['penguin_stats']['enabled'] = old_reporting['enabled']
             ydoc['combat']['penguin_stats']['uid'] = old_reporting['penguin_stats_uid']
             ydoc['combat']['penguin_stats']['report_special_item'] = old_reporting['report_special_item']
             del ydoc['reporting']
-    except:
-        pass
-    try:
+    with contextlib.suppress(KeyError, AttributeError):
         old_grass_on_aog_exclude = ydoc['addons']['grass_on_aog']['exclude_names']
         if isinstance(old_grass_on_aog_exclude, Sequence):
             ydoc['grass_on_aog']['exclude'] = old_grass_on_aog_exclude
-    except:
-        pass
     ydoc['__version__'] = 1
     return ydoc
