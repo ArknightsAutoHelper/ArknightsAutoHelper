@@ -13,7 +13,7 @@ import app
 from .fancycli import fancywait
 from .fancycli.platform import isatty
 
-app.enable_logging()
+app.init()
 
 helper: BaseAutomator = None
 prompt_prefix = 'akhelper'

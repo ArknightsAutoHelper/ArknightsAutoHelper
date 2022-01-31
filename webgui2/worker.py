@@ -1,3 +1,5 @@
+import util.early_logs
+
 import logging
 import sys
 import threading
@@ -43,8 +45,7 @@ class PendingHandler(logging.Handler):
 
 loghandler = PendingHandler()
 loghandler.setLevel(logging.INFO)
-logging.root.addHandler(loghandler)
-app.enable_logging()
+app.init([loghandler])
 
 class WebHandler(logging.Handler):
     terminator = '\n'

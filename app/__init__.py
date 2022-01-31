@@ -1,6 +1,7 @@
 # from config.shell_log import ShellColor, BufferColor
 # from config.developer_config import *
 # from config.common_config import SCREEN_SHOOT_SAVE_PATH, STORAGE_PATH, CONFIG_PATH
+import util.early_logs
 
 import logging.config
 import os
@@ -8,8 +9,10 @@ import shutil
 import sys
 from pathlib import Path
 from collections.abc import Mapping
+from typing import Optional, Sequence
 
 import ruamel.yaml
+from . import schema
 
 yaml = ruamel.yaml.YAML()
 
@@ -73,14 +76,8 @@ tessdata_prefix = Path.joinpath(root, 'tessdata')
 
 ##### end of paths
 
-
-os.makedirs(screenshot_path, exist_ok=True)
-os.makedirs(config_path, exist_ok=True)
-os.makedirs(cache_path, exist_ok=True)
-os.makedirs(extra_items_path, exist_ok=True)
-os.makedirs(logs, exist_ok=True)
-
 dirty = False
+config = schema.root()
 
 def _save_config(store, file):
     swpfile = os.fspath(file) + '.saving'
@@ -89,7 +86,6 @@ def _save_config(store, file):
     os.replace(swpfile, config_file)
 
 def _load_config():
-    from . import schema
     if not config_file.exists():
         config = schema.root()
         _save_config(config._store, config_file)
@@ -109,7 +105,20 @@ def _load_config():
     config = schema.root(ydoc)
     return config
 
-config = _load_config()
+initialized = False
+
+def init(extra_logging_handlers=None):
+    global config, initialized
+    if initialized:
+        return
+    os.makedirs(screenshot_path, exist_ok=True)
+    os.makedirs(config_path, exist_ok=True)
+    os.makedirs(cache_path, exist_ok=True)
+    os.makedirs(extra_items_path, exist_ok=True)
+    os.makedirs(logs, exist_ok=True)
+    config = _load_config()
+    enable_logging(extra_logging_handlers)
+    initialized = True
 
 def _get_instance_id_win32():
     import ctypes
@@ -224,15 +233,10 @@ def set(dig, value):
     current_map[k] = value
     _set_dirty()
 
-##### Legacy config values
 
-ADB_SERVER = (lambda host, portstr: (host, int(portstr)))(
-    # attempt to not pollute global namespace
-    *(config.device.adb_server.rsplit(':', 1))
-)
-
-
-##### End of Legacy config values
+def get_config_adb_server():
+    host, portstr = config.device.adb_server.rsplit(':', 1)
+    return host, int(portstr)
 
 
 _instanceid = None
@@ -254,18 +258,23 @@ def get_instance_id():
 
 logging_enabled = False
 
-def enable_logging():
+def enable_logging(extra_handlers: Optional[Sequence[logging.Handler]] = None):
     global logging_enabled
     if logging_enabled:
         return
     get_instance_id()
-    old_handlers = logging.root.handlers[:]
+    old_handlers: list = logging.root.handlers[:]
     if not logging_config_file.exists():
         shutil.copy2(logging_config_template, logging_config_file)
     with open(logging_config_file, 'r', encoding='utf-8') as f:
         logging.config.dictConfig(yaml.load(f))
+    if extra_handlers is not None:
+        old_handlers.extend(extra_handlers)
     for h in old_handlers:
         logging.root.addHandler(h)
+    early_records = util.early_logs.fetch_and_stop()
+    for record in early_records:
+        logging.getLogger(record.name).handle(record)
     logging.debug('ArknightsAutoHelper version %s', version)
     import coloredlogs
     coloredlogs.install(
@@ -275,9 +284,6 @@ def enable_logging():
         level_styles={'warning': {'color': 'yellow'}, 'error': {'color': 'red'}},
         level='INFO')
     logging_enabled = True
-    if config_file.stat().st_mtime < config_template.stat().st_mtime:
-        logging.warning('配置文件模板 config-template.yaml 已更新，请检查配置文件 config.yaml 是否需要更新')
-
 
 def get_vendor_path(name):
     import platform

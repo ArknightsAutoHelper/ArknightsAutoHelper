@@ -2,7 +2,7 @@ def enum_devices():
     from .ADBConnector import ADBConnector, enum as adb_enum
     import app
     always_use_device = app.config.device.adb_always_use_device
-    if always_use_device is not None:
+    if always_use_device:
         return [(f'ADB: {always_use_device} (forced)', ADBConnector, [always_use_device], 'strong')]
     result = []
     adb_enum(result)

@@ -98,7 +98,7 @@ def check_adb_alive():
     if time.monotonic() - _last_check < 0.1:
         return True
     try:
-        sess = ADBClientSession(app.ADB_SERVER)
+        sess = ADBClientSession(app.get_config_adb_server())
         version = int(sess.service('host:version').read_response().decode(), 16)
         logger.debug('ADB server version %d', version)
         _last_check = time.monotonic()
@@ -275,7 +275,7 @@ class _ScreenCapImplReverseLoopback:
 
 def _host_session_factory(timeout=None):
     ensure_adb_alive()
-    return ADBClientSession(app.ADB_SERVER, timeout)
+    return ADBClientSession(app.get_config_adb_server(), timeout)
 
 def enum(devices):
     for serial in ADBConnector.available_devices():
