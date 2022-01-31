@@ -4,6 +4,7 @@ if TYPE_CHECKING:
     from typing import Union
     from automator import BaseAutomator
 del TYPE_CHECKING
+import sys
 import os
 import time
 
