@@ -29,6 +29,11 @@ def migrate_from_legacy(ydoc: Mapping):
     ydoc['stage_navigator'] = schemadef._generate_default_store(schema.root.stage_navigator)
     ydoc['grass_on_aog'] = schemadef._generate_default_store(schema.root.grass_on_aog)
     try:
+        if isinstance(ydoc['device']['extra_enumerators'], Mapping) and 'bluestacks_hyperv' in ydoc['device']['extra_enumerators']:
+            ydoc['device']['extra_enumerators']['bluestacks_hyperv'] = True
+    except:
+        pass
+    try:
         old_mistaken_delegation = ydoc['behavior']['mistaken_delegation']
         if isinstance(old_mistaken_delegation, Mapping):
             ydoc['combat']['mistaken_delegation'] = old_mistaken_delegation
