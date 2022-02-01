@@ -27,7 +27,7 @@ def _set_dirty():
 def _save():
     global _dirty
     if _dirty:
-        swpfile = db_file + '.saving'
+        swpfile = str(db_file) + '.saving'
         with open(swpfile, 'w', encoding='utf-8') as f:
             json.dump(_ydoc, f, indent=2)
         os.replace(swpfile, db_file)

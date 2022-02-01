@@ -11,7 +11,7 @@ def resolve_libpath():
     if sys.platform == 'win32' and 'app' in sys.modules:
         try:
             import app
-            vendor_path = app.get_vendor_path('tesseract')
+            vendor_path = str(app.get_vendor_path('tesseract'))
             if vendor_path not in os.environ['PATH']:
                 os.environ['PATH'] += os.pathsep + vendor_path
         except:
