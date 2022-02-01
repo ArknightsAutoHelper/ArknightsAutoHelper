@@ -63,8 +63,8 @@ logging_config_file = Path.joinpath(config_path, 'logging.yaml')
 logs = Path.joinpath(writable_root, 'log')
 use_archived_resources = not Path.joinpath(root, 'resources').is_dir()
 if use_archived_resources:
-    resource_archive = Path.joinpath(root, 'app.zip')
-    resource_root = Path.joinpath(root, 'app.zip', 'resources')
+    resource_archive = app_archive
+    resource_root = Path.joinpath(resource_archive, 'resources')
 else:
     resource_archive = None
     resource_root = Path.joinpath(root, 'resources')
