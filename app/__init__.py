@@ -17,15 +17,16 @@ from . import schema
 yaml = ruamel.yaml.YAML()
 
 # setup app paths
-
-bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+_thisfile = Path(__file__)
+bundled = not _thisfile.is_file()
 use_state_separation = None
 if bundled:
-    root = Path(sys._MEIPASS)
+    app_archive = _thisfile.parent.parent.absolute()
+    root = app_archive.parent
     # FIXME: macOS app bundle outside /Applications
 else:
-    root = Path(__file__).absolute().parent.parent
-config_template_path = root / 'config'
+    app_archive = None
+    root = Path(__file__).parent.parent.absolute()
 
 try:
     if not bundled and Path.joinpath(root, '.git').exists():
@@ -58,20 +59,17 @@ config_path = Path.joinpath(writable_root, 'config')
 cache_path = Path.joinpath(writable_root, 'cache')
 extra_items_path = Path.joinpath(writable_root, 'extra_items')
 config_file = Path.joinpath(config_path, 'config.yaml')
-config_template = Path.joinpath(config_template_path, 'config-template.yaml')
 logging_config_file = Path.joinpath(config_path, 'logging.yaml')
-logging_config_template = Path.joinpath(config_template_path, 'logging.yaml')
 logs = Path.joinpath(writable_root, 'log')
 use_archived_resources = not Path.joinpath(root, 'resources').is_dir()
 if use_archived_resources:
-    resource_archive = Path.joinpath(root, 'resources.zip')
-    sys.path.append(os.fspath(resource_archive))
-    resource_root = Path.joinpath(root, 'resources.zip', 'resources')
+    resource_archive = Path.joinpath(root, 'app.zip')
+    resource_root = Path.joinpath(root, 'app.zip', 'resources')
 else:
     resource_archive = None
     resource_root = Path.joinpath(root, 'resources')
 vendor_root = Path.joinpath(root, 'vendor')
-tessdata_prefix = Path.joinpath(root, 'tessdata')
+tessdata_prefix = Path.joinpath(vendor_root, 'tessdata')
 
 
 ##### end of paths
@@ -264,10 +262,15 @@ def enable_logging(extra_handlers: Optional[Sequence[logging.Handler]] = None):
         return
     get_instance_id()
     old_handlers: list = logging.root.handlers[:]
-    if not logging_config_file.exists():
-        shutil.copy2(logging_config_template, logging_config_file)
-    with open(logging_config_file, 'r', encoding='utf-8') as f:
-        logging.config.dictConfig(yaml.load(f))
+    if logging_config_file.exists():
+        logging_config_io = open(logging_config_file, 'r', encoding='utf-8')
+    else:
+        import zipfile
+        import io
+        with zipfile.ZipFile(app_archive) as zf:
+            logging_config_io = io.TextIOWrapper(zf.open('config/logging.yaml', 'r'), encoding='utf-8')
+    with logging_config_io:
+        logging.config.dictConfig(yaml.load(logging_config_io))
     if extra_handlers is not None:
         old_handlers.extend(extra_handlers)
     for h in old_handlers:

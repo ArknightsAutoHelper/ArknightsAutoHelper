@@ -1,8 +1,9 @@
 coloredlogs==15.0.1
-numpy>=1.21.3
+scipy
+numpy
 opencv-contrib-python>=4.5.4.58
-pillow>=8.4.0
-requests==2.26.0
+pillow
+requests
 ruamel.yaml==0.17.17
 colorama==0.4.4; sys_platform == 'win32'
 -r ./vendor/penguin_client/requirements.txt

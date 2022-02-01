@@ -1,4 +1,5 @@
 from pathlib import Path
+from zipfile import ZipFile
 from util import unfuck_pythonw
 import sys
 import os
@@ -26,15 +27,35 @@ import app
 
 def start(port=0):
     multiprocessing.set_start_method('spawn')
+    bottle.debug(True)
     bottle_app = bottle.Bottle()
     logger = create_logger('geventwebsocket.logging')
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
     logger.propagate = False
-    if app.bundled:
-        root = app.root.joinpath('web')
+    if app.app_archive:
+        zf = ZipFile(app.app_archive, 'r')
+        print(zf.namelist())
+        print(zf.getinfo('webgui2/dist/index.html'))
+        def serve_file(path):
+            try:
+                print('serving', path, 'from', 'webgui2/dist/' + path)
+                info = zf.getinfo('webgui2/dist/' + path)
+                if info.is_dir():
+                    return bottle.HTTPError(403)
+                size = info.file_size
+                bottle.response.content_length = size
+                bottle.response.content_type = bottle.mimetypes.guess_type(path)[0]
+                return zf.open(info, 'r')
+            except KeyError:
+                return bottle.HTTPError(404)
+            except:
+                import traceback
+                traceback.print_exc()
     else:
         root = Path(__file__).parent.joinpath('dist')
+        def serve_file(path):
+            return bottle.static_file(path, root)
     httpsock = gevent.socket.socket(gevent.socket.AF_INET, gevent.socket.SOCK_STREAM)
     httpsock.bind(('127.0.0.1', port))
     httpsock.listen()
@@ -43,7 +64,7 @@ def start(port=0):
 
     @bottle_app.route("/")
     def serve_root():
-        return bottle.static_file("index.html", root)
+        return serve_file("index.html")
 
     @bottle_app.route('/itemimg/<name>.png')
     def itemimg(name):
@@ -139,10 +160,10 @@ def start(port=0):
                 wsock.close()
                 inq.put_nowait(None)
             p.kill()
-            
+    
     @bottle_app.route("/<filepath:path>")
     def serve_static(filepath):
-        return bottle.static_file(filepath, root)
+        return serve_file(filepath)
 
     group = gevent.pool.Pool()
     server = gevent.pywsgi.WSGIServer(httpsock, bottle_app, handler_class=WebSocketHandler, log=logger, spawn=group)
