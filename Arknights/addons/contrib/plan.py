@@ -13,11 +13,11 @@ record_path = os.path.join(config.CONFIG_PATH, 'record.json')
 class PlannerAddOn(AddonBase):
     def on_attach(self) -> None:
         self.register_cli_command('arkplanner', self.cli_arkplanner, self.cli_arkplanner.__doc__)
-        self.addon(StageNavigator).register_custom_stage('plan', self.run_plan, ignore_count=True, title='执行刷图计划', description='使用 arkplannar 命令创建刷图计划。执行过程会自动更新计划进度。')
+        self.addon(StageNavigator).register_custom_stage('plan', self.run_plan, ignore_count=True, title='执行刷图计划', description='使用 arkplanner 命令创建刷图计划。执行过程会自动更新计划进度。')
 
     def cli_arkplanner(self, argv):
         """
-        arkplannar
+        arkplanner
         输入材料需求创建刷图计划。使用 auto plan 命令执行刷图计划。
         """
         cache_time = arkplanner.get_cache_time()
