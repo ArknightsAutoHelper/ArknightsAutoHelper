@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "bootstrapper", "bootstrapper\bootstrapper.csproj", "{7D196942-D896-4730-B3FD-9063860D8415}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bootstrapperw", "bootstrapperw\bootstrapperw.csproj", "{7DFF919E-F608-4584-B091-453094868D12}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7D196942-D896-4730-B3FD-9063860D8415}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D196942-D896-4730-B3FD-9063860D8415}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D196942-D896-4730-B3FD-9063860D8415}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D196942-D896-4730-B3FD-9063860D8415}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DFF919E-F608-4584-B091-453094868D12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DFF919E-F608-4584-B091-453094868D12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DFF919E-F608-4584-B091-453094868D12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DFF919E-F608-4584-B091-453094868D12}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {487B7E73-C3C8-4018-8FE6-6217194D9826}
+	EndGlobalSection
+EndGlobal

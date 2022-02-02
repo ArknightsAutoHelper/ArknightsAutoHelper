@@ -1,0 +1,46 @@
+name: bootstrapper
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - 'packaging/bootstrapper**'
+
+jobs:
+  build-win-amd64:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up .NET
+    - uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+    - name: Make package
+      shell: cmd
+      run: |
+        dotnet publish -o build\bootstrapper packaging\bootstrapper.sln
+        tar caf build\bootstrapper.zip *.exe *.toml -C build\bootstrapper
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2.1.4
+      with:
+        name: bootstrapper
+        path: build/bootstrapper
+    - name: prerelease
+      uses: "softprops/action-gh-release@latest"
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        name: "Bootstrapper for Windows"
+        tag_name: "bootstrapper-release"
+        prerelease: true
+        body: |
+          ## 一键启动器（Windows）
+
+          首次运行时将自动下载预先打包的 Python 环境及应用并展开到 exe 所在目录。
+          
+          使用 `--update` 参数可自动更新。
+
+        files: |
+          build/bootstrapper.zip

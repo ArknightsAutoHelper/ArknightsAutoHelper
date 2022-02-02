@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>9.0</LangVersion>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<RootNamespace>ArknightsAutoHelper</RootNamespace>
+		<ApplicationIcon>../carrot.ico</ApplicationIcon>
+		<Authors />
+		<Company />
+		<AssemblyTitle>Arknights Auto Helper Bootstrapper</AssemblyTitle>
+		<Product>$(AssemblyTitle)</Product>
+		<AssemblyName>akhelper-gui</AssemblyName>
+	</PropertyGroup>
+	<Import Project="../bootstrapper/version.props" />
+
+	<ItemGroup>
+		<ProjectReference Include="../bootstrapper/bootstrapper.csproj" />
+		<PackageReference Include="Costura.Fody" Version="5.7.0">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+</Project>
