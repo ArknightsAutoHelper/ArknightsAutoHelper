@@ -25,6 +25,10 @@ def main():
         build_app()
     if 'runtime' in sys.argv:
         build_runtime()
+    if 'vendor' in sys.argv:
+        build_vendor()
+    if 'template' in sys.argv:
+        build_template()
 
 def build_app():
     shutil.rmtree(dist_dir, ignore_errors=True)
@@ -58,38 +62,47 @@ def build_app():
     shutil.move(app_unpacked_dir / 'vendor/penguin_client/penguin_client', app_unpacked_dir / 'penguin_client')
     shutil.rmtree(app_unpacked_dir / 'vendor')
     shutil.copytree(root / 'webgui2' / 'dist', app_unpacked_dir / 'webgui2' / 'dist')
+    os.makedirs(app_unpacked_dir / 'config', exist_ok=True)
+    shutil.copy(root / 'config' / 'logging.yaml', app_unpacked_dir / 'config' / 'logging.yaml')
 
     print('archiving app')
-    shutil.make_archive(str(dist_dir / 'app-cp39'), 'zip', app_unpacked_dir)
-    shutil.move(dist_dir / 'app-cp39.zip', dist_dir / 'app-cp39.bin')
-
-    print('copying misc resource files')
-    shutil.copytree(root / 'vendor', dist_dir / 'vendor')
-    # TODO: remove binaries for other platforms
-    shutil.rmtree(dist_dir / 'vendor/penguin_client')
-    shutil.copytree(root / 'custom_record', dist_dir / 'custom_record')
-    shutil.make_archive(str(build_dir / 'app'), 'zip', dist_dir)
+    shutil.make_archive(str(dist_dir / 'app'), 'zip', app_unpacked_dir)
+    shutil.move(dist_dir / 'app.zip', dist_dir / 'app.bin')
+    shutil.make_archive(str(build_dir / 'app-cp39'), 'zip', dist_dir)
 
 
 def build_runtime():
-    shutil.rmtree(build_dir / 'runtime', ignore_errors=True)
+    runtime_dir = build_dir / 'runtime'
+    shutil.rmtree(runtime_dir, ignore_errors=True)
 
     print('making runtime archive')
     python_bin_zip = build_dir / 'python-3.9.10-embed-amd64.zip'
     subprocess.run(['curl', '-Lo', os.fspath(python_bin_zip), 'https://www.python.org/ftp/python/3.9.10/python-3.9.10-embed-amd64.zip'], check=True)
     with zipfile.ZipFile(python_bin_zip, 'r') as zf:
-        zf.extractall(build_dir / 'runtime')
+        zf.extractall(runtime_dir)
     print('copying venv libs')
-    shutil.copytree(root / 'venv' / 'Lib', build_dir / 'runtime' / 'Lib', ignore=lambda dir, files: [x for x in files if x.endswith('.pyc')] + ['__pycache__'])
+    shutil.copytree(root / 'venv' / 'Lib', runtime_dir / 'Lib', ignore=lambda dir, files: [x for x in files if x.endswith('.pyc')] + ['__pycache__'])
     print('precompiling venv libs')
     import compileall
-    compileall.compile_dir(build_dir / 'runtime' / 'Lib', ddir=None, force=True, quiet=1)
-    with open(build_dir / 'runtime' / 'python39._pth', 'a') as f:
+    compileall.compile_dir(runtime_dir / 'Lib', ddir=None, force=True, quiet=1)
+    with open(runtime_dir / 'python39._pth', 'a') as f:
         f.write("\n")
         f.write("import site\n")
-        f.write("../app-cp39.bin\n")
+        f.write("../app.bin\n")
     print("archiving runtime")
-    shutil.make_archive(str(build_dir / 'runtime-cp39-win_amd64'), 'zip', build_dir / 'runtime')
+    shutil.make_archive(str(build_dir / 'runtime-cp39-win_amd64'), 'zip', runtime_dir)
+
+def build_vendor():
+    print('copying misc resource files')
+    build_vendor_dir = build_dir / 'vendor-unpacked'
+    build_vendor_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(root / 'vendor', build_vendor_dir / 'vendor')
+    # TODO: remove binaries for other platforms
+    shutil.rmtree(build_vendor_dir / 'vendor' / 'penguin_client')
+    shutil.make_archive(str(build_dir / 'vendor'), 'zip', build_vendor_dir)
+
+def build_template():
+    shutil.make_archive(str(build_dir / 'template'), 'zip', root, 'custom_record')
 
 if __name__ == '__main__':
     main()

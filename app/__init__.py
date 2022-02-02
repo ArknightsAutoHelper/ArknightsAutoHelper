@@ -50,6 +50,8 @@ if use_state_separation:
     else:
         platform_appdata_path = Path(os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config")))
     writable_root = platform_appdata_path / 'ArknightsAutoHelper'
+elif 'AKHELPER_STATE_DIR' in os.environ:
+    writable_root = Path(os.environ['AKHELPER_STATE_DIR'])
 else:
     writable_root = root
 
