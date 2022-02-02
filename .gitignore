@@ -137,3 +137,6 @@ resources.zip
 
 *.bak
 
+packaging/*/bin
+packaging/*/obj
+*proj.user
