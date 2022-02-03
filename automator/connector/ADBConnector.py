@@ -293,6 +293,7 @@ class ScrcpyInput:
         self.scrcpy.control.tap(int(x), int(y), hold_time)
 
     def swipe(self, x0, y0, x1, y1, move_duraion=1, hold_before_release=0, interpolation='linear'):
+        logger.info("move from (%d, %d) to (%d, %d) in %f s", x0, y0, x1, y1, move_duraion)
         if interpolation == 'linear':
             interpolate = lambda x: x
         elif interpolation == 'spline':
@@ -489,8 +490,8 @@ class ADBConnector:
 
         logger.debug("滑动初始坐标:({},{}); 移动距离dX:{}, dy:{}".format(*origin, *movement))
         if duration is None:
-            duration = 1
-        self.input.swipe(x1, y1, x2, y2, duration)
+            duration = 1000
+        self.input.swipe(x1, y1, x2, y2, duration / 1000)
 
     def touch_tap(self, XY=None, offsets=None):
         # sleep(10)
