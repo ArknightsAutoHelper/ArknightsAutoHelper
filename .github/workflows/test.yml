@@ -1,0 +1,21 @@
+name: 'test'
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-win-amd64:
+    runs-on: windows-latest
+    steps:
+    - name: Set up Python 3.9 amd64
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+        architecture: x64
+    - name: run test
+      shell: cmd
+      run: |
+        set PYTHONENCODING=utf-8
+        set PYTHONLEGACYWINDOWSSTDIO=utf-8
+        set PYTHONUTF8=1
+        python -c "print('\u4f60\u597d')"
