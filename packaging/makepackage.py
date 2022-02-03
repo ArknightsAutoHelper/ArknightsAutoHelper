@@ -37,7 +37,7 @@ def main():
     version = scmver['version'] + suffix
     print('version:', version)
     
-    with open(os.path.join(os.path.dirname(__file__), '..', 'config', 'release_info.py'), 'w') as f:
+    with open(os.path.join(os.path.dirname(__file__), '..', 'app', 'release_info.py'), 'w') as f:
         f.write('version = %r\n' % version)
 
     print('archiving resources')

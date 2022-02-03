@@ -1,38 +1,38 @@
 # from config.shell_log import ShellColor, BufferColor
 # from config.developer_config import *
 # from config.common_config import SCREEN_SHOOT_SAVE_PATH, STORAGE_PATH, CONFIG_PATH
+import util.early_logs
 
 import logging.config
 import os
 import shutil
 import sys
-
-if sys.version_info[:2] >= (3, 8):
-    from collections.abc import Mapping
-else:
-    from collections import Mapping
+from pathlib import Path
+from collections.abc import Mapping
+from typing import Optional, Sequence
 
 import ruamel.yaml
+from . import schema
 
 yaml = ruamel.yaml.YAML()
 
 # setup app paths
-
-bundled = getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
+_thisfile = Path(__file__)
+bundled = not _thisfile.is_file()
 use_state_separation = None
 if bundled:
-    root = sys._MEIPASS
+    app_archive = _thisfile.parent.parent.absolute()
+    root = app_archive.parent
     # FIXME: macOS app bundle outside /Applications
-    config_template_path = os.path.join(root, 'config')
 else:
-    config_template_path = os.path.realpath(os.path.dirname(__file__))
-    root = os.path.realpath(os.path.join(config_template_path, '..'))
+    app_archive = None
+    root = Path(__file__).parent.parent.absolute()
 
 try:
-    if not bundled and os.path.exists(os.path.join(root, '.git')):
-        from .scm_version import version
+    if not bundled and Path.joinpath(root, '.git').exists():
+        from app.scm_version import version
     else:
-        from .release_info import version
+        from app.release_info import version
 except ImportError:
     version = 'UNKNOWN'
 
@@ -44,62 +44,81 @@ if use_state_separation:
     system = sys.platform
     if system == "win32":
         # TODO: windows user data dir
-        platform_appdata_path = os.getenv('LOCALAPPDATA')
+        platform_appdata_path = Path(os.getenv('LOCALAPPDATA'))
     elif system == 'darwin':
-        platform_appdata_path = os.path.expanduser('~/Library/Preferences')
+        platform_appdata_path = Path(os.path.expanduser('~/Library/Preferences'))
     else:
-        platform_appdata_path = os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config"))
-    writable_root = os.path.join(platform_appdata_path, 'ArknightsAutoHelper')
+        platform_appdata_path = Path(os.getenv('XDG_CONFIG_HOME', os.path.expanduser("~/.config")))
+    writable_root = platform_appdata_path / 'ArknightsAutoHelper'
+elif 'AKHELPER_STATE_DIR' in os.environ:
+    writable_root = Path(os.environ['AKHELPER_STATE_DIR'])
 else:
     writable_root = root
 
 background = False
-SCREEN_SHOOT_SAVE_PATH = os.path.join(writable_root, 'screenshot')
-CONFIG_PATH = os.path.join(writable_root, 'config')
-cache_path = os.path.join(writable_root, 'cache')
-extra_items_path = os.path.join(writable_root, 'extra_items')
-config_file = os.path.join(CONFIG_PATH, 'config.yaml')
-config_template = os.path.join(config_template_path, 'config-template.yaml')
-logging_config_file = os.path.join(CONFIG_PATH, 'logging.yaml')
-logging_config_template = os.path.join(config_template_path, 'logging.yaml')
-logs = os.path.join(writable_root, 'log')
-use_archived_resources = not os.path.isdir(os.path.join(root, 'resources'))
+screenshot_path = Path.joinpath(writable_root, 'screenshot')
+config_path = Path.joinpath(writable_root, 'config')
+cache_path = Path.joinpath(writable_root, 'cache')
+extra_items_path = Path.joinpath(writable_root, 'extra_items')
+config_file = Path.joinpath(config_path, 'config.yaml')
+logging_config_file = Path.joinpath(config_path, 'logging.yaml')
+logs = Path.joinpath(writable_root, 'log')
+use_archived_resources = not Path.joinpath(root, 'resources').is_dir()
 if use_archived_resources:
-    resource_archive = os.path.join(root, 'resources.zip')
-    sys.path.append(resource_archive)
-    resource_root = os.path.join(root, 'resources.zip', 'resources')
+    resource_archive = app_archive
+    resource_root = Path.joinpath(resource_archive, 'resources')
 else:
     resource_archive = None
-    resource_root = os.path.join(root, 'resources')
-vendor_root = os.path.join(root, 'vendor')
-tessdata_prefix = os.path.join(root, 'tessdata')
+    resource_root = Path.joinpath(root, 'resources')
+vendor_root = Path.joinpath(root, 'vendor')
+tessdata_prefix = Path.joinpath(vendor_root, 'tessdata')
 
 
 ##### end of paths
 
-
-os.makedirs(SCREEN_SHOOT_SAVE_PATH, exist_ok=True)
-os.makedirs(CONFIG_PATH, exist_ok=True)
-os.makedirs(cache_path, exist_ok=True)
-os.makedirs(extra_items_path, exist_ok=True)
-os.makedirs(logs, exist_ok=True)
-
 dirty = False
+config = schema.root()
 
-def _create_config_file():
-    with open(config_template, 'r', encoding='utf-8') as f:
-        loader = yaml.load_all(f)
-        next(loader) # discard first document (used for comment)
-        ydoc = next(loader)
-    with open(config_file, 'w', encoding='utf-8') as f:
-        yaml.dump(ydoc, f)
+def _save_config(store, file):
+    swpfile = os.fspath(file) + '.saving'
+    with open(swpfile, 'w', encoding='utf-8') as f:
+        yaml.dump(store, f)
+    os.replace(swpfile, config_file)
 
-if not os.path.exists(config_file):
-    _create_config_file()
+def _load_config():
+    if not config_file.exists():
+        config = schema.root()
+        _save_config(config._store, config_file)
+        return config
+    with open(config_file, 'r', encoding='utf-8') as f:
+        ydoc = yaml.load(f)
+    config_schema_version = ydoc.get('__version__', None)
+    if config_schema_version != schema.root.__version__:
+        if config_schema_version is None:
+            oldfile_suffix = '-legacy.bak'
+        else:
+            oldfile_suffix = f'-schema{config_schema_version}.bak'
+        shutil.copyfile(config_file, str(config_file).removesuffix('.yaml') + oldfile_suffix)
+        from .migration import migrate
+        ydoc = migrate(ydoc)
+        _save_config(ydoc, config_file)
+    config = schema.root(ydoc)
+    return config
 
-with open(config_file, 'r', encoding='utf-8') as f:
-    _ydoc = yaml.load(f)
+initialized = False
 
+def init(extra_logging_handlers=None):
+    global config, initialized
+    if initialized:
+        return
+    os.makedirs(screenshot_path, exist_ok=True)
+    os.makedirs(config_path, exist_ok=True)
+    os.makedirs(cache_path, exist_ok=True)
+    os.makedirs(extra_items_path, exist_ok=True)
+    os.makedirs(logs, exist_ok=True)
+    config = _load_config()
+    enable_logging(extra_logging_handlers)
+    initialized = True
 
 def _get_instance_id_win32():
     import ctypes
@@ -135,9 +154,9 @@ def _get_instance_id_posix():
     while True:
         try:
             if i == 0:
-                filename = os.path.join(logs, 'ArknightsAutoHelper.log')
+                filename = Path.joinpath(logs, 'ArknightsAutoHelper.log')
             else:
-                filename = os.path.join(logs, 'ArknightsAutoHelper.%d.log' % i)
+                filename = Path.joinpath(logs, 'ArknightsAutoHelper.%d.log' % i)
             f = open(filename, 'a+b')
             f.seek(0)
             import fcntl
@@ -165,20 +184,15 @@ def _set_dirty():
 
 
 def save():
-    global dirty
-    if dirty:
-        swpfile = config_file + '.saving'
-        with open(swpfile, 'w', encoding='utf-8') as f:
-            yaml.dump(_ydoc, f)
-        os.replace(swpfile, config_file)
-        dirty = False
+    _save_config(config._store, config_file)
+    config._dirty = False
 
 
 def _dig_mapping(dig, create_parent=False):
     if isinstance(dig, str):
         dig = dig.split('/')
     parent_maps = dig[:-1]
-    current_map = _ydoc
+    current_map = config._store
     i = 0
     for k in parent_maps:
         if k not in current_map:
@@ -219,28 +233,10 @@ def set(dig, value):
     current_map[k] = value
     _set_dirty()
 
-debug = get('debug', False)
 
-##### Legacy config values
-
-ADB_SERVER = (lambda host, portstr: (host, int(portstr)))(
-    # attempt to not pollute global namespace
-    *(get('device/adb_server', '127.0.0.1:5037').rsplit(':', 1))
-)
-# enable_adb_host_auto_detect = get('device/enable_adb_host_auto_detect', True)
-# ADB_HOST = get('device/adb_connect', '127.0.0.1:7555')
-ArkNights_PACKAGE_NAME = get('device/package_name', 'com.hypergryph.arknights')
-ArkNights_ACTIVITY_NAME = get('device/activity_name', 'com.u8.sdk.U8UnityContext')
-
-engine = get('ocr/engine', 'auto')
-enable_baidu_api = get('ocr/baidu_api/enabled', False)
-APP_ID = get('ocr/baidu_api/app_id', 'AAAZZZ')
-API_KEY = get('ocr/baidu_api/app_key', 'AAAZZZ')
-SECRET_KEY = get('ocr/baidu_api/app_secret', 'AAAZZZ')
-reporter = get('reporting/enabled', False)
-
-
-##### End of Legacy config values
+def get_config_adb_server():
+    host, portstr = config.device.adb_server.rsplit(':', 1)
+    return host, int(portstr)
 
 
 _instanceid = None
@@ -253,27 +249,37 @@ def get_instance_id():
 
     _instanceid = _get_instance_id()
     if _instanceid == 0:
-        logfile = os.path.join(logs, 'ArknightsAutoHelper.log')
+        logfile = Path.joinpath(logs, 'ArknightsAutoHelper.log')
     else:
-        logfile = os.path.join(logs, 'ArknightsAutoHelper.%d.log' % _instanceid)
+        logfile = Path.joinpath(logs, 'ArknightsAutoHelper.%d.log' % _instanceid)
 
 
     return _instanceid
 
 logging_enabled = False
 
-def enable_logging():
+def enable_logging(extra_handlers: Optional[Sequence[logging.Handler]] = None):
     global logging_enabled
     if logging_enabled:
         return
     get_instance_id()
-    old_handlers = logging.root.handlers[:]
-    if not os.path.exists(logging_config_file):
-        shutil.copy2(logging_config_template, logging_config_file)
-    with open(logging_config_file, 'r', encoding='utf-8') as f:
-        logging.config.dictConfig(yaml.load(f))
+    old_handlers: list = logging.root.handlers[:]
+    if logging_config_file.exists():
+        logging_config_io = open(logging_config_file, 'r', encoding='utf-8')
+    else:
+        import zipfile
+        import io
+        with zipfile.ZipFile(app_archive) as zf:
+            logging_config_io = io.TextIOWrapper(zf.open('config/logging.yaml', 'r'), encoding='utf-8')
+    with logging_config_io:
+        logging.config.dictConfig(yaml.load(logging_config_io))
+    if extra_handlers is not None:
+        old_handlers.extend(extra_handlers)
     for h in old_handlers:
         logging.root.addHandler(h)
+    early_records = util.early_logs.fetch_and_stop()
+    for record in early_records:
+        logging.getLogger(record.name).handle(record)
     logging.debug('ArknightsAutoHelper version %s', version)
     import coloredlogs
     coloredlogs.install(
@@ -283,24 +289,21 @@ def enable_logging():
         level_styles={'warning': {'color': 'yellow'}, 'error': {'color': 'red'}},
         level='INFO')
     logging_enabled = True
-    if os.path.getmtime(config_file) < os.path.getmtime(config_template):
-        logging.warning('配置文件模板 config-template.yaml 已更新，请检查配置文件 config.yaml 是否需要更新')
-
 
 def get_vendor_path(name):
     import platform
-    base = os.path.join(vendor_root, name)
+    base = Path.joinpath(vendor_root, name)
     system = platform.system().lower()
     arch = platform.machine().lower()
     if system:
         if arch :
-            path = os.path.join(base, f'{system}_{arch}')
-            if os.path.isdir(path):
+            path = Path.joinpath(base, f'{system}_{arch}')
+            if path.is_dir():
                 return path
-        path = os.path.join(base, system)
-        if os.path.isdir(path):
+        path = Path.joinpath(base, system)
+        if path.is_dir():
             return path
-    if os.path.isdir(base):
+    if base.is_dir():
         return base
     raise FileNotFoundError(base)
 
@@ -313,21 +316,21 @@ class _FixedSpecFinder:
         if fullname == self.name:
             return self.spec
         return None
-    
+
     def __repr__(self):
         return f'{self.__class__.__qualname__}({self.name!r}, {self.spec!r})'
 
 def require_vendor_lib(fullname, base_path_relative_to_vendor):
-    import importlib
+    import importlib.machinery
     if bundled:
         importlib.import_module(fullname)
         return
     if fullname in sys.modules:
         return
-    path = os.path.join(vendor_root, base_path_relative_to_vendor)
-    if not os.path.exists(path):
+    path = Path.joinpath(vendor_root, base_path_relative_to_vendor)
+    if not path.exists():
         raise FileNotFoundError(path)
-    spec = importlib.machinery.PathFinder.find_spec(fullname, [path] + sys.path)
+    spec = importlib.machinery.PathFinder.find_spec(fullname, [os.fspath(path)] + sys.path)
     if spec is None:
         raise ModuleNotFoundError(fullname)
     sys.meta_path.insert(0, _FixedSpecFinder(fullname, spec))

@@ -10,7 +10,7 @@ handlers:
     class: logging.handlers.TimedRotatingFileHandler
     formatter: precise
     # 读取 config.logfile 中的绝对路径
-    filename: ext://config.logfile
+    filename: ext://app.logfile
     level: NOTSET
     encoding: utf-8
     when: D

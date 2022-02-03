@@ -1,11 +1,10 @@
 from io import BytesIO
 import os
-import logging
 import logging.config
+from pathlib import Path
 from random import randint
 import random
 import shlex
-from sys import exc_info
 import warnings
 import zlib
 import struct
@@ -19,7 +18,7 @@ from util import cvimage as Image
 import numpy as np
 import cv2
 
-import config
+import app
 # from config import ADB_ROOT, ADB_HOST, SCREEN_SHOOT_SAVE_PATH, ShellColor, CONFIG_PATH,enable_adb_host_auto_detect, ADB_SERVER
 from .ADBClientSession import ADBClientSession
 from util.socketutil import recvall, recvexactly
@@ -74,19 +73,19 @@ def find_adb_from_android_sdk():
 
     try:
         if system == 'Windows':
-            root = os.path.join(os.environ['LOCALAPPDATA'], 'Android', 'Sdk')
+            root = Path(os.environ['LOCALAPPDATA']).joinpath('Android', 'Sdk')
             base = 'adb.exe'
         elif system == 'Linux':
-            root = os.path.join(os.environ['HOME'], 'Android', 'Sdk')
+            root = Path(os.environ['HOME']).joinpath('Android', 'Sdk')
         elif system == 'Darwin':
-            root = os.path.join(os.environ['HOME'], 'Library', 'Android', 'sdk')
+            root = Path(os.environ['HOME']).joinpath('Library', 'Android', 'sdk')
 
         if 'ANDROID_SDK_ROOT' in os.environ:
-            root = os.environ['ANDROID_SDK_ROOT']
+            root = Path(os.environ['ANDROID_SDK_ROOT'])
 
-        adbpath = os.path.join(root, 'platform-tools', base)
+        adbpath = root.joinpath('platform-tools', base)
 
-        if os.path.exists(adbpath):
+        if adbpath.exists():
             return adbpath
 
     except:
@@ -99,7 +98,7 @@ def check_adb_alive():
     if time.monotonic() - _last_check < 0.1:
         return True
     try:
-        sess = ADBClientSession(config.ADB_SERVER)
+        sess = ADBClientSession(app.get_config_adb_server())
         version = int(sess.service('host:version').read_response().decode(), 16)
         logger.debug('ADB server version %d', version)
         _last_check = time.monotonic()
@@ -117,12 +116,12 @@ def ensure_adb_alive():
         return
     logger.info('尝试启动 adb server')
     import subprocess
-    adbbin = config.get('device/adb_binary', None)
-    if adbbin is None:
+    adbbin = app.config.device.adb_binary
+    if not adbbin:
         adb_binaries = ['adb']
         try:
-            bundled_adb = config.get_vendor_path('platform-tools')
-            adb_binaries.append(os.path.join(bundled_adb, 'adb'))
+            bundled_adb = app.get_vendor_path('platform-tools')
+            adb_binaries.append(bundled_adb / 'adb')
         except FileNotFoundError:
             pass
         findadb = find_adb_from_android_sdk()
@@ -133,7 +132,7 @@ def ensure_adb_alive():
     for adbbin in adb_binaries:
         try:
             logger.debug('trying %r', adbbin)
-            if os.name == 'nt' and config.background:
+            if os.name == 'nt' and app.background:
                 si = subprocess.STARTUPINFO(dwFlags=subprocess.STARTF_USESHOWWINDOW, wShowWindow=subprocess.SW_HIDE)
                 subprocess.run([adbbin, 'start-server'], check=True, startupinfo=si)
             else:
@@ -276,7 +275,7 @@ class _ScreenCapImplReverseLoopback:
 
 def _host_session_factory(timeout=None):
     ensure_adb_alive()
-    return ADBClientSession(config.ADB_SERVER, timeout)
+    return ADBClientSession(app.get_config_adb_server(), timeout)
 
 def enum(devices):
     for serial in ADBConnector.available_devices():
@@ -360,7 +359,7 @@ class ADBConnector:
         self.host_session_factory = _host_session_factory
         self.rch = None
         self.device_session_factory = lambda: self.host_session_factory().device(self.device_serial)
-        self.cache_screenshot = config.get('device/cache_screenshot', True)
+        self.cache_screenshot = app.config.device.cache_screenshot
         self.last_screenshot_timestamp = 0
         self.last_screenshot_duration = 0
         self.last_screenshot = None
@@ -418,60 +417,6 @@ class ADBConnector:
     def available_devices(cls):
         return [x for x in _host_session_factory().devices() if x[1] != 'offline']
 
-    @classmethod
-    def auto_connect(cls):
-        devices = cls.available_devices()
-
-        if len(devices) == 0:
-            fixups = config.get('device/adb_no_device_fixups', [])
-
-            # old config migration
-            if autoconn := config.get('device/adb_auto_connect', None):
-                fixups.append(dict(run='adb_connect', target=autoconn))
-
-            if fixups:
-                logger.info('无设备连接，尝试自动修复')
-                cls.disconnect_offline()
-                fixup_flag = False
-                for fixup in fixups:
-                    if isinstance(fixup, collections.abc.Mapping):
-                        name = fixup['run']
-                        if not name.isidentifier():
-                            logger.error('无效修复模块名称 %r', name)
-                            continue
-                        try:
-                            logger.info('运行修复模块 %s', name)
-                            module = importlib.import_module('..fixups.' + name, __name__)
-                            if module.run(cls, fixup):
-                                logger.info('自动修复成功')
-                                fixup_flag = True
-                                break
-                        except ModuleNotFoundError:
-                            logger.error('无效修复模块名称 %s', name)
-                        except Exception:
-                            logger.error('自动修复模块 %s 发生错误', name)
-                            logger.debug('', exc_info=True)
-                if fixup_flag:
-                    time.sleep(1)
-            else:
-                raise RuntimeError('找不到可用设备')
-
-        devices = cls.available_devices()
-
-        always_use_device = config.get('device/adb_always_use_device', None)
-        if always_use_device is not None:
-            if always_use_device not in (x[0] for x in devices):
-                raise RuntimeError('设备 %s 未连接' % always_use_device)
-            return always_use_device
-
-        if len(devices) == 1:
-            device_name = devices[0][0]
-            return cls(device_name)
-        elif len(devices) == 0:
-            raise IndexError("no device connected")
-        else:
-            raise IndexError("more than one device connected")
-        
 
     def run_device_cmd(self, cmd, DEBUG_LEVEL=2):
         output = self.device_session_factory().exec(cmd)
@@ -561,9 +506,9 @@ class ADBConnector:
         self.input.tap(final_X, final_Y)
 
     def load_device_config(self):
-        import config.device_database
+        import app.device_database
         
-        device_record = config.device_database.get_device(self.config_key)
+        device_record = app.device_database.get_device(self.config_key)
         if device_record.is_new_record():
             self._probe_device_config(device_record)
             return
@@ -615,7 +560,7 @@ class ADBConnector:
         time_gzipped_raw = 999
         time_reverse_loopback = 999
         screenshot = None
-        workaround_slow_emulator_adb = config.get('device/workaround_slow_emulator_adb', 'auto')
+        workaround_slow_emulator_adb = app.config.device.workaround_slow_emulator_adb
 
         if 'screenshot_rotate' not in device_record:
             device_record['screenshot_rotate'] = 0

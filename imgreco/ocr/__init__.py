@@ -37,11 +37,11 @@ def _auto_impl():
 
 @lru_cache()
 def get_config_impl():
-    import config
-    if config.engine == 'auto':
+    import app
+    if app.config.ocr.backend == 'auto':
         engine = _auto_impl()
     else:
-        engine = get_impl(config.engine)
+        engine = get_impl(app.config.ocr.backend)
     return engine
 
 

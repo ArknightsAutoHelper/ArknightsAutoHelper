@@ -4,16 +4,16 @@ if TYPE_CHECKING:
     from typing import Union
     from automator import BaseAutomator
 del TYPE_CHECKING
-import os
 import sys
+import os
 import time
 
-import config
+import app
 
 from .fancycli import fancywait
 from .fancycli.platform import isatty
 
-config.enable_logging()
+app.init()
 
 helper: BaseAutomator = None
 prompt_prefix = 'akhelper'
@@ -211,7 +211,7 @@ def interactive(argv):
             import readline
     except ImportError:
         pass
-    if instance_id := config.get_instance_id():
+    if instance_id := app.get_instance_id():
         title = f"{prompt_prefix}-{instance_id}"
     else:
         title = prompt_prefix
@@ -295,7 +295,7 @@ def _configure(prompt, helper_class):
     helper, context = _create_helper(helper_class)
     global_cmds.extend([*helper._cli_commands.values(), ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
     interactive_cmds.extend([('connect', connect, connect.__doc__), *helper._cli_commands.values(), ('exit', exit, '')])
-    if config.debug:
+    if app.config.debug:
         global_cmds.append(('debug', debug, ''))
         interactive_cmds.append(('debug', debug, ''))
 

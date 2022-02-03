@@ -1,7 +1,7 @@
 import requests
 import os
 import json
-import config
+import app
 
 
 common_cache_config = {
@@ -15,7 +15,7 @@ common_cache_config = {
 
 
 def get_cache_path(cache_file_name):
-    return os.path.join(config.cache_path, cache_file_name)
+    return app.cache_path.joinpath(cache_file_name)
 
 
 def update_net_cache(cache_file_name, url):

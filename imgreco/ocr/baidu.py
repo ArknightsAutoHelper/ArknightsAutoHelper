@@ -6,7 +6,7 @@ from io import BytesIO
 import cv2
 #from aip import AipOcr
 import requests
-from config import enable_baidu_api, APP_ID, API_KEY, SECRET_KEY
+from app import config
 from .common import *
 
 is_online = True
@@ -14,7 +14,7 @@ info = "baidu"
 
 
 def check_supported():
-    if enable_baidu_api:
+    if config.ocr.baidu_api.enable:
         return True
     else:
         return False
@@ -32,7 +32,7 @@ def _options(option):
 @lru_cache()
 def _get_token():
     resp = requests.request('POST', 'https://aip.baidubce.com/oauth/2.0/token',
-                     params={'grant_type': 'client_credentials', 'client_id': API_KEY, 'client_secret': SECRET_KEY})
+                     params={'grant_type': 'client_credentials', 'client_id': config.ocr.baidu_api.app_key, 'client_secret': config.ocr.baidu_api.app_secret})
     resp.raise_for_status()
     resp = resp.json()
     return resp['access_token']

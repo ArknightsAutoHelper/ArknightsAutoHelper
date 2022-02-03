@@ -1,12 +1,11 @@
 import os
-from typing import OrderedDict
-import config
+import app
 import copy
 import json
 
 _ydoc = None
-db_file = os.path.join(config.CONFIG_PATH, 'device-config.json')
-if os.path.exists(db_file):
+db_file = app.config_path / 'device-config.json'
+if db_file.exists():
     with open(db_file, 'r', encoding='utf-8') as f:
         try:
             _ydoc = json.load(f)
@@ -28,7 +27,7 @@ def _set_dirty():
 def _save():
     global _dirty
     if _dirty:
-        swpfile = db_file + '.saving'
+        swpfile = str(db_file) + '.saving'
         with open(swpfile, 'w', encoding='utf-8') as f:
             json.dump(_ydoc, f, indent=2)
         os.replace(swpfile, db_file)

@@ -4,8 +4,7 @@ import socket
 import struct
 import threading
 from time import sleep
-import time
-from typing import Any, Callable, Optional, Tuple, Union, TYPE_CHECKING
+from typing import Optional, Tuple, Union, TYPE_CHECKING
 if TYPE_CHECKING:
     from ..ADBConnector import ADBConnector
 
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 import numpy as np
 # from adbutils import AdbDevice, AdbError, Network, _AdbStreamConnection, adb
 
-from .const import EVENT_FRAME, EVENT_INIT, LOCK_SCREEN_ORIENTATION_UNLOCKED
+from .const import LOCK_SCREEN_ORIENTATION_UNLOCKED
 from .control import ControlSender
 
 
@@ -112,8 +111,8 @@ class Client:
         """
         # server_root = os.path.abspath(os.path.dirname(__file__))
         # server_file_path = server_root + "/scrcpy-server.jar"
-        import config
-        server_file_path = os.path.join(config.get_vendor_path('scrcpy-server-novideo'), 'scrcpy-server-novideo.jar')
+        import app
+        server_file_path = app.get_vendor_path('scrcpy-server-novideo') / 'scrcpy-server-novideo.jar'
         server_buf = open(server_file_path, 'rb').read()
         self.device.push("/data/local/tmp/scrcpy-server-novideo.jar", server_buf)
         cmdline = 'CLASSPATH=/data/local/tmp/scrcpy-server-novideo.jar app_process /data/local/tmp com.genymobile.scrcpy.Server 1.21 log_level=verbose control=true tunnel_forward=true'

@@ -1,17 +1,17 @@
 import numpy as np
-import urllib.request, json, time, os, copy, sys
+import urllib.request, json, time, os, copy
 from scipy.optimize import linprog
 from . import arkplanner
-import config
+import app
 
 global penguin_url, headers, LanguageMap
 penguin_url = 'https://penguin-stats.io/PenguinStats/api/v2/'
 headers = {'User-Agent': 'ArkPlanner'}
 LanguageMap = {'CN': 'zh', 'US': 'en', 'JP': 'ja', 'KR': 'ko'}
 
-path_stats = os.path.join(config.cache_path, 'matrix_cache.json')
-path_rules = os.path.join(config.cache_path, 'formula_cache.json')
-path_aog_stages = os.path.join(config.cache_path, 'aog_stages_cache.json')
+path_stats = app.cache_path.joinpath('matrix_cache.json')
+path_rules = app.cache_path.joinpath('formula_cache.json')
+path_aog_stages = app.cache_path.joinpath('aog_stages_cache.json')
 
 
 class MaterialPlanning(object):

@@ -1,0 +1,42 @@
+name: 'bootstrapper package: vendor'
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - 'vendor'
+
+jobs:
+  build-win-amd64:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Set up Python 3.9 amd64
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9.10
+        architecture: x64
+    - name: Make package
+      shell: cmd
+      run: |
+        python packaging/package2.py vendor
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2.1.4
+      with:
+        name: vendor
+        path: build/vendor-unpacked
+    - name: prerelease
+      uses: "softprops/action-gh-release@latest"
+      with:
+        token: "${{ secrets.GITHUB_TOKEN }}"
+        name: "Bootstrapper Package: vendor"
+        tag_name: "bootstrapper-package-vendor"
+        prerelease: true
+        body: |
+          This release provides a package for [bootstrapper](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release) ans is not meant to be used directly.
+
+        files: |
+          build/vendor.zip

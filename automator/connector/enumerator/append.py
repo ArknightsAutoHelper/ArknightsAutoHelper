@@ -15,8 +15,8 @@ def compare_adb_serial(a, b):
 
 def enum(devices):
     from ..ADBConnector import ADBConnector
-    import config
-    targets: list[str] = config.get('device/extra_enumerators/append', None)
+    import app
+    targets: list[str] = app.config.device.extra_enumerators.append
     if targets is None:
         return
     # check if target serial is already enumerated

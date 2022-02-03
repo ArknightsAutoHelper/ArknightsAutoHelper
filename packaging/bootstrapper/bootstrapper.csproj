@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>9.0</LangVersion>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>ArknightsAutoHelper</RootNamespace>
+		<ApplicationIcon>../carrot.ico</ApplicationIcon>
+		<Authors />
+		<Company />
+		<AssemblyTitle>Arknights Auto Helper Bootstrapper</AssemblyTitle>
+		<Product>$(AssemblyTitle)</Product>
+		<AssemblyName>akhelper</AssemblyName>
+	</PropertyGroup>
+
+	<Import Project="version.props" />
+	
+	<PropertyGroup Condition="'$(TargetFramework)' == 'net6'">
+		<PublishSingleFile>true</PublishSingleFile>
+		<PublishTrimmed>true</PublishTrimmed>
+		<TrimMode>copyused</TrimMode>
+	</PropertyGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+		<PackageReference Include="Costura.Fody" Version="5.7.0">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="System.Net.Http" Version="4.3.4" />
+		<PackageReference Include="System.Text.Json" Version="6.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="SharpZipLib" Version="1.3.3" />
+		<PackageReference Include="Tomlyn" Version="0.10.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="bootstrapper.toml">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+</Project>

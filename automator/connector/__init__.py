@@ -1,19 +1,17 @@
 def enum_devices():
     from .ADBConnector import ADBConnector, enum as adb_enum
-    import config
-    always_use_device = config.get('device/adb_always_use_device', None)
-    if always_use_device is not None:
+    import app
+    always_use_device = app.config.device.adb_always_use_device
+    if always_use_device:
         return [(f'ADB: {always_use_device} (forced)', ADBConnector, [always_use_device], 'strong')]
     result = []
     adb_enum(result)
-    import importlib
-    extra_enumerators = config.get('device/extra_enumerators', {})
-    for name in extra_enumerators:
-        try:
-            enumerator_module = importlib.import_module('.enumerator.' + name, __name__)
-            enumerator_module.enum(result)
-        except:
-            pass
+    if app.config.device.extra_enumerators.bluestacks_hyperv:
+        from .enumerator import bluestacks_hyperv
+        bluestacks_hyperv.enum(result)
+    if app.config.device.extra_enumerators.append:
+        from .enumerator import append
+        append.enum(result)
     return result
 
 def auto_connect():
