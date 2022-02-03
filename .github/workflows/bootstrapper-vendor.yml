@@ -24,6 +24,7 @@ jobs:
       run: |
         set PYTHONENCODING=utf-8
         set PYTHONLEGACYWINDOWSSTDIO=utf-8
+        set PYTHONUTF8=1
         python packaging/package2.py vendor
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4

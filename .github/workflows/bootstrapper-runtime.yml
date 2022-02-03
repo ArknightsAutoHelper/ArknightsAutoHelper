@@ -23,15 +23,17 @@ jobs:
       run: |
         set PYTHONENCODING=utf-8
         set PYTHONLEGACYWINDOWSSTDIO=utf-8
+        set PYTHONUTF8=1
         python -m pip install --upgrade pip
         python -m venv venv
         venv\Scripts\python -m pip install --upgrade pip wheel setuptools
         venv\Scripts\python -m pip install -r requirements.txt
-        venv\Scripts\python -m pip install pyinstaller pywebview
+        venv\Scripts\python -m pip install pywebview
       shell: cmd
     - name: Make package
       shell: cmd
       run: |
+        where curl
         python packaging/package2.py runtime
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
