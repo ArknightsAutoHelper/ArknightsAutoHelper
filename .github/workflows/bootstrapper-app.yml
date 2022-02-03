@@ -32,6 +32,13 @@ jobs:
       with:
         name: app
         path: build/app-unpacked
+    - name: delete old release
+      shell: cmd
+      run: |
+        git fetch --tags
+        hub release delete bootstrapper-package-app
+        git push --delete origin bootstrapper-package-app
+        call;
     - name: prerelease
       uses: "softprops/action-gh-release@v1"
       with:

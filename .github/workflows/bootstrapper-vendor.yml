@@ -31,6 +31,13 @@ jobs:
       with:
         name: vendor
         path: build/vendor-unpacked
+    - name: delete old release
+      shell: cmd
+      run: |
+        git fetch --tags
+        hub release delete bootstrapper-package-vendor
+        git push --delete origin bootstrapper-package-vendor
+        call;
     - name: prerelease
       uses: "softprops/action-gh-release@v1"
       with:
