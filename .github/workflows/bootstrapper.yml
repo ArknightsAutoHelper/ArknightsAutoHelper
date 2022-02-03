@@ -22,7 +22,7 @@ jobs:
       shell: cmd
       run: |
         dotnet publish -o build\bootstrapper packaging\bootstrapper.sln
-        tar caf build\bootstrapper.zip *.exe *.toml -C build\bootstrapper
+        tar caf build\bootstrapper.zip -C build\bootstrapper *.exe *.toml
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
