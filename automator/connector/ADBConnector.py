@@ -293,7 +293,6 @@ class ScrcpyInput:
         self.scrcpy.control.tap(int(x), int(y), hold_time)
 
     def swipe(self, x0, y0, x1, y1, move_duraion=1, hold_before_release=0, interpolation='linear'):
-        logger.info("move from (%d, %d) to (%d, %d) in %f s", x0, y0, x1, y1, move_duraion)
         if interpolation == 'linear':
             interpolate = lambda x: x
         elif interpolation == 'spline':
