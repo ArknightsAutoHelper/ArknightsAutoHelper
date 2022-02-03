@@ -96,7 +96,7 @@ class BaseAPI:
             if self.fsencoding == 'mbcs':
                 datapath = encode_mbcs_path(datapath)
             else:
-                datapath = datapath.encode(self.fsencoding)
+                datapath = str(datapath).encode(self.fsencoding)
         if configs is not None:
             configlen = len(configs)
             configsarr = (ctypes.c_char_p * configlen)()
