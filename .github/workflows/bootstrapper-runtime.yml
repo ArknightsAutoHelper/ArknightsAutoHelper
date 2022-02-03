@@ -37,7 +37,7 @@ jobs:
         name: runtime-cp39-win_amd64
         path: build/runtime
     - name: prerelease
-      uses: "softprops/action-gh-release@latest"
+      uses: "softprops/action-gh-release@v1"
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
         name: "Bootstrapper Package: runtime"

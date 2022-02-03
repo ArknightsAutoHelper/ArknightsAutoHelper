@@ -30,7 +30,7 @@ jobs:
         name: app
         path: build/app-unpacked
     - name: prerelease
-      uses: "softprops/action-gh-release@latest"
+      uses: "softprops/action-gh-release@v1"
       with:
         token: "${{ secrets.GITHUB_TOKEN }}"
         name: "Bootstrapper Package: app"
