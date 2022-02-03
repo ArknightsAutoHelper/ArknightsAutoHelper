@@ -4,24 +4,24 @@ release_manifest_url = "https://api.github.com/repos/ninthDevilHAUNSTER/Arknight
 
 [[package]]
 name = "app"
-tag = "test-app"
+tag = "bootstrapper-package-app"
 asset_name = "app-cp39.zip"
 extract_base = ".bootstrapper"
 
 [[package]]
 name = "runtime"
-tag = "test"
+tag = "bootstrapper-package-runtime"
 asset_name = "runtime-cp39-win_amd64.zip"
 extract_base = ".bootstrapper\\runtime"
 
 [[package]]
 name = "vendor"
-tag = "test"
+tag = "bootstrapper-package-vendor"
 asset_name = "vendor.zip"
 extract_base = ".bootstrapper"
 
 [[package]]
 name = "template"
-tag = "test-app"
+tag = "bootstrapper-package-template"
 asset_name = "template.zip"
 extract_base = "."
