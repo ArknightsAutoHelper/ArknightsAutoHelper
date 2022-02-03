@@ -28,6 +28,12 @@ jobs:
       with:
         name: bootstrapper
         path: build/bootstrapper
+    - name: delete old release
+      shell: cmd
+      run: |
+        git fetch --tags
+        hub release delete bootstrapper-package-runtime
+        git push --delete origin bootstrapper-package-runtime
     - name: prerelease
       uses: "softprops/action-gh-release@v1"
       with:

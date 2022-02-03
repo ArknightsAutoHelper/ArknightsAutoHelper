@@ -46,7 +46,7 @@ jobs:
         tag_name: "bootstrapper-package-template"
         prerelease: true
         body: |
-          This release provides a package for [bootstrapper](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release) ans is not meant to be used directly.
+          This release provides a package for [bootstrapper](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release) and isnot meant to be used directly.
 
         files: |
           build/template.zip
