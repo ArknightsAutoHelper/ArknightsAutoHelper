@@ -23,6 +23,7 @@ jobs:
       shell: cmd
       run: |
         set PYTHONENCODING=utf-8
+        set PYTHONLEGACYWINDOWSSTDIO=utf-8
         python packaging/package2.py template
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
