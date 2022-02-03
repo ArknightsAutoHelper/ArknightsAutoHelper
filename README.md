@@ -39,15 +39,11 @@ pip install -r requirements.txt
 
 #### 二进制包（Windows）
 
-从 Releases、Actions artifacts 或 nightly.link 中下载 PyInstaller 打包后的二进制包，二进制包随源代码同步更新。
+从 Releases 中下载[二进制包启动器](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release)。
 
-* [Releases](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/current-binary-package)
+首次运行启动器时，将从 GitHub 下载通过 Actions 打包的最新代码及运行环境，请保持网络畅通。
 
-* Actions: [![Windows binary package](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml/badge.svg)](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions/workflows/pyinstaller-win.yml) （:wink: 需要登录 GitHub）
-
-
-* [ninthDevilHAUNSTER/ArknightsAutoHelper](https://nightly.link/ninthDevilHAUNSTER/ArknightsAutoHelper/workflows/pyinstaller-win/master) （:satisfied: 无需登录）
-
+运行 `akhelper.exe --update` 或 `akhelper-gui.exe --update` 可更新到最新版本。如果最新版本存在问题，可尝试从 [Actions](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions) 中下载 90 天内的旧版本覆盖 `.bootstrapper` 目录内的对应文件。
 
 #### OCR 依赖
 目前 OCR 用于：
@@ -57,18 +53,13 @@ pip install -r requirements.txt
 
 如果 OCR 不可用，则不能自动处理以上情况。
 
-目前可以使用 tesseract（需另行安装）、Windows OCR（需要 Windows 10 简体中文系统或语言包）和百度 OCR API，请参阅 [OCR 安装说明](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/wiki/OCR-%E5%AE%89%E8%A3%85%E8%AF%B4%E6%98%8E)。
+目前可以使用 tesseract（项目内自带识别模型及 Windows amd64 库）、Windows OCR（需要 Windows 10 简体中文系统或语言包）和百度 OCR API，请参阅 [OCR 安装说明](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/wiki/OCR-%E5%AE%89%E8%A3%85%E8%AF%B4%E6%98%8E)。
 
 
 ###  **环境与分辨率**
 > 💡 由于游戏内文字渲染机制问题，分辨率过低可能影响识别效果，建议分辨率高度 1080 或以上。
 
 大部分功能可以自适应分辨率（宽高比不小于 16:9，即`宽度≥高度×16/9`），作者测试过的分辨率有 <span style="opacity: 0.5">1280x720、1440x720、</span>1920x1080、2160x1080。
-
-例外（欢迎提交代码改进）：
-* 基建收菜（需要 16:9 宽高比和特定基建布局）
-* 好友查房（需要 16:9 宽高比）
-* 自动登录游戏（需要 1280x720 分辨率）
 
 ### **ADB 连接**
 
@@ -135,21 +126,35 @@ Web GUI 将在一下第一个可用的浏览器环境中打开：
 ```
 $ python3 akhelper.py
 usage: akhelper.py command [command args]
-commands (prefix abbreviation accepted):
+    connect [connector type] [connector args ...]
+        连接到设备
+        支持的设备类型：
+        connect adb [serial or tcpip endpoint]
     quick [+-rR[N]] [n]
         重复挑战当前画面关卡特定次数或直到理智不足
         +r/-r 是否自动回复理智，最多回复 N 次
         +R/-R 是否使用源石回复理智（需要同时开启 +r）
-    auto [+-rR[N]] stage1 count1 [stage2 count2] ...
-        按顺序挑战指定关卡特定次数直到理智不足
-    collect
-        收集每日任务和每周任务奖励
+    auto [+-rR[N]] TARGET_DESC [TARGET_DESC]...
+        按顺序挑战指定关卡。
+        TARGET_DESC 可以是：
+            1-7 10      特定主线、活动关卡（1-7）10 次
+            grass       一键长草: 检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料
+            plan        执行刷图计划: 使用 arkplanner 命令创建刷图计划。执行过程会自动更新计划进度。
     recruit [tags ...]
         公开招募识别/计算，不指定标签则从截图中识别
-    interactive
-        进入交互模式，减少按键次数（
-    help
-        输出本段消息
+    collect
+        收集每日任务和每周任务奖励
+    record
+        操作记录模块，使用 record --help 查看帮助。
+    riic <subcommand>
+        基建功能（开发中）
+        riic collect
+        收取制造站及贸易站
+        riic shift <room> <operator1> <operator2> ...
+        指定干员换班
+        room: B101 B102 B103 B201 B202 B203 B301 B302 B303 dorm1 dorm2 dorm3 dorm4 meeting workshop office
+    arkplanner
+        输入材料需求创建刷图计划。使用 auto plan 命令执行刷图计划。
 ```
 
 命令可使用前缀（首字母）缩写（类似 Linux iproute2），交互模式下只需输入对应命令名称即可，如：
