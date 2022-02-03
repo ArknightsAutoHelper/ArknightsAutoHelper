@@ -74,6 +74,7 @@ def build_app():
 def build_runtime():
     runtime_dir = build_dir / 'runtime'
     shutil.rmtree(runtime_dir, ignore_errors=True)
+    runtime_dir.mkdir(parents=True, exist_ok=True)
 
     print('making runtime archive')
     python_bin_zip = build_dir / 'python-3.9.10-embed-amd64.zip'
