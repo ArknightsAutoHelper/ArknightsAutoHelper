@@ -30,8 +30,8 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
-        name: app
-        path: build/app-unpacked
+        name: app-nested-zip
+        path: build/app-cp39.zip
     - name: delete old release
       shell: cmd
       run: |

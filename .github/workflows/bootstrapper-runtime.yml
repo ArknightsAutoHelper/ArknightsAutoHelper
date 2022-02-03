@@ -38,8 +38,8 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
-        name: runtime-cp39-win_amd64
-        path: build/runtime
+        name: runtime-nested-zip
+        path: build/runtime-cp39-win_amd64.zip
     - name: delete old release
       shell: cmd
       run: |

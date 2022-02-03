@@ -29,8 +29,8 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4
       with:
-        name: vendor
-        path: build/vendor-unpacked
+        name: vendor-nested-zip
+        path: build/vendor.zip
     - name: delete old release
       shell: cmd
       run: |
