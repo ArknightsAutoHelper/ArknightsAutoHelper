@@ -23,6 +23,7 @@ jobs:
     - name: Make package
       shell: cmd
       run: |
+        set PYTHONENCODING=utf-8
         python packaging/package2.py app
     - name: Upload artifact
       uses: actions/upload-artifact@v2.1.4

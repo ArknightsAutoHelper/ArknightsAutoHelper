@@ -21,6 +21,7 @@ jobs:
         architecture: x64
     - name: Install dependencies
       run: |
+        set PYTHONENCODING=utf-8
         python -m pip install --upgrade pip
         python -m venv venv
         venv\Scripts\python -m pip install --upgrade pip wheel setuptools
