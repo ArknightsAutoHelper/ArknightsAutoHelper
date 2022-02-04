@@ -72,7 +72,7 @@ try:
     HcnCloseEndpoint.restype = check_hresult
     availiable = True
 except Exception as e:
-    logger.info("HCN API not availiable")
+    logger.debug("HCN API not availiable")
     availiable = False
 
 if availiable:
