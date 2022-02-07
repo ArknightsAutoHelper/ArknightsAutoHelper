@@ -26,6 +26,7 @@ class OperatorBox:
     status: str
     room: Optional[str]
     skill_icons: list[str]
+    selected: bool = False
 
 def transform_rect(rc, M):
     l, t, r, b = rc
@@ -136,62 +137,71 @@ class RIICAddon(AddonBase):
         # print(layout)
         return layout
 
-    def recognize_operator_select(self, deselect=True, recognize_skill=False, skill_facility_hint=None) -> list[OperatorBox]:
+    def recognize_operator_select(self, recognize_skill=False, skill_facility_hint=None) -> list[OperatorBox]:
         screenshot = self.device.screenshot(cached=False).convert('RGB')
-        if not (roi := self.match_roi('riic/clear_selection', screenshot=screenshot)):
+        self.scale = screenshot.height / 1080
+        if not (roi := self.match_roi('riic/sort_button', screenshot=screenshot)):
             raise RuntimeError('not here')
         # self.tap_rect(roi.bbox, post_delay=0)
         t0 = time.monotonic()
-        screenshot = imgops.scale_to_height(screenshot, 1080)
-        if deselect:
-            highlighted_check = screenshot.subview((605, 530, screenshot.width, 538))
-            self.richlogger.logimage(highlighted_check)
-
-            if (highlighted_check.array == (0, 152, 220)).all(axis=-1).any():
-                self.logger.info('取消选中干员')
-                self.tap_rect(roi.bbox, post_delay=0.2)  # transition animation
-                screenshot = imgops.scale_to_height(self.device.screenshot(cached=False).convert('RGB'), 1080)
+        scaled_screenshot = imgops.scale_to_height(screenshot, 1080)
         dbg_screen = screenshot.copy()
         xs = []
         operators = []
-        cropim = screenshot.array[485:485+37]
-        cropim = cv2.cvtColor(cropim, cv2.COLOR_RGB2GRAY)
-        thim = cv2.threshold(cropim, 55, 1, cv2.THRESH_BINARY)[1]
-        ysum = np.sum(thim, axis=0).astype(np.int16)
-        ysumdiff=np.diff(ysum)
-        row1xs = np.where(ysumdiff<=ysumdiff.min()+3)[0] + 1
+        # cropim = screenshot.array[485:485+37]
+        # cropim = cv2.cvtColor(cropim, cv2.COLOR_RGB2GRAY)
+        # thim = cv2.threshold(cropim, 55, 1, cv2.THRESH_BINARY)[1]
+        # ysum = np.sum(thim, axis=0).astype(np.int16)
+        # ysumdiff=np.diff(ysum)
+        # row1xs = np.where(ysumdiff<=ysumdiff.min()+3)[0] + 1
 
-        for x in row1xs:
-            if x < 605 or x + 184 > screenshot.width:
-                continue
-            rc = Rect.from_xywh(x, 113, 184, 411)
-            operators.append((screenshot.subview(rc), rc))
+        # for x in row1xs:
+        #     if x < 605 or x + 184 > screenshot.width:
+        #         continue
+        #     rc = Rect.from_xywh(x, 113, 184, 411)
+        #     operators.append((screenshot.subview(rc), rc))
 
-        cropim = screenshot.array[909:909+36]
-        cropim = cv2.cvtColor(cropim, cv2.COLOR_RGB2GRAY)
-        thim = cv2.threshold(cropim, 55, 1, cv2.THRESH_BINARY)[1]
-        ysum = np.sum(thim, axis=0).astype(np.int16)
-        ysumdiff=np.diff(ysum)
-        row2xs = np.where(ysumdiff<=ysumdiff.min()+3)[0] + 1
+        # cropim = screenshot.array[909:909+36]
+        # cropim = cv2.cvtColor(cropim, cv2.COLOR_RGB2GRAY)
+        # thim = cv2.threshold(cropim, 55, 1, cv2.THRESH_BINARY)[1]
+        # ysum = np.sum(thim, axis=0).astype(np.int16)
+        # ysumdiff=np.diff(ysum)
+        # row2xs = np.where(ysumdiff<=ysumdiff.min()+3)[0] + 1
 
-        for x in row2xs:
-            if x < 605 or x + 184 > screenshot.width:
-                continue
-            rc = Rect.from_xywh(x, 534, 184, 411)
-            operators.append((screenshot.subview(rc), rc))
+        # for x in row2xs:
+        #     if x < 605 or x + 184 > screenshot.width:
+        #         continue
+        #     rc = Rect.from_xywh(x, 534, 184, 411)
+        #     operators.append((screenshot.subview(rc), rc))
 
-        # for color in ('green', 'yellow', 'red'):
-        #     face = resources.load_image_cached(f'riic/{color}_face.png', 'RGB')
-        #     w, h = face.size
-        #     res = cv2.matchTemplate(screenshot.array, face.array, cv2.TM_CCOEFF_NORMED)
-        #     while True:
-        #         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-        #         if max_val > 0.9:
-        #             xs.append(max_loc[0] - 14)
-        #             res[max_loc[1]-h//2:max_loc[1]+h//2+1, max_loc[0]-w//2:max_loc[0]+w//2+1] = 0
-        #             operators.append(screenshot.subview((max_loc[0] - 14, max_loc[1] - 345, max_loc[0] + 170, max_loc[1] + 66)))
-        #         else:
-        #             break
+        img2find = np.concatenate([scaled_screenshot.array[455:492, 605:], scaled_screenshot.array[876:913, 605:]], axis=0)
+        dedup_set = set()
+        for color in ('green', 'yellow', 'red'):
+            face = resources.load_image_cached(f'riic/{color}_face.png', 'RGB')
+            w, h = face.size
+            res = cv2.matchTemplate(img2find, face.array, cv2.TM_CCOEFF_NORMED)
+            while True:
+                min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+                if max_val > 0.9:
+                    cv2.rectangle(res, (max_loc[0]-4, max_loc[1]-4), (max_loc[0]+4, max_loc[1]+4), 0, -1)
+                    # res[max_loc[1]-4:max_loc[1]+4+1, max_loc[0]-4:max_loc[0]+4+1] = 0
+                    x = max_loc[0] - 14 + 605
+                    if x < 605 or x + 184 > scaled_screenshot.width:
+                        continue
+                    xs.append(x)
+                    if max_loc[1] < img2find.shape[0] // 2:
+                        y = 113
+                    else:
+                        y = 534
+                    key = (round(x/(184/2)), y)
+                    print(key)
+                    if key not in dedup_set:
+                        rc = Rect.from_xywh(x, y, 184, 411).iscale(self.scale)
+                        operators.append((screenshot.subview(rc), rc))
+                        dedup_set.add(key)
+                else:
+                    break
+        operators.sort(key=lambda x: (x[1].x // (184 * self.scale // 2), x[1].y))
         for o, rc in operators:
             cv2.rectangle(dbg_screen.array, rc.xywh, [255,0,0, 1])
         self.richlogger.logimage(dbg_screen)
@@ -214,9 +224,9 @@ class RIICAddon(AddonBase):
         return result
 
     def recognize_operator_box(self, img: Image.Image, recognize_skill=False, skill_facility_hint=None) -> OperatorBox:
-        name_img = img.subview((0, 375, img.width, img.height - 2)).convert('L')
+        name_img = img.subview((0, 375*self.scale, img.width, img.height - 2*self.scale)).convert('L')
         name_img = imgops.enhance_contrast(name_img, 90, 220)
-        name_img = imgops.crop_blackedge2(name_img)
+        name_img = imgops.crop_blackedge2(name_img, x_threshold=name_img.height * 0.3)
         name_img = Image.fromarray(cv2.copyMakeBorder(255 - name_img.array, 8, 8, 8, 8, cv2.BORDER_CONSTANT, value=[255, 255, 255]))
         # save image for training ocr
         # name_img.save(os.path.join(config.SCREEN_SHOOT_SAVE_PATH, '%d-%04d.png' % (self.tag, self.seq)))
@@ -232,15 +242,15 @@ class RIICAddon(AddonBase):
             if comparisions[0][1] == comparisions[1][1]:
                 self.logger.warning('multiple fixes availiable for %r', ocrresult)
             name = comparisions[0][0]
-        mood_img = img.subview(Rect.from_xywh(44, 358, 127, 3)).convert('L').array
+        mood_img = img.subview(Rect.from_xywh(44, 358, 127, 3).iscale(self.scale)).convert('L').array
         mood_img = np.max(mood_img, axis=0)
         mask = (mood_img >= 200).astype(np.uint8)
         mood = np.count_nonzero(mask) / mask.shape[0] * 24
 
-        tagimg = img.subview((35, 209, 155, 262))
         on_shift = resources.load_image_cached('riic/on_shift.png', 'RGB')
         distracted = resources.load_image_cached('riic/distracted.png', 'RGB')
         rest = resources.load_image_cached('riic/rest.png', 'RGB')
+        tagimg = img.subview(Rect.from_ltrb(35, 209, 155, 262).iscale(self.scale)).resize(on_shift.size)
         tag = None
         if imgops.compare_mse(tagimg, on_shift) < 3251:
             tag = 'on_shift'
@@ -249,11 +259,18 @@ class RIICAddon(AddonBase):
         elif imgops.compare_mse(tagimg, rest) < 3251:
             tag = 'rest'
         
-        has_room_check = img.subview(Rect.from_xywh(45,2,62,6)).convert('L')
-        mse = np.mean(np.power(has_room_check.array.astype(np.float32) - 50, 2))
+        selected_check = np.mean(np.power(img.array[0:5].astype(np.float32) - [0, 152, 220], 2))
+        self.richlogger.logtext(f'selected_check mse={selected_check}')
+        selected = selected_check < 3251  # has drop shadow over it
+        if selected:
+            has_room_check_color = [48, 79, 93]  # blue-tinted
+        else:
+            has_room_check_color = [60, 60, 60]
+        has_room_check = img.subview(Rect.from_xywh(111,9,10,4).iscale(self.scale))
+        mse = np.mean(np.power(has_room_check.array.astype(np.float32) - has_room_check_color, 2))
         self.richlogger.logtext(f'has_room_check mse={mse}')
         if mse < 200:
-            room_img = img.subview(Rect.from_xywh(42, 6, 74, 30)).array
+            room_img = img.subview(Rect.from_xywh(42, 9, 74, 27).iscale(self.scale)).array
             room_img = imgops.enhance_contrast(Image.fromarray(np.max(room_img, axis=2)), 64, 220)
             room_img = Image.fromarray(255 - room_img.array)
             self.richlogger.logimage(room_img)
@@ -262,8 +279,8 @@ class RIICAddon(AddonBase):
             room = None
 
         if recognize_skill:
-            skill1_icon = img.subview(Rect.from_xywh(4,285,54,54))
-            skill2_icon = img.subview(Rect.from_xywh(67,285,54,54))
+            skill1_icon = img.subview(Rect.from_xywh(4,285,54,54).iscale(self.scale))
+            skill2_icon = img.subview(Rect.from_xywh(67,285,54,54).iscale(self.scale))
             skill1, score1 = self.recognize_skill(skill1_icon, skill_facility_hint)
             skill2, score2 = self.recognize_skill(skill2_icon, skill_facility_hint)
         else:
@@ -277,13 +294,15 @@ class RIICAddon(AddonBase):
             skill_icons.append(skill2)
         self.richlogger.logimage(name_img)
         self.richlogger.logtext(repr(ocrresult))
-        result = OperatorBox(None, name, mood, tag, room, skill_icons=skill_icons)
+        result = OperatorBox(None, name, mood, tag, room, skill_icons=skill_icons, selected=selected)
         self.richlogger.logtext(repr(result))
         return result
 
     def recognize_skill(self, icon, facility_hint=None) -> tuple[str, float]:
         self.richlogger.logimage(icon)
-        if np.max(icon.array) < 120:
+        skill_check = np.mean(icon.array)
+        self.richlogger.logtext(f'skill_check mean={skill_check}')
+        if skill_check < 60:
             self.richlogger.logtext('no skill')
             return None, 114514
         from . import bskill_cache
@@ -333,7 +352,7 @@ class RIICAddon(AddonBase):
         if bottom > self.viewport[1]:
             bottom = self.viewport[1]
         rect = Rect.from_ltrb(left, top, right, bottom)
-        self.richlogger.logtext(f'rect {rect!r}')
+        self.logger.info(f'{room} @ {rect!r}')
         if rect.width <= 0 or rect.height <= 0:
             raise ValueError('invalid rect')
         self.tap_rect(rect)
@@ -354,17 +373,22 @@ class RIICAddon(AddonBase):
     def select_operators(self, operators):
         pending_operators: list = operators[:]
         last_page_set = set()
-        deselect = True
         while True:
-            current_page = self.recognize_operator_select(deselect=deselect, recognize_skill=False)
+            current_page = self.recognize_operator_select(recognize_skill=False)
             current_page_set = set()
             for op in current_page:
                 current_page_set.add(op.name)
                 if op.name in pending_operators:
-                    self.logger.info('选择干员：%s', op.name)
                     pending_operators.remove(op.name)
-                    self.tap_rect(op.box, post_delay=0)
-                    deselect = False
+                    if op.selected:
+                        self.logger.info(f'{op.name} 已选择')
+                    else:
+                        self.logger.info('选择干员：%s', op.name)
+                        self.tap_rect(op.box, post_delay=0)
+                else:
+                    if op.selected:
+                        self.logger.info(f'取消选择: {op.name}')
+                        self.tap_rect(op.box, post_delay=0)
             if len(pending_operators) == 0 or current_page_set == last_page_set:
                 break
             last_page_set = current_page_set

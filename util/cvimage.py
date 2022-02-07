@@ -171,6 +171,18 @@ class Rect:
         """describe this Rect in tuple of (left, top, right, bottom)"""
         return self.x, self.y, self.right, self.bottom
 
+    def round(self):
+        """return a Rect that rounded to nearest integer"""
+        return Rect.from_ltrb(*(round(x) for x in self.ltrb))
+
+    def scale(self, scale):
+        """return a Rect that scaled by given factor"""
+        return Rect(*(x*scale for x in self.xywh))
+
+    def iscale(self, scale):
+        """return a Rect that scaled by given factor and rounded to nearest integer"""
+        return self.scale(scale).round()
+
     def __iter__(self):
         return iter((self.x, self.y, self.right(), self.bottom()))
 
