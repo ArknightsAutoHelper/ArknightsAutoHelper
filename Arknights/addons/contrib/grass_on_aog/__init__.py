@@ -5,7 +5,7 @@ import json
 import os
 import app
 from automator import AddonBase
-from ...stage_navigator import StageNavigator
+from ...stage_navigator import StageNavigator, custom_stage
 from ...inventory import InventoryAddon
 
 desc = f"""
@@ -64,13 +64,10 @@ def order_stage(item):
 
 
 class GrassAddOn(AddonBase):
-
-    def on_attach(self) -> None:
-        self.addon(StageNavigator).register_custom_stage('grass', self.run, ignore_count=True, title='一键长草', description='检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料')
-
+    @custom_stage('grass', ignore_count=True, title='一键长草', description='检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料')
     def run(self, argv):
         exclude_names = app.config.grass_on_aog.exclude
-        self.logger.info('不刷以下材料:', exclude_names)
+        self.logger.info('不刷以下材料: %r', exclude_names)
         self.logger.info('加载库存信息...')
         aog_cache = load_aog_cache()
         my_items = self.load_inventory()
@@ -94,7 +91,7 @@ class GrassAddOn(AddonBase):
                 # print(t3_item)
                 stage_info = order_stage(t3_item)
                 stage = stage_info['code']
-                self.logger.info('aog stage:', stage)
+                self.logger.info('aog stage: %s', stage)
                 break
         self.addon(StageNavigator).navigate_and_combat(stage, 1000)
 

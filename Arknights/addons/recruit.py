@@ -1,8 +1,6 @@
-from automator import AddonBase
-class RecruitAddon(AddonBase):
-    def on_attach(self) -> None:
-        self.register_cli_command('recruit', self.cli_recruit, self.cli_recruit.__doc__)
+from automator import AddonBase, cli_command
 
+class RecruitAddon(AddonBase):
     def recruit(self):
         import imgreco.recruit
         from . import recruit_calc
@@ -15,6 +13,7 @@ class RecruitAddon(AddonBase):
         self.logger.debug('计算结果：%s', repr(result))
         return result
 
+    @cli_command('recruit')
     def cli_recruit(self, argv):
         """
         recruit [tags ...]

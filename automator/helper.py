@@ -1,85 +1,23 @@
 from __future__ import annotations
 from collections import OrderedDict
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Annotated, Callable, ClassVar, Sequence, Tuple, TypeVar, Union, Type, ForwardRef
+    from typing import TypeVar, Union, Type, ForwardRef
+    from .addon import AddonBase
     TAddon = TypeVar('TAddon')
 del TYPE_CHECKING
 
 import logging
 
-
-
-from .connector import auto_connect
-from .connector.ADBConnector import ADBConnector
-from .frontend import Frontend, DummyFrontend
-from .mixin import AddonMixin
-from util import richlog
-
 logger = logging.getLogger('helper')
 
 
-class RichLogSyncHandler(logging.Handler):
-    def __init__(self, richlog: richlog.RichLogger):
-        super().__init__()
-        self.richlog = richlog
+from .connector.ADBConnector import ADBConnector
+from .frontend import Frontend, DummyFrontend
+from .mixin import AddonMixin
 
-    def emit(self, record: logging.LogRecord):
-        self.richlog.logtext(f'[{record.levelname}] {record.getMessage()}')
-
-class AddonBase(AddonMixin):
-    alias : ClassVar[Union[str, None]] = None
-
-    def __init__(self, helper):
-        super().__init__()
-        self.helper : BaseAutomator = helper
-        self.logger = logging.getLogger(type(self).__name__)
-        self.richlogger = richlog.get_logger(type(self).__name__)
-        self._sync_handler = None
-        self.on_attach()
-
-    def addon(self, cls: Union[str, Type[TAddon]]) -> TAddon:
-        return self.helper.addon(cls)
-
-    def on_attach(self) -> None:
-        """callback"""
-
-    @property
-    def device(self):
-        return self.helper.device
-
-    @property
-    def viewport(self):
-        self.helper._ensure_device()
-        return self.helper.viewport
-
-    @property
-    def vw(self):
-        self.helper._ensure_device()
-        return self.helper.vw
-
-    @property
-    def vh(self):
-        self.helper._ensure_device()
-        return self.helper.vh
-
-    @property
-    def frontend(self):
-        return self.helper.frontend
-
-    def register_cli_command(self, command: str, handler: Callable[[Annotated[Sequence[str], "argv"]], int], help: Union[str, None]=None):
-        if help is None:
-            help = command
-        self.helper._cli_commands[command] = (command, handler, help)
-
-    def register_gui_handler(self, handler):
-        pass
-
-    def sync_richlog(self):
-        if self._sync_handler is None:
-            self._sync_handler = RichLogSyncHandler(self.richlogger)
-            self.logger.addHandler(self._sync_handler)
 class BaseAutomator(AddonMixin):
     frontend: Frontend
     def __init__(self, device_connector=None, frontend=None):  # 当前绑定到的设备
@@ -101,16 +39,14 @@ class BaseAutomator(AddonMixin):
 
 
     def addon(self, cls: Union[ForwardRef[Type[TAddon]], Type[TAddon]]) -> TAddon:
-        if cls in self.addons:
-            return self.addons[cls]
-        elif type(cls) == type:
-            logger.debug("loading addon %s", cls.__qualname__)
-            instance = cls(self)
-            self.addons[cls] = instance
-            alias = getattr(instance, 'alias', None)
-            if alias is None:
-                alias = cls.__name__
-            self.addons[alias] = instance
+        from .addon import _addon_registry
+        dealias = _addon_registry[cls]
+        if dealias in self.addons:
+            return self.addons[dealias]
+        elif type(dealias) == type:
+            logger.debug("loading addon %s", dealias.__qualname__)
+            instance = dealias(self)
+            self.addons[dealias] = instance
             return instance
         else:
             raise TypeError("cls")

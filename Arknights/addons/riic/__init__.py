@@ -8,7 +8,7 @@ import numpy as np
 import textdistance
 
 from Arknights.addons.common import CommonAddon
-from automator import AddonBase
+from automator import AddonBase, cli_command
 from imgreco import imgops, resources, ocr
 import imgreco.ocr.tesseract as tesseract
 import util.cvimage as Image
@@ -42,7 +42,6 @@ class RIICAddon(AddonBase):
     def on_attach(self) -> None:
         self.sync_richlog()
         self.ocr = tesseract.Engine(lang=None, model_name='chi_sim')
-        self.register_cli_command('riic', self.cli_riic, self.cli_riic.__doc__)
         self.tag = time.time()
         self.seq = 0
     
@@ -415,7 +414,7 @@ class RIICAddon(AddonBase):
             self.logger.info('二次确认换班')
             self.tap_rect(roi.bbox)
 
-
+    @cli_command('riic')
     def cli_riic(self, argv):
         """
         riic <subcommand>

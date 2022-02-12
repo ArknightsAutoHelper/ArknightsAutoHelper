@@ -1,11 +1,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Callable, Any, Sequence
+    from typing import Callable, Any, Sequence, ClassVar, Optional, Type
 
-from automator import AddonBase
+from automator import AddonBase, cli_command
 from .common import CommonAddon
 from .combat import CombatAddon, _parse_opt
+from dataclasses import dataclass
+from collections import OrderedDict
 from random import randint, uniform
 from Arknights.flags import *
 
@@ -30,42 +32,93 @@ def get_stage_path(stage):
 def is_stage_supported_ocr(stage):
     return stage in known_stages_ocr and not is_invalid_stage(stage)
 
+@dataclass
+class _custom_stage_record:
+    owner: Type[AddonBase]
+    name: str
+    func: Callable = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    ignore_count: bool = False
+
+@dataclass
+class _navigator_record:
+    owner: Type[AddonBase]
+    tag: str
+    query: Callable[..., bool]
+    navigate: Callable[..., None]
+
+_custom_stage_registry: OrderedDict[str, _custom_stage_record] = OrderedDict()
+_navigator_registry: list[_navigator_record] = []
+class custom_stage:
+    def __init__(self, name, ignore_count=False, title: Optional[str] = None, description: Optional[str] = None):
+        if callable(name):
+            self.fn = self.name
+            self.name = name.__name__
+        else:
+            self.fn = None
+            self.name = name
+        self.ignore_count = ignore_count
+        self.title = title
+        self.description = description
+    
+    def __call__(self, func):
+        self.fn = func
+        return self
+    
+    def __set_name__(self, owner, name):
+        _custom_stage_registry[self.name] = _custom_stage_record(owner, self.name, self.fn, self.title, self.description, self.ignore_count)
+        setattr(owner, name, self.fn)
+
+class navigator:
+    def __init__(self, tag=None, *, query: Optional[Callable[[Type[AddonBase], str], bool]] = None, naivgate: Optional[Callable[[Type[AddonBase], str], None]] = None):
+        if callable(tag):
+            self._query = tag
+            self.tag = None
+        else:
+            self.tag = tag
+            self._query = query
+        self._navigate = naivgate
+    def __call__(self, func):
+        self._query = func
+        return self
+    def navigate(self, fn):
+        self._navigate = fn
+        return fn
+    def __set_name__(self, owner, name):
+        if self._query is None:
+            raise ValueError('navigator must have a query function')
+        if self._navigate is None:
+            raise ValueError('navigator must have a navigate function')
+        if self.tag is None:
+            self.tag = owner.__name__
+        _navigator_registry.append(_navigator_record(owner, self.tag, self._query, self._navigate))
+        setattr(owner, name, self.navigate)
+
+def _auto_extra_help():
+    append_helptext = ['']
+    for name, record in _custom_stage_registry.items():
+        text = f"            {record.name}"
+        if record.title is not None:
+            text += f"\t{record.title}"
+            if record.description is not None:
+                text += f": {record.description}"
+        append_helptext.append(text)
+    return '\n'.join(append_helptext)
 
 class StageNavigator(AddonBase):
     def on_attach(self) -> None:
         self.extra_handlers: list[tuple[Callable[[str], bool], Callable[[str], Any]]] = []
         self.handler_cache = {}
-        self.custom_stages = {}
-        self.register_navigator('builtin', self.is_stage_supported_builtin, self.goto_stage_builtin)
-        self.register_cli_command('auto', self.cli_auto, self.cli_auto.__doc__)
-
-    def register_navigator(self, tag: str, predicate: Callable[[str], bool], navigator: Callable[[str], Any]):
-        self.extra_handlers.append((tag, predicate, navigator))
-
-    def register_custom_stage(self, name: str, handler: Callable[[str, int], Any], ignore_count=False, title=None, description=None):
-        """custom stages are meant to be invoked by user directly and will be unavailable in navigate_and_combat"""
-        self.custom_stages[name] = (handler, ignore_count, title, description)
-        helptxt = self.cli_auto.__doc__.rstrip()
-        append_helptext = ['']
-        for name in self.custom_stages:
-            handler, ignore_count, title, description = self.custom_stages[name]
-            text = f"            {name}"
-            if title is not None:
-                text += f"\t{title}"
-                if description is not None:
-                    text += f": {description}"
-            append_helptext.append(text)
-        helptxt += '\n'.join(append_helptext)
-        self.register_cli_command('auto', self.cli_auto, helptxt)
 
     def is_stage_supported(self, stage):
         if stage in self.handler_cache:
             return True
-        for tag, predicate, handler in self.extra_handlers:
-            self.logger.debug("querying %s for stage %s navigation", tag, stage)
-            result = predicate(stage)
+        for record in _navigator_registry:
+            self.logger.debug("querying %s for stage %s navigation", record.tag, stage)
+            result = record.query(self.addon(record.owner), stage)
             if result:
-                self.handler_cache[stage] = handler
+                self.handler_cache[stage] = lambda stage: record.navigate(self.addon(record.owner), stage)
                 return True
         return False
 
@@ -238,10 +291,12 @@ class StageNavigator(AddonBase):
             else:
                 self.logger.error('未找到目标，是否未开放关卡？')
 
+    @navigator('builtin')
     def is_stage_supported_builtin(self, c_id):
         result = is_stage_supported_ocr(c_id)
         return result
 
+    @is_stage_supported_builtin.navigate
     def goto_stage_builtin(self, stage):
         import imgreco.common
         import imgreco.main
@@ -282,9 +337,9 @@ class StageNavigator(AddonBase):
 
         for c_id, count in task_list:
             self.logger.info("开始 %s", c_id)
-            if c_id in self.custom_stages:
-                handler, ignore_count, title, description = self.custom_stages[c_id]
-                handler(count)
+            if c_id in _custom_stage_registry:
+                record = _custom_stage_registry[c_id]
+                record.func(self.addon(record.owner), count)
             else:
                 flag = self.navigate_and_combat(c_id, count)
 
@@ -298,9 +353,9 @@ class StageNavigator(AddonBase):
                 current = next(it)
             except StopIteration:
                 break
-            if current in self.custom_stages:
-                handler, ignore_count, title, description = self.custom_stages[current]
-                if ignore_count:
+            if current in _custom_stage_registry:
+                record = _custom_stage_registry[current]
+                if record.ignore_count:
                     result.append((current, None))
                     continue
             else:
@@ -316,6 +371,7 @@ class StageNavigator(AddonBase):
             result.append((current, count))
         return result
 
+    @cli_command('auto')
     def cli_auto(self, argv):
         """
         auto [+-rR[N]] TARGET_DESC [TARGET_DESC]...
@@ -336,3 +392,7 @@ class StageNavigator(AddonBase):
         with self.helper.frontend.context:
             self.main_handler(task_list=tasks)
         return 0
+
+    @cli_auto.dynamic_help
+    def cli_auto_help(self):
+        return self.cli_auto.__doc__.rstrip() + _auto_extra_help()

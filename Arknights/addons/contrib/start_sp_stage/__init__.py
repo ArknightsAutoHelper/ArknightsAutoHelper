@@ -13,7 +13,7 @@ from ..activity import get_stage_map
 from ..base import pil2cv, crop_cv_by_rect, show_img
 from ..common_cache import load_game_data
 from ...common import CommonAddon
-from ...stage_navigator import StageNavigator
+from ...stage_navigator import StageNavigator, navigator
 from ...record import RecordAddon
 from imgreco import resources, ocr
 from util import cvimage as Image
@@ -99,18 +99,16 @@ def ocr_and_correct(img, s_list, cand_alphabet: str = None, min_score=0.5, log_l
 
 
 class StartSpStageAddon(AddonBase):
-    def on_attach(self):
-        self.addon(StageNavigator).register_navigator(
-            self.__class__.__name__,
-            lambda stage: self.run(stage, query_only=True),
-            lambda stage: self.run(stage, query_only=False)
-        )
-
     def apply_scale(self, value):
         if self.scale == 1:
             return value
         return int(value * self.scale)
 
+    @navigator
+    def nav(self, stage):
+        return self.run(stage, query_only=True)
+
+    @nav.navigate
     def run(self, stage_code: str, query_only=False):
         stage_code = stage_code.upper()
         stage_code_map, zone_linear_map = get_stage_map()

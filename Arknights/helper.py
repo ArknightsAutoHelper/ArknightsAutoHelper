@@ -32,31 +32,20 @@ class ArknightsHelper(BaseAutomator):
     def load_addons(self):
         from .addons.common import CommonAddon
         from .addons.combat import CombatAddon
-        from .addons.recruit import RecruitAddon
         from .addons.stage_navigator import StageNavigator
+        from .addons.recruit import RecruitAddon
         from .addons.quest import QuestAddon
         from .addons.record import RecordAddon
         from .addons.riic import RIICAddon
 
-        self.addon(CommonAddon)
-        self.addon(CombatAddon)
-        self.addon(StageNavigator)
-        self.addon(RecruitAddon)
-        self.addon(QuestAddon)
-        self.addon(RecordAddon)
-        self.addon(RIICAddon)
         
         from .addons.contrib.grass_on_aog import GrassAddOn
-        self.addon(GrassAddOn)
 
         from .addons.contrib.activity import ActivityAddOn
-        self.addon(ActivityAddOn)
         
         try:
             from .addons.contrib.start_sp_stage import StartSpStageAddon
-            self.addon(StartSpStageAddon)
         except Exception:
             pass
 
         from .addons.contrib.plan import PlannerAddOn
-        self.addon(PlannerAddOn)

@@ -293,8 +293,16 @@ def _configure(prompt, helper_class):
     global prompt_prefix, helper, context
     prompt_prefix = prompt
     helper, context = _create_helper(helper_class)
-    global_cmds.extend([*helper._cli_commands.values(), ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
-    interactive_cmds.extend([('connect', connect, connect.__doc__), *helper._cli_commands.values(), ('exit', exit, '')])
+    from .addon import _cli_registry
+    addon_cmds = []
+    for name, record in _cli_registry.items():
+        def capture_value(owner, func_name):
+            def cli_handler(argv):
+                return getattr(helper.addon(owner), func_name)(argv)
+            return cli_handler
+        addon_cmds.append((name, capture_value(record.owner, record.attr), record.get_help(helper)))
+    global_cmds.extend([*addon_cmds, ('interactive', interactive, interactive.__doc__), ('help', help, help.__doc__)])
+    interactive_cmds.extend([('connect', connect, connect.__doc__), *addon_cmds, ('exit', exit, '')])
     if app.config.debug:
         global_cmds.append(('debug', debug, ''))
         interactive_cmds.append(('debug', debug, ''))

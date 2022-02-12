@@ -1,10 +1,7 @@
-from automator import AddonBase
+from automator import AddonBase, cli_command
 from Arknights.flags import *
 from .common import CommonAddon
 class QuestAddon(AddonBase):
-    def on_attach(self):
-        self.register_cli_command('collect', self.cli_collect, self.cli_collect.__doc__)
-
     def clear_task(self):
         import imgreco.main
         import imgreco.task
@@ -43,6 +40,7 @@ class QuestAddon(AddonBase):
             self.tap_rect(imgreco.task.get_collect_reward_button_rect(self.viewport))
             screenshot = self.device.screenshot(cached=False)
 
+    @cli_command('collect')
     def cli_collect(self, argv):
         """
         collect

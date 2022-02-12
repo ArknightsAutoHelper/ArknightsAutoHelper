@@ -3,16 +3,13 @@ import re
 import json
 import imgreco.imgops
 
-from automator import AddonBase
+from automator import AddonBase, cli_command
 import app
 from .common import CommonAddon
 
 record_basedir = app.writable_root.joinpath('custom_record')
 
 class RecordAddon(AddonBase):
-    def on_attach(self):
-        self.register_cli_command('record', self.cli_record, self.cli_record.__doc__)
-
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
                              description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
         record_dir = record_basedir.joinpath(record_name)
@@ -168,6 +165,7 @@ class RecordAddon(AddonBase):
         path, dirs, files = next(os.walk(record_basedir))
         return [x for x in dirs if os.path.isfile(os.path.join(path, x, 'record.json'))]
 
+    @cli_command('record')
     def cli_record(self, argv):
         """
         record

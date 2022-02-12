@@ -8,7 +8,7 @@ import penguin_stats.reporter
 import app
 from util.excutil import guard
 
-from automator import AddonBase
+from automator import AddonBase, cli_command
 from Arknights.flags import *
 
 
@@ -68,8 +68,6 @@ class CombatAddon(AddonBase):
             self.penguin_reporter = penguin_stats.reporter.PenguinStatsReporter()
         self.refill_count = 0
         self.max_refill_count = None
-
-        self.register_cli_command('quick', self.cli_quick, self.cli_quick.__doc__)
 
         # self.helper.register_gui_handler(self.gui_handler)
 
@@ -354,6 +352,7 @@ class CombatAddon(AddonBase):
     def log_total_loots(self):
         self.logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
 
+    @cli_command('combat')
     def cli_quick(self, argv):
         """
         quick [+-rR[N]] [n]
