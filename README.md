@@ -281,7 +281,7 @@ python3 akhelper.py auto   5-1 2   5-2 3
 
 详情请联系作者或者提出你的issue！祝大家玩的愉快
 
-欢迎来加开发者QQ 2454225341 或加入QQ群 757689154
+欢迎来加开发者QQ 2454225341 或加入QQ群 757689154 [Telegram 群（有简单防爬虫验证）](https://t.me/+fBBb553wouM5MWM1)
 
   [1]: http://static.zybuluo.com/shaobaobaoer/7ifp1acn3an7a3z23t96owt1/TIM%E6%88%AA%E5%9B%BE20190530114456.png
   [2]: http://static.zybuluo.com/shaobaobaoer/860t36w2ygsvet6sxn3lv3ty/TIM%E5%9B%BE%E7%89%8720190612102050.png
