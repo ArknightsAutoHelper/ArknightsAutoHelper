@@ -352,7 +352,7 @@ class CombatAddon(AddonBase):
     def log_total_loots(self):
         self.logger.info('目前已获得：%s', ', '.join('%sx%d' % tup for tup in self.loots.items()))
 
-    @cli_command('combat')
+    @cli_command('quick')
     def cli_quick(self, argv):
         """
         quick [+-rR[N]] [n]
