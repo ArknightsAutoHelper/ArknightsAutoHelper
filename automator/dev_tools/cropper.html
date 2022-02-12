@@ -397,8 +397,8 @@
             elt.addEventListener('mousedown', function (e) {
                 e.preventDefault()
                 e.stopPropagation()
-                this.draginitX = e.pageX
-                this.draginitY = e.pageY
+                this.draginitX = Math.round(e.pageX)
+                this.draginitY = Math.round(e.pageY)
                 let elm = elt
                 handler.enter?.call(handler, e)
                 let originaltranslateX = handler.getX()
@@ -406,9 +406,9 @@
                 if (isNaN(originaltranslateX)) originaltranslateX = 0
                 let movehandler = function (e) {
                     e.preventDefault()
-                    let offsetX = e.pageX - elm.draginitX
+                    let offsetX = Math.round(e.pageX) - elm.draginitX
                     let eltX = originaltranslateX + offsetX
-                    let offsetY = e.pageY - elm.draginitY
+                    let offsetY = Math.round(e.pageY) - elm.draginitY
                     let eltY = originaltranslateY + offsetY
                     // elm.style.transform = 'translateX(' + eltX.toString() + ')'
                     // document.documentElement.style.setProperty(prop, eltX)
@@ -466,8 +466,8 @@
                 let rect = imgelt.getBoundingClientRect()
                 let scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
                 let scrollTop = window.pageYOffset || document.documentElement.scrollTop
-                absleft = e.pageX - (rect.left + scrollLeft)
-                abstop = e.pageY - (rect.top + scrollTop)
+                absleft = Math.round(e.pageX - (rect.left + scrollLeft))
+                abstop = Math.round(e.pageY - (rect.top + scrollTop))
                 absright = absleft
                 absbottom = abstop
                 setFixedX(absleft)
