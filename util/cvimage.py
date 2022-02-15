@@ -440,3 +440,53 @@ class Image:
         from . import _cvimage_imshow_helper
         title = f'Image: {self.width}x{self.height} {self.mode} {self.dtype}'
         multiprocessing.Process(target=_cvimage_imshow_helper.imshow, args=(title, native.array)).start()
+
+    def to_pil(self, always_copy=False):
+        need_convert = None
+        real_pil_mode = self.mode
+        pil_internal_mode = None
+        w, h = self.size
+        if self.mode == 'RGB' or self.mode == 'BGR':
+            need_convert = 'RGBA'
+            real_pil_mode = 'RGB'
+            pil_internal_mode = 'RGBA'
+        elif self.mode[0:3] == 'BGR':
+            need_convert = 'RGB' + self.mode[3:]
+            real_pil_mode = need_convert
+        if pil_internal_mode is None:
+            pil_internal_mode = real_pil_mode
+        if need_convert is not None:
+            img = self.convert(need_convert)
+        else:
+            img = self
+        if always_copy and img is self:
+            img = img.copy()
+        mat = img.array
+        assert mat.dtype == np.uint8
+        if not mat[0].data.c_contiguous:
+            mat = np.ascontiguousarray(mat)
+        from PIL import Image as PILImage
+        ystride = mat.strides[0]
+        ystep = 1
+        if ystride < 0:
+            ystride = -ystride
+            ystep = -1
+        fulllen = ystride * h
+        contmat = np.lib.stride_tricks.as_strided(mat[::ystep, ...], shape=(fulllen,), strides=(1,))
+        return PILImage.frombuffer(real_pil_mode, (w, h), contmat, 'raw', pil_internal_mode, ystride, ystep)
+
+def _test():
+    im = open(r"D:\dant\Pictures\items\100px-道具_带框_量子二踢脚.png", cv2.IMREAD_COLOR)
+    im = im.subview((20, 20, 70, 70))
+    im.show()
+    bio = io.BytesIO()
+    pil_im = im.to_pil()
+    pil_im.show()
+    pil_im.save(bio, 'png')
+    bio.seek(0)
+    im2 = open(bio)
+    im2.show()
+
+
+if __name__ == '__main__':
+    _test()
