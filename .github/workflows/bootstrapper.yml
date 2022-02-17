@@ -40,7 +40,7 @@ jobs:
         token: "${{ secrets.GITHUB_TOKEN }}"
         name: "Bootstrapper for Windows"
         tag_name: "bootstrapper-release"
-        prerelease: true
+        prerelease: false
         body: |
           ## 一键启动器（Windows）
 
