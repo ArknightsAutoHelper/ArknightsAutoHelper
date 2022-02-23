@@ -1,0 +1,127 @@
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+.tasklist-widget {
+  min-height: $pt-button-height-large * 2;
+  .#{$ns}-large {
+    font-size: unset;
+  }
+
+  .scroller {
+    overflow-x: visible;
+  }
+
+  .scroller > * {
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+  .scroller > .grower {
+    flex-grow: 1;
+    flex-shrink: 1;
+  }
+
+  .toolbar-placeholder {
+    height: $pt-button-height-small;
+  }
+  overflow: visible;
+}
+
+.task-item {
+  height: $pt-button-height-large;
+  // background-color: $light-gray5;
+  &.hover-effect:hover, &:focus-within {
+    background-color: $white;
+  }
+  &.selected {
+    background-color: $pt-text-selection-color !important;
+  }
+  &.dragging {
+    background: none !important;
+    * {
+      opacity: 0;
+    }
+    .#{$ns}-divider {
+      opacity: 1;
+    }
+  }
+  &.overlay {
+    position: relative;
+    transform: translate3d(0,0,0);
+    border-radius: $pt-border-radius;
+    box-shadow: $pt-elevation-shadow-3;
+    cursor: grabbing;
+    .#{$ns}-divider{
+      display: none;
+    }
+    .task-item-mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  }
+  .task-item-icon {
+    color: $pt-icon-color;
+    margin-right: 0.25em;
+  }
+
+  .task-item-title {
+    cursor: default;
+    user-select: none;
+  }
+
+  .item-controls {
+    width: 0;
+    overflow: hidden;
+  }
+
+  .item-checkbox {
+    opacity: 0;
+  }
+
+  &:focus-within, &:hover, &.selected{
+    .item-controls {
+      width: unset;
+      overflow: visible;
+    }
+    .item-checkbox {
+      opacity: 1;
+    }
+  }
+
+  .drag-handle {
+    color: $pt-icon-color-disabled;
+    margin-left: -0.1em;
+    margin-right: -0.1em;
+    cursor: grab;
+  }
+
+  .#{$ns}-divider {
+    margin: -1px 0 0 0;
+  }
+}
+
+.TaskScheduler {
+  .#{$ns}-button {
+    cursor: default;
+  }
+}
+
+.task-list-toolbar {
+  background-color: $white;
+}
+
+.#{$ns}-dark {
+  .task-item {
+    // background-color: $dark-gray3;
+    &.hover-effect:hover, &:focus-within {
+      background-color: $dark-gray4;
+    }
+  }
+  .task-list-toolbar {
+    background-color: $pt-dark-app-background-color;
+  }
+  .drag-handle {
+    color: $pt-dark-icon-color-disabled;
+  }
+}

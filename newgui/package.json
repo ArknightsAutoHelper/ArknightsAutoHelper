@@ -1,0 +1,70 @@
+{
+  "name": "newgui",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@blueprintjs/core": "^3.52.0",
+    "@blueprintjs/popover2": "^0.12.9",
+    "@blueprintjs/select": "^3.18.11",
+    "@chakra-ui/layout": "^1.7.4",
+    "@chakra-ui/system": "^1.10.3",
+    "@dnd-kit/core": "^5.0.1",
+    "@dnd-kit/modifiers": "^5.0.0",
+    "@dnd-kit/sortable": "^6.0.0",
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@react-rxjs/core": "^0.8.4",
+    "@react-rxjs/utils": "^0.9.3",
+    "@testing-library/jest-dom": "^5.16.2",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/user-event": "^13.5.0",
+    "@types/jest": "^27.4.0",
+    "@types/node": "^17.0.15",
+    "@types/react": "^17.0.2",
+    "@types/react-dom": "^17.0.2",
+    "inobounce": "^0.2.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-scripts": "5.0.0",
+    "rxjs": "^7.5.4",
+    "sass": "^1.49.7",
+    "typescript": "^4.5.5",
+    "web-vitals": "^2.1.4",
+    "workbox-background-sync": "^6.4.2",
+    "workbox-broadcast-update": "^6.4.2",
+    "workbox-cacheable-response": "^6.4.2",
+    "workbox-core": "^6.4.2",
+    "workbox-expiration": "^6.4.2",
+    "workbox-google-analytics": "^6.4.2",
+    "workbox-navigation-preload": "^6.4.2",
+    "workbox-precaching": "^6.4.2",
+    "workbox-range-requests": "^6.4.2",
+    "workbox-routing": "^6.4.2",
+    "workbox-strategies": "^6.4.2",
+    "workbox-streams": "^6.4.2"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

@@ -1,0 +1,52 @@
+@import "~@blueprintjs/core/lib/scss/variables";
+
+.dynamic-setting-namespace {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 540px;
+    // margin-bottom: 0.5em;
+}
+
+.dynamic-setting-namespace-indent {
+    margin-left: 2em;
+}
+
+.dynamic-setting-field {
+    min-height: 3em;
+    padding: 8px 0;
+    .bp3-control {
+        margin: 0;
+    }
+    .bp3-form-group-sub-label{
+        white-space: pre-wrap;
+
+    }
+    .bp3-divider {
+        margin: 0;
+    }
+}
+
+.dynamic-setting-schema-title {
+    .#{$ns}-heading {
+        margin-top: 0;
+        margin-bottom: 0.25em;
+    }
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    // &.level-0 {
+    //     margin-top: 1rem;
+    // }
+}
+
+.dynamic-setting-field-doc {
+    white-space: pre-wrap;
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+.dynamic-setting-divider {
+    // margin-left: 0;
+    // margin-right: 0;
+    margin: 0;
+}

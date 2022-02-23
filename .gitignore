@@ -140,3 +140,6 @@ resources.zip
 packaging/*/bin
 packaging/*/obj
 *proj.user
+
+# use gitignore file in newgui only
+!newgui

@@ -1,0 +1,122 @@
+@import "~normalize.css";
+
+$pt-font-family-monospace: 'Monaco', 'Consolas', monospace;
+
+
+@import "~@blueprintjs/core/lib/css/blueprint.css";
+@import "~@blueprintjs/icons/lib/css/blueprint-icons.css";
+@import "~@blueprintjs/popover2/lib/css/blueprint-popover2.css";
+@import "~@blueprintjs/core/lib/scss/variables.scss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow: hidden;
+  width: 100vw;
+  height: 100%;
+  height: -webkit-fill-available;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  min-height: -webkit-fill-available;
+  min-width: calc(420px + (100vw - env(titlebar-area-width) - env(titlebar-area-x)));
+  width: 100%;
+  overflow: hidden;
+  -webkit-overflow-scrolling: touch;
+  user-select: none;
+}
+
+#root {
+  overscroll-behavior: contain;
+  width: 100%;
+  height: 100%;
+}
+
+.user-select-text {
+  user-select: text;
+}
+
+.overflow-y-scroll {
+  overflow-y: scroll;
+  overflow-y: overlay;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+  overflow-y: overlay;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+.square-card {
+  border-radius: 0;
+}
+
+.no-bottom-margin {
+  margin-bottom: 0;
+}
+
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
+
+.min-height-0 {
+  min-height: 0;
+}
+
+html, body {
+  color: $pt-text-color;
+  background-color: $pt-app-background-color;
+  &.#{$ns}-dark {
+    color: $pt-dark-text-color;
+    background-color: $pt-dark-app-background-color;
+  }
+}
+
+@media(prefers-color-scheme: dark) {
+  html {
+    background-color: $pt-dark-app-background-color;
+  }
+}
+// scrollbar
+// /* Scrollbar size */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 10px;
+  position: fixed;
+  transition: 1.0s;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(127, 127, 127, 0.6);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 5px;
+  transition: 1.0s;
+  &:hover {
+    background-color: rgb(110, 110, 110);
+    transition: 0.3s;
+  }
+  &:active {
+    background: rgba(95, 91, 91, 1);
+  }
+}
+
+::-webkit-scrollbar-track {
+  background: none;
+}
+
+::-webkit-scrollbar-corner {
+  background: none;
+}
