@@ -78,6 +78,7 @@ class Namespace(Field[SubType]):
 
 class Schema:
     _parent_schema: ClassVar[Optional[Type[Schema]]] = None
+    _fields: ClassVar[OrderedDict[str, Field]]
     def __init__(self, store: Optional[Mapping] = None, parent: Optional[Schema] = None):
         if store is None:
             store = _generate_default_store(self.__class__)
@@ -127,5 +128,26 @@ def _generate_default_store(cls: Union[Type[Schema], Namespace], indent=0):
 
 def is_dirty(schema: Schema):
     return schema._dirty
+
+def _to_viewmodel(schema: Schema, name_prefix=''):
+    result = []
+    for name, field in schema.__class__._fields.items():
+        item = dict(field_type=type(field).__name__, local_name=name, full_name=name_prefix + name, title=field.title, doc=field.doc)
+        if isinstance(field, Namespace):
+            item['value'] = _to_viewmodel(field.__get__(schema, type(schema)), name_prefix + name + '.')
+        else:
+            item['value'] = getattr(schema, name)
+            item['default'] = field.default
+            if isinstance(field, ListField):
+                item['element_type'] = field.element_type.__name__
+            elif isinstance(field, EnumField):
+                item['enum_values'] = field.values
+            else:
+                item['value_type'] = field.type.__name__
+        result.append(item)
+    return result
+
+def to_viewmodel(schema: Schema):
+    return _to_viewmodel(schema)
 
 __all__ = ['Schema', 'Field', 'EnumField', 'ListField', 'Namespace', 'is_dirty']
