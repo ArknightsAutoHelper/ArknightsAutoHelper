@@ -1,7 +1,7 @@
 import { Flex, Box } from '@chakra-ui/layout'
 import React, { useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { AnchorButton, Button, ButtonGroup, Card, Checkbox, Classes, ControlGroup, Divider, Elevation, H3, H5, Icon, Label, MenuItem, Spinner, SpinnerSize, Text } from '@blueprintjs/core';
+import { Button, ButtonGroup, Card, Divider, Icon, Text } from '@blueprintjs/core';
 import { Tooltip2 } from '@blueprintjs/popover2';
 import * as DnD from '@dnd-kit/core';
 import * as DnDSortable from '@dnd-kit/sortable';
@@ -53,14 +53,7 @@ interface ITaskItemProps extends ITaskItemRenderData, ITaskItemUIEvents {
   style?: React.CSSProperties;
 }
 
-interface ITaskItemDrag {
-  id: string;
-  originalIndex: number;
-}
-
 const TaskItem = React.forwardRef((props: ITaskItemProps, ref) => {
-
-  const dragItem: ITaskItemDrag = { id: props.id, originalIndex: props.index };
   const listDragging = props.dragging
   const { id, itemStatus, title, checked, onConfig, onCheckedChange, onDisableChange } = props;
 

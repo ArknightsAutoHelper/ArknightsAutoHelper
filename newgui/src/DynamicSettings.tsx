@@ -1,6 +1,6 @@
 import { Field, SchemaViewModel } from "./SchemaViewModel";
 
-import { FormGroup, H3, H4, H5, H6, HTMLSelect, InputGroup, NumericInput, Switch, TagInput, Divider, Label, Text, Code } from "@blueprintjs/core";
+import { H3, H4, H5, H6, HTMLSelect, InputGroup, NumericInput, Switch, TagInput, Divider, Text, Code } from "@blueprintjs/core";
 import { Box, Flex } from "@chakra-ui/layout";
 
 import "./DynamicSettings.scss";

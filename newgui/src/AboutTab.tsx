@@ -1,6 +1,5 @@
-import { AnchorButton, Button, ButtonGroup, H4, Icon, Switch } from "@blueprintjs/core";
+import { Button, H4, Icon, Switch } from "@blueprintjs/core";
 import { Box, Flex } from "@chakra-ui/layout";
-import { DrakModePreference, updateDarkMode } from "./darkmode";
 import { useLocalStorage } from "./LocalStorageHook";
 
 

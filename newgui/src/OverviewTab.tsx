@@ -1,12 +1,11 @@
-import { Flex, Box, Grid, GridItem } from '@chakra-ui/layout'
+import { Flex, Box } from '@chakra-ui/layout'
 import * as React from 'react';
-import { AnchorButton, Button, ButtonGroup, Card, Checkbox, Classes, ControlGroup, Divider, Elevation, H3, H4, H5, Icon, Label, MenuItem, Spinner, SpinnerSize, Switch, Text } from '@blueprintjs/core';
+import {  Button, Card, Divider, H5, Icon, MenuItem, Switch, Text } from '@blueprintjs/core';
 import { Select } from "@blueprintjs/select";
-import { Tooltip2 } from '@blueprintjs/popover2';
 import TaskScheduler from './TaskScheduler';
 import "./OverviewTab.scss";
 
-import * as global from './AppGlobalState';
+import * as globalState from './AppGlobalState';
 
 interface IDeviceSelect {
   key: string;
@@ -28,25 +27,18 @@ const LogRecord = React.memo(({ level, time, message }: any) => {
   )
 });
 
-const LogRecord2 = React.memo(({ level, time, message }: any) => {
-  return (
-    <pre className='log-record' data-loglevel={level}>{time + '|' + level + '|' + message}</pre>
-  )
-});
-
-
-
 function LogPanel({ autoScroll, showDebugMessage }) {
   const scrollContainer = React.useRef<HTMLDivElement>(null);
   const [logs, setLogs] = React.useState([]);
+  // const [limit] = globalState.logScrollbackLimit.useState();
   const lastlog = logs[logs.length - 1]?.id;
   React.useEffect(() => {
-    const subscription = global.log$.asObservable().subscribe(log => {
-      global.logScrollbackLimit.getValue((limit) => {
-        setLogs(logs => [...logs, log].slice(-limit));
-      });
-    })
-    return subscription.unsubscribe;
+    const subscription = globalState.log$.asObservable().subscribe(log => {
+      const limit = globalState.logScrollbackLimit.getValue();
+      console.log("limit=", limit);
+      setLogs(logs => [...logs.slice(-limit+1), log]);
+    });
+    return ()=>subscription.unsubscribe();
   }, []);
   React.useEffect(() => {
     if (autoScroll) {
@@ -54,7 +46,7 @@ function LogPanel({ autoScroll, showDebugMessage }) {
         const elm = scrollContainer.current;
         if (elm) {
           // console.log('scrolling to bottom of', elm);
-          elm.scrollTop = elm.scrollHeight;
+          elm.querySelector('tr:last-child')?.scrollIntoView();
           // if (elm.scrollTop >= elm.scrollHeight - elm.clientHeight - 32) {
           // }
         }
@@ -77,11 +69,11 @@ function LogPanel({ autoScroll, showDebugMessage }) {
 export default function OverviewTab() {
   const [autoScroll, setAutoScroll] = React.useState(true);
   const [showDebugMessage, setShowDebugMessage] = React.useState(false);
-  const [currentDevice] = global.currentDevice.useState();
+  const [currentDevice] = globalState.currentDevice.useState();
   const [clearTag, setClearTag] = React.useState(() => new Date().toISOString());
   const addLog = () => {
     const level = ['DEBUG', 'INFO', 'WARNING', 'ERROR'][Math.floor(Math.random() * 4)];
-    global.log$.next({ level, time: new Date().toISOString().substring(11, 23), message: "Hello world! " + trollCount, id: +new Date() + Math.random().toString() })
+    globalState.log$.next({ level, time: new Date().toISOString().substring(11, 23), message: "Hello world! " + trollCount, id: +new Date() + Math.random().toString() })
     trollCount++;
   };
 
@@ -95,10 +87,10 @@ export default function OverviewTab() {
     const worker = (i: number) => {
       addLog();
       if (i < 100) {
-        requestIdleCallback(() => worker(i + 1));
+        setTimeout(() => worker(i + 1), 0);
       }
     }
-    requestIdleCallback(() => worker(1));
+    setTimeout(() => worker(1), 0);
   };
 
   return (
