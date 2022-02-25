@@ -11,7 +11,7 @@ from ..inventory import InventoryAddon
 record_path = app.config_path.joinpath('record.json')
 
 class PlannerAddOn(AddonBase):
-    @cli_command('plan')
+    @cli_command('arkplanner')
     def cli_arkplanner(self, argv):
         """
         arkplanner
