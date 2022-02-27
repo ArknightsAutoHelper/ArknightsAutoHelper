@@ -29,7 +29,12 @@ export function App() {
   const [currentTab, setActiveTab] = globalState.currentTab.useState();
   const activeTab = currentTab || (showAboutOnStartup ? 'about' : 'overview');
   const [hasUpdate] = globalState.updateAvailiable.useState();
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    setTimeout(() => setLoading(false), 5000);
+  }, []);
+
   const defaultClasses = "tab-container overflow-y-auto min-height-0";
   return (
     <Flex flexDirection="column" alignItems="stretch" height="100%" className="app">
@@ -43,7 +48,6 @@ export function App() {
             <Button active={activeTab === 'statistics'} onPointerDown={() => setActiveTab('statistics')} icon="timeline-bar-chart" text="统计" />
             <Button active={activeTab === 'settings'} onPointerDown={() => setActiveTab('settings')} icon="cog" text="设置" />
           </ButtonGroup>
-          <Box flexGrow={1} />
         </Navbar.Group>
         <Navbar.Group align={Alignment.RIGHT} className='app-titlebar-right-padding' />
         <Navbar.Group align={Alignment.RIGHT} className='app-titlebar-controls'>
@@ -53,6 +57,14 @@ export function App() {
         </Navbar.Group>
       </Navbar>
       <Box flexGrow={1} minHeight="0" position="relative">
+        {loading &&
+          <Box style={{ position: 'absolute', background: "rgba(255,255,255, 0.7)", left: "0", right: "0", top: "0", bottom: "0", zIndex: 9999 }}>
+            <NonIdealState
+              icon={<Spinner />}
+              title="Loading…"
+            />
+          </Box>
+        }
         <Box className={defaultClasses + (activeTab !== 'overview' ? ' inactive' : '')}>
           {React.useMemo(() => <OverviewTab />, [])}
         </Box>
@@ -66,17 +78,7 @@ export function App() {
           {React.useMemo(() => <AboutTab />, [])}
         </Box>
       </Box>
-
-      {loading &&
-        <Box style={{ position: 'absolute', background: "rgba(255,255,255, 0.7)", left: "0", right: "0", top: "0", bottom: "0", zIndex: 9999 }}>
-          <NonIdealState
-            icon={<Spinner />}
-            title="Loading…"
-          />
-        </Box>
-      }
     </Flex>
-
   );
 }
 

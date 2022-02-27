@@ -1,10 +1,10 @@
 import { Button, H4, Icon, Switch } from "@blueprintjs/core";
 import { Box, Flex } from "@chakra-ui/layout";
-import { useLocalStorage } from "./LocalStorageHook";
 
+import * as globalState from "./AppGlobalState";
 
 export default function AboutTab() {
-  const [showOnStartup, setShowOnStartup] = useLocalStorage("showAboutOnStartup", true);
+  const [showOnStartup, setShowOnStartup] = globalState.showAboutOnStartup.useState();
 
   return (
     <Box width="100%" height="100%"  flexGrow={1} flexDirection='column' alignItems='center' minHeight={0} className="overflow-y-auto">

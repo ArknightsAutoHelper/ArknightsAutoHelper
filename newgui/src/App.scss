@@ -8,7 +8,7 @@
     app-region: no-drag;
   }
   box-shadow: $pt-elevation-shadow-1;
-  transform: translate3d(0,0,0);
+  // transform: translate3d(0,0,0);
   .app-titlebar-left-padding {
     padding-left: env(titlebar-area-x);
   }

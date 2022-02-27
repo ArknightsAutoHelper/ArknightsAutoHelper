@@ -126,21 +126,21 @@ export function SchemaView(props: ISchemaViewProps) {
   return (
     <div className="dynamic-setting-namespace user-select-text width-100">
       <SchemaTitle title={schema.name} code={showFieldName ? namespaceName : null} {...{ description, nestingLevel }} />
-      <Box className={nestingLevel !== 0 ? 'dynamic-setting-namespace-indent': null} >
+      <Box className={nestingLevel !== 0 ? 'dynamic-setting-namespace-indent' : null} >
         {schema.fields.map((field, i, a) => {
           if (field.field_type === 'Field' || field.field_type === 'EnumField' || field.field_type === 'ListField') {
             // text/bool/number input
             const elm = <FieldView key={field.full_name} field={field} showFieldName={showFieldName} valueAtom={valueAtoms.get(field.full_name) || new RxAtom(field.value)} />;
             if (i === 0) {
               return <>
-                <Divider className="dynamic-setting-divider"/>
+                <Divider className="dynamic-setting-divider" />
                 {elm}
-                <Divider className="dynamic-setting-divider"/>
+                <Divider className="dynamic-setting-divider" />
               </>
             } else {
               return <>
                 {elm}
-                <Divider className="dynamic-setting-divider"/>
+                <Divider className="dynamic-setting-divider" />
               </>
             }
           } else if (field.field_type === 'Namespace') {

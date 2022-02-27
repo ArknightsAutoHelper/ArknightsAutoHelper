@@ -1,6 +1,6 @@
 import { Flex, Box } from '@chakra-ui/layout'
 import * as React from 'react';
-import {  Button, Card, Divider, H5, Icon, MenuItem, Switch, Text } from '@blueprintjs/core';
+import { Button, Card, Divider, H5, Icon, MenuItem, Switch, Text } from '@blueprintjs/core';
 import { Select } from "@blueprintjs/select";
 import TaskScheduler from './TaskScheduler';
 import "./OverviewTab.scss";
@@ -36,19 +36,16 @@ function LogPanel({ autoScroll, showDebugMessage }) {
     const subscription = globalState.log$.asObservable().subscribe(log => {
       const limit = globalState.logScrollbackLimit.getValue();
       console.log("limit=", limit);
-      setLogs(logs => [...logs.slice(-limit+1), log]);
+      setLogs(logs => [...logs.slice(-limit + 1), log]);
     });
-    return ()=>subscription.unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
   React.useEffect(() => {
     if (autoScroll) {
       window.requestAnimationFrame(() => {
         const elm = scrollContainer.current;
         if (elm) {
-          // console.log('scrolling to bottom of', elm);
-          elm.querySelector('tr:last-child')?.scrollIntoView();
-          // if (elm.scrollTop >= elm.scrollHeight - elm.clientHeight - 32) {
-          // }
+          elm.scrollTop = elm.scrollHeight;
         }
       });
     }
