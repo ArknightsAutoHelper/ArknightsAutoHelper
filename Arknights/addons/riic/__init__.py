@@ -8,7 +8,8 @@ import numpy as np
 import textdistance
 
 from Arknights.addons.common import CommonAddon
-from automator import AddonBase, cli_command
+from app.schemadef import Field
+from automator import AddonBase, cli_command, task_sched
 from imgreco import imgops, resources, ocr
 import imgreco.ocr.tesseract as tesseract
 import util.cvimage as Image
@@ -193,7 +194,6 @@ class RIICAddon(AddonBase):
                     else:
                         y = 534
                     key = (round(x/(184/2)), y)
-                    print(key)
                     if key not in dedup_set:
                         rc = Rect.from_xywh(x, y, 184, 411).iscale(self.scale)
                         operators.append((screenshot.subview(rc), rc))
@@ -453,3 +453,29 @@ class RIICAddon(AddonBase):
         else:
             print("unknown command:", cmd)
             return 1
+
+    @task_sched.task(category='基建', title='一键收取')
+    class RIICCollectTask(task_sched.Schema):
+        """收取贸易站、制造站、信赖"""
+        pass
+
+    @RIICCollectTask.handler
+    def handle_task(self, task: RIICCollectTask):
+        self.collect_all()
+
+    @task_sched.task(category='基建', title='线索交流')
+    class RIICClueTask(task_sched.Schema):
+        """收取线索、赠送线索、开启线索交流"""
+        pass
+
+    @RIICClueTask.handler
+    def handle_task(self, task: RIICClueTask):
+        raise NotImplementedError
+
+    @task_sched.task(category='基建', title='自动换班')
+    class RIICShiftTask(task_sched.Schema):
+        strategy = Field(str, default='', title='换班策略', doc='留空使用自带策略。自定义策略请参考开发文档。')
+
+    @RIICShiftTask.handler
+    def handle_task(self, task: RIICShiftTask):
+        raise NotImplementedError

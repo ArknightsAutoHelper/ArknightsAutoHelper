@@ -2,11 +2,16 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import ClassVar, Sequence, Type, TypeVar, Generic, Optional, Union
+from typing import Callable, ClassVar, Sequence, Type, TypeVar, Generic, Optional, Union
 
 FieldType = TypeVar('FieldType')
 ElementType = TypeVar('ElementType')
 SubType = TypeVar('SubType')
+
+class action:
+    pass
+_action_tag = action()
+
 class Field(Generic[FieldType]):
     def __init__(self, type: Type[FieldType], default: FieldType, title: str = None, doc: str = None):
         self.type = type
@@ -54,6 +59,21 @@ class ListField(Field[list[ElementType]]):
         super().__set__(instance, value)
 
 
+class IntField(Field[int]):
+    def __init__(self, default: int, title: str = None, doc: str = None, min: int = None, max: int = None):
+        super().__init__(int, default, title, doc)
+        self.min = min
+        self.max = max
+
+class Action(Field[object]):
+    def __init__(self, button: str = None, title: str = None, doc: str = None):
+        super().__init__(action, button, title, doc)
+        self._handler = None
+    
+    def handler(self, func):
+        self._handler = func
+        return func
+
 class Namespace(Field[SubType]):
     def __init__(self, title=None, doc=None):
         super().__init__(None, None, title, doc)
@@ -67,6 +87,7 @@ class Namespace(Field[SubType]):
     def __set_name__(self, owner: Type[Schema], name: str):
         super().__set_name__(owner, name)
         self.type._parent_schema = self.type
+        setattr(owner, name, self.type)
 
     def __get__(self, instance: Schema, owner: Type[Schema]) -> SubType:
         if instance is None:
@@ -107,6 +128,8 @@ def _generate_default_store(cls: Union[Type[Schema], Namespace], indent=0):
         if name.startswith('_'):
             continue
         if isinstance(field, Field):
+            if isinstance(field, Action):
+                continue
             comment_lines = []
             if first_field:
                 first_field = False
@@ -135,6 +158,9 @@ def _to_viewmodel(schema: Schema, name_prefix=''):
         item = dict(field_type=type(field).__name__, local_name=name, full_name=name_prefix + name, title=field.title, doc=field.doc)
         if isinstance(field, Namespace):
             item['value'] = _to_viewmodel(field.__get__(schema, type(schema)), name_prefix + name + '.')
+        elif isinstance(field, Action):
+            item['value'] = '<action>'
+            item['default'] = field.default
         else:
             item['value'] = getattr(schema, name)
             item['default'] = field.default

@@ -1,12 +1,14 @@
+from app.schemadef import ListField
 from penguin_stats import arkplanner
 import requests
 from datetime import datetime
 import json
 import os
 import app
-from automator import AddonBase
+from automator import AddonBase, task_sched
 from ...stage_navigator import StageNavigator, custom_stage
 from ...inventory import InventoryAddon
+from ...combat import CombatAddon, RefillConfigurationMixin
 
 desc = f"""
 {__file__}
@@ -109,6 +111,15 @@ class GrassAddOn(AddonBase):
         with open(inventory_cache_file, 'w') as f:
             json.dump(data, f)
         return data
+
+    @task_sched.task(category='代理指挥作战', title='一键长草')
+    class GrassTask(task_sched.Schema, RefillConfigurationMixin):
+        exclude = ListField(str, ['固源岩组'], '不刷以下材料')
+
+    @GrassTask.handler
+    def handle_task(self, task: GrassTask):
+        self.addon(CombatAddon).configure_refill(task)
+        self.run([])
 
 __all__ = ['GrassAddOn']
 
