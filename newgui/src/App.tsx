@@ -41,7 +41,7 @@ export function App() {
       <Navbar className='app-titlebar'>
         <Navbar.Group align={Alignment.LEFT} className='app-titlebar-left-padding' />
         <Navbar.Group align={Alignment.LEFT}>
-          <Navbar.Heading><img className='app-icon' src={logo} width="24" height="24" /></Navbar.Heading>
+          <Navbar.Heading><img className='app-icon' src={logo} width="24" height="24" alt="icon" /></Navbar.Heading>
           <ButtonGroup className='app-titlebar-controls'>
             <Button active={activeTab === 'overview'} onPointerDown={() => setActiveTab('overview')} icon="dashboard" text="总览" />
             <Button active={activeTab === 'gallery'} onPointerDown={() => setActiveTab('gallery')} icon="control" text="任务库" />

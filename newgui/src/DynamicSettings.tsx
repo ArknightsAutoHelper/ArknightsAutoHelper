@@ -103,7 +103,7 @@ export const SchemaTitle = React.memo(({ title, code, description, nestingLevel 
 function populateFields(fields: Field[], output: Map<string, RxAtom>, onChange?: (full_name: string, atom: RxAtom, newValue) => void) {
   for (const field of fields) {
     if (field.field_type === "Namespace") {
-      populateFields(field.value, output, onChange);
+      populateFields(field.fields, output, onChange);
     } else if (field.full_name) {
       const newAtom = new RxAtom(field.value)
       if (onChange) newAtom.changed$.subscribe((value) => onChange(field.full_name, newAtom, value));
@@ -145,7 +145,7 @@ export function SchemaView(props: ISchemaViewProps) {
             }
           } else if (field.field_type === 'Namespace') {
             // namespace
-            return <SchemaView key={field.full_name} showFieldName={showFieldName} namespaceName={field.local_name} schema={{ name: field.title, description: field.doc, fields: field.value }} nestingLevel={nestingLevel + 1} valueAtoms={valueAtoms} />;
+            return <SchemaView key={field.full_name} showFieldName={showFieldName} namespaceName={field.local_name} schema={{ name: field.title, description: field.doc, fields: field.fields }} nestingLevel={nestingLevel + 1} valueAtoms={valueAtoms} />;
           }
           return null;
         })}

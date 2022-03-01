@@ -8,7 +8,7 @@
         "full_name": "device",
         "title": "设备连接",
         "doc": null,
-        "value": [
+        "fields": [
             {
                 "field_type": "Field",
                 "local_name": "adb_server",
@@ -45,7 +45,7 @@
                 "full_name": "device.extra_enumerators",
                 "title": "额外的设备枚举逻辑",
                 "doc": null,
-                "value": [
+                "fields": [
                     {
                         "field_type": "Field",
                         "local_name": "bluestacks_hyperv",
@@ -116,14 +116,14 @@
         "full_name": "combat",
         "title": "作战模块",
         "doc": "回复体力设置已移除，请使用命令行参数或在 GUI 中设置",
-        "value": [
+        "fields": [
             {
                 "field_type": "Namespace",
                 "local_name": "penguin_stats",
                 "full_name": "combat.penguin_stats",
                 "title": "企鹅物流数据统计",
                 "doc": null,
-                "value": [
+                "fields": [
                     {
                         "field_type": "Field",
                         "local_name": "enabled",
@@ -162,7 +162,7 @@
                 "full_name": "combat.mistaken_delegation",
                 "title": "代理指挥失误",
                 "doc": null,
-                "value": [
+                "fields": [
                     {
                         "field_type": "Field",
                         "local_name": "settle",
@@ -193,7 +193,7 @@
         "full_name": "plan",
         "title": "作战计划",
         "doc": null,
-        "value": [
+        "fields": [
             {
                 "field_type": "EnumField",
                 "local_name": "calc_mode",
@@ -215,7 +215,7 @@
         "full_name": "stage_navigator",
         "title": "关卡导航",
         "doc": null,
-        "value": [
+        "fields": [
             {
                 "field_type": "EnumField",
                 "local_name": "ocr_backend",
@@ -237,7 +237,7 @@
         "full_name": "ocr",
         "title": "OCR 设置（即将弃用）",
         "doc": null,
-        "value": [
+        "fields": [
             {
                 "field_type": "EnumField",
                 "local_name": "backend",
@@ -259,7 +259,7 @@
                 "full_name": "ocr.baidu_api",
                 "title": "百度 OCR API 设置",
                 "doc": null,
-                "value": [
+                "fields": [
                     {
                         "field_type": "Field",
                         "local_name": "enable",
@@ -310,7 +310,7 @@
         "full_name": "grass_on_aog",
         "title": "一键长草设置",
         "doc": null,
-        "value": [
+        "fields": [
             {
                 "field_type": "ListField",
                 "local_name": "exclude",

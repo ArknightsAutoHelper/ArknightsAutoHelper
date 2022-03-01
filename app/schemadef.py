@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from collections.abc import Mapping
-from typing import Callable, ClassVar, Sequence, Type, TypeVar, Generic, Optional, Union
+from typing import Any, Callable, ClassVar, Sequence, Type, TypeVar, Generic, Optional, Union
 
 FieldType = TypeVar('FieldType')
 ElementType = TypeVar('ElementType')
@@ -22,8 +22,11 @@ class Field(Generic[FieldType]):
 
     def __set_name__(self, owner: Type[Schema], name: str):
         self.name = name
-        if not hasattr(owner, '_fields'):
-            owner._fields = OrderedDict()
+        if '_fields' not in owner.__dict__:
+            if not hasattr(owner, '_fields'):
+                owner._fields = OrderedDict()
+            else:
+                owner._fields = owner._fields.copy()
         owner._fields[name] = self
 
     def __get__(self, instance: Schema, owner: Type[Schema]) -> FieldType:
@@ -80,18 +83,20 @@ class Namespace(Field[SubType]):
 
     def __call__(self, subtype: Type[SubType]) -> SubType:
         if not issubclass(subtype, Schema):
-            subtype = type(subtype.__name__, (Schema, subtype), {k: v for k, v in subtype.__dict__.items() if isinstance(v, Field)})
+            newtype = type(subtype.__name__, (Schema, subtype), {})
+            newtype.__qualname__ = subtype.__qualname__
+            newtype.__module__ = subtype.__module__
+            subtype = newtype
         self.type = subtype
         return self
 
     def __set_name__(self, owner: Type[Schema], name: str):
         super().__set_name__(owner, name)
         self.type._parent_schema = self.type
-        setattr(owner, name, self.type)
 
     def __get__(self, instance: Schema, owner: Type[Schema]) -> SubType:
         if instance is None:
-            return self
+            return self.type
         return instance._namespaces[self.name]
     
     def __set__(self, instance, value):
@@ -107,7 +112,7 @@ class Schema:
         self._namespaces = {}
         self._parent = parent
         self._dirty = False
-        for name, defn in self.__class__.__dict__.items():
+        for name, defn in self.__class__._fields.items():
             if isinstance(defn, Namespace):
                 self._namespaces[name] = defn.type(store.get(name, None), self)
     def _set_dirty(self):
@@ -115,6 +120,16 @@ class Schema:
             self._parent._set_dirty()
         else:
             self._dirty = True
+    def __len__(self):
+        return len(self._fields)
+    def __getitem__(self, key):
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
+    def __iter__(self):
+        for f in self._fields:
+            yield (f, getattr(self, f))
 
 def _generate_default_store(cls: Union[Type[Schema], Namespace], indent=0):
     if isinstance(cls, Namespace):
@@ -124,7 +139,7 @@ def _generate_default_store(cls: Union[Type[Schema], Namespace], indent=0):
     if hasattr(cls, '__version__'):
         ydoc['__version__'] = cls.__version__
     first_field = True
-    for name, field in cls.__dict__.items():
+    for name, field in cls._fields.items():
         if name.startswith('_'):
             continue
         if isinstance(field, Field):
@@ -152,17 +167,19 @@ def _generate_default_store(cls: Union[Type[Schema], Namespace], indent=0):
 def is_dirty(schema: Schema):
     return schema._dirty
 
-def _to_viewmodel(schema: Schema, name_prefix=''):
+def _to_viewmodel(schema: Schema, name_prefix='', values: dict = None):
     result = []
+    if values is None:
+        values = {}
     for name, field in schema.__class__._fields.items():
+        full_name = name_prefix + name
         item = dict(field_type=type(field).__name__, local_name=name, full_name=name_prefix + name, title=field.title, doc=field.doc)
         if isinstance(field, Namespace):
-            item['value'] = _to_viewmodel(field.__get__(schema, type(schema)), name_prefix + name + '.')
+            item['fields'] = _to_viewmodel(getattr(schema, name), name_prefix + name + '.', values)[0]
         elif isinstance(field, Action):
-            item['value'] = '<action>'
-            item['default'] = field.default
+            item['button'] = field.default
         else:
-            item['value'] = getattr(schema, name)
+            values[full_name] = getattr(schema, name)
             item['default'] = field.default
             if isinstance(field, ListField):
                 item['element_type'] = field.element_type.__name__
@@ -171,9 +188,17 @@ def _to_viewmodel(schema: Schema, name_prefix=''):
             else:
                 item['value_type'] = field.type.__name__
         result.append(item)
-    return result
+    return result, values
 
 def to_viewmodel(schema: Schema):
     return _to_viewmodel(schema)
+
+def set_flat_values(schema: Schema, values: Mapping[str, Any]):
+    for name, value in values.items():
+        *parents, child = name.split('.')
+        parent = schema
+        for p in parents:
+            parent = getattr(parent, p)
+        setattr(parent, child, value)
 
 __all__ = ['Schema', 'Field', 'EnumField', 'ListField', 'Namespace', 'is_dirty']

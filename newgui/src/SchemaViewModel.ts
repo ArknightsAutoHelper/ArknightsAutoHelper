@@ -2,7 +2,6 @@ interface BaseField {
     field_type: string;
     local_name: string;
     full_name: string;
-    value: unknown;
     title: string;
     doc?: string;
 }
@@ -32,14 +31,14 @@ interface EnumField extends BaseField {
 interface ListField extends BaseField {
     field_type: "ListField";
     element_type: string;
-    value: any[];
+    value: string[];
 }
 
 type UnknwonValueField = ValueField<string, unknown>;
 
 interface Namespace extends BaseField {
     field_type: "Namespace";
-    value: Field[];
+    fields: Field[];
 }
 
 export type Field = IntegerField | BooleanField | StringField | EnumField | ListField | Namespace;
