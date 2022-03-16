@@ -12,40 +12,52 @@
 
 ## 0x01 运行须知
 
-### **安装**
-
-#### 从源代码安装
+### 从源代码安装
 
 需要 Python 3.9 或以上版本。
 
 > ⚠ **不建议从 GitHub 下载 zip 源码包安装**：这样做会丢失版本信息，且不便于后续更新。
 
-**首先，克隆仓库到本地**
+#### 第一步：克隆仓库到本地
 ```bash
 git clone https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper
 cd ArknightsAutoHelper
 ```
-
-##### 在 Windows CMD 中：
-```bat
-python3 -m venv venv
-venv\Scripts\activate.bat
-pip install -r requirements.txt
-```
-##### 在 PowerShell 中：
-```pwsh
-python3 -m venv venv
-& ./venv/[bS]*/Activate.ps1
-pip install -r requirements.txt
-```
-##### 在 bash/zsh 中：
+#### 第二步：（建议）配置 venv 避免依赖包冲突
+> 💡 如果您正在使用 Windows，可以通过项目根目录下的 `一键配置环境.bat` 一键配置。
+##### 创建 venv 环境
 ```bash
 python3 -m venv venv
+```
+##### 激活 venv
+> 💡 请根据您使用的命令行环境选择对应的命令。
+
+如果您正在使用 Windows 命令提示符：
+```bat
+venv\Scripts\activate.bat
+```
+如果您正在使用 PowerShell：
+```pwsh
+& ./venv/[bS]*/Activate.ps1
+```
+> 💡 venv 在 Windows 上生成 venv/Scripts，在其他系统上生成 venv/bin
+
+> ⚠️ 注意：venv 会生成 UTF-8 编码的 Activate.ps1 并在其中写入当前路径，Windows PowerShell（系统自带版本）可能无法正常解析其中的非 ASCII 字符。
+
+如果您正在使用 bash/zsh：
+```bash
 source venv/bin/activate
+```
+#### 第三步：安装依赖
+```bash
 pip install -r requirements.txt
 ```
+#### 第四步：开始使用
+请继续阅读本文档后续部分的使用说明。
 
-#### 二进制包（Windows）
+如果您打开了一个新的命令行环境，请重新执行[激活 venv](#激活-venv)步骤。
+
+### 二进制包（Windows）
 
 从 Releases 中下载[二进制包启动器](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release)。
 
@@ -53,7 +65,7 @@ pip install -r requirements.txt
 
 运行 `akhelper.exe --update` 或 `akhelper-gui.exe --update` 可更新到最新版本。如果最新版本存在问题，可尝试从 [Actions](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions) 中下载 90 天内的旧版本覆盖 `.bootstrapper` 目录内的对应文件。
 
-#### OCR 依赖
+### OCR 依赖
 目前 OCR 用于：
 
 * 公开招募 tag 识别
@@ -61,7 +73,7 @@ pip install -r requirements.txt
 
 如果 OCR 不可用，则不能自动处理以上情况。
 
-目前可以使用 tesseract（项目内自带识别模型及 Windows amd64 库）、Windows OCR（需要 Windows 10 简体中文系统或语言包）和百度 OCR API，请参阅 [OCR 安装说明](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/wiki/OCR-%E5%AE%89%E8%A3%85%E8%AF%B4%E6%98%8E)。
+目前可以使用 tesseract（项目内自带识别模型及 Windows amd64 库）~~、Windows OCR（需要 Windows 10 简体中文系统或语言包）和百度 OCR API~~（由于各种问题已不建议使用），请参阅 [OCR 安装说明](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/wiki/OCR-%E5%AE%89%E8%A3%85%E8%AF%B4%E6%98%8E)。
 
 
 ###  **环境与分辨率**
@@ -112,7 +124,7 @@ pip install -r requirements.txt
 **报告 issue 时，建议附上日志以便定位问题。**
 
 ## 0x02 ArknightsHelper GUI 启动
-
+> 💡 Windows：如果您按照[上文中的路径](#第二步建议配置-venv-避免依赖包冲突)配置了 venv，则可以通过双击 `启动GUI.bat` 调用。
 ```
 $ python3 akhelper-gui.pyw
 ```
@@ -130,7 +142,7 @@ Web GUI 将在一下第一个可用的浏览器环境中打开：
 > 💡 Windows：命令行功能在 Windows 10 1607 (build 14393) 及以上版本上体验最佳。非简体中文系统可能无法在 Windows 命令行窗口中正确显示简体中文文字，可尝试使用 Windows Terminal。
 
 ### 命令行启动说明
-
+> 💡 Windows：如果您按照[上文中的路径](#第二步建议配置-venv-避免依赖包冲突)配置了 venv，则可以通过双击 `整合工具箱(新).bat` 调用。
 ```
 $ python3 akhelper.py
 usage: akhelper.py command [command args]
@@ -263,11 +275,11 @@ python3 akhelper.py auto   5-1 2   5-2 3
 
 #### 2. 我想跑一些别的关卡，但是提示我关卡不支持。
 
-这些关卡可以通过 ~~slim~~ quick 模式来启动。
+这些关卡可以通过 quick 命令来启动。
 
 #### 3. OCR 模块可以不装嚒？
 
-最好安装，在之后的版本迭代中会对没有OCR依赖的用户越来越不友好
+~~最好安装，在之后的版本迭代中会对没有OCR依赖的用户越来越不友好~~不可以。
 
 #### 4. 我不会python|我电脑里没装Python，我能用这个嚒？
 
