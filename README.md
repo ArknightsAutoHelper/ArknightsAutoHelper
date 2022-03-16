@@ -20,20 +20,28 @@
 
 > ⚠ **不建议从 GitHub 下载 zip 源码包安装**：这样做会丢失版本信息，且不便于后续更新。
 
+**首先，克隆仓库到本地**
 ```bash
 git clone https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper
 cd ArknightsAutoHelper
+```
 
-#### 建议使用 venv 避免依赖包冲突
+##### 在 Windows CMD 中：
+```bat
 python3 -m venv venv
-# 在 Windows cmd 中：
 venv\Scripts\activate.bat
-# 在 PowerShell 中：
+pip install -r requirements.txt
+```
+##### 在 PowerShell 中：
+```pwsh
+python3 -m venv venv
 & ./venv/[bS]*/Activate.ps1
-# 在 bash/zsh 中：
+pip install -r requirements.txt
+```
+##### 在 bash/zsh 中：
+```bash
+python3 -m venv venv
 source venv/bin/activate
-#### venv end
-
 pip install -r requirements.txt
 ```
 
