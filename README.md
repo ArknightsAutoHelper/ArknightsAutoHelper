@@ -14,7 +14,7 @@
 
 ### 二进制包（Windows）
 
-从 Releases 中下载[二进制包启动器](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release)。
+⬇️ 从 Releases 中下载 [二进制包启动器](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release)。
 
 首次运行启动器时，将从 GitHub 下载通过 Actions 打包的最新代码及运行环境，请保持网络畅通。
 
