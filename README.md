@@ -34,7 +34,7 @@
 ### ADB 连接
 
 请确认 `adb devices` 中列出了目标模拟器/设备：
-```shell
+```console
 $ adb devices
 emulator-5554   device
 ```
@@ -75,7 +75,7 @@ emulator-5554   device
 
 ## 0x02 ArknightsHelper GUI 启动
 > 💡 Windows：如果您按照 [wiki/从源代码安装] 配置了 venv，则可以通过双击 `启动GUI.bat` 调用。
-```
+```console
 $ python3 akhelper-gui.pyw
 ```
 
@@ -93,7 +93,7 @@ Web GUI 将在一下第一个可用的浏览器环境中打开：
 
 ### 命令行启动说明
 > 💡 Windows：如果您按照 [wiki/从源代码安装] 配置了 venv，则可以通过双击 `整合工具箱(新).bat` 调用。
-```
+```console
 $ python3 akhelper.py
 usage: akhelper.py command [command args]
     connect [connector type] [connector args ...]
@@ -129,7 +129,7 @@ usage: akhelper.py command [command args]
 
 命令可使用前缀（首字母）缩写（类似 Linux iproute2），交互模式下只需输入对应命令名称即可，如：
 
-```
+```console
 $ python3 akhelper.py q 5
 
 $ python3 akhelper.py i
