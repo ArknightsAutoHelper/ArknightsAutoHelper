@@ -1,3 +1,5 @@
+import { colorScheme } from './AppGlobalState';
+
 export type DrakModePreference = "light" | "dark" | "system";
 
 function setMode(dark: boolean) {
@@ -15,8 +17,8 @@ function setMode(dark: boolean) {
 }
 
 export function updateDarkMode() {
-  let preference = window.localStorage.getItem("darkmode");
-  preference = preference ? JSON.parse(preference) : 'system';
+  let preference = colorScheme.getValue();
+  // preference = preference ? JSON.parse(preference) : 'system';
   if (preference === "dark") {
     setMode(true);
   } else if (preference === "light") {
@@ -28,15 +30,21 @@ export function updateDarkMode() {
 
 if (window.matchMedia) {
   const match = window.matchMedia('(prefers-color-scheme: dark)');
-  match.addEventListener('change', (e) => {
-    updateDarkMode();
-  })
+  try {
+    match?.addEventListener('change', (e) => {
+      updateDarkMode();
+    })
+  } catch (e) {}
 }
 
-export function setDarkModePreference(mode: DrakModePreference) {
-  window.localStorage.setItem("darkmode", mode);
+colorScheme.subject.subscribe(value => {
   updateDarkMode();
-}
+});
+
+// export function setDarkModePreference(mode: DrakModePreference) {
+//   window.localStorage.setItem("darkmode", mode);
+//   updateDarkMode();
+// }
 
 updateDarkMode();
-window['setDarkModePreference'] = setDarkModePreference;
+// window['setDarkModePreference'] = setDarkModePreference;

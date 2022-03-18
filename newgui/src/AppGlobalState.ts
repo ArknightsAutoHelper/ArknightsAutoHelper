@@ -1,11 +1,11 @@
 import { Subject } from "rxjs";
-import { DrakModePreference, updateDarkMode } from "./darkmode";
+import { DrakModePreference } from "./darkmode";
 import { RxAtom } from "./RxAtom";
 
 function storedGlobalState<T>(key: string, defaultValue?: T): RxAtom<T> {
   const value = loadLocalStoragePreference(key, defaultValue);
   const state = new RxAtom(value);
-  state.changed$.subscribe(value => {
+  state.subject.subscribe(value => {
     localStorage.setItem(key, JSON.stringify(value));
   });
   return state;
@@ -27,9 +27,6 @@ export const updateAvailiable = new RxAtom<boolean>(false);
 export const currentDevice = new RxAtom<string>(null);
 export const dispatcherState = new RxAtom<string>('running');
 export const colorScheme = storedGlobalState<DrakModePreference>("darkmode", "system");
-colorScheme.changed$.subscribe(value => {
-  updateDarkMode();
-});
 
 export const logScrollbackLimit = storedGlobalState<number>("logScrollbackLimit", 1500);
 export const showAboutOnStartup = storedGlobalState<boolean>("showAboutOnStartup", true);

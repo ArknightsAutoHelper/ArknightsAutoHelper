@@ -106,7 +106,7 @@ function populateFields(fields: Field[], output: Map<string, RxAtom>, onChange?:
       populateFields(field.fields, output, onChange);
     } else if (field.full_name) {
       const newAtom = new RxAtom(field.value)
-      if (onChange) newAtom.changed$.subscribe((value) => onChange(field.full_name, newAtom, value));
+      if (onChange) newAtom.asObservable().subscribe((value) => onChange(field.full_name, newAtom, value));
       output.set(field.full_name, newAtom);
     }
   }

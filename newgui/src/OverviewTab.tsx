@@ -19,11 +19,11 @@ let trollCount = 1;
 
 const LogRecord = React.memo(({ level, time, message }: any) => {
   return (
-    <Box className='log-record' as="tr" data-loglevel={level}>
-      <Box className='log-record-field no-wrap text-align-right time-field' width="5.5em" as="td">{time}</Box>
-      <Box className='log-record-field text-align-right level-field' width="4em" as="td">{level}</Box>
-      <Box className='log-record-field message-field' as="td">{message}</Box>
-    </Box>
+    <tr className='log-record' data-loglevel={level}>
+      <td className='log-record-field no-wrap text-align-right time-field' width="5.5em">{time}</td>
+      <td className='log-record-field text-align-right level-field' width="4em">{level}</td>
+      <td className='log-record-field message-field'>{message}</td>
+    </tr>
   )
 });
 
@@ -54,9 +54,9 @@ function LogPanel({ autoScroll, showDebugMessage }) {
   return (
     <Card className='card-no-padding flex-grow-1 min-height-0 user-select-text default-background'>
       <Box ref={scrollContainer} className="overflow-y-scroll min-height-0" width="100%" height="100%" >
-        <Box className={"log-container" + (showDebugMessage ? ' show-debug' : '')} width="100%" as="table" >
+        <table className={"log-container" + (showDebugMessage ? ' show-debug' : '')}>
           <tbody>{logs.map((x, i) => <LogRecord {...x} key={x.id} />)}</tbody>
-        </Box>
+        </table>
       </Box>
     </Card>
   );

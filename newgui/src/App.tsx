@@ -29,11 +29,11 @@ export function App() {
   const [currentTab, setActiveTab] = globalState.currentTab.useState();
   const activeTab = currentTab || (showAboutOnStartup ? 'about' : 'overview');
   const [hasUpdate] = globalState.updateAvailiable.useState();
-  const [loading, setLoading] = React.useState(true);
+  const [loading, setLoading] = React.useState(false);
 
-  React.useEffect(() => {
-    setTimeout(() => setLoading(false), 5000);
-  }, []);
+  // React.useEffect(() => {
+  //   setTimeout(() => setLoading(false), 5000);
+  // }, []);
 
   const defaultClasses = "tab-container overflow-y-auto min-height-0";
   return (
