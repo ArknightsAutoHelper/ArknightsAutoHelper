@@ -167,6 +167,8 @@ def _get_instance_id_posix():
                     lockfile.close()
             atexit.register(fini, f)
             return i
+        except FileNotFoundError:
+            return 0
         except OSError:
             i += 1
 
