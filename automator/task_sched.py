@@ -80,6 +80,7 @@ class TaskScheduler:
         self.cookie = random.choices(string.ascii_letters + string.digits, k=8)
         self.seq = 0
         self.current_task: _task_record = None
+        self.pause = False
 
     def notify_list_update(self):
         self.parent.frontend.notify('task_list', [serialize_task_record(x) for x in self.tasks])
@@ -100,10 +101,6 @@ class TaskScheduler:
 
     def run(self):
         pass
-
-    def stop(self):
-        import signal
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
     
     def reorder_task(self, moved_id, over_id):
         try:

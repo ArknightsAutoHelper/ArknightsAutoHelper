@@ -3,6 +3,8 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from automator.task_sched import TaskScheduler
+
 if TYPE_CHECKING:
     from typing import TypeVar, Union, Type, ForwardRef
     from .addon import AddonBase
@@ -26,6 +28,7 @@ class BaseAutomator(AddonMixin):
         self.frontend.attach(self)
         self.helper = self
         self.addons: dict[Union[str, Type[TAddon]], TAddon] = {}
+        self.scheduler = TaskScheduler(self)
         self._cli_commands = OrderedDict()
         self.load_addons()
 

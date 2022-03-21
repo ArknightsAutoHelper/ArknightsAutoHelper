@@ -1,11 +1,17 @@
+from __future__ import annotations
+import util.early_logs
+import util.unfuck_https_proxy
+import queue
 import asyncio
 import signal
 import threading
-from rpc.aioobservable import Subject
-import util.early_logs
-import util.unfuck_https_proxy
-
+import concurrent.futures
 import logging
+
+from rpc.aioobservable import Subject
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from automator.helper import BaseAutomator
 
 import app
 app.background = True
@@ -62,12 +68,10 @@ loghandler.setLevel(logging.INFO)
 app.init([loghandler])
 
 class WebFrontend:
-    def __init__(self, output: Subject[dict], interrupt_signal: Subject, skip_signal: Subject, loop: asyncio.AbstractEventLoop):
+    def __init__(self, output: Subject[dict], loop: asyncio.AbstractEventLoop):
         self.output = output
         self.loop = loop
-        self.interrupt_signal = interrupt_signal
         self.interrupt_event = threading.Event()
-        self.skip_signal = skip_signal
         self.skip_event = threading.Event()
 
     def attach(self, helper):
@@ -91,25 +95,159 @@ class WebFrontend:
         self.devices = devices
         self.notify("web:availiable-devices", [x[0] for x in devices])
 
+    def interrupt(self):
+        self.interrupt_event.set()
+        self.skip_event.set()
+
     def delay(self, secs, allow_skip):
         self.notify("wait", dict(duration=secs, allow_skip=allow_skip))
-        intr_sub = self.interrupt_signal.subscribe(lambda x: self.interrupt_event.set)
-        skip_sub = self.interrupt_signal.subscribe(lambda x: self.skip_event.set)
         try:
             if not allow_skip:
                 self.interrupt_event.wait(secs)
             else:
                 if self.interrupt_event.is_set():
                     raise KeyboardInterrupt()
-                self.skip_wait_event.clear()
-                self.skip_wait_event.wait(secs)
+                self.skip_event.clear()
+                self.skip_event.wait(secs)
             if self.interrupt_event.is_set():
                 raise KeyboardInterrupt()
         finally:
             self.notify("wait", dict(duration=0, allow_skip=False))
 
+_known_methods = {}
+
+def export(func):
+    _known_methods[func.__name__] = asyncio.iscoroutinefunction(func)
+    return func
+
+class ApiServer:
+    def __init__(self, helper: BaseAutomator):
+        self.main_thread_queue = queue.Queue()
+        self.helper = helper
+    def interrupt(self):
+        signal.raise_signal(signal.SIGINT)
+    async def handle_request(self, request):
+        func_name = request['func']
+        is_async = _known_methods[func_name]
+        func = getattr(self, func_name)
+        if is_async:
+            return await func(**request['args'])
+        else:
+            return await asyncio.to_thread(func, **request['args'])
+
+
+    def run_main_thread(self):
+        while True:
+            try:
+                command = self.main_thread_queue.get(block=True, timeout=1)
+            except queue.Empty:
+                continue
+            if command is None:
+                break
+            elif command == 'sched:start':
+                try:
+                    self.helper.scheduler.run()
+                except KeyboardInterrupt:
+                    pass
+
+    # API functions
+    @export
+    async def app_get_version(self):
+        return app.version
+
+    @export
+    async def app_get_config(self):
+        schema, values = app.schemadef.to_viewmodel(app.config)
+        return dict(schema=schema, values=values)
+
+    @export
+    async def app_set_config_values(self, values):
+        app.schemadef.set_flat_values(app.config, values)
+
+    @export
+    async def app_check_updates(self):
+        pass
+
+    @export
+    async def sched_refresh_task_list(self):
+        return self.helper.scheduler.tasks
+
+    @export
+    async def sched_add_task(self, defn):
+        pass
+
+    @export
+    async def sched_update_task(self, task_id, defn):
+        pass
+
+    @export
+    async def sched_remove_task(self, task_id):
+        pass
+
+    @export
+    async def sched_reset_task_list(self):
+        pass
+
+    @export
+    async def sched_quick_run_task(self, defn):
+        pass
+
+    @export
+    async def sched_start(self):
+        self.main_thread_queue.put('sched:start')
+
+    @export
+    async def sched_interrupt(self):
+        pass
+
+    @export
+    async def sched_get_registered_tasks(self):
+        pass
+
+
+def server_thread(loop_future: concurrent.futures.Future, stopper_future: concurrent.futures.Future, notify_sink: Subject):
+    loop = asyncio.new_event_loop()
+    print("creating loop", loop, id(loop))
+    asyncio.set_event_loop(loop)
+    loop_future.set_result(loop)
+    from . import ws_endpoint
+    ws_endpoint.start(stopper_future)
+
 
 def run():
-    signal.signal(signal.SIGINT, lambda *args: interrupt_signal.next(None))
+    # signal.signal(signal.SIGINT, lambda *args: interrupt_signal.next(None))
     from Arknights.helper import ArknightsHelper
-    helper = ArknightsHelper()
+    loop_future = concurrent.futures.Future()
+    stop_future = concurrent.futures.Future()
+    notify_sink = Subject()
+    thread = threading.Thread(target=server_thread, args=(loop_future, stop_future, notify_sink))
+    thread.start()
+    aioloop = loop_future.result()
+    stopper = stop_future.result()
+    helper = ArknightsHelper(frontend=WebFrontend(output=notify_sink, loop=aioloop))
+    main_thread_queue = queue.Queue()
+
+    try:
+        while True:
+            try:
+                print('waiting for next command')
+                action = main_thread_queue.get(timeout=1)
+            except queue.Empty:
+                continue
+            if action is None:
+                break
+            elif action == 'sched:start':
+                try:
+                    helper.scheduler.run()
+                except KeyboardInterrupt:
+                    pass
+            
+            print(action)
+    finally:
+        print("requesting stop")
+        stopper()
+        print("waiting for rpc thread")
+        thread.join()
+
+if __name__ == '__main__':
+    run()
