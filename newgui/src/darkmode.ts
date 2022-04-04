@@ -6,12 +6,12 @@ function setMode(dark: boolean) {
   const html = document.documentElement;
   const body = document.body;
   if (dark) {
-    html.classList.add('bp3-dark');
-    body.classList.add('bp3-dark');
+    html.classList.add('bp4-dark');
+    body.classList.add('bp4-dark');
     document.querySelector('meta[name="theme-color"]').setAttribute("content", '#394B59');
   } else {
-    html.classList.remove('bp3-dark');
-    body.classList.remove('bp3-dark');
+    html.classList.remove('bp4-dark');
+    body.classList.remove('bp4-dark');
     document.querySelector('meta[name="theme-color"]').setAttribute("content", '#FFFFFF');
   }
 }

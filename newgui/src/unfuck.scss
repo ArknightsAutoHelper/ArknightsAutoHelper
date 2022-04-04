@@ -1,8 +1,5 @@
 // https://github.com/palantir/blueprint/issues/4425
-.bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-popover-wrapper:not(:last-child) .bp3-button, .bp3-dark .bp3-button-group:not(.bp3-minimal) > .bp3-button:not(:last-child) {
-    margin-right: -1px;
-}
 
-.bp3-running-text code, .bp3-code {
+.bp4-running-text code, .bp4-code {
     font-family: ui-monospace, "SFMono-Regular", "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
 }

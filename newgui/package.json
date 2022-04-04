@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@blueprintjs/core": "^3.52.0",
-    "@blueprintjs/popover2": "^0.12.9",
-    "@blueprintjs/select": "^3.18.11",
+    "@blueprintjs/core": "^4.0.4",
+    "@blueprintjs/popover2": "^1.0.4",
+    "@blueprintjs/select": "^4.0.4",
     "@chakra-ui/layout": "^1.7.4",
     "@chakra-ui/system": "^1.10.3",
     "@dnd-kit/core": "^5.0.1",

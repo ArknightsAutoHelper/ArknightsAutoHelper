@@ -92,7 +92,7 @@ export default function OverviewTab() {
 
   return (
     <Flex flexDirection="row" alignItems="stretch" height="100%" className="card-background">
-      <Flex flexDirection="column" width={280} height="100%" alignItems="stretch" style={{ gap: "8px" }} padding="12px" className="bp3-card square-card">
+      <Flex flexDirection="column" width={280} height="100%" alignItems="stretch" style={{ gap: "8px" }} padding="12px" className="bp4-card square-card">
         <H5>
           <Flex flexDirection="row" alignItems={'center'}>
             <Icon icon="link" style={{ marginRight: "0.5em" }} /><Text>连接设备</Text>

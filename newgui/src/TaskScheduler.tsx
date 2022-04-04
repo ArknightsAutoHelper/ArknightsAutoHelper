@@ -110,7 +110,7 @@ const TaskItem = React.forwardRef((props: ITaskItemProps, ref) => {
 
   const textElm = useMemo(() => {
     const muted = itemStatus === TaskItemStatus.Skip || itemStatus === TaskItemStatus.Stop;
-    return <Text ellipsize={true} className={"task-item-title flex-grow-1" + (muted ? ' bp3-text-muted' : '')}>{title}</Text>
+    return <Text ellipsize={true} className={"task-item-title flex-grow-1" + (muted ? ' bp4-text-muted' : '')}>{title}</Text>
   }, [itemStatus, title]);
 
   let classes = ['task-item'];

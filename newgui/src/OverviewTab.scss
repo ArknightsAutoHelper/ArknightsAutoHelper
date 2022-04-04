@@ -96,6 +96,9 @@
         .log-record-field {
             border-left: 1px solid $pt-dark-divider-white;
             border-right: 1px solid $pt-dark-divider-white;
+            &.time-field {
+                border-left: none;
+            }
         }
         &[data-loglevel="ERROR"] {
             color: $red5;

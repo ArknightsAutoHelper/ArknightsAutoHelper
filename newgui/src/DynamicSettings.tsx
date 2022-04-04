@@ -62,7 +62,7 @@ export const FieldView = React.memo(({ field, showFieldName, valueAtom }: IField
   const doc = field.doc;
   const docElement = useMemo(() => doc && (
     <Box flexBasis="100%">
-      <p className="dynamic-setting-field-doc bp3-text-muted"><small>{doc}</small></p>
+      <p className="dynamic-setting-field-doc bp4-text-muted"><small>{doc}</small></p>
     </Box>
   ), [doc]);
 
@@ -95,7 +95,7 @@ export const SchemaTitle = React.memo(({ title, code, description, nestingLevel 
       {title && <LevelingHeader nestingLevel={nestingLevel}>{title}</LevelingHeader>}
       {code && <Code style={{ marginInlineStart: "0.5em" }}>{code}</Code>}
     </Flex>
-    <p className="dynamic-setting-field-doc bp3-text-muted">{description}</p>
+    <p className="dynamic-setting-field-doc bp4-text-muted">{description}</p>
   </div>)
 });
 
