@@ -12,6 +12,17 @@ record_basedir = app.writable_root.joinpath('custom_record')
 class RecordAddon(AddonBase):
     def create_custom_record(self, record_name, roi_size=64, wait_seconds_after_touch=1,
                              description='', back_to_main=True, prefer_mode='match_template', threshold=0.7):
+        if description == None:
+            description = ""
+        if roi_size == None:
+            roi_size = 64
+        if wait_seconds_after_touch == None:
+            wait_seconds_after_touch = 1
+        if prefer_mode == None:
+            prefer_mode='match_template'
+        if threshold == None:
+            threshold = 0.7
+        
         record_dir = record_basedir.joinpath(record_name)
         if record_dir.exists():
             c = input('已存在同名的记录, y 覆盖, n 退出: ')
