@@ -214,6 +214,7 @@ class StageNavigator(AddonBase):
         while current_episode != target:
             move = min(abs(current_episode - target), 2) * episode_move * (1 if current_episode > target else -1)
             self.swipe_screen(move, 10, self.viewport[0] // 4 * 3)
+            self.delay(0.5)
             screenshot = self.device.screenshot()
             current_episode_tag = screenshot.crop(episode_tag_rect)
             current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
