@@ -170,7 +170,7 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
         logger.logtext('matched %s with mse %f' % (itemname, score))
         name = itemname
     else:
-        prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg))
+        prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg.convert('RGB')))
         logger.logtext(f'dnn matched {name} with prob {prob}')
         if prob < 0.8 or item_id == 'other':
             logger.logtext('no match')

@@ -117,12 +117,15 @@ def scalecrop(img, left, top, right, bottom):
     return img.crop(rect)
 
 
-def compare_mse(mat1, mat2):
+def compare_mse(mat1, mat2, mask=None):
     """max 65025 (255**2) for 8bpc image"""
     mat1 = np.asarray(mat1)
     mat2 = np.asarray(mat2)
     assert (mat1.shape == mat2.shape)
     diff = mat1.astype(np.float32) - mat2.astype(np.float32)
+    if mask is not None:
+        mask = np.asarray(mask)
+        diff[mask == 0] = 0
     mse = np.mean(diff * diff)
     return mse
 
@@ -132,11 +135,13 @@ def scale_to_height(img, height, algo=Image.BILINEAR):
     return img.resize((int(img.width * scale), height), algo)
 
 
-def compare_ccoeff(img1, img2):
+def compare_ccoeff(img1, img2, mask=None):
     img1 = np.asarray(img1)
     img2 = np.asarray(img2)
+    if mask is not None:
+        mask = np.asarray(mask)
     assert (img1.shape == img2.shape)
-    result = cv.matchTemplate(img1, img2, cv.TM_CCOEFF_NORMED)[0, 0]
+    result = cv.matchTemplate(img1, img2, cv.TM_CCOEFF_NORMED, mask=mask)[0, 0]
     return result
 
 

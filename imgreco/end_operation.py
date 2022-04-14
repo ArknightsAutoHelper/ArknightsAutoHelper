@@ -76,6 +76,41 @@ def tell_group(groupimg, session, bartop, barbottom, ):
     return (groupname, result)
 
 
+def tell_group_20220414(groupimg, session, bartop, barbottom, ):
+    logger.logimage(groupimg)
+    grouptext = groupimg.subview((0, barbottom, groupimg.width, groupimg.height))
+
+    thim = imgops.enhance_contrast(grouptext.convert('L'), 60)
+    # thim = imgops.crop_blackedge(thim)
+    logger.logimage(thim)
+
+    groupname, diff = tell_group_name_ocr(thim, session)
+    if diff > 0.8:
+        session.low_confidence = True
+
+    if groupname == '幸运掉落':
+        return (groupname, [('(家具)', 1, 'furni')])
+
+    vw, vh = session.vw, session.vh
+    itemwidth = 19.167 * vh
+    itemcount = roundint(groupimg.width / itemwidth)
+    logger.logtext('group has %d items' % itemcount)
+    result = []
+    for i in range(itemcount):
+        itemimg = groupimg.subview((itemwidth * i, 0.000 * vh, itemwidth * (i+1), bartop))
+        # x1, _, x2, _ = (0.093*vh, 0.000*vh, 19.074*vh, 18.981*vh)
+        center_x = itemimg.width / 2
+        center_y = itemimg.height / 2
+        itembox_radius = 16.492 * vh / 2
+        itemimg = itemimg.crop((center_x - itembox_radius, center_y - itembox_radius, center_x + itembox_radius + 1, center_y + itembox_radius + 1))
+        recognized_item = item.tell_item(itemimg, with_quantity=True, learn_unrecognized=session.learn_unrecognized)
+        if recognized_item.low_confidence:
+            session.low_confidence = True
+        result.append((recognized_item.name, recognized_item.quantity, recognized_item.item_type))
+    return (groupname, result)
+
+
+
 def tell_group_name_alt(img, session):
     names = [('龙门币', '声望&龙门币奖励'),
              ('常规', '常规掉落'),
@@ -110,6 +145,34 @@ def tell_group_name_alt(img, session):
         logger.logtext(repr(comparsions))
         return comparsions[0]
 
+def tell_group_name_ocr(img, session):
+    names = [('龙门币', '声望&龙门币奖励'),
+             ('常规', '常规掉落'),
+             ('特殊', '特殊掉落'),
+             ('幸运', '幸运掉落'),
+             ('额外', '额外物资'),
+             ('首次', '首次掉落'),
+             ('返还', '理智返还')]
+    comparsions = []
+    scale = session.vh * 100 / 1080
+    from .ocr import acquire_engine_global_cached
+    engine = acquire_engine_global_cached('zh-cn')
+    img = imgops.crop_blackedge(img, 1)
+    invimg = Image.fromarray(cv2.copyMakeBorder(255 - img.array, 4, 4, 4, 4, cv2.BORDER_CONSTANT, value=255), img.mode)
+    ocr_result = engine.recognize(invimg)
+    logger.logimage(invimg)
+    logger.logtext(repr(ocr_result))
+    for name, group in names:
+        if group in session.recognized_groups:
+            continue
+        match = True
+        for c in name:
+            if c not in ocr_result:
+                match = False
+                break
+        if match:
+            return group, 0
+    return None, 1
 
 def find_jumping(ary, threshold):
     ary = np.array(ary, dtype=np.int16)
@@ -149,28 +212,32 @@ def check_level_up_popup(img):
 
 
 def check_end_operation(style, friendship, img):
-    if style == 'main':
-        return check_end_operation_main_friendship(img) if friendship else check_end_operation_main(img)
+    if style == 'legacy' or style == '20220414':
+        return check_end_operation_20220414(img)
     elif style == 'interlocking':
         if friendship:
             return check_end_operation_interlocking_friendship(img)
         else:
             raise NotImplementedError()
 
-def check_end_operation_main_friendship(img):
+def check_end_operation_legacy_friendship(img):
     vw, vh = common.get_vwvh(img.size)
     template = resources.load_image_cached('end_operation/friendship.png', 'RGB')
     operation_end_img = img.crop((117.083*vh, 64.306*vh, 121.528*vh, 69.583*vh)).convert('RGB')
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
     return mse < 3251
 
-def check_end_operation_main(img):
+def check_end_operation_legacy(img):
     vw, vh = common.get_vwvh(img.size)
     template = resources.load_image_cached('end_operation/end.png', 'L')
     operation_end_img = img.crop((4.722 * vh, 80.278 * vh, 56.389 * vh, 93.889 * vh)).convert('L')
     operation_end_img = imgops.enhance_contrast(operation_end_img, 225, 255)
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
     return mse < 6502
+
+def check_end_operation_20220414(img):
+    context = common.ImageRoiMatchingContext(img)
+    return bool(context.match_roi('end_operation/20220414/rhodes_island'))
 
 def check_end_operation_interlocking_friendship(img):
     vw, vh = common.get_vwvh(img.size)
@@ -202,15 +269,17 @@ get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
 
 
 def recognize(style, im, learn_unrecognized_item=False):
-    if style == 'main':
-        return recognize_main(im, learn_unrecognized_item)
+    if style == 'legacy':
+        return recognize_20220414(im, learn_unrecognized_item)
+    elif style == '20220414':
+        return recognize_20220414(im, learn_unrecognized_item)
     elif style == 'interlocking':
         return recognize_interlocking(im, learn_unrecognized_item)
     else:
         raise ValueError(style)
 
 
-def recognize_main(im, learn_unrecognized_item):
+def recognize_legacy(im, learn_unrecognized_item):
     import time
     t0 = time.monotonic()
     vw, vh = common.get_vwvh(im.size)
@@ -286,6 +355,93 @@ def recognize_main(im, learn_unrecognized_item):
 
     for group in imggroups:
         groupresult = tell_group(group, session, linetop, linebottom)
+        session.recognized_groups.append(groupresult[0])
+        items.append(groupresult)
+
+    t1 = time.monotonic()
+    if session.low_confidence:
+        logger.logtext('LOW CONFIDENCE')
+    logger.logtext('time elapsed: %f' % (t1 - t0))
+    recoresult['items'] = items
+    recoresult['low_confidence'] = recoresult['low_confidence'] or session.low_confidence
+    return recoresult
+
+
+def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
+    import time
+    t0 = time.monotonic()
+    vw, vh = common.get_vwvh(im.size)
+
+    context = common.ImageRoiMatchingContext(im)
+
+    logger.logimage(im)
+
+    operation_id = im.subview((20.278*vh, 10.000*vh, 43.889*vh, 15.093*vh)).convert('L')
+    # logger.logimage(operation_id)
+    operation_id = imgops.enhance_contrast(imgops.crop_blackedge(operation_id, value_threshold=200), 80, 220)
+    logger.logimage(operation_id)
+    operation_id_str = reco_novecento_bold.recognize(operation_id).upper()
+    fixup, operation_id_str = minireco.fix_stage_name(operation_id_str)
+    if fixup:
+        logger.logtext('fixed to ' + operation_id_str)
+    # operation_name = lower.crop((0, 14.074*vh, 23.611*vh, 20*vh)).convert('L')
+    # operation_name = imgops.enhance_contrast(imgops.crop_blackedge(operation_name))
+    # logger.logimage(operation_name)
+
+    stars = im.subview((9.907*vh, 40.926*vh, 38.056*vh, 48.333*vh))
+    logger.logimage(stars)
+    stars_status = tell_stars(stars)
+
+    # level = lower.crop((63.148 * vh, 4.444 * vh, 73.333 * vh, 8.611 * vh))
+    # logger.logimage(level)
+    # exp = lower.crop((76.852 * vh, 5.556 * vh, 94.074 * vh, 7.963 * vh))
+    # logger.logimage(exp)
+
+    recoresult = {
+        'operation': operation_id_str,
+        'stars': stars_status,
+        'items': [],
+        'low_confidence': False
+    }
+
+    items = im.crop((7.870*vh, 71.111*vh, im.width, 91.481*vh))
+    logger.logimage(items)
+
+    linedet = im.crop((7.870*vh, 87.222*vh, im.width, 89.259*vh)).convert('L')
+    xsum = list(np.sum(linedet, axis=1))
+    maxsum = max(xsum)
+    linetop = next((i for i, x in enumerate(xsum) if x > maxsum * 0.8), 0) + 87.222*vh
+    linebottom = next((len(xsum) - i for i, x in enumerate(reversed(xsum)) if x > maxsum * 0.8), 0) + 87.222*vh
+    # if len(linedet) >= 2:
+    #     linetop, linebottom, *_ = linedet
+    # else:
+    #     logger.logtext('horizontal line detection failed')
+    #     recoresult['low_confidence'] = True
+    #     return recoresult
+    grouping = im.crop((7.870*vh, linetop, im.width, linebottom))
+    # grouping = grouping.resize((grouping.width, 1), Image.BILINEAR)
+    grouping = grouping.convert('L')
+
+    logger.logimage(grouping.resize((grouping.width, 16)))
+
+    d = np.array(grouping, dtype=np.int16)[0]
+    points = [0, *find_jumping(d, 55)]
+    if len(points) % 2 != 0:
+        raise RuntimeError('possibly incomplete item list')
+    finalgroups = list(zip(*[iter(points)] * 2))  # each_slice(2)
+    logger.logtext(repr(finalgroups))
+
+    imggroups = [items.crop((x1, 0, x2, items.height))
+                 for x1, x2 in finalgroups]
+    items = []
+
+    session = RecognizeSession()
+    session.vw = vw
+    session.vh = vh
+    session.learn_unrecognized = learn_unrecognized_item
+
+    for group in imggroups:
+        groupresult = tell_group_20220414(group, session, linetop - 71.111*vh, linebottom - 71.111*vh)
         session.recognized_groups.append(groupresult[0])
         items.append(groupresult)
 
