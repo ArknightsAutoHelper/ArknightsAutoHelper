@@ -22,7 +22,6 @@ def load_data():
 def recognize(img):
     vw, vh = common.get_vwvh(img.size)
     context = common.ImageRoiMatchingContext(img)
-    print(img.mode)
     match_checked1 = context.match_roi('before_operation/delegation_checked_legacy')
     match_checked2 = context.match_roi('before_operation/delegation_checked_20220414')
     match_unchecked1 = context.match_roi('before_operation/delegation_unchecked_legacy')

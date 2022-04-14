@@ -527,7 +527,7 @@ def recognize_interlocking(im):
 
 def get_still_check_rect(viewport):
     vw, vh = common.get_vwvh(viewport)
-    return (68.241 * vh, 61.111 * vh, 100 * vw, 100 * vh)
+    return (7.870*vh, 71.111*vh, 100*vw, 91.481*vh)
 
 
 if __name__ == '__main__':
