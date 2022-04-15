@@ -162,16 +162,18 @@ def invert_color(img):
     return Image.fromarray(resultmat, img.mode)
 
 
-def match_template(img, template, method=cv.TM_CCOEFF_NORMED, template_mask=None):
+def match_template(img, template, method=cv.TM_CCOEFF_NORMED, template_mask=None) -> tuple[tuple[int, int], float]:
     templatemat = np.asarray(template)
     mtresult = cv.matchTemplate(np.asarray(img), templatemat, method, mask=template_mask)
+    minval, maxval, minloc, maxloc = cv.minMaxLoc(mtresult)
     if method == cv.TM_SQDIFF_NORMED or method == cv.TM_SQDIFF:
-        selector = np.argmin
+        useloc = minloc
+        useval = minval
     else:
-        selector = np.argmax
-    maxidx = np.unravel_index(selector(mtresult), mtresult.shape)
-    y, x = maxidx
-    return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), mtresult[maxidx]
+        useloc = maxloc
+        useval = maxval
+    x, y = useloc
+    return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), useval
 
 
 @dataclass
