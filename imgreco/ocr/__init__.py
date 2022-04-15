@@ -51,3 +51,13 @@ def acquire_engine_global_cached(lang, **kwargs) -> OcrEngine:
     return impl.Engine(lang, **kwargs)
 
 atexit.register(acquire_engine_global_cached.cache_clear)
+
+
+def match_distance(text, collection):
+    import textdistance
+    comparisions = []
+    for index, item in enumerate(collection):
+        if text == item:
+            return index, 0
+        comparisions.append((index, textdistance.levenshtein(text, item)))
+    return min(comparisions, key=lambda x: x[1])

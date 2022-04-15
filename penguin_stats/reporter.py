@@ -156,7 +156,7 @@ class PenguinStatsReporter:
             if groupname == '首次掉落':
                 logger.info('不汇报首次掉落')
                 return ReportResult.NotReported
-            if '声望&龙门币奖励' in groupname:
+            if '龙门币' in groupname:
                 continue
             if groupname == '幸运掉落':
                 typeddrops.append(penguin_client.TypedDrop('FURNITURE', 'furni', 1))

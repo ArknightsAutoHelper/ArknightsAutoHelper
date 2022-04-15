@@ -3,6 +3,7 @@ import math
 
 import cv2
 import numpy as np
+from imgreco import ocr
 from util import cvimage as Image
 
 from util.richlog import get_logger
@@ -43,6 +44,7 @@ def tell_stars(starsimg):
 
 recozh = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-Medium.dat'))
 reco_novecento_bold = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Bold.dat'))
+reco_novecento_medium = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Medium.dat'))
 
 
 def tell_group(groupimg, session, bartop, barbottom, ):
@@ -85,7 +87,7 @@ def tell_group_20220414(groupimg, session, bartop, barbottom, ):
     logger.logimage(thim)
 
     groupname, diff = tell_group_name_ocr(thim, session)
-    if diff > 0.8:
+    if diff > 0.6:
         session.low_confidence = True
 
     if groupname == '幸运掉落':
@@ -146,33 +148,23 @@ def tell_group_name_alt(img, session):
         return comparsions[0]
 
 def tell_group_name_ocr(img, session):
-    names = [('龙门币', '声望&龙门币奖励'),
-             ('常规', '常规掉落'),
-             ('特殊', '特殊掉落'),
-             ('幸运', '幸运掉落'),
-             ('额外', '额外物资'),
-             ('首次', '首次掉落'),
-             ('返还', '理智返还')]
+    
+    names = ['声望&龙门币奖励', '常规掉落', '特殊掉落', '幸运掉落', '额外物资', '首次掉落', '理智返还']
+    all_chars = ''.join(set(c for item in names for c in item))
     comparsions = []
     scale = session.vh * 100 / 1080
     from .ocr import acquire_engine_global_cached
     engine = acquire_engine_global_cached('zh-cn')
     img = imgops.crop_blackedge(img, 1)
     invimg = Image.fromarray(cv2.copyMakeBorder(255 - img.array, 4, 4, 4, 4, cv2.BORDER_CONSTANT, value=255), img.mode)
-    ocr_result = engine.recognize(invimg)
+    ocr_result = engine.recognize(invimg, char_whitelist=all_chars)
     logger.logimage(invimg)
-    logger.logtext(repr(ocr_result))
-    for name, group in names:
-        if group in session.recognized_groups:
-            continue
-        match = True
-        for c in name:
-            if c not in ocr_result:
-                match = False
-                break
-        if match:
-            return group, 0
-    return None, 1
+    pending = [x for x in names if x not in session.recognized_groups]
+
+    text = ocr_result.text.replace(' ', '')
+    match_index, min_distance = ocr.match_distance(text, pending)
+    logger.logtext(f'{ocr_result=} {match_index=} {min_distance=}')
+    return pending[match_index], min_distance / len(pending[match_index])
 
 def find_jumping(ary, threshold):
     ary = np.array(ary, dtype=np.int16)
@@ -380,7 +372,7 @@ def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
     # logger.logimage(operation_id)
     operation_id = imgops.enhance_contrast(imgops.crop_blackedge(operation_id, value_threshold=200), 80, 220)
     logger.logimage(operation_id)
-    operation_id_str = reco_novecento_bold.recognize(operation_id).upper()
+    operation_id_str = reco_novecento_medium.recognize(operation_id).upper()
     fixup, operation_id_str = minireco.fix_stage_name(operation_id_str)
     if fixup:
         logger.logtext('fixed to ' + operation_id_str)
