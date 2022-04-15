@@ -72,14 +72,14 @@ class RIICAddon(AddonBase):
         self.enter_riic()
         count = 0
         while count < 2:
-            if roi := self.match_roi('riic/notification', fixed_position=False, method='template_matching'):
+            if roi := self.match_roi('riic/notification2', fixed_position=False, method='mse'):
                 while True:
                     self.logger.info('发现蓝色通知')
                     self.tap_rect(roi.bbox)
                     if self.match_roi('riic/pending'):
                         break
                     self.logger.info('重试点击蓝色通知')
-                while roi := self.wait_for_roi('riic/collect_all', timeout=2, fixed_position=False, method='template_matching'):
+                while roi := self.wait_for_roi('riic/collect_all2', timeout=2, fixed_position=False, method='mse'):
                     self.logger.info('发现全部收取按钮')
                     rc = roi.bbox
                     rc.y = 93.704 * self.vh
@@ -365,7 +365,7 @@ class RIICAddon(AddonBase):
         screenshot = self.device.screenshot().convert('RGB')
         if self.match_roi('riic/clear_operator'):
             pass
-        elif roi := self.match_roi('riic/operator_button', method='template_matching', fixed_position=False, screenshot=screenshot.subview((0, 0, screenshot.height * 0.18611, screenshot.height))):
+        elif roi := self.match_roi('riic/operator_button', method='mse', fixed_position=False, screenshot=screenshot.subview((0, 0, screenshot.height * 0.18611, screenshot.height))):
             self.tap_rect(roi.bbox)
         self.tap_rect(self.load_roi('riic/first_operator_in_list').bbox)
 
