@@ -60,7 +60,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         ydiff = max(-1.0, min(1.0, gauss(0, 0.2)))
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
-        self.helper.device.touch_tap((tapx, tapy))
+        self.helper.device.touch_tap((tapx, tapy), (0, 0))
         self.delay(post_delay, MANLIKE_FLAG=True)
 
     def tap_quadrilateral(self, pts, post_delay=1):
@@ -72,7 +72,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         pt2 = pts[1] if bddiff > 1 else pts[3]
         halfvec = (pt2 - m) / 2
         finalpt = m + halfvec * bddiff
-        self.helper.device.touch_tap(tuple(int(x) for x in finalpt))
+        self.helper.device.touch_tap(tuple(int(x) for x in finalpt), (0, 0))
         self.delay(post_delay, MANLIKE_FLAG=True)
 
     def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
