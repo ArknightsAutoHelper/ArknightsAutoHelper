@@ -8,13 +8,15 @@ from dataclasses import dataclass, field
 from numbers import Real
 import cv2
 import numpy as np
+import logging
 from util import cvimage as Image
 
 from util.richlog import get_logger
 from . import imgops
 from . import resources
 
-logger = get_logger(__name__)
+richlogger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 def check_get_item_popup(img):
     vw, vh = get_vwvh(img.size)
@@ -24,8 +26,8 @@ def check_get_item_popup(img):
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
     # print(mse, icon1.size)
-    logger.logimage(icon1)
-    logger.logtext('check_get_item_popup mse=%f' % mse)
+    richlogger.logimage(icon1)
+    richlogger.logtext('check_get_item_popup mse=%f' % mse)
     return mse < 2000
 
 
@@ -41,8 +43,8 @@ def check_nav_button(img):
 
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     ccoeff = imgops.compare_ccoeff(np.asarray(icon1), np.asarray(icon2))
-    logger.logimage(icon1)
-    logger.logtext('check_nav_button ccoeff=%f' % ccoeff)
+    richlogger.logimage(icon1)
+    richlogger.logtext('check_nav_button ccoeff=%f' % ccoeff)
     return ccoeff > 0.8
 
 
@@ -58,8 +60,8 @@ def check_setting_scene(img):
 
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     mse = imgops.compare_mse(np.asarray(icon1), np.asarray(icon2))
-    logger.logimage(icon1)
-    logger.logtext('check_setting_scene mse=%f' % mse)
+    richlogger.logimage(icon1)
+    richlogger.logtext('check_setting_scene mse=%f' % mse)
     return mse < 200
 
 def get_setting_back_rect(viewport):
@@ -224,43 +226,37 @@ class RoiMatchingMixin:
                 result.score = imgops.compare_mse(template, compare, mask)
                 result.score_for_max_similarity = 0
                 result.threshold = 1625
-                return result
             elif method == 'template_matching' or method == 'ccoeff':
                 result.score = imgops.compare_ccoeff(template, compare, mask)
                 result.score_for_max_similarity = 1
                 result.threshold = 0.8
-                return result
             elif method == 'sift':
                 feature_result = imgops.match_feature(template, compare, templ_mask=mask.array)
                 result.score = feature_result.matched_keypoint_count
                 result.score_for_max_similarity = feature_result.template_keypooint_count
                 result.threshold = min(feature_result.template_keypooint_count, 10)
                 result.context = feature_result
-                return result
             else:
                 raise RuntimeError("unsupported matching method %s for fixed-position ROI" % method)
 
         else:
             if method is None:
                 method = 'ccoeff'
-            if method == 'template_matching' or method == 'ccoeff':
+            if method == 'template_matching' or method == 'ccoeff' or method == 'mse':
+                if method == 'mse':
+                    cv_method = cv2.TM_SQDIFF_NORMED
+                    result.score_for_max_similarity = 0
+                    result.threshold = 0.06
+                else:
+                    cv_method = cv2.TM_CCOEFF_NORMED
+                    result.score_for_max_similarity = 1
+                    result.threshold = 0.8
                 scaled_template = roi.template.resize((roi.bbox.width, roi.bbox.height))
                 mask = roi.mask.resize(scaled_template.size) if roi.mask is not None else None
-                point, score = imgops.match_template(screenshot, scaled_template, template_mask=mask.array)
+                center, score = imgops.match_template(screenshot, scaled_template, method=cv_method, template_mask=mask.array)
+                point = (center[0] - scaled_template.width / 2, center[1] - scaled_template.height / 2)
                 result.score = score
-                result.score_for_max_similarity = 1
-                result.threshold = 0.8
                 result.bbox = Image.Rect.from_xywh(point[0], point[1], scaled_template.width, scaled_template.height)
-                return result
-            elif method == 'mse':
-                scaled_template = roi.template.resize((roi.bbox.width, roi.bbox.height))
-                mask = roi.mask.resize(scaled_template.size) if roi.mask is not None else None
-                point, score = imgops.match_template(screenshot, scaled_template, method=cv2.TM_SQDIFF_NORMED, template_mask=mask.array)
-                result.score = score
-                result.score_for_max_similarity = 0
-                result.threshold = 0.2
-                result.bbox = Image.Rect.from_xywh(point[0], point[1], scaled_template.width, scaled_template.height)
-                return result
             elif method == 'sift':
                 feature_result = imgops.match_feature(roi.template, screenshot, templ_mask=roi.mask.array, haystack_mask=matching_mask)
                 result.score = feature_result.matched_keypoint_count
@@ -269,10 +265,11 @@ class RoiMatchingMixin:
                 result.context = feature_result
                 x, y, w, h = cv2.boundingRect(feature_result.template_corners)
                 result.bbox = Image.Rect.from_xywh(x, y, w, h)
-                return result
             else:
                 raise RuntimeError("unsupported matching method %s for non-fixed-position ROI" % method)
-
+        uselogger = getattr(self, 'logger', logger)
+        uselogger.debug('%r', result)
+        return result
 class ImageRoiMatchingContext(RoiMatchingMixin):
     def __init__(self, img: Image.Image):
         self.image = img
