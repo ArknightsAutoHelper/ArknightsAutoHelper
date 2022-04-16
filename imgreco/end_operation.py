@@ -229,7 +229,7 @@ def check_end_operation_legacy(img):
 
 def check_end_operation_20220414(img):
     context = common.ImageRoiMatchingContext(img)
-    return bool(context.match_roi('end_operation/20220414/rhodes_island'))
+    return bool(context.match_roi('end_operation/20220414/rhodes_island', method='mse', threshold=325))
 
 def check_end_operation_interlocking_friendship(img):
     vw, vh = common.get_vwvh(img.size)
