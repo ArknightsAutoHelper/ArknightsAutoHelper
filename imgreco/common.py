@@ -180,9 +180,6 @@ class RoiMatchingResult:
         elif self.threshold <= self.score_for_max_similarity:
             return bool(self.score > self.threshold)
 
-    def with_threshold(self, threshold):
-        return RoiMatchingResult(self.score, threshold, self.bbox, self.score_for_max_similarity, self.context)
-
 RoiMatchingResult.NoMatch = RoiMatchingResult(None, 65025, 1, 0)
 
 class RoiMatchingMixin:
@@ -204,7 +201,7 @@ class RoiMatchingMixin:
         else:
             return self._localize_roi(roidef)
 
-    def match_roi(self, roi: Union[str, RegionOfInterest], fixed_position: Optional[bool] = None, method: Literal["template_matching", "mse", "sift", None] = None, mode='RGB', screenshot=None, matching_mask=None) -> RoiMatchingResult:
+    def match_roi(self, roi: Union[str, RegionOfInterest], fixed_position: Optional[bool] = None, method: Literal["template_matching", "mse", "sift", None] = None, threshold=None, mode='RGB', screenshot=None, matching_mask=None) -> RoiMatchingResult:
         roi = self._ensure_roi(roi, mode)
         if screenshot is None:
             screenshot = self._implicit_screenshot()
@@ -215,6 +212,8 @@ class RoiMatchingMixin:
             fixed_position = roi.matching_preference.get('fixed_position', True)
         if method is None:
             method = roi.matching_preference.get('method', None)
+        if threshold is None:
+            threshold = roi.matching_preference.get('threshold', None)
         if fixed_position:
             result.bbox = roi.bbox
             compare = screenshot.crop(roi.bbox)
@@ -225,11 +224,11 @@ class RoiMatchingMixin:
             if method == 'mse':
                 result.score = imgops.compare_mse(template, compare, mask)
                 result.score_for_max_similarity = 0
-                result.threshold = 1625
+                result.threshold = threshold if threshold is not None else 650
             elif method == 'template_matching' or method == 'ccoeff':
                 result.score = imgops.compare_ccoeff(template, compare, mask)
                 result.score_for_max_similarity = 1
-                result.threshold = 0.8
+                result.threshold = threshold if threshold is not None else 0.8
             elif method == 'sift':
                 feature_result = imgops.match_feature(template, compare, templ_mask=mask.array)
                 result.score = feature_result.matched_keypoint_count
@@ -246,11 +245,11 @@ class RoiMatchingMixin:
                 if method == 'mse':
                     cv_method = cv2.TM_SQDIFF_NORMED
                     result.score_for_max_similarity = 0
-                    result.threshold = 0.06
+                    result.threshold = threshold if threshold is not None else 0.06
                 else:
                     cv_method = cv2.TM_CCOEFF_NORMED
                     result.score_for_max_similarity = 1
-                    result.threshold = 0.8
+                    result.threshold = threshold if threshold is not None else 0.8
                 scaled_template = roi.template.resize((roi.bbox.width, roi.bbox.height))
                 mask = roi.mask.resize(scaled_template.size) if roi.mask is not None else None
                 center, score = imgops.match_template(screenshot, scaled_template, method=cv_method, template_mask=mask.array)
