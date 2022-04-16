@@ -21,6 +21,7 @@ from . import common
 net_file = app.cache_path / 'ark_material.onnx'
 index_file = app.cache_path / 'index_itemid_relation.json'
 
+logger = logging.getLogger(__name__)
 
 @lru_cache(1)
 def _load_net():
@@ -58,11 +59,12 @@ def update_net():
         with open(index_file, 'r', encoding='utf-8') as f:
             local_rel = json.load(f)
             local_cache_time = local_rel['time']
+    logger.info('检查物品识别模型更新')
     resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/index_itemid_relation.json')
     remote_relation = resp.json()
     if remote_relation['time'] > local_cache_time:
         from datetime import datetime
-        logging.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
+        logger.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
         with open(index_file, 'w', encoding='utf-8') as f:
             json.dump(remote_relation, f, ensure_ascii=False)
         resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/ark_material.onnx')
@@ -130,8 +132,8 @@ def all_known_items():
 
 
 def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
-    logger = get_logger(__name__)
-    logger.logimage(itemimg)
+    richlogger = get_logger(__name__)
+    richlogger.logimage(itemimg)
     from . import itemdb
     # l, t, r, b = scaledwh(80, 146, 90, 28)
     # print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)
@@ -144,9 +146,9 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
 
         if numimg is not None:
             numimg = imgops.clear_background(numimg, 120)
-            logger.logimage(numimg)
+            richlogger.logimage(numimg)
             numtext, score = itemdb.num_recognizer.recognize2(numimg, subset='0123456789万')
-            logger.logtext('quantity: %s, minscore: %f' % (numtext, score))
+            richlogger.logtext('quantity: %s, minscore: %f' % (numtext, score))
             if score < 0.2:
                 low_confidence = True
             quantity = int(numtext) if numtext.isdigit() else None
@@ -163,17 +165,17 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
     scores.sort(key=lambda x: x[1])
     itemname, score = scores[0]
     # maxmatch = max(scores, key=lambda x: x[1])
-    logger.logtext(repr(scores[:5]))
+    richlogger.logtext(repr(scores[:5]))
     diffs = np.diff([a[1] for a in scores])
     item_type = None
     if score < 800 and np.any(diffs > 600):
-        logger.logtext('matched %s with mse %f' % (itemname, score))
+        richlogger.logtext('matched %s with mse %f' % (itemname, score))
         name = itemname
     else:
         prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg.convert('RGB')))
-        logger.logtext(f'dnn matched {name} with prob {prob}')
+        richlogger.logtext(f'dnn matched {name} with prob {prob}')
         if prob < 0.8 or item_id == 'other':
-            logger.logtext('no match')
+            richlogger.logtext('no match')
             low_confidence = True
             name = None
 
