@@ -259,8 +259,7 @@ class CombatAddon(AddonBase):
             if end_flag:
                 self.logger.info('战斗结束')
                 self.operation_time.append(t)
-                crop = imgreco.end_operation.get_still_check_rect(self.viewport)
-                if self.wait_for_still_image(crop=crop, timeout=15, raise_for_timeout=True):
+                if self.wait_for_still_image(timeout=15, raise_for_timeout=True):
                     smobj.state = on_end_operation
                 return
             dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
