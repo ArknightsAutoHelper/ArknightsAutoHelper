@@ -38,6 +38,7 @@ jobs:
         git fetch --tags
         hub release delete bootstrapper-package-app
         git push --delete origin bootstrapper-package-app
+        timeout /t 5 /nobreak > nul
         call;
     - name: prerelease
       uses: "softprops/action-gh-release@v1"
