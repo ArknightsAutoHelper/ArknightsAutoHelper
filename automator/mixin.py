@@ -38,7 +38,10 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
-        self.helper.frontend.delay(n, allow_skip)
+        if n > 3 or allow_skip:
+            self.helper.frontend.delay(n, allow_skip)
+        else:
+            time.sleep(n)
 
     def tap_point(self, pos, post_delay=0.5, randomness=(5, 5)):
         x, y = pos
@@ -75,12 +78,12 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         self.helper.device.touch_tap(tuple(int(x) for x in finalpt), (0, 0))
         self.delay(post_delay, MANLIKE_FLAG=True)
 
-    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
+    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1, iteration=1):
         if crop is None:
             shooter = lambda: self.helper.device.screenshot(False)
         else:
             shooter = lambda: self.helper.device.screenshot(False).crop(crop)
-        screenshot = shooter()
+        prev_screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
         n = 0
@@ -88,12 +91,16 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         message_shown = False
         while (t1 := time.monotonic()) < ts:
             if check_delay > 0:
-                self.delay(check_delay, False, True)
+                self.delay(check_delay, False, False)
             screenshot2 = shooter()
-            mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
+            mse = imgreco.imgops.compare_mse(prev_screenshot, screenshot2)
             if mse <= threshold:
-                return screenshot2
-            screenshot = screenshot2
+                n += 1
+                if n >= iteration:
+                    return screenshot2
+            else:
+                n = 0
+            prev_screenshot = screenshot2
             if mse < minerr:
                 minerr = mse
             if not message_shown and t1-t0 > 10:
