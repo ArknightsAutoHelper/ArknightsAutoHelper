@@ -154,30 +154,32 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
             quantity = int(numtext) if numtext.isdigit() else None
 
 
-    # scale = 48/itemimg.height
-    img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
-    img4reco[itemdb.itemmask] = 0
 
-    scores = []
-    for name, templ in itemdb.itemmats.items():
-        scores.append((name, imgops.compare_mse(img4reco, templ)))
 
-    scores.sort(key=lambda x: x[1])
-    itemname, score = scores[0]
-    # maxmatch = max(scores, key=lambda x: x[1])
-    richlogger.logtext(repr(scores[:5]))
-    diffs = np.diff([a[1] for a in scores])
-    item_type = None
-    if score < 800 and np.any(diffs > 600):
-        richlogger.logtext('matched %s with mse %f' % (itemname, score))
-        name = itemname
-    else:
         prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg.convert('RGB')))
         richlogger.logtext(f'dnn matched {name} with prob {prob}')
         if prob < 0.8 or item_id == 'other':
-            richlogger.logtext('no match')
-            low_confidence = True
-            name = None
+    # scale = 48/itemimg.height
+            img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
+            img4reco[itemdb.itemmask] = 0
+
+            scores = []
+            for name, templ in itemdb.itemmats.items():
+                scores.append((name, imgops.compare_mse(img4reco, templ)))
+
+            scores.sort(key=lambda x: x[1])
+            itemname, score = scores[0]
+            # maxmatch = max(scores, key=lambda x: x[1])
+            richlogger.logtext(repr(scores[:5]))
+            diffs = np.diff([a[1] for a in scores])
+            item_type = None
+            if score < 800 and np.any(diffs > 600):
+                richlogger.logtext('matched %s with mse %f' % (itemname, score))
+                name = itemname
+            else:
+                richlogger.logtext('no match')
+                low_confidence = True
+                name = None
 
     if name is None and learn_unrecognized:
         name = itemdb.add_item(itemimg)
