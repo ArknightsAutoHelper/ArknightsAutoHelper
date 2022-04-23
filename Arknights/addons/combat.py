@@ -255,15 +255,15 @@ class CombatAddon(AddonBase):
 
             screenshot = self.device.screenshot()
 
-            if self.match_roi('combat/topbar', screenshot=screenshot):
-                if self.match_roi('combat/lun', screenshot=screenshot) and not smobj.mistaken_delegation:
+            if self.match_roi('combat/topbar', method='ccoeff', screenshot=screenshot):
+                if self.match_roi('combat/lun', method='ccoeff', screenshot=screenshot) and not smobj.mistaken_delegation:
                     self.logger.info('伦了。')
                     smobj.mistaken_delegation = True
                 else:
                     return
 
-            if self.match_roi('combat/topbar_camp', screenshot=screenshot):
-                if self.match_roi('combat/lun_camp', screenshot=screenshot) and not smobj.mistaken_delegation:
+            if self.match_roi('combat/topbar_camp', method='ccoeff', screenshot=screenshot):
+                if self.match_roi('combat/lun_camp', method='ccoeff', screenshot=screenshot) and not smobj.mistaken_delegation:
                     self.logger.info('伦了。')
                     smobj.mistaken_delegation = True
                 else:

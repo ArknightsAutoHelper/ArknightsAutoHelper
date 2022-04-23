@@ -167,10 +167,8 @@ def check_ap_refill_type(img):
     context = common.ImageRoiMatchingContext(img)
     vw, vh = common.get_vwvh(img.size)
 
-    item_icon = context.match_roi('before_operation/refill_with_item_icon')
-    originium_icon = context.match_roi('before_operation/refill_with_originium_icon')
-    logger.logtext('match item_icon=%r' % (item_icon,))
-    logger.logtext('match originium_icon=%r' % (originium_icon,))
+    item_icon = context.match_roi('before_operation/refill_with_item_icon', method='ccoeff')
+    originium_icon = context.match_roi('before_operation/refill_with_originium_icon', method='ccoeff')
 
     if not item_icon and not originium_icon:
         return None
