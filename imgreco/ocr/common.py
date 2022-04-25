@@ -56,5 +56,5 @@ class OcrEngine(ABC):
         self.kwargs = kwargs
         self.features = ()
 
-    def recognize(self, image, ppi=70, hints=None, **kwargs):
+    def recognize(self, image, ppi=70, hints=None, **kwargs) -> OcrResult:
         raise NotImplementedError()

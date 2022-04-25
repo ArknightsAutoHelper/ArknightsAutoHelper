@@ -298,3 +298,11 @@ def compare_region_mse(img, region, template, threshold=3251, logger=None):
     if threshold is not None:
         return mse < threshold
     return mse
+
+def pad(img, size, value=None):
+    if value is None:
+        mode = cv.BORDER_REPLICATE
+    else:
+        mode = cv.BORDER_CONSTANT
+    mat = cv.copyMakeBorder(np.asarray(img), size, size, size, size, mode, value=value)
+    return Image.fromarray(mat, img.mode)

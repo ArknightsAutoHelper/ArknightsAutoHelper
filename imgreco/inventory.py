@@ -137,23 +137,7 @@ def show_img(cv_img):
     cv2.waitKey()
 
 
-def get_quantity(num_img):
-    logger.logimage(num_img)
-    x_threshold = int(num_img.height * 0.25) + 1
-    numimg = imgops.crop_blackedge2(num_img, 130, x_threshold)
-    logger.logimage(numimg)
-
-    if numimg is not None:
-        numimg = imgops.clear_background(numimg, 120)
-        logger.logimage(numimg)
-        cached = item.load_data()
-        numtext, score = cached.num_recognizer.recognize2(numimg, subset='0123456789万')
-        logger.logtext('quantity: %s, minscore: %f' % (numtext, score))
-        quantity = int(numtext) if numtext.isdigit() else None
-        return quantity
-
-    return None
-
+from .item import get_quantity
 
 def convert_to_pil(cv_img):
     return Image.fromarray(cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB))
@@ -168,7 +152,7 @@ def get_all_item_in_screen(screen):
         logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
         if item_id in exclude_items or item_type == 'ACTIVITY_ITEM':
             continue
-        quantity = get_quantity(item_img['num_img'])
+        quantity = get_quantity(Image.fromarray(item_img['item_img'], 'BGR'))
         item_count_map[item_id] = quantity
         # print(item_id, quantity)
         # show_img(item_img['item_img'])
@@ -191,7 +175,7 @@ def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_t
             continue
         if only_normal_items and (not item_id.isdigit() or len(item_id) < 5 or item_type != 'MATERIAL'):
             continue
-        quantity = get_quantity(item_img['num_img'])
+        quantity = get_quantity(Image.fromarray(item_img['item_img'], 'BGR'))
         # get_quantity2(item_img['item_img'])
         res.append({'itemId': item_id, 'itemName': item_name, 'itemType': item_type,
                     'quantity': quantity, 'itemPos': item_img['item_pos']})

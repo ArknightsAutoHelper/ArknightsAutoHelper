@@ -131,6 +131,30 @@ def all_known_items():
     return itemdb.resources_known_items.keys()
 
 
+def get_quantity(itemimg):
+    richlogger = get_logger(__name__)
+    numimg = imgops.scalecrop(itemimg, 0.39, 0.71, 0.82, 0.855).convert('L')
+        numimg = imgops.crop_blackedge2(numimg, 120)
+        if numimg is not None:
+            numimg = imgops.clear_background(numimg, 120)
+        numimg4legacy = numimg
+            numimg = imgops.pad(numimg, 8, 0)
+            numimg = imgops.invert_color(numimg)
+            richlogger.logimage(numimg)
+            from .ocr import acquire_engine_global_cached
+            eng = acquire_engine_global_cached('zh-cn')
+        result = eng.recognize(numimg, char_whitelist='0123456789万', tessedit_pageseg_mode='13')
+        qty_ocr = result.text.replace(' ', '').replace('万', '0000')
+        richlogger.logtext(f'{qty_ocr=}')
+        if not qty_ocr.isdigit():
+            from . import itemdb
+            qty_minireco, score = itemdb.num_recognizer.recognize2(numimg4legacy, subset='0123456789万')
+            richlogger.logtext(f'{qty_minireco=}, {score=}')
+            if score > 0.2:
+                qty_ocr = qty_minireco
+        return int(qty_ocr) if qty_ocr.isdigit() else None
+
+
 def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
     richlogger = get_logger(__name__)
     richlogger.logimage(itemimg)
@@ -141,20 +165,7 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
     low_confidence = False
     quantity = None
     if with_quantity:
-        numimg = imgops.scalecrop(itemimg, 0.39, 0.71, 0.82, 0.84).convert('L')
-        numimg = imgops.crop_blackedge2(numimg, 120)
-
-        if numimg is not None:
-            numimg = imgops.clear_background(numimg, 120)
-            richlogger.logimage(numimg)
-            numtext, score = itemdb.num_recognizer.recognize2(numimg, subset='0123456789万')
-            richlogger.logtext('quantity: %s, minscore: %f' % (numtext, score))
-            if score < 0.2:
-                low_confidence = True
-            quantity = int(numtext) if numtext.isdigit() else None
-
-
-
+        quantity = get_quantity(itemimg)
 
         prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg.convert('RGB')))
         richlogger.logtext(f'dnn matched {name} with prob {prob}')
