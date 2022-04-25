@@ -29,11 +29,14 @@ jobs:
         name: bootstrapper
         path: build/bootstrapper
     - name: delete old release
-      shell: cmd
+      shell: powershell
+      continue-on-error: true
       run: |
         git fetch --tags
-        hub release delete bootstrapper-package-runtime
-        git push --delete origin bootstrapper-package-runtime
+        $ErrorActionPreference = 'continue'
+        hub release delete bootstrapper-release
+        git push --delete origin bootstrapper-release
+        sleep 5
     - name: prerelease
       uses: "softprops/action-gh-release@v1"
       with:

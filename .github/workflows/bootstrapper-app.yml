@@ -33,13 +33,14 @@ jobs:
         name: app-nested-zip
         path: build/app-cp39.zip
     - name: delete old release
-      shell: cmd
+      shell: powershell
+      continue-on-error: true
       run: |
         git fetch --tags
+        $ErrorActionPreference = 'continue'
         hub release delete bootstrapper-package-app
         git push --delete origin bootstrapper-package-app
-        timeout /t 5 /nobreak > nul
-        call;
+        sleep 5
     - name: prerelease
       uses: "softprops/action-gh-release@v1"
       with:
