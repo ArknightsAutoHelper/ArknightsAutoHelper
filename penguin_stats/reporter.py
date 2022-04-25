@@ -190,12 +190,14 @@ class PenguinStatsReporter:
                     logger.error('分组 %s 内物品种类数量（%d）不符合企鹅数据验证规则', groupinfo.drop_type, kinds)
                     return ReportResult.NotReported
 
+        from imgreco.item import model_timestamp
+
         req = penguin_client.SingleReportRequest(
             drops=typeddrops,
             server='CN',
             stage_id=stage.stage_id,
             source=REPORT_SOURCE,
-            version=app.version
+            version=f'{app.version},ark_material@{model_timestamp}',
         )
 
 
