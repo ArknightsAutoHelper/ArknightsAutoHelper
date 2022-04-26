@@ -235,13 +235,13 @@ class StartSpStageAddon(AddonBase):
     def tap_side_story(self):
         vh, vw = self.vh, self.vw
         self.logger.info('open side story view')
-        self.helper.tap_rect((44.297 * vw, 88.611 * vh, 56.406 * vw, 98.750 * vh))
+        self.helper.tap_rect((40.093*vw, 88.704*vh, 46.991*vw, 97.778*vh))
         self.delay(1)
 
     def tap_branch_line(self):
         self.logger.info('open branch line view')
         vh, vw = self.vh, self.vw
-        self.helper.tap_rect((29.375 * vw, 88.611 * vh, 41.719 * vw, 98.750 * vh))
+        self.helper.tap_rect((27.593*vw, 88.704*vh, 34.491*vw, 97.778*vh))
         self.delay(1)
 
     def tap_enter_activity(self):

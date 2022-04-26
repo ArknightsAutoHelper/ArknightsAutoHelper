@@ -1,6 +1,6 @@
 from .schemadef import *
 class root(Schema):
-    __version__ = 1
+    __version__ = 2
     debug = Field(bool, False)
     @Namespace('设备连接')
     class device:
@@ -33,7 +33,7 @@ class root(Schema):
         ocr_backend = EnumField(['svm', 'dnn'], 'svm', '自动选关使用的 OCR 后端')
     @Namespace('OCR 设置（即将弃用）')
     class ocr:
-        backend = EnumField(['auto', 'tesseract', 'windows_media_ocr', 'baidu'], 'auto', '默认 OCR 后端')
+        backend = EnumField(['auto', 'tesseract', 'baidu'], 'auto', '默认 OCR 后端')
         @Namespace('百度 OCR API 设置')
         class baidu_api:
             enable = Field(bool, False)

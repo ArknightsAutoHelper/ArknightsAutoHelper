@@ -8,7 +8,7 @@ from automator import AddonBase, cli_command
 from ..stage_navigator import StageNavigator, custom_stage
 from ..inventory import InventoryAddon
 
-record_path = app.config_path.joinpath('record.json')
+record_path = app.config_path.joinpath('plan.json')
 
 class PlannerAddOn(AddonBase):
     @cli_command('arkplanner')
@@ -76,7 +76,7 @@ class PlannerAddOn(AddonBase):
             'owned': owned,
             'stages': stage_task_list
         }
-        with open('config/plan.json', 'w') as f:
+        with open(record_path, 'w') as f:
             json.dump(save_data, f, indent=4, sort_keys=True)
         print('刷图计划已保存至: config/plan.json')
 
@@ -104,6 +104,6 @@ class PlannerAddOn(AddonBase):
             if update_flag:
                 with open(record_path, 'w') as f:
                     json.dump(plan, f, indent=4, sort_keys=True)
-                print('刷图计划已更新至: config/plan.json')
+                print('刷图计划已更新至: ', record_path)
         else:
             self.logger.error('未能检测到刷图计划')

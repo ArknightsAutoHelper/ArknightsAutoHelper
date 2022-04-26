@@ -37,7 +37,7 @@ FIXED_QUANTITY = [
 #     '感谢庆典物资补给',
 # ]
 
-report_types = {'MATERIAL', 'CARD_EXP', 'VOUCHER_MGACHA', 'furni', 'special_report_item'}
+# report_types = {'MATERIAL', 'CARD_EXP', 'VOUCHER_MGACHA', 'furni', 'special_report_item', None}
 
 
 def event_preprocess(stage: str, items: List[Tuple[str, str, int, str]], exclude_from_validation: List):
@@ -45,7 +45,7 @@ def event_preprocess(stage: str, items: List[Tuple[str, str, int, str]], exclude
     for itemrecord in items:
         group, name, qty, item_type = itemrecord
 
-        if name in FIXED_QUANTITY or item_type not in report_types or name.startswith('@'):
+        if name in FIXED_QUANTITY or name.startswith('@'):
             # 不加入汇报列表
             continue
             

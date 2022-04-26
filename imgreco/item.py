@@ -21,6 +21,9 @@ from . import common
 net_file = app.cache_path / 'ark_material.onnx'
 index_file = app.cache_path / 'index_itemid_relation.json'
 
+logger = logging.getLogger(__name__)
+
+model_timestamp = 0
 
 @lru_cache(1)
 def _load_net():
@@ -32,12 +35,16 @@ def _load_net():
 
 
 @lru_cache(1)
-def load_index_info():
-    update_net()
+def _load_index_info():
     with open(index_file, 'r', encoding='utf-8') as f:
         data = json.load(f)
+    global model_timestamp
+    model_timestamp = data['time']
     return data['idx2id'], data['id2idx'], data['idx2name'], data['idx2type']
 
+def load_index_info():
+    update_net()
+    return _load_index_info()
 
 def retry_get(url, max_retry=5, timeout=3):
     c = 0
@@ -53,22 +60,34 @@ def retry_get(url, max_retry=5, timeout=3):
 
 def update_net():
     local_cache_time = 0
+    import time
     os.makedirs(os.path.dirname(index_file), exist_ok=True)
-    if os.path.exists(index_file):
+    try:
+        stat = os.stat(index_file)
+        cache_mtime = stat.st_mtime
         with open(index_file, 'r', encoding='utf-8') as f:
             local_rel = json.load(f)
-            local_cache_time = local_rel['time']
+            model_gen_time = local_rel['time'] / 1000
+        now = time.time()
+        print(f'{cache_mtime=} {now=} {model_gen_time=}')
+        if cache_mtime > model_gen_time and now - cache_mtime < 60 * 60 * 8:
+            return
+    except:
+        pass
+    logger.info('检查物品识别模型更新')
     resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/index_itemid_relation.json')
     remote_relation = resp.json()
     if remote_relation['time'] > local_cache_time:
         from datetime import datetime
-        logging.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
+        logger.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
         with open(index_file, 'w', encoding='utf-8') as f:
             json.dump(remote_relation, f, ensure_ascii=False)
         resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/ark_material.onnx')
         with open(net_file, 'wb') as f:
             f.write(resp.content)
         _load_net.cache_clear()
+    else:
+        os.utime(index_file, None)
 
 
 def crop_item_middle_img(cv_item_img):
@@ -129,9 +148,33 @@ def all_known_items():
     return itemdb.resources_known_items.keys()
 
 
+def get_quantity(itemimg):
+    richlogger = get_logger(__name__)
+    numimg = imgops.scalecrop(itemimg, 0.39, 0.71, 0.82, 0.855).convert('L')
+    numimg = imgops.crop_blackedge2(numimg, 120)
+    if numimg is not None:
+        numimg = imgops.clear_background(numimg, 120)
+        numimg4legacy = numimg
+        numimg = imgops.pad(numimg, 8, 0)
+        numimg = imgops.invert_color(numimg)
+        richlogger.logimage(numimg)
+        from .ocr import acquire_engine_global_cached
+        eng = acquire_engine_global_cached('zh-cn')
+        result = eng.recognize(numimg, char_whitelist='0123456789万', tessedit_pageseg_mode='13')
+        qty_ocr = result.text.replace(' ', '').replace('万', '0000')
+        richlogger.logtext(f'{qty_ocr=}')
+        if not qty_ocr.isdigit():
+            from . import itemdb
+            qty_minireco, score = itemdb.num_recognizer.recognize2(numimg4legacy, subset='0123456789万')
+            richlogger.logtext(f'{qty_minireco=}, {score=}')
+            if score > 0.2:
+                qty_ocr = qty_minireco
+        return int(qty_ocr) if qty_ocr.isdigit() else None
+    
+
 def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
-    logger = get_logger(__name__)
-    logger.logimage(itemimg)
+    richlogger = get_logger(__name__)
+    richlogger.logimage(itemimg)
     from . import itemdb
     # l, t, r, b = scaledwh(80, 146, 90, 28)
     # print(l/itemimg.width, t/itemimg.height, r/itemimg.width, b/itemimg.height)
@@ -139,41 +182,30 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False):
     low_confidence = False
     quantity = None
     if with_quantity:
-        numimg = imgops.scalecrop(itemimg, 0.39, 0.71, 0.82, 0.84).convert('L')
-        numimg = imgops.crop_blackedge2(numimg, 120)
+        quantity = get_quantity(itemimg)
 
-        if numimg is not None:
-            numimg = imgops.clear_background(numimg, 120)
-            logger.logimage(numimg)
-            numtext, score = itemdb.num_recognizer.recognize2(numimg, subset='0123456789万')
-            logger.logtext('quantity: %s, minscore: %f' % (numtext, score))
-            if score < 0.2:
-                low_confidence = True
-            quantity = int(numtext) if numtext.isdigit() else None
+    prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg.convert('RGB')))
+    richlogger.logtext(f'dnn matched {name} with prob {prob}')
+    if prob < 0.8 or item_id == 'other':
+# scale = 48/itemimg.height
+        img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
+        img4reco[itemdb.itemmask] = 0
 
+        scores = []
+        for name, templ in itemdb.itemmats.items():
+            scores.append((name, imgops.compare_mse(img4reco, templ)))
 
-    # scale = 48/itemimg.height
-    img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
-    img4reco[itemdb.itemmask] = 0
-
-    scores = []
-    for name, templ in itemdb.itemmats.items():
-        scores.append((name, imgops.compare_mse(img4reco, templ)))
-
-    scores.sort(key=lambda x: x[1])
-    itemname, score = scores[0]
-    # maxmatch = max(scores, key=lambda x: x[1])
-    logger.logtext(repr(scores[:5]))
-    diffs = np.diff([a[1] for a in scores])
-    item_type = None
-    if score < 800 and np.any(diffs > 600):
-        logger.logtext('matched %s with mse %f' % (itemname, score))
-        name = itemname
-    else:
-        prob, item_id, name, item_type = get_item_id(common.convert_to_cv(itemimg))
-        logger.logtext(f'dnn matched {name} with prob {prob}')
-        if prob < 0.8 or item_id == 'other':
-            logger.logtext('no match')
+        scores.sort(key=lambda x: x[1])
+        itemname, score = scores[0]
+        # maxmatch = max(scores, key=lambda x: x[1])
+        richlogger.logtext(repr(scores[:5]))
+        diffs = np.diff([a[1] for a in scores])
+        item_type = None
+        if score < 800 and np.any(diffs > 600):
+            richlogger.logtext('matched %s with mse %f' % (itemname, score))
+            name = itemname
+        else:
+            richlogger.logtext('no match')
             low_confidence = True
             name = None
 

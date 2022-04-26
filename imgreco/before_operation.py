@@ -21,6 +21,30 @@ def load_data():
 @lru_cache(1)
 def recognize(img):
     vw, vh = common.get_vwvh(img.size)
+    context = common.ImageRoiMatchingContext(img)
+    match_checked1 = context.match_roi('before_operation/delegation_checked_legacy')
+    match_checked2 = context.match_roi('before_operation/delegation_checked_20220414')
+    match_unchecked1 = context.match_roi('before_operation/delegation_unchecked_legacy')
+    match_unchecked2 = context.match_roi('before_operation/delegation_unchecked_20220414')
+    logger.logtext(f'{match_checked1}\n{match_checked2}\n{match_unchecked1}\n{match_unchecked2}')
+    delegate_match = min(match_checked1, match_checked2, match_unchecked1, match_unchecked2, key=lambda x: x.score)
+    logger.logtext('best_match=%s' % delegate_match)
+    if delegate_match.score > 3251:
+        # ASSUMPTION: 存在代理指挥按钮
+        return None
+    *_, template, style = delegate_match.roi_name.split('_')
+    delegated = template == 'checked'
+    logger.logtext(f'{delegated=}, {style=}')
+    if style == 'legacy':
+        # old layout
+        opidrect = (100 * vw - 55.694 * vh, 11.667 * vh, 100 * vw - 44.028 * vh, 15.139 * vh)
+        consumerect = (100 * vw - 12.870 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)
+        start_button = (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
+    elif style == '20220414':
+        # 2022-04-14 new layout
+        opidrect = (100*vw-49.537*vh, 11.111*vh, 100*vw-37.870*vh, 15.370*vh)
+        consumerect = (100*vw-13.704*vh, 95.833*vh, 100*vw-7.315*vh, 99.074*vh)
+        start_button = (100*vw-31.759*vh, 90.093*vh, 100*vw-6.389*vh, 96.296*vh)
 
     # if imgops.compare_region_mse(img, (43.333*vh, 86.111*vh, 50.185*vh, 95.093*vh), 'before_operation/interlocking/interlocking_tag.png', threshold=650, logger=logger):
     #     return recognize_interlocking(img)
@@ -42,7 +66,7 @@ def recognize(img):
     logger.logtext(aptext)
     # print("AP:", aptext)
 
-    opidimg = img.crop((100 * vw - 55.694 * vh, 11.667 * vh, 100 * vw - 44.028 * vh, 15.139 * vh)).convert('L')
+    opidimg = img.crop(opidrect).convert('L')
     opidimg = imgops.enhance_contrast(opidimg, 80, 255)
     logger.logimage(opidimg)
     opidtext = str(reco_Novecento.recognize(opidimg))
@@ -57,15 +81,10 @@ def recognize(img):
     nofriendshiplist = ['OF-F']
     no_friendship = any(opidtext.startswith(header) for header in nofriendshiplist)
 
-    delegateimg = img.crop((100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh)).convert('L')
-    template = resources.load_image_cached('before_operation/delegation_checked.png', 'L')
-    logger.logimage(delegateimg)
-    mse = imgops.compare_mse(*imgops.uniform_size(delegateimg, template))
-    logger.logtext('mse=%f' % mse)
-    delegated = mse < 3251
+
     # print('delegated:', delegated)
 
-    consumeimg = img.crop((100 * vw - 12.870 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)).convert('L')
+    consumeimg = img.crop(consumerect).convert('L')
     consumeimg = imgops.enhance_contrast(consumeimg, 80, 255)
     logger.logimage(consumeimg)
     consumetext, minscore = reco_Noto.recognize2(consumeimg, subset='-0123456789')
@@ -86,9 +105,9 @@ def recognize(img):
         'operation': opidtext,
         'delegated': delegated,
         'consume': int(consumetext) if consumetext.isdigit() else None,
-        'style': 'main',
-        'delegate_button': (100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh),
-        'start_button': (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
+        'style': style,
+        'delegate_button': delegate_match.bbox.ltrb,
+        'start_button': start_button
     }
     # print('consumption:', consumetext)
 
@@ -148,10 +167,8 @@ def check_ap_refill_type(img):
     context = common.ImageRoiMatchingContext(img)
     vw, vh = common.get_vwvh(img.size)
 
-    item_icon = context.match_roi('before_operation/refill_with_item_icon')
-    originium_icon = context.match_roi('before_operation/refill_with_originium_icon')
-    logger.logtext('match item_icon=%r' % (item_icon,))
-    logger.logtext('match originium_icon=%r' % (originium_icon,))
+    item_icon = context.match_roi('before_operation/refill_with_item_icon', method='ccoeff')
+    originium_icon = context.match_roi('before_operation/refill_with_originium_icon', method='ccoeff')
 
     if not item_icon and not originium_icon:
         return None

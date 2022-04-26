@@ -156,7 +156,7 @@ class PenguinStatsReporter:
             if groupname == '首次掉落':
                 logger.info('不汇报首次掉落')
                 return ReportResult.NotReported
-            if '声望&龙门币奖励' in groupname:
+            if '龙门币' in groupname:
                 continue
             if groupname == '幸运掉落':
                 typeddrops.append(penguin_client.TypedDrop('FURNITURE', 'furni', 1))
@@ -190,14 +190,17 @@ class PenguinStatsReporter:
                     logger.error('分组 %s 内物品种类数量（%d）不符合企鹅数据验证规则', groupinfo.drop_type, kinds)
                     return ReportResult.NotReported
 
+        from imgreco.item import model_timestamp
+
         req = penguin_client.SingleReportRequest(
             drops=typeddrops,
             server='CN',
             stage_id=stage.stage_id,
             source=REPORT_SOURCE,
-            version=app.version
+            version=f'{app.version},ark_material@{model_timestamp // 1000}',
         )
 
+        logger.debug('raw request: %r', req)
 
         client = self.client
         if not self.logged_in:

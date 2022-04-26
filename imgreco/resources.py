@@ -1,8 +1,10 @@
+from __future__ import annotations
 import os
 import pickle
 from functools import lru_cache
 import json
-
+from typing import TYPE_CHECKING
+import cv2
 import numpy as np
 from util import cvimage as Image
 
@@ -97,7 +99,7 @@ def open_file(respath):
     return resolve(respath).open()
 
 
-def load_image(name, mode=None, imread_flags=None):
+def load_image(name, mode=None, imread_flags=None) -> Image.Image:
     if imread_flags is None:
         im = Image.open(open_file(name))
         if mode is not None and im.mode != mode:
@@ -108,8 +110,8 @@ def load_image(name, mode=None, imread_flags=None):
 
 
 @lru_cache(maxsize=None)
-def load_image_cached(name, mode=None):
-    return load_image(name, mode)
+def load_image_cached(name, mode=None, imread_flags=None):
+    return load_image(name, mode, imread_flags)
 
 
 def load_image_as_ndarray(name):
@@ -130,12 +132,22 @@ def load_minireco_model(name, filter_chars=None):
     return model
 
 
-def load_roi(basename, image_mode='RGB'):
+if TYPE_CHECKING:
+    from .common import RegionOfInterest as RegionOfInterest_ghost
+
+def load_roi(basename, image_mode='RGB', metafile=None, imgfile=None) -> RegionOfInterest_ghost:
     from .common import RegionOfInterest
-    metafile = basename + '.roi.json'
-    imgfile = basename + '.png'
+    if metafile is None:
+        metafile = basename + '.roi.json'
+    if imgfile is None:
+        imgfile = basename + '.png'
     imgfileindex = resolve(imgfile)
-    img = load_image_cached(imgfileindex, image_mode) if imgfileindex is not None else None
+    raw_img = load_image_cached(imgfileindex, imread_flags=cv2.IMREAD_UNCHANGED) if imgfileindex is not None else None
+    mask = None
+    if raw_img is not None:
+        if raw_img.mode.endswith('A'):
+            mask = Image.fromarray(np.ascontiguousarray(raw_img.array[..., -1]), 'L')
+        img = raw_img.convert(image_mode)
     try:
         with open_file(metafile) as f:
             meta = json.load(f)
@@ -144,4 +156,4 @@ def load_roi(basename, image_mode='RGB'):
     except:
         bbox_matrix = None
         native_resolution = None
-    return RegionOfInterest(name=basename, template=img, bbox_matrix=bbox_matrix, native_resolution=native_resolution)
+    return RegionOfInterest(name=basename, template=img, mask=mask, bbox_matrix=bbox_matrix, native_resolution=native_resolution)
