@@ -114,10 +114,10 @@ class WebFrontend:
         finally:
             self.notify("wait", dict(duration=0, allow_skip=False))
 
-_known_methods = {}
+_export_methods = {}
 
 def export(func):
-    _known_methods[func.__name__] = asyncio.iscoroutinefunction(func)
+    _export_methods[func.__name__] = asyncio.iscoroutinefunction(func)
     return func
 
 class ApiServer:
@@ -128,7 +128,7 @@ class ApiServer:
         signal.raise_signal(signal.SIGINT)
     async def handle_request(self, request):
         func_name = request['func']
-        is_async = _known_methods[func_name]
+        is_async = _export_methods[func_name]
         func = getattr(self, func_name)
         if is_async:
             return await func(**request['args'])
