@@ -197,9 +197,10 @@ class PenguinStatsReporter:
             server='CN',
             stage_id=stage.stage_id,
             source=REPORT_SOURCE,
-            version=f'{app.version},ark_material@{model_timestamp}',
+            version=f'{app.version},ark_material@{model_timestamp // 1000}',
         )
 
+        logger.debug('raw request: %r', req)
 
         client = self.client
         if not self.logged_in:
