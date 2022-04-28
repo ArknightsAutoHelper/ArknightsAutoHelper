@@ -38,10 +38,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         if MANLIKE_FLAG:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
-        if n > 3 or allow_skip:
-            self.helper.frontend.delay(n, allow_skip)
-        else:
-            time.sleep(n)
+        self.helper.frontend.delay(n, allow_skip)
 
     def tap_point(self, pos, post_delay=0.5, randomness=(5, 5)):
         x, y = pos
