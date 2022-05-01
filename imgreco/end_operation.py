@@ -78,7 +78,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
     return (groupname, result)
 
 
-def tell_group_20220414(groupimg, session, bartop, barbottom, ):
+def tell_group_ep10(groupimg, session, bartop, barbottom, ):
     logger.logimage(groupimg)
     grouptext = groupimg.subview((0, barbottom, groupimg.width, groupimg.height))
 
@@ -204,13 +204,14 @@ def check_level_up_popup(img):
 
 
 def check_end_operation(style, friendship, img):
-    if style == 'legacy' or style == '20220414':
-        return check_end_operation_20220414(img)
-    elif style == 'interlocking':
+    if style == 'interlocking':
         if friendship:
             return check_end_operation_interlocking_friendship(img)
         else:
             raise NotImplementedError()
+    else:
+        return check_end_operation_ep10(img)
+
 
 def check_end_operation_legacy_friendship(img):
     vw, vh = common.get_vwvh(img.size)
@@ -227,9 +228,9 @@ def check_end_operation_legacy(img):
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
     return mse < 6502
 
-def check_end_operation_20220414(img):
+def check_end_operation_ep10(img):
     context = common.ImageRoiMatchingContext(img)
-    return bool(context.match_roi('end_operation/20220414/rhodes_island', method='mse', threshold=325))
+    return bool(context.match_roi('end_operation/ep10/rhodes_island', method='mse', threshold=325))
 
 def check_end_operation_interlocking_friendship(img):
     vw, vh = common.get_vwvh(img.size)
@@ -261,10 +262,8 @@ get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
 
 
 def recognize(style, im, learn_unrecognized_item=False):
-    if style == 'legacy':
-        return recognize_20220414(im, learn_unrecognized_item)
-    elif style == '20220414':
-        return recognize_20220414(im, learn_unrecognized_item)
+    if style in {'legacy', 'ep10', 'sof'}:
+        return recognize_ep10(im, learn_unrecognized_item)
     elif style == 'interlocking':
         return recognize_interlocking(im, learn_unrecognized_item)
     else:
@@ -359,7 +358,7 @@ def recognize_legacy(im, learn_unrecognized_item):
     return recoresult
 
 
-def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
+def recognize_ep10(im: Image.Image, learn_unrecognized_item=False):
     import time
     t0 = time.monotonic()
     vw, vh = common.get_vwvh(im.size)
@@ -433,7 +432,7 @@ def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
     session.learn_unrecognized = learn_unrecognized_item
 
     for group in imggroups:
-        groupresult = tell_group_20220414(group, session, linetop - 71.111*vh, linebottom - 71.111*vh)
+        groupresult = tell_group_ep10(group, session, linetop - 71.111*vh, linebottom - 71.111*vh)
         session.recognized_groups.append(groupresult[0])
         items.append(groupresult)
 
