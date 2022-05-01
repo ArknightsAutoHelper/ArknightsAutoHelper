@@ -69,7 +69,7 @@ def update_net():
             local_rel = json.load(f)
             model_gen_time = local_rel['time'] / 1000
         now = time.time()
-        print(f'{cache_mtime=} {now=} {model_gen_time=}')
+        logger.debug(f'{cache_mtime=} {now=} {model_gen_time=}')
         if cache_mtime > model_gen_time and now - cache_mtime < 60 * 60 * 8:
             return
     except:
