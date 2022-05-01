@@ -53,9 +53,9 @@ def recognize(img):
         check_consume_ap = True
     elif style == 'sof':
         # i.e. Stultifera Navis
-        opidrect = (23.241*vh, 74.907*vh, 35.278*vh, 78.426*vh)
-        consumerect = (100*vw-14.944*vh, 90.926*vh, 100*vw-8.463*vh, 94.259*vh)
-        start_button = (100*vw-31.667*vh, 86.574*vh, 100*vw-9.167*vh, 90.833*vh)
+        opidrect = (10*vw+3.426*vh, 74.907*vh, 10*vw+11.944*vh, 78.426*vh)
+        consumerect = (90*vw+3.056*vh, 90.926*vh, 90*vw+9.537*vh, 94.259*vh)
+        start_button = (90*vw-11.667*vh, 86.574*vh, 90*vw-10.833*vh, 90.833*vh)
         ap_rect = (100*vw-24.630*vh, 4.259*vh, 100*vw-9.259*vh, 8.611*vh)
         stage_reco = reco_Noto
 
