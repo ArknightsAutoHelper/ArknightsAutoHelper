@@ -51,3 +51,5 @@ class ArknightsHelper(BaseAutomator):
         from .addons.contrib.plan import PlannerAddOn
 
         from .addons import sof_nav
+
+        from .addons import start
