@@ -493,6 +493,7 @@ class ADBConnector:
         self.input.swipe(x1, y1, x2, y2, duration / 1000)
 
     def touch_tap(self, XY=None, offsets=None):
+        """DEPRECATED: use input.tap() instead"""
         # sleep(10)
         # sleep(0.5)
         if offsets is not None:

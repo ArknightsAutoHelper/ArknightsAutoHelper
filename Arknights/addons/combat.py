@@ -122,9 +122,9 @@ class CombatAddon(AddonBase):
                 if count != desired_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if app.config.combat.penguin_stats.enabled:
-                        self.delay(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
+                        self.delay(SMALL_WAIT, randomize=True, allow_skip=True)
                     else:
-                        self.delay(BIG_WAIT, MANLIKE_FLAG=True, allow_skip=True)
+                        self.delay(BIG_WAIT, randomize=True, allow_skip=True)
         except StopIteration:
             # count: succeeded count
             self.logger.error('未能进行第 %d 次作战', count + 1)
@@ -340,7 +340,7 @@ class CombatAddon(AddonBase):
 
         def on_level_up_popup(smobj):
             import imgreco.end_operation
-            self.delay(SMALL_WAIT, MANLIKE_FLAG=True)
+            self.delay(SMALL_WAIT, randomize=True)
             self.logger.info('关闭升级提示')
             self.tap_rect(imgreco.end_operation.get_dismiss_level_up_popup_rect(self.viewport))
             self.wait_for_still_image()

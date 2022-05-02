@@ -163,6 +163,7 @@ def invert_color(img):
 
 
 def match_template(img, template, method=cv.TM_CCOEFF_NORMED, template_mask=None) -> tuple[tuple[int, int], float]:
+    """returns *center* point of matched template and matching score"""
     templatemat = np.asarray(template)
     mtresult = cv.matchTemplate(np.asarray(img), templatemat, method, mask=template_mask)
     minval, maxval, minloc, maxloc = cv.minMaxLoc(mtresult)
@@ -286,6 +287,7 @@ def _find_homography_test(templ, haystack):
 
 
 def compare_region_mse(img, region, template, threshold=3251, logger=None):
+    '''DEPPRECATED: use match_roi instead'''
     if isinstance(template, str):
         from . import resources
         template = resources.load_image_cached(template, img.mode)
