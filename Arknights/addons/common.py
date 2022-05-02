@@ -55,6 +55,8 @@ class CommonAddon(AddonBase):
                 elif '招募干员' in ocr or '加急' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot), post_delay=2)
                     continue
+                if '退出游戏' in ocr:
+                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot), post_delay=2)
                 else:
                     raise RuntimeError('未适配的对话框')
             elif dlgtype == 'ok':
@@ -64,6 +66,7 @@ class CommonAddon(AddonBase):
             retry_count += 1
             if retry_count > max_retry:
                 raise RuntimeError('未知画面')
-            self.logger.info('未知画面，尝试重新识别 {}/{} 次'.format(retry_count, max_retry))
+            self.logger.info('未知画面，尝试返回按钮 {}/{} 次'.format(retry_count, max_retry))
+            self.device.input.keyboard(4)  # KEYCODE_BACK
             self.delay(3)
         self.logger.info("已回到主页")

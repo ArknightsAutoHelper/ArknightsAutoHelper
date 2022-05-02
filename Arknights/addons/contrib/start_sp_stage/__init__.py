@@ -112,19 +112,24 @@ class StartSpStageAddon(AddonBase):
     def run(self, stage_code: str, query_only=False):
         stage_code = stage_code.upper()
         stage_code_map, zone_linear_map = get_stage_map()
-        if query_only:
-            return stage_code in stage_code_map
         if stage_code not in stage_code_map:
+            if query_only:
+                return False
             raise RuntimeError(f'无效的关卡: {stage_code}')
         self.scale = self.viewport[1] / 720
         if self.viewport != (1280, 720):
-            self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         stage = stage_code_map[stage_code]
         activity_id = stage['zoneId'].split('_')[0]
         activity_infos = get_activity_infos()
         activity = activity_infos[activity_id]
         self.logger.debug(f'stage: {stage}, activity: {activity}')
-        self.enter_activity(activity)
+        try:
+            self.enter_activity(activity)
+        except Exception as e:
+            if query_only:
+                return False
+            raise
+        self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         self.after_enter_activity(stage)
         stage_linear = zone_linear_map[stage['zoneId']]
         self.logger.info(f"stage zone id: {stage['zoneId']}, stage_linear: {stage_linear}")
