@@ -14,11 +14,11 @@
 
 ### 二进制包（Windows）
 
-⬇️ 从 Releases 中下载 [二进制包启动器](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release)。
+⬇️ 从 Releases 中下载 [二进制包启动器](https://github.com/ArknightsAutoHelper/ArknightsAutoHelper/releases/tag/bootstrapper-release)。
 
 首次运行启动器时，将从 GitHub 下载通过 Actions 打包的最新代码及运行环境，请保持网络畅通。
 
-运行 `akhelper.exe --update` 或 `akhelper-gui.exe --update` 可更新到最新版本。如果最新版本存在问题，可尝试从 [Actions](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/actions) 中下载 90 天内的旧版本覆盖 `.bootstrapper` 目录内的对应文件。
+运行 `akhelper.exe --update` 或 `akhelper-gui.exe --update` 可更新到最新版本。如果最新版本存在问题，可尝试从 [Actions](https://github.com/ArknightsAutoHelper/ArknightsAutoHelper/actions) 中下载 90 天内的旧版本覆盖 `.bootstrapper` 目录内的对应文件。
 
 ### 从源代码安装
 
@@ -217,6 +217,8 @@ python3 akhelper.py auto   5-1 2   5-2 3
 
 ## 0x06 自定义开发与TODO
 
+如果您已经有一定的 Python 基础，可以通过 [wiki 中的开发文档](https://github.com/ArknightsAutoHelper/ArknightsAutoHelper/wiki/Development-%23-1.-Getting-Started)快速上手。
+
 ### 关于一些常见的问题
 
 #### 1. 分辨率/模拟器/路径问题
@@ -245,7 +247,7 @@ python3 akhelper.py auto   5-1 2   5-2 3
 
 #### 7. 我想将这个脚本适配到其他服务器
 
-☞ [Porting to Another Server](https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/wiki/Porting-to-Another-Server)
+☞ [Porting to Another Server](https://github.com/ArknightsAutoHelper/ArknightsAutoHelper/wiki/Porting-to-Another-Server)
 
 ### 自定义开发与更多功能
 
