@@ -130,7 +130,9 @@ def compare_mse(mat1, mat2, mask=None):
     return mse
 
 
-def scale_to_height(img, height, algo=Image.BILINEAR):
+def scale_to_height(img: Image.Image, height, algo=Image.BILINEAR):
+    if img.height == height:
+        return img
     scale = height / img.height
     return img.resize((int(img.width * scale), height), algo)
 

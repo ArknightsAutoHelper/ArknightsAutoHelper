@@ -264,7 +264,7 @@ class Image:
     def crop(self, rect):
         return self.subview(rect).copy()
     
-    def convert(self, mode=None, matrix=NotImplemented, dither=NotImplemented, palette=NotImplemented, colors=NotImplemented):
+    def convert(self, mode=None, matrix=NotImplemented, dither=NotImplemented, palette=NotImplemented, colors=NotImplemented) -> Image:
         if matrix is not NotImplemented or dither is not NotImplemented or palette is not NotImplemented or colors is not NotImplemented:
             raise NotImplementedError()
         from_cv_mode = pil_mode_mapping[self.mode]
