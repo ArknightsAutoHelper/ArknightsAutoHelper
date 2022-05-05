@@ -18,7 +18,7 @@ version = tessbaseapi.version
 class LibTesseractEngine(BaseTesseractEngine):
     def __init__(self, lang, **kwargs):
         super().__init__(lang, **kwargs)
-        vars = {'debug_file': os.devnull}
+        vars = {'debug_file': os.devnull, 'classify_enable_learning': '0'}
         if 'app' in sys.modules:
             import app
             if app.config.debug:
