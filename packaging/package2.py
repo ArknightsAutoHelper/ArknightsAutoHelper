@@ -59,7 +59,6 @@ def build_app():
             shutil.copy(f, app_unpacked_dir / f)
     py_compile.compile(os.path.join(build_dir, 'release_info.py'), str(app_unpacked_dir / 'app' / 'release_info.pyc'))
     
-    shutil.move(app_unpacked_dir / 'vendor/penguin_client/penguin_client', app_unpacked_dir / 'penguin_client')
     shutil.rmtree(app_unpacked_dir / 'vendor')
     shutil.copytree(root / 'webgui2' / 'dist', app_unpacked_dir / 'webgui2' / 'dist')
     os.makedirs(app_unpacked_dir / 'config', exist_ok=True)
@@ -99,7 +98,6 @@ def build_vendor():
     build_vendor_dir.mkdir(parents=True, exist_ok=True)
     shutil.copytree(root / 'vendor', build_vendor_dir / 'vendor')
     # TODO: remove binaries for other platforms
-    shutil.rmtree(build_vendor_dir / 'vendor' / 'penguin_client')
     shutil.make_archive(str(build_dir / 'vendor'), 'zip', build_vendor_dir)
 
 def build_template():
