@@ -42,14 +42,16 @@ def recognize(img):
         consumerect = (100 * vw - 12.870 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)
         start_button = (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
         ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
-        stage_reco = reco_Novecento
+        def stage_reco(img):
+            return reco_Novecento.recognize(img)
     elif style == 'ep10':
         # 2022-04-14: episode 10 new layout
         opidrect = (100*vw-49.537*vh, 11.111*vh, 100*vw-37.870*vh, 15.370*vh)
         consumerect = (100*vw-13.704*vh, 95.833*vh, 100*vw-7.315*vh, 99.074*vh)
         start_button = (100*vw-31.759*vh, 90.093*vh, 100*vw-6.389*vh, 96.296*vh)
         ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
-        stage_reco = reco_Novecento
+        def stage_reco(img):
+            return reco_Novecento.recognize(img)
         check_consume_ap = True
     elif style == 'sof':
         # i.e. Stultifera Navis
@@ -57,7 +59,11 @@ def recognize(img):
         consumerect = (90*vw+3.056*vh, 90.926*vh, 90*vw+9.537*vh, 94.259*vh)
         start_button = (90*vw-11.667*vh, 86.574*vh, 90*vw-10.833*vh, 90.833*vh)
         ap_rect = (100*vw-24.630*vh, 4.259*vh, 100*vw-9.259*vh, 8.611*vh)
-        stage_reco = reco_Noto
+        def stage_reco(img):
+            from .ocr import acquire_engine_global_cached
+            engine = acquire_engine_global_cached('zh-cn')
+            img = imgops.invert_color(img)
+            return engine.recognize(img, tessedit_char_whitelist='SN-0123456789', tessedit_pageseg_mode='13').text.replace(' ', '')
 
 
     # if imgops.compare_region_mse(img, (43.333*vh, 86.111*vh, 50.185*vh, 95.093*vh), 'before_operation/interlocking/interlocking_tag.png', threshold=650, logger=logger):
@@ -86,7 +92,7 @@ def recognize(img):
     opidimg = img.crop(opidrect).convert('L')
     opidimg = imgops.enhance_contrast(opidimg, 80, 255)
     logger.logimage(opidimg)
-    opidtext = str(stage_reco.recognize(opidimg))
+    opidtext = stage_reco(opidimg)
     if opidtext.endswith('-'):
         opidtext = opidtext[:-1]
     opidtext = opidtext.upper()

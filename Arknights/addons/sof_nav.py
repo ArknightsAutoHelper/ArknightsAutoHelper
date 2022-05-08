@@ -41,12 +41,10 @@ class ShipOfFoolsNavigator(AddonBase):
         from .common import CommonAddon
         self.addon(CommonAddon).back_to_main()
 
+
         count = 0
         while True:
             if match := self.match_roi('maps/sof/glan_faro'):
-                self.logger.info('进入活动关卡')
-                self.tap_rect(match.bbox, post_delay=3)
-            if section_icon := self.match_roi('maps/sof/section_icon'):
                 break
             if match := self.match_roi('maps/sof/banner', fixed_position=False, method='sift'):
                 self.logger.info('进入活动首页')
@@ -54,6 +52,17 @@ class ShipOfFoolsNavigator(AddonBase):
             count += 1
             if count > 10:
                 raise RuntimeError('导航失败')
+
+        target_section = stage_to_section[stage_code]
+        section_rects = {1: match.bbox, 2: self.load_roi('maps/sof/section2').bbox, 3: self.load_roi('maps/sof/section3').bbox}
+
+        while True:
+            self.logger.info('进入活动关卡')
+            self.tap_rect(section_rects[target_section])
+            if not self.match_roi('maps/sof/glan_faro'):
+                break
+
+        swipe_count = 0
 
         while True:
             screenshot = imgops.scale_to_height(self.device.screenshot().convert('RGB'), 1080)
@@ -81,15 +90,20 @@ class ShipOfFoolsNavigator(AddonBase):
             if stage_code in current_page_stages:
                 self.tap_rect(current_page_stages[stage_code], post_delay=1)
                 break
+            
             if len(current_page_stages) == 0:
-                self.swipe_left()
+                if swipe_count < 2:
+                    self.swipe_right()
+                elif swipe_count < 5:
+                    self.swipe_left()
+                else:
+                    raise RuntimeError('未找到关卡')
                 continue
-            target_section = stage_to_section[stage_code]
-            if target_section != stage_to_section[next(iter(current_page_stages))]:
-                self.logger.info('跳转到第 %d 层', target_section)
-                self.tap_rect(section_icon.bbox, post_delay=1)
-                self.tap_rect(self.load_roi(f'maps/sof/section{target_section}').bbox, post_delay=3)
-                continue
+            # if target_section != stage_to_section[next(iter(current_page_stages))]:
+            #     self.logger.info('跳转到第 %d 层', target_section)
+            #     self.tap_rect(section_icon.bbox, post_delay=1)
+            #     self.tap_rect(self.load_roi(f'maps/sof/section{target_section}').bbox, post_delay=3)
+            #     continue
             section_map = linear_maps[target_section]
             target_index = section_map.index(stage_code)
             known_indices = [section_map.index(x) for x in current_page_stages.keys()]
