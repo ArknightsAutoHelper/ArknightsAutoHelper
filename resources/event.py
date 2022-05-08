@@ -1,11 +1,28 @@
-from typing import Tuple, List
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from imgreco.item import RecognizedItem
 
 EXTRA_KNOWN_ITEMS = [
-    '龙门币1500',
-    '家具',
-    '龙门币2000',
-    '龙门币1000',
-    '资质凭证'
+    'trap_oxygen_3',
+    '31044',
+    'charm_coin_4',
+    'charm_coin_1',
+    'randomMaterial_5',
+    '4001_1500',
+    '31054',
+    '31053',
+    'furni',
+    '4005',
+    '4001_2000',
+    'charm_coin_3',
+    '4001_1000',
+    'charm_r1',
+    '31043',
+    'charm_coin_2',
+    'charm_r2',
+    'randomMaterial_1'
 ]
 
 FIXED_QUANTITY = [
@@ -40,12 +57,11 @@ FIXED_QUANTITY = [
 # report_types = {'MATERIAL', 'CARD_EXP', 'VOUCHER_MGACHA', 'furni', 'special_report_item', None}
 
 
-def event_preprocess(stage: str, items: List[Tuple[str, str, int, str]], exclude_from_validation: List):
+def event_preprocess(stage: str, items: list[tuple[str, RecognizedItem]], exclude_from_validation: list):
     # [('常规掉落', '固源岩', 1), ...]
     for itemrecord in items:
-        group, name, qty, item_type = itemrecord
-
-        if name in FIXED_QUANTITY or name.startswith('@'):
+        group, item = itemrecord
+        if item.name in FIXED_QUANTITY or item.name.startswith('@'):
             # 不加入汇报列表
             continue
             
