@@ -59,7 +59,9 @@ def build_app():
             shutil.copy(f, app_unpacked_dir / f)
     py_compile.compile(os.path.join(build_dir, 'release_info.py'), str(app_unpacked_dir / 'app' / 'release_info.pyc'))
     
-    shutil.rmtree(app_unpacked_dir / 'vendor')
+    vendor_path = app_unpacked_dir / 'vendor'
+    if vendor_path.exists():
+        shutil.rmtree(vendor_path)
     shutil.copytree(root / 'webgui2' / 'dist', app_unpacked_dir / 'webgui2' / 'dist')
     os.makedirs(app_unpacked_dir / 'config', exist_ok=True)
     shutil.copy(root / 'config' / 'logging.yaml', app_unpacked_dir / 'config' / 'logging.yaml')
