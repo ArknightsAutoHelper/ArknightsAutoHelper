@@ -37,7 +37,7 @@ jobs:
       run: |
         git fetch --tags
         $ErrorActionPreference = 'continue'
-        hub release delete bootstrapper-package-vendor
+        gh release delete bootstrapper-package-vendor -y
         git push --delete origin bootstrapper-package-vendor
         sleep 5
     - name: prerelease

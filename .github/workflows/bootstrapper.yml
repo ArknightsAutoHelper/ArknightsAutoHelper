@@ -34,7 +34,7 @@ jobs:
       run: |
         git fetch --tags
         $ErrorActionPreference = 'continue'
-        hub release delete bootstrapper-release
+        gh release delete bootstrapper-release -y
         git push --delete origin bootstrapper-release
         sleep 5
     - name: prerelease
