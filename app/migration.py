@@ -75,3 +75,8 @@ def migrate_from_1(ydoc: Mapping):
             ydoc['ocr']['backend'] = 'auto'
     ydoc['__version__'] = 2
     return ydoc
+
+@migrate_from(2)
+def migrate_from_2(ydoc: Mapping):
+    ydoc['__version__'] = 3
+    return ydoc

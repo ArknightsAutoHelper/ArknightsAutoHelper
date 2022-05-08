@@ -15,9 +15,12 @@ logger = logging.getLogger('PenguinReporter')
 
 REPORT_SOURCE = 'ArknightsAutoHelper'
 
-API_BASE = 'https://penguin-stats.io/'
+API_BASE = {
+    'global': 'https://penguin-stats.io/',
+    'cn': 'https://penguin-stats.cn/',
+}
 def api_endpoint(path):
-    return urljoin(API_BASE, path)
+    return urljoin(API_BASE[app.config.combat.penguin_stats.endpoint], path)
 
 def _check_in_bound(bound, num):
     result = bound['lower'] <= num <= bound['upper'] 
