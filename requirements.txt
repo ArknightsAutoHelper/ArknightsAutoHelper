@@ -8,6 +8,7 @@ requests-cache
 ruamel.yaml==0.17.17
 colorama==0.4.4; sys_platform == 'win32'
 textdistance==4.2.1
+dataclasses_json
 
 # webgui2
 bottle==0.12.19
