@@ -207,6 +207,9 @@ class Image:
         array_intf_tup = tuple(array_intf.get(i, None) for i in keys)
         return builtins.hash((repr(array_intf_tup), self._mode))
 
+    def __repr__(self):
+        return f'<{self.__class__.__qualname__} {self.width}x{self.height} {self.mode} {self.dtype}>'
+
     @property
     def array(self):
         return self._mat

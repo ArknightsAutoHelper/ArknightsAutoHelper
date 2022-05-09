@@ -48,6 +48,7 @@ class CommonAddon(AddonBase):
                 continue
 
             dlgtype, ocr = imgreco.common.recognize_dialog(screenshot)
+            self.logger.debug(f"检查对话框：{dlgtype}, {ocr}")
             if dlgtype == 'yesno':
                 if '基建' in ocr or '停止招募' in ocr or '好友列表' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot), post_delay=2)
