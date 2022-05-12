@@ -299,9 +299,10 @@ class RIICAddon(AddonBase):
 
     def recognize_skill(self, icon, facility_hint=None) -> tuple[str, float]:
         self.richlogger.logimage(icon)
-        skill_check = np.mean(icon.array)
-        self.richlogger.logtext(f'skill_check mean={skill_check}')
-        if skill_check < 60:
+        skill_check_mean = np.mean(icon.array)
+        skill_check_max = np.max(icon.array)
+        self.richlogger.logtext(f'{skill_check_mean=} {skill_check_max=}')
+        if skill_check_mean < 60 and skill_check_max < 90:
             self.richlogger.logtext('no skill')
             return None, 114514
         from . import bskill_cache
