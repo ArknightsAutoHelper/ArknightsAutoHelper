@@ -49,13 +49,13 @@ class LibTesseractEngine(BaseTesseractEngine):
             tessvars[key] = value
         
         old_tessvars = {name: self.baseapi.get_variable(name) for name in tessvars}
-        logger.debug('old tessvars: %r', old_tessvars)
+        # logger.debug('old tessvars: %r', old_tessvars)
+        for name, value in tessvars.items():
+            self.baseapi.set_variable(name, value)
         self.baseapi.recognize()
         result = parse_hocr(io.BytesIO(self.baseapi.get_hocr()))
         for name, value in old_tessvars.items():
             self.baseapi.set_variable(name, value)
-        for key in kwargs:
-            self.baseapi.set_variable(key, None)
         self.baseapi.clear()
         return result
 
