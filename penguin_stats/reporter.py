@@ -182,7 +182,7 @@ class PenguinStatsReporter:
                 logger.warning("不汇报包含 %s 分组的掉落数据", groupname)
                 return ReportResult.NotReported
 
-            if item.item_id in stage['recognitionOnly']:
+            if item.item_id in stage.get('recognitionOnly', []):
                 logger.debug('不汇报识别结果中的物品（recognitionOnly）：%s', item.item_id)
                 continue
             penguin_item = self.item_map.get(item.item_id, None)
