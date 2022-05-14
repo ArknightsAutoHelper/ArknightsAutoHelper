@@ -18,6 +18,8 @@ app.init()
 helper: BaseAutomator = None
 prompt_prefix = 'akhelper'
 
+device = None
+
 def skipcallback(handler):
     raise StopIteration
 
@@ -86,8 +88,11 @@ def _alarm_context_factory():
         return BellAlarmContext()
     return AlarmContext()
 
-
-device = None
+def _connect_device(newdevice):
+    global device
+    device = newdevice
+    if helper is not None:
+        helper.connect_device(device)
 
 
 def connect(argv):
@@ -112,9 +117,8 @@ def connect(argv):
 
 def _interactive_connect():
     from automator import connector
-    global device
     try:
-        device = connector.auto_connect()
+        _connect_device(connector.auto_connect())
     except IndexError:
         devices = connector.enum_devices()
         if len(devices) == 0:
@@ -133,16 +137,15 @@ def _interactive_connect():
             except ValueError:
                 print("输入不合法，请重新输入")
         name, cls, args, binding = devices[num-1]
-        device = cls(*args)
+        _connect_device(cls(*args))
 
 
 def _connect_adb(args):
     from automator.connector.ADBConnector import ADBConnector, ensure_adb_alive
     ensure_adb_alive()
-    global device
     if len(args) >= 0:
         serial = args[0]
-        device = ADBConnector(serial)
+        _connect_device(ADBConnector(serial))
         return 0
     else:
         print('usage: connect adb <serial>')
