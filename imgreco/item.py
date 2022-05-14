@@ -98,16 +98,23 @@ def get_quantity(itemimg):
         richlogger.logimage(numimg)
         from .ocr import acquire_engine_global_cached
         eng = acquire_engine_global_cached('zh-cn')
-        result = eng.recognize(numimg, char_whitelist='0123456789万', tessedit_pageseg_mode='13')
-        qty_ocr = result.text.replace(' ', '').replace('万', '0000')
-        richlogger.logtext(f'{qty_ocr=}')
-        if not qty_ocr.isdigit():
-            from . import itemdb
-            qty_minireco, score = itemdb.num_recognizer.recognize2(numimg4legacy, subset='0123456789万')
-            richlogger.logtext(f'{qty_minireco=}, {score=}')
-            if score > 0.2:
-                qty_ocr = qty_minireco
-        return int(qty_ocr) if qty_ocr.isdigit() else None
+        result = eng.recognize(numimg, char_whitelist='0123456789.万', tessedit_pageseg_mode='13')
+        qty_text = result.text
+        richlogger.logtext(f'{qty_text=}')
+        try:
+            try:
+                qty_base = float(qty_text.replace(' ', '').replace('万', ''))
+            except:
+                from . import itemdb
+                qty_minireco, score = itemdb.num_recognizer.recognize2(numimg4legacy, subset='0123456789.万')
+                richlogger.logtext(f'{qty_minireco=}, {score=}')
+                if score > 0.2:
+                    qty_text = qty_minireco
+                    qty_base = float(qty_text.replace('万', ''))
+            qty_scale = 10000 if '万' in qty_text else 1
+            return int(qty_base * qty_scale)
+        except:
+            return None
     
 
 def tell_item(itemimg, with_quantity=True, learn_unrecognized=False) -> RecognizedItem:

@@ -148,12 +148,11 @@ def get_all_item_in_screen(screen):
     item_count_map = {}
     for item_img in imgs:
         logger.logimage(convert_to_pil(item_img['item_img']))
-        prob, item_id, item_name, item_type = item.get_item_id(item_img['item_img'])
-        logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
-        if item_id in exclude_items or item_type == 'ACTIVITY_ITEM':
+        itemreco = item.tell_item(Image.fromarray(item_img['item_img'], 'BGR'), with_quantity=True)
+        logger.logtext('%r' % itemreco)
+        if itemreco.item_id is None or itemreco.item_id in exclude_items or itemreco.item_type == 'ACTIVITY_ITEM':
             continue
-        quantity = get_quantity(Image.fromarray(item_img['item_img'], 'BGR'))
-        item_count_map[item_id] = quantity
+        item_count_map[itemreco.item_id] = itemreco.quantity
         # print(item_id, quantity)
         # show_img(item_img['item_img'])
     logger.logtext('item_count_map: %s' % item_count_map)
@@ -169,16 +168,17 @@ def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_t
     res = []
     for item_img in imgs:
         logger.logimage(convert_to_pil(item_img['item_img']))
-        prob, item_id, item_name, item_type = item.get_item_id(item_img['item_img'])
-        logger.logtext('item_id: %s, item_name: %s, prob: %s, type: %s' % (item_id, item_name, prob, item_type))
-        if item_id in exclude_item_ids or item_type in exclude_item_types:
+        itemreco = item.tell_item(Image.fromarray(item_img['item_img'], 'BGR'), with_quantity=True)
+        logger.logtext('%r' % itemreco)
+        if itemreco.item_id is None:
             continue
-        if only_normal_items and (not item_id.isdigit() or len(item_id) < 5 or item_type != 'MATERIAL'):
+        if itemreco.item_id in exclude_item_ids or itemreco.item_type in exclude_item_types:
             continue
-        quantity = get_quantity(Image.fromarray(item_img['item_img'], 'BGR'))
+        if only_normal_items and (not itemreco.item_id.isdigit() or len(itemreco.item_id) < 5 or itemreco.item_type != 'MATERIAL'):
+            continue
         # get_quantity2(item_img['item_img'])
-        res.append({'itemId': item_id, 'itemName': item_name, 'itemType': item_type,
-                    'quantity': quantity, 'itemPos': item_img['item_pos']})
+        res.append({'itemId': itemreco.item_id, 'itemName': itemreco.name, 'itemType': itemreco.item_type,
+                    'quantity': itemreco.quantity, 'itemPos': item_img['item_pos']})
     logger.logtext('res: %s' % res)
     return res
 
