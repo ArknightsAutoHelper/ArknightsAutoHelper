@@ -4,12 +4,15 @@ numpy
 opencv-contrib-python>=4.5.4.58
 pillow
 requests
+requests-cache
 ruamel.yaml==0.17.17
 colorama==0.4.4; sys_platform == 'win32'
--r ./vendor/penguin_client/requirements.txt
+textdistance==4.2.1
+dataclasses_json
+
+# webgui2
 bottle==0.12.19
 bottle-websocket==0.2.9
 # not using pywebview on win32 python >= 3.9 as one dependency (pythonnet) has no binary wheel (yet)
 # we will fallback to a customized Chrome/Chromium/Edge
 pywebview==3.5; sys_platform != 'win32' or python_version < '3.9'
-textdistance==4.2.1

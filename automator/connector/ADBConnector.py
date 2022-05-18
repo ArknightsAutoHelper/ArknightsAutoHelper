@@ -292,7 +292,7 @@ class ScrcpyInput:
     def tap(self, x, y, hold_time=0.07):
         self.scrcpy.control.tap(int(x), int(y), hold_time)
 
-    def swipe(self, x0, y0, x1, y1, move_duraion=1, hold_before_release=0, interpolation='linear'):
+    def swipe(self, x0, y0, x1, y1, move_duration=1, hold_before_release=0, interpolation='linear'):
         if interpolation == 'linear':
             interpolate = lambda x: x
         elif interpolation == 'spline':
@@ -304,7 +304,7 @@ class ScrcpyInput:
         frame_time = 1/100
 
         start_time = time.perf_counter()
-        end_time = start_time + move_duraion
+        end_time = start_time + move_duration
         self.scrcpy.control.touch(x0, y0, scrcpy_const.ACTION_DOWN)
         t1 = time.perf_counter()
         step_time = t1 - start_time
@@ -314,7 +314,7 @@ class ScrcpyInput:
             t0 = time.perf_counter()
             if t0 > end_time:
                 break
-            time_progress = (t0 - start_time) / move_duraion
+            time_progress = (t0 - start_time) / move_duration
             path_progress = interpolate(time_progress)
             self.scrcpy.control.touch(int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress), scrcpy_const.ACTION_MOVE)
             t1 = time.perf_counter()
@@ -329,6 +329,11 @@ class ScrcpyInput:
     def text(self, text):
         self.scrcpy.control.text(text)
 
+    def keyboard(self, keycode: int, hold_time=0.07):
+        self.scrcpy.control.keycode(keycode, scrcpy_const.ACTION_DOWN)
+        time.sleep(hold_time)
+        self.scrcpy.control.keycode(keycode, scrcpy_const.ACTION_UP)
+
 class ShellInput:
     def __init__(self, device: 'ADBConnector', displayid):
         self.device = device
@@ -340,16 +345,19 @@ class ShellInput:
     def tap(self, x, y, hold_time=0.07):
         self.device.run_device_cmd(f'{self.input_command} swipe {x} {y} {x} {y} {hold_time*1000:.0f}')
 
-    def swipe(self, x0, y0, x1, y1, move_duraion=1, hold_before_release=0, interpolation='linear'):
+    def swipe(self, x0, y0, x1, y1, move_duration=1, hold_before_release=0, interpolation='linear'):
         if hold_before_release > 0:
             warnings.warn('hold_before_release is not supported in shell mode, you may experience unexpected inertia scrolling')
         if interpolation != 'linear':
             warnings.warn('interpolation mode other than linear is not supported in shell mode')
-        self.device.run_device_cmd(f'{self.input_command} swipe {x0} {y0} {x1} {y1} {move_duraion*1000:.0f}')
+        self.device.run_device_cmd(f'{self.input_command} swipe {x0} {y0} {x1} {y1} {move_duration*1000:.0f}')
 
     def text(self, text):
         escaped_text = shlex.quote(text)
         self.device.run_device_cmd(f'{self.input_command} text {escaped_text}')
+
+    def keyboard(self, keycode: int, hold_time=0.07):
+        self.device.run_device_cmd(f'{self.input_command} keyevent {keycode}')
 
 class ADBConnector:
     def __init__(self, adb_serial, displayid=None):
@@ -493,6 +501,7 @@ class ADBConnector:
         self.input.swipe(x1, y1, x2, y2, duration / 1000)
 
     def touch_tap(self, XY=None, offsets=None):
+        """DEPRECATED: use input.tap() instead"""
         # sleep(10)
         # sleep(0.5)
         if offsets is not None:

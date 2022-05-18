@@ -35,10 +35,12 @@ jobs:
     - name: delete old release
       shell: powershell
       continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git fetch --tags
         $ErrorActionPreference = 'continue'
-        hub release delete bootstrapper-package-app
+        gh release delete bootstrapper-package-app -y
         git push --delete origin bootstrapper-package-app
         sleep 5
     - name: prerelease

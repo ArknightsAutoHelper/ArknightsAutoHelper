@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 import sys
 import math
 
@@ -60,7 +62,7 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         session.low_confidence = True
 
     if groupname == '幸运掉落':
-        return (groupname, [('(家具)', 1, 'furni')])
+        return (groupname, [item.RecognizedItem(item_id='furni', name='(家具)', quantity=1, item_type='FURN')])
 
     vw, vh = session.vw, session.vh
     itemwidth = 20.370 * vh
@@ -74,11 +76,11 @@ def tell_group(groupimg, session, bartop, barbottom, ):
         recognized_item = item.tell_item(itemimg, with_quantity=True, learn_unrecognized=session.learn_unrecognized)
         if recognized_item.low_confidence:
             session.low_confidence = True
-        result.append((recognized_item.name, recognized_item.quantity, recognized_item.item_type))
+        result.append(recognized_item)
     return (groupname, result)
 
 
-def tell_group_20220414(groupimg, session, bartop, barbottom, ):
+def tell_group_ep10(groupimg, session, bartop, barbottom, ):
     logger.logimage(groupimg)
     grouptext = groupimg.subview((0, barbottom, groupimg.width, groupimg.height))
 
@@ -91,7 +93,7 @@ def tell_group_20220414(groupimg, session, bartop, barbottom, ):
         session.low_confidence = True
 
     if groupname == '幸运掉落':
-        return (groupname, [('(家具)', 1, 'furni')])
+        return (groupname, [item.RecognizedItem(item_id='furni', name='(家具)', quantity=1, item_type='FURN')])
 
     vw, vh = session.vw, session.vh
     itemwidth = 19.167 * vh
@@ -108,7 +110,7 @@ def tell_group_20220414(groupimg, session, bartop, barbottom, ):
         recognized_item = item.tell_item(itemimg, with_quantity=True, learn_unrecognized=session.learn_unrecognized)
         if recognized_item.low_confidence:
             session.low_confidence = True
-        result.append((recognized_item.name, recognized_item.quantity, recognized_item.item_type))
+        result.append(recognized_item)
     return (groupname, result)
 
 
@@ -204,13 +206,14 @@ def check_level_up_popup(img):
 
 
 def check_end_operation(style, friendship, img):
-    if style == 'legacy' or style == '20220414':
-        return check_end_operation_20220414(img)
-    elif style == 'interlocking':
+    if style == 'interlocking':
         if friendship:
             return check_end_operation_interlocking_friendship(img)
         else:
             raise NotImplementedError()
+    else:
+        return check_end_operation_ep10(img)
+
 
 def check_end_operation_legacy_friendship(img):
     vw, vh = common.get_vwvh(img.size)
@@ -227,9 +230,9 @@ def check_end_operation_legacy(img):
     mse = imgops.compare_mse(*imgops.uniform_size(template, operation_end_img))
     return mse < 6502
 
-def check_end_operation_20220414(img):
+def check_end_operation_ep10(img):
     context = common.ImageRoiMatchingContext(img)
-    return bool(context.match_roi('end_operation/20220414/rhodes_island', method='mse', threshold=325))
+    return bool(context.match_roi('end_operation/ep10/rhodes_island', method='mse', threshold=325))
 
 def check_end_operation_interlocking_friendship(img):
     vw, vh = common.get_vwvh(img.size)
@@ -259,12 +262,18 @@ def get_dismiss_level_up_popup_rect(viewport):
 
 get_dismiss_end_operation_rect = get_dismiss_level_up_popup_rect
 
+@dataclass_json
+@dataclass
+class EndOperationResult:
+    operation: str
+    stars: list[bool]
+    items: list[tuple[str, list[item.RecognizedItem]]]
+    low_confidence: bool = False
 
-def recognize(style, im, learn_unrecognized_item=False):
-    if style == 'legacy':
-        return recognize_20220414(im, learn_unrecognized_item)
-    elif style == '20220414':
-        return recognize_20220414(im, learn_unrecognized_item)
+
+def recognize(style, im, learn_unrecognized_item=False) -> EndOperationResult:
+    if style in {'legacy', 'ep10', 'sof'}:
+        return recognize_ep10(im, learn_unrecognized_item)
     elif style == 'interlocking':
         return recognize_interlocking(im, learn_unrecognized_item)
     else:
@@ -300,12 +309,7 @@ def recognize_legacy(im, learn_unrecognized_item):
     # exp = lower.crop((76.852 * vh, 5.556 * vh, 94.074 * vh, 7.963 * vh))
     # logger.logimage(exp)
 
-    recoresult = {
-        'operation': operation_id_str,
-        'stars': stars_status,
-        'items': [],
-        'low_confidence': False
-    }
+    recoresult = EndOperationResult(operation_id_str, stars_status, [], False)
 
     items = lower.crop((68.241 * vh, 10.926 * vh, lower.width, 35.000 * vh))
     logger.logimage(items)
@@ -318,7 +322,7 @@ def recognize_legacy(im, learn_unrecognized_item):
         linetop, linebottom, *_ = linedet
     else:
         logger.logtext('horizontal line detection failed')
-        recoresult['low_confidence'] = True
+        recoresult.low_confidence = True
         return recoresult
     linetop += y
     linebottom += y
@@ -354,12 +358,12 @@ def recognize_legacy(im, learn_unrecognized_item):
     if session.low_confidence:
         logger.logtext('LOW CONFIDENCE')
     logger.logtext('time elapsed: %f' % (t1 - t0))
-    recoresult['items'] = items
-    recoresult['low_confidence'] = recoresult['low_confidence'] or session.low_confidence
+    recoresult.items = items
+    recoresult.low_confidence = recoresult.low_confidence or session.low_confidence
     return recoresult
 
 
-def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
+def recognize_ep10(im: Image.Image, learn_unrecognized_item=False):
     import time
     t0 = time.monotonic()
     vw, vh = common.get_vwvh(im.size)
@@ -389,12 +393,7 @@ def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
     # exp = lower.crop((76.852 * vh, 5.556 * vh, 94.074 * vh, 7.963 * vh))
     # logger.logimage(exp)
 
-    recoresult = {
-        'operation': operation_id_str,
-        'stars': stars_status,
-        'items': [],
-        'low_confidence': False
-    }
+    recoresult = EndOperationResult(operation_id_str, stars_status, [], False)
 
     items = im.crop((7.870*vh, 71.111*vh, im.width, 91.481*vh))
     logger.logimage(items)
@@ -433,7 +432,7 @@ def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
     session.learn_unrecognized = learn_unrecognized_item
 
     for group in imggroups:
-        groupresult = tell_group_20220414(group, session, linetop - 71.111*vh, linebottom - 71.111*vh)
+        groupresult = tell_group_ep10(group, session, linetop - 71.111*vh, linebottom - 71.111*vh)
         session.recognized_groups.append(groupresult[0])
         items.append(groupresult)
 
@@ -441,8 +440,8 @@ def recognize_20220414(im: Image.Image, learn_unrecognized_item=False):
     if session.low_confidence:
         logger.logtext('LOW CONFIDENCE')
     logger.logtext('time elapsed: %f' % (t1 - t0))
-    recoresult['items'] = items
-    recoresult['low_confidence'] = recoresult['low_confidence'] or session.low_confidence
+    recoresult.items = items
+    recoresult.low_confidence = recoresult.low_confidence or session.low_confidence
     return recoresult
 
 
@@ -466,12 +465,7 @@ def recognize_interlocking(im):
     logger.logimage(stars)
     stars_status = tell_stars(stars)
 
-    recoresult = {
-        'operation': operation_id_str,
-        'stars': stars_status,
-        'items': [],
-        'low_confidence': False
-    }
+    recoresult = EndOperationResult(operation_id_str, stars_status, [], False)
 
     items = im.crop((100*vw-87.778*vh, 65.000*vh, 100*vw, 89.259*vh))
     logger.logimage(items)
@@ -510,8 +504,8 @@ def recognize_interlocking(im):
     if session.low_confidence:
         logger.logtext('LOW CONFIDENCE')
     logger.logtext('time elapsed: %f' % (t1 - t0))
-    recoresult['items'] = items
-    recoresult['low_confidence'] = recoresult['low_confidence'] or session.low_confidence
+    recoresult.items = items
+    recoresult.low_confidence = recoresult.low_confidence or session.low_confidence
     return recoresult
 
 

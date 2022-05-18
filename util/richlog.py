@@ -104,7 +104,7 @@ class RichLogger:
 
     def logtext(self, text):
         _ensure_worker()
-        _worker.logtext(self.filename, self.overwrite, text)
+        _worker.logtext(self.filename, self.overwrite, str(text))
 
     def loghtml(self, html):
         _ensure_worker()

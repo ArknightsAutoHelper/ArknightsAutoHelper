@@ -3,6 +3,7 @@ from typing import Callable, Optional, overload
 import os
 import time
 from dataclasses import dataclass
+from imgreco.end_operation import EndOperationResult
 
 import penguin_stats.reporter
 import app
@@ -120,13 +121,13 @@ class CombatAddon(AddonBase):
     def reset_refill(self):
         return self.configure_refill(False, False)
 
-    def format_recoresult(self, recoresult):
+    def format_recoresult(self, recoresult: EndOperationResult):
         result = None
         with guard(self.logger):
-            result = '[%s] %s' % (recoresult['operation'],
-                '; '.join('%s: %s' % (grpname, ', '.join('%sx%s' % (item_name_guard(itemtup[0]), item_qty_guard(itemtup[1]))
-                for itemtup in grpcont))
-                for grpname, grpcont in recoresult['items']))
+            result = '[%s] %s' % (recoresult.operation,
+                '; '.join('%s: %s' % (grpname, ', '.join('%sx%s' % (item_name_guard(item.name), item_qty_guard(item.quantity))
+                for item in grpcont))
+                for grpname, grpcont in recoresult.items))
         if result is None:
             result = '<发生错误>'
         return result
@@ -159,9 +160,9 @@ class CombatAddon(AddonBase):
                 if count != desired_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if app.config.combat.penguin_stats.enabled:
-                        self.delay(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
+                        self.delay(SMALL_WAIT, randomize=True, allow_skip=True)
                     else:
-                        self.delay(BIG_WAIT, MANLIKE_FLAG=True, allow_skip=True)
+                        self.delay(BIG_WAIT, randomize=True, allow_skip=True)
         except StopIteration:
             # count: succeeded count
             self.logger.error('未能进行第 %d 次作战', count + 1)
@@ -377,7 +378,7 @@ class CombatAddon(AddonBase):
 
         def on_level_up_popup(smobj):
             import imgreco.end_operation
-            self.delay(SMALL_WAIT, MANLIKE_FLAG=True)
+            self.delay(SMALL_WAIT, randomize=True)
             self.logger.info('关闭升级提示')
             self.tap_rect(imgreco.end_operation.get_dismiss_level_up_popup_rect(self.viewport))
             self.wait_for_still_image()
@@ -393,11 +394,11 @@ class CombatAddon(AddonBase):
                 self.logger.debug('%s', repr(drops))
                 self.logger.info('掉落识别结果：%s', self.format_recoresult(drops))
                 log_total = len(self.loots)
-                for _, group in drops['items']:
-                    for name, qty, item_type in group:
-                        if name is not None and qty is not None:
-                            self.loots[name] = self.loots.get(name, 0) + qty
-                self.frontend.notify("combat-result", drops)
+                for _, group in drops.items:
+                    for record in group:
+                        if record.name is not None and record.quantity is not None:
+                            self.loots[record.name] = self.loots.get(record.name, 0) + record.quantity
+                self.frontend.notify("combat-result", drops.to_json())
                 self.frontend.notify("loots", self.loots)
                 if log_total:
                     self.log_total_loots()

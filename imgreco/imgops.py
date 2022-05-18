@@ -130,7 +130,9 @@ def compare_mse(mat1, mat2, mask=None):
     return mse
 
 
-def scale_to_height(img, height, algo=Image.BILINEAR):
+def scale_to_height(img: Image.Image, height, algo=Image.BILINEAR):
+    if img.height == height:
+        return img
     scale = height / img.height
     return img.resize((int(img.width * scale), height), algo)
 
@@ -163,6 +165,7 @@ def invert_color(img):
 
 
 def match_template(img, template, method=cv.TM_CCOEFF_NORMED, template_mask=None) -> tuple[tuple[int, int], float]:
+    """returns *center* point of matched template and matching score"""
     templatemat = np.asarray(template)
     mtresult = cv.matchTemplate(np.asarray(img), templatemat, method, mask=template_mask)
     minval, maxval, minloc, maxloc = cv.minMaxLoc(mtresult)
@@ -286,6 +289,7 @@ def _find_homography_test(templ, haystack):
 
 
 def compare_region_mse(img, region, template, threshold=3251, logger=None):
+    '''DEPPRECATED: use match_roi instead'''
     if isinstance(template, str):
         from . import resources
         template = resources.load_image_cached(template, img.mode)

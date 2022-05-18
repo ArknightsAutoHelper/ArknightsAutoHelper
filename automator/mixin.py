@@ -34,14 +34,11 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         return self.helper.device.screenshot(False)
 
     def delay(self, n: Real=10,  # 等待时间中值
-               MANLIKE_FLAG=True, allow_skip=False):  # 是否在此基础上设偏移量
-        if MANLIKE_FLAG:
+               randomize=True, allow_skip=False):  # 是否在此基础上设偏移量
+        if randomize:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
-        if n > 3 or allow_skip:
-            self.helper.frontend.delay(n, allow_skip)
-        else:
-            time.sleep(n)
+        self.helper.frontend.delay(n, allow_skip)
 
     def tap_point(self, pos, post_delay=0.5, randomness=(5, 5)):
         x, y = pos
@@ -64,7 +61,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
         self.helper.device.touch_tap((tapx, tapy), (0, 0))
-        self.delay(post_delay, MANLIKE_FLAG=True)
+        self.delay(post_delay, randomize=True)
 
     def tap_quadrilateral(self, pts, post_delay=1):
         pts = np.asarray(pts)
@@ -76,7 +73,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         halfvec = (pt2 - m) / 2
         finalpt = m + halfvec * bddiff
         self.helper.device.touch_tap(tuple(int(x) for x in finalpt), (0, 0))
-        self.delay(post_delay, MANLIKE_FLAG=True)
+        self.delay(post_delay, randomize=True)
 
     def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1, iteration=1):
         if crop is None:
@@ -130,24 +127,24 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
             self.tap_rect(roi.bbox.ltrb)
         return result
     
-    def wait_for_any_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, list[imgreco.common.RoiMatchingResult]]:
+    def wait_for_any_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, dict[str, imgreco.common.RoiMatchingResult]]:
         rois = [self._ensure_roi(roi) for roi in rois]
         t0 = time.monotonic()
-        results = [imgreco.common.RoiMatchingResult.NoMatch] * len(rois)
+        results = {roi.name: imgreco.common.RoiMatchingResult.NoMatch for roi in rois}
         while time.monotonic() < t0 + timeout:
-            results = [self.match_roi(roi, **roi_matching_args) for roi in rois]
-            if any(results):
+            results = {roi.name: self.match_roi(roi, **roi_matching_args) for roi in rois}
+            if any(results.values()):
                 return True, results
             self.delay(0.5, False, False)
         return False, results
     
-    def wait_for_all_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, list[imgreco.common.RoiMatchingResult]]:
+    def wait_for_all_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, dict[str, imgreco.common.RoiMatchingResult]]:
         rois = [self._ensure_roi(roi) for roi in rois]
         t0 = time.monotonic()
-        results = [imgreco.common.RoiMatchingResult.NoMatch] * len(rois)
+        results = {roi.name: imgreco.common.RoiMatchingResult.NoMatch for roi in rois}
         while time.monotonic() < t0 + timeout:
-            results = [self.match_roi(roi, **roi_matching_args) for roi in rois]
-            if all(results):
+            results = {roi.name: self.match_roi(roi, **roi_matching_args) for roi in rois}
+            if all(results.values()):
                 return True, results
             self.delay(0.5, False, False)
         return False, results

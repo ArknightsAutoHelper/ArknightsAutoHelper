@@ -59,9 +59,14 @@ if libname:
     TessBaseAPIGetHOCRText = cfunc(tesseract, 'TessBaseAPIGetHOCRText', ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int)
     TessDeleteText = cfunc(tesseract, 'TessDeleteText', None, ctypes.c_void_p)
     TessBaseAPIEnd = cfunc(tesseract, 'TessBaseAPIEnd', None, ctypes.c_void_p)
+    TessBaseAPIClear = cfunc(tesseract, 'TessBaseAPIClear', None, ctypes.c_void_p)
     TessBaseAPIDelete = cfunc(tesseract, 'TessBaseAPIDelete', None, ctypes.c_void_p)
     TessBaseAPISetSourceResolution = cfunc(tesseract, 'TessBaseAPISetSourceResolution', None, ctypes.c_void_p, ctypes.c_int)
     TessBaseAPISetVariable = cfunc(tesseract, 'TessBaseAPISetVariable', ctypes.c_bool, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p)
+    TessBaseAPIGetIntVariable = cfunc(tesseract, 'TessBaseAPIGetIntVariable', ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int))
+    TessBaseAPIGetBoolVariable = cfunc(tesseract, 'TessBaseAPIGetBoolVariable', ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_int))
+    TessBaseAPIGetDoubleVariable = cfunc(tesseract, 'TessBaseAPIGetDoubleVariable', ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p, ctypes.POINTER(ctypes.c_double))
+    TessBaseAPIGetStringVariable = cfunc(tesseract, 'TessBaseAPIGetStringVariable', ctypes.c_char_p, ctypes.c_void_p, ctypes.c_char_p)
     version = TessVersion().decode()
     import logging
     logger = logging.getLogger(__name__)
@@ -164,8 +169,40 @@ class BaseAPI:
 
     def set_variable(self, name, value):
         with self._api_context_factory():
-            return TessBaseAPISetVariable(self.baseapi, name.encode(), b'' if value is None else value.encode())
+            if value is None:
+                value = b''
+            elif value is True:
+                value = b'1'
+            elif value is False:
+                value = b'0'
+            elif isinstance(value, int) or isinstance(value, float):
+                value = str(value).encode()
+            elif isinstance(value, str):
+                value = value.encode()
+            elif isinstance(value, bytes):
+                pass
+            else:
+                raise TypeError("value must be str, bytes, int, bool, float or None")
+            return TessBaseAPISetVariable(self.baseapi, name.encode(), value)
+    
+    def get_variable(self, name):
+        with self._api_context_factory():
+            strval = TessBaseAPIGetStringVariable(self.baseapi, name.encode())
+            if strval is not None:
+                return strval
+            intval = ctypes.c_int()
+            if TessBaseAPIGetBoolVariable(self.baseapi, name.encode(), ctypes.byref(intval)):
+                return bool(intval.value)
+            if TessBaseAPIGetIntVariable(self.baseapi, name.encode(), ctypes.byref(intval)):
+                return intval.value
+            floatval = ctypes.c_double()
+            if TessBaseAPIGetDoubleVariable(self.baseapi, name.encode(), ctypes.byref(floatval)):
+                return floatval.value
+            raise KeyError(name)
 
+    def clear(self):
+        with self._api_context_factory():
+            TessBaseAPIClear(self.baseapi)
 
 if __name__ == '__main__':
     import cv2

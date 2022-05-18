@@ -18,7 +18,7 @@ version = tessbaseapi.version
 class LibTesseractEngine(BaseTesseractEngine):
     def __init__(self, lang, **kwargs):
         super().__init__(lang, **kwargs)
-        vars = {'debug_file': os.devnull}
+        vars = {'debug_file': os.devnull, 'classify_enable_learning': '0'}
         if 'app' in sys.modules:
             import app
             if app.config.debug:
@@ -38,20 +38,25 @@ class LibTesseractEngine(BaseTesseractEngine):
         self.baseapi.set_image(image, ppi)
         if hints is None:
             hints = []
+        tessvars = {}
         if OcrHint.SINGLE_LINE in hints:
-            self.baseapi.set_variable('tessedit_pageseg_mode', '7')
+            tessvars['tessedit_pageseg_mode'] = '7'
         elif OcrHint.SPARSE in hints:
-            self.baseapi.set_variable('tessedit_pageseg_mode', '11')
-        self.baseapi.set_variable('tessedit_char_whitelist', kwargs.get('char_whitelist', ''))
+            tessvars['tessedit_pageseg_mode'] = '11'
+        if 'char_whitelist' in kwargs:
+            tessvars['tessedit_char_whitelist'] = kwargs.pop('char_whitelist')
         for key, value in kwargs.items():
-            self.baseapi.set_variable(key, value)
+            tessvars[key] = value
+        
+        old_tessvars = {name: self.baseapi.get_variable(name) for name in tessvars}
+        # logger.debug('old tessvars: %r', old_tessvars)
+        for name, value in tessvars.items():
+            self.baseapi.set_variable(name, value)
         self.baseapi.recognize()
         result = parse_hocr(io.BytesIO(self.baseapi.get_hocr()))
-        self.baseapi.set_variable('tessedit_pageseg_mode', None)
-        self.baseapi.set_variable('tessedit_char_whitelist', None)
-        for key in kwargs:
-            self.baseapi.set_variable(key, None)
-
+        for name, value in old_tessvars.items():
+            self.baseapi.set_variable(name, value)
+        self.baseapi.clear()
         return result
 
 Engine = LibTesseractEngine
