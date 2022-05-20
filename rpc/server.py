@@ -1,4 +1,6 @@
 from __future__ import annotations
+import sys
+import traceback
 import util.early_logs
 import util.unfuck_https_proxy
 import queue
@@ -7,16 +9,44 @@ import signal
 import threading
 import concurrent.futures
 import logging
-
+from util.excutil import format_exception
+from collections.abc import Sequence
 from rpc.aioobservable import Subject
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar, Mapping, Optional, Union
 if TYPE_CHECKING:
     from automator.helper import BaseAutomator
+    JSONObject = Mapping[str, 'JSONSerializable']
+    JSONArray = Sequence['JSONSerializable']
+    JSONSerializable = Union[str, int, float, bool, None, JSONArray, JSONObject]
+
+logger = logging.getLogger(__name__)
+
+class JSONRPCError(RuntimeError):
+    code: int
+    message: str
+class InvalidRequestError(JSONRPCError):
+    code = -32600
+    message = 'Invalid Request'
+class ParseError(JSONRPCError):
+    code = -32700
+    message = 'Parse Error'
+class MethodNotFoundError(JSONRPCError):
+    code = -32601
+    message = 'Method not found'
+class InvalidParamsError(JSONRPCError):
+    code = -32602
+    message = 'Invalid params'
+class InternalError(JSONRPCError):
+    code = -32603
+    message = 'Internal error'
+
+
 
 import app
 app.background = True
 
 interrupt_signal = Subject()
+notify_sink = Subject()
 
 class PendingHandler(logging.Handler):
     terminator = '\n'
@@ -81,8 +111,8 @@ class WebFrontend:
         self.output.next(dict(type="alert", title=title, message=text, level=level, details=details))
     def notify(self, name, value=None):
         """program-targeted message"""
-        # logger.info("sending notify %s %r", name, value)
-        self.output.next(dict(type="notify", name=name, value=value))
+        logger.info("sending notify %s %r", name, value)
+        self.output.next((dict(type="notify", name=name, value=value)))
     def request_device_connector(self):
         try:
             return connector.auto_connect()
@@ -121,9 +151,10 @@ def export(func):
     return func
 
 class ApiServer:
-    def __init__(self, helper: BaseAutomator):
+    def __init__(self, helper: BaseAutomator, notify_sink: Subject):
         self.main_thread_queue = queue.Queue()
         self.helper = helper
+        self.notify_sink = notify_sink
     def interrupt(self):
         signal.raise_signal(signal.SIGINT)
     async def handle_request(self, request):
@@ -135,6 +166,63 @@ class ApiServer:
         else:
             return await asyncio.to_thread(func, **request['args'])
 
+
+    async def _handle_single_request(self, request: JSONObject) -> Optional[JSONObject]:
+        print("_handle_single_request", request)
+
+        request_id = None
+        try:
+            if not isinstance(request, Mapping):
+                raise InvalidRequestError
+            if request.get('jsonrpc') != '2.0':
+                raise InvalidRequestError
+            request_id = request.get('id', None)
+            method = request.get('method', None)
+            if not isinstance(method, str):
+                raise InvalidRequestError
+            if method not in _known_methods:
+                raise MethodNotFoundError
+            json_params = request.get('params', [])
+            if isinstance(json_params, Sequence):
+                args = json_params
+                kwargs = {}
+            elif isinstance(json_params, Mapping):
+                args = []
+                kwargs = json_params
+            is_async = _known_methods[method]
+            func = getattr(self, method)
+            if is_async:
+                result = await func(*args, **kwargs)
+            else:
+                result = await asyncio.to_thread(func, *args, **kwargs)
+            if request_id is None:
+                return None
+            return dict(jsonrpc='2.0', id=request_id, result=result)
+        except JSONRPCError as e:
+            response = dict(jsonrpc='2.0', id=request.get('id', None), error=dict(code=e.code, message=e.message))
+        except Exception as e:
+            traceback.print_exc()
+            code = -32000
+            rpc_message = "RPC server error"
+            if isinstance(e, TypeError):
+                message = str(e)
+                if 'positional argument but' in message or 'got an unexpected keyword argument' in message:
+                    code = InvalidParamsError.code
+                    rpc_message = InvalidParamsError.message
+            exc = sys.exc_info()
+            response = dict(jsonrpc='2.0', id=request.get('id', None), error=dict(code=code, message=rpc_message, data=format_exception(*exc)))
+        if request_id is not None:
+            return response
+        else:
+            return None
+
+    async def handle_jsonrpc(self, request: Union[JSONObject, JSONArray]):
+        if isinstance(request, Sequence):
+            if len(request) == 0:
+                return dict(jsonrpc='2.0', id=None, error=dict(code=-32600, message='Invalid Request'))
+            return [x for x in await asyncio.gather(*(self._handle_one_request(req) for req in request)) if x is not None]
+        elif isinstance(request, Mapping):
+            return await self._handle_one_request(request)
 
     def run_main_thread(self):
         while True:
@@ -194,6 +282,8 @@ class ApiServer:
 
     @export
     async def sched_start(self):
+        if self.helper.scheduler.running:
+            return
         self.main_thread_queue.put('sched:start')
 
     @export
@@ -205,13 +295,19 @@ class ApiServer:
         pass
 
 
-def server_thread(loop_future: concurrent.futures.Future, stopper_future: concurrent.futures.Future, notify_sink: Subject):
+    @export
+    def test_notify(self, value=None):
+        self.helper.frontend.notify('test', dict(value=value))
+
+
+def server_thread(loop_future: concurrent.futures.Future, stopper_future: concurrent.futures.Future, api_server_future: concurrent.futures.Future):
     loop = asyncio.new_event_loop()
     print("creating loop", loop, id(loop))
     asyncio.set_event_loop(loop)
     loop_future.set_result(loop)
+    api_server = api_server_future.result()
     from . import ws_endpoint
-    ws_endpoint.start(stopper_future)
+    ws_endpoint.start(stopper_future, api_server)
 
 
 def run():
@@ -220,18 +316,20 @@ def run():
     loop_future = concurrent.futures.Future()
     stop_future = concurrent.futures.Future()
     notify_sink = Subject()
-    thread = threading.Thread(target=server_thread, args=(loop_future, stop_future, notify_sink))
+    api_server_future = concurrent.futures.Future()
+    thread = threading.Thread(target=server_thread, args=(loop_future, stop_future, api_server_future))
     thread.start()
     aioloop = loop_future.result()
-    stopper = stop_future.result()
     helper = ArknightsHelper(frontend=WebFrontend(output=notify_sink, loop=aioloop))
-    main_thread_queue = queue.Queue()
+    api_server = ApiServer(helper, notify_sink)
+    api_server_future.set_result(api_server)
+    stopper = stop_future.result()
 
     try:
         while True:
             try:
-                print('waiting for next command')
-                action = main_thread_queue.get(timeout=1)
+                # print('waiting for next command')
+                action = api_server.main_thread_queue.get(timeout=1)
             except queue.Empty:
                 continue
             if action is None:

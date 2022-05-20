@@ -19,7 +19,11 @@ class Subscription:
         self.observable = observable
         self.key = key
     def unsubscribe(self):
-        self.observable.unsubscribe(self.key)
+        self.observable.unsubscribe(self)
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.unsubscribe()
 
 class Subject(Generic[T]):
     def __init__(self):
