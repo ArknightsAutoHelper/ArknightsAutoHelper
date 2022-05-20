@@ -1,23 +1,28 @@
-import { colorScheme } from './AppGlobalState';
+import { colorSchemePreference } from './AppGlobalState';
+import { RxAtom } from './RxAtom';
 
 export type DrakModePreference = "light" | "dark" | "system";
+
+export const activeColorScheme = new RxAtom<DrakModePreference>(null);
 
 function setMode(dark: boolean) {
   const html = document.documentElement;
   const body = document.body;
   if (dark) {
-    html.classList.add('bp3-dark');
-    body.classList.add('bp3-dark');
+    html.classList.add('bp4-dark');
+    body.classList.add('bp4-dark');
     document.querySelector('meta[name="theme-color"]').setAttribute("content", '#394B59');
+    activeColorScheme.setValue("dark");
   } else {
-    html.classList.remove('bp3-dark');
-    body.classList.remove('bp3-dark');
+    html.classList.remove('bp4-dark');
+    body.classList.remove('bp4-dark');
     document.querySelector('meta[name="theme-color"]').setAttribute("content", '#FFFFFF');
+    activeColorScheme.setValue("light");
   }
 }
 
 export function updateDarkMode() {
-  let preference = colorScheme.getValue();
+  let preference = colorSchemePreference.getValue();
   // preference = preference ? JSON.parse(preference) : 'system';
   if (preference === "dark") {
     setMode(true);
@@ -37,7 +42,7 @@ if (window.matchMedia) {
   } catch (e) {}
 }
 
-colorScheme.subject.subscribe(value => {
+colorSchemePreference.subject.subscribe(value => {
   updateDarkMode();
 });
 

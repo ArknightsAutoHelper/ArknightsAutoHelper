@@ -9,7 +9,7 @@ import * as globalState from './AppGlobalState'
 import { Field } from './SchemaViewModel';
 
 const ThemeSettings = React.memo(() => {
-  const [colorScheme, setColorScheme] = globalState.colorScheme.useState();
+  const [colorScheme, setColorScheme] = globalState.colorSchemePreference.useState();
   return (
     <Flex flexDirection="row" alignItems="center" width="100%" className="dynamic-setting-field">
       <div className="flex-grow-1">主题</div>
@@ -80,14 +80,14 @@ export default function SettingsTab() {
     https://bugzilla.mozilla.org/show_bug.cgi?id=1377072
     */}
       {React.useMemo(() =>
-        <Flex flexDirection="column" alignItems="center" margin="0 auto" padding="8px" maxWidth="640px" className='bp3-card square-card' >
+        <Flex flexDirection="column" alignItems="center" margin="0 auto" padding="8px" maxWidth="640px" className='bp4-card square-card' >
           <GuiSettings />
           <SchemaView namespaceName='config.yaml' schema={schema as any} showFieldName valueAtoms={atoms} />
           <Box flexGrow={1} flexShrink={0} paddingTop={0}></Box>
         </Flex>, [atoms])}
 
       {React.useMemo(() =>
-        <Box position="sticky" bottom="0" visibility={changedSize > 0 ? null : 'hidden'} className="bp3-card square-card bp3-elevation-2" padding="1em">
+        <Box position="sticky" bottom="0" visibility={changedSize > 0 ? null : 'hidden'} className="bp4-card square-card bp4-elevation-2" padding="1em">
           <Flex justifyContent="flex-end" alignItems="center" gap="1em">
             <div>已更改 {changedSize} 项</div>
             <Button icon="trash" intent="danger" onClick={handleDiscard}>放弃</Button>
