@@ -1,29 +1,15 @@
 from functools import lru_cache
+
 import cv2
 import numpy as np
-from . import resources
-import zipfile
-from . import common
-from util.richlog import get_logger
-import app
 
+from util.richlog import get_logger
+from . import common
+from . import resources
 
 idx2id = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
           'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-prefer_svm = app.config.stage_navigator.ocr_backend == 'svm'
 logger = get_logger(__name__)
-
-
-@lru_cache(maxsize=1)
-def _load_svm():
-    with resources.open_file('stage_ocr/svm_data.zip') as f:
-        zf = zipfile.ZipFile(f, 'r')
-        ydoc = zf.read('svm_data.dat').decode('utf-8')
-        fs = cv2.FileStorage(ydoc, cv2.FileStorage_READ | cv2.FileStorage_MEMORY)
-        svm = cv2.ml.SVM_create()
-        svm.read(fs.getFirstTopLevelNode())
-        assert svm.isTrained()
-        return svm
 
 
 @lru_cache(maxsize=1)
@@ -34,11 +20,15 @@ def _load_onnx_model():
         return net
 
 
-def predict_cv(img):
-    net = _load_onnx_model()
-    char_imgs = crop_char_img(img)
+def predict_cv(img, noise_size=None):
+    char_imgs = crop_char_img(img, noise_size)
     if not char_imgs:
         return ''
+    return predict_char_images(char_imgs)
+
+
+def predict_char_images(char_imgs):
+    net = _load_onnx_model()
     roi_list = [np.expand_dims(resize_char(x), 2) for x in char_imgs]
     blob = cv2.dnn.blobFromImages(roi_list)
     net.setInput(blob)
@@ -50,10 +40,6 @@ def predict_cv(img):
     return ''.join([idx2id[p] for p in predicts])
 
 
-def get_img_feature(img):
-    return resize_char(img).reshape((256, 1))
-
-
 def resize_char(img):
     h, w = img.shape[:2]
     scale = 16 / max(h, w)
@@ -61,44 +47,50 @@ def resize_char(img):
     w = int(w * scale)
     img2 = np.zeros((16, 16)).astype(np.uint8)
     img = cv2.resize(img, (w, h))
-    img2[0:h, 0:w] = ~img
+    img2[0:h, 0:w] = img
+    # cv2.imshow('test', img2)
+    # cv2.waitKey()
     return img2
 
 
-def predict(gray_img):
-    svm = _load_svm()
-    res = svm.predict(np.float32([get_img_feature(gray_img)]))
-    return chr(int(res[1][0][0]))
-
-
-def crop_char_img(img):
+def crop_char_img(img, noise_size=None):
     h, w = img.shape[:2]
-    has_black = False
+    has_white = False
     last_x = None
     res = []
+    if noise_size is None:
+        noise_size = 3 if h > 40 else 2
     for x in range(0, w):
-        for y in range(0, h - 1):
-            has_black = False
-            if img[y][x] < 127 and img[y+1][x] < 127:
-                has_black = True
+        for y in range(0, h - noise_size + 1):
+            has_white = False
+            flag = False
+            if img[y][x] > 127:
+                flag = True
+                for i in range(noise_size):
+                    if img[y+i][x] < 127:
+                        flag = False
+            if flag:
+                has_white = True
                 if not last_x:
                     last_x = x
                 break
-        if not has_black and last_x:
-            if x - last_x >= 3:
+        if not has_white and last_x:
+            if x - last_x >= noise_size // 2:
                 min_y = None
                 max_y = None
                 for y1 in range(0, h):
-                    has_black = False
+                    has_white = False
                     for x1 in range(last_x, x):
-                        if img[y1][x1] < 127:
-                            has_black = True
+                        if img[y1][x1] > 127:
+                            has_white = True
                             if min_y is None:
                                 min_y = y1
                             break
-                    if not has_black and min_y is not None and max_y is None:
+                    if not has_white and min_y is not None and max_y is None:
                         max_y = y1
                         break
+                # cv2.imshow('test', img[min_y:max_y, last_x:x])
+                # cv2.waitKey()
                 res.append(img[min_y:max_y, last_x:x])
             last_x = None
     return res
@@ -106,7 +98,7 @@ def crop_char_img(img):
 
 def thresholding(image):
     img = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    if img[0, 0] < 127:
+    if img[0, 0] > 127:
         img = ~img
     return img
 
@@ -116,19 +108,15 @@ def pil_to_cv_gray_img(pil_img):
     return cv2.cvtColor(arr, cv2.COLOR_RGB2GRAY)
 
 
-def invert_cv_gray_img_color(img):
-    return ~img
-
-
 def cut_tag(screen, w, pt):
     img_h, img_w = screen.shape[:2]
     tag_w, tag_h = 130, 36
-    tag = thresholding(screen[pt[1] - 1:pt[1] + tag_h, pt[0] + w + 3:pt[0] + tag_w + w])
+    tag = thresholding(screen[pt[1] + 2:pt[1] + tag_h + 3, pt[0] + w + 3:pt[0] + tag_w + w])
     # 130 像素不一定能将 tag 截全，所以再检查一次看是否需要拓宽 tag 长度
     for i in range(3):
         for j in range(tag_h):
-            if tag[j][tag_w - 4 - i] < 127:
-                tag_w = 155
+            if tag[j][tag_w - 4 - i] > 127:
+                tag_w = 150
                 if pt[0] + w + tag_w >= img_w:
                     return None
                 tag = thresholding(screen[pt[1] - 1:pt[1] + tag_h, pt[0] + w + 3:pt[0] + tag_w + w])
@@ -138,14 +126,15 @@ def cut_tag(screen, w, pt):
 
 def remove_holes(img):
     # 去除小连通域
-    # findContours 只能处理黑底白字的图像, 所以需要进行一下翻转
-    contours, hierarchy = cv2.findContours(~img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    h, w = img.shape[:2]
+    noise_size = 15 if h > 25 else 8
+    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for i in range(len(contours)):
         # 计算区块面积
         area = cv2.contourArea(contours[i])
-        if area < 8:
-            # 将面积较小的点涂成白色，以去除噪点
-            cv2.drawContours(img, [contours[i]], 0, 255, -1)
+        if area < noise_size:
+            # 将面积较小的点涂成黑色，以去除噪点
+            cv2.drawContours(img, [contours[i]], 0, 0, -1)
 
 
 def recognize_stage_tags(pil_screen, template, ccoeff_threshold=0.75):
@@ -177,7 +166,7 @@ def recognize_stage_tags(pil_screen, template, ccoeff_threshold=0.75):
             if tag is None:
                 continue
             remove_holes(tag)
-            tag_str = do_tag_ocr(tag)
+            tag_str = do_tag_ocr(tag, 3)
             if len(tag_str) < 3:
                 if dbg_screen is None:
                     dbg_screen = screen.copy()
@@ -192,31 +181,24 @@ def recognize_stage_tags(pil_screen, template, ccoeff_threshold=0.75):
     return res
 
 
-def do_tag_ocr(img):
+def do_tag_ocr(img, noise_size=None):
     logger.logimage(common.convert_to_pil(img))
-    res = do_tag_ocr_svm(img) if prefer_svm else do_tag_ocr_dnn(img)
-    logger.logtext('%s, res: %s' % ('svm' if prefer_svm else 'dnn', res))
+    res = do_tag_ocr_dnn(img, noise_size)
+    logger.logtext('res: %s' % res)
     return res
 
 
-def do_tag_ocr_svm(img):
-    char_imgs = crop_char_img(img)
-    s = ''
-    for char_img in char_imgs:
-        c = predict(char_img)
-        s += c
-    return s
-
-
-def do_tag_ocr_dnn(img):
-    return predict_cv(img)
+def do_tag_ocr_dnn(img, noise_size=None):
+    return predict_cv(img, noise_size)
 
 
 def do_img_ocr(pil_img):
     img = pil_to_cv_gray_img(pil_img)
     # cv2.imshow('test', img)
     # cv2.waitKey()
-    img = thresholding(img)
+    img_avg = np.average(img)
+    thresh_mode = cv2.THRESH_BINARY_INV if img_avg > 127 else cv2.THRESH_BINARY
+    img = cv2.threshold(img, 100, 255, thresh_mode)[1]
     remove_holes(img)
     return do_tag_ocr(img)
 

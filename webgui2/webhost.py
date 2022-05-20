@@ -38,6 +38,7 @@ def find_chromium():
     return None
 
 def check_webview2():
+    return None
     import os
     if os.name != 'nt':
         return None
@@ -136,6 +137,7 @@ def get_host():
             raise RuntimeError("no compatible browser executable found")
         return WebHostChromePWA(exe)
     elif name == 'webview':
+        return auto_host()
         return WebHostWebView()
     else:
         raise KeyError(name)

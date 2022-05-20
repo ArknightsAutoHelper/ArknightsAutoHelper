@@ -89,34 +89,5 @@ html, body {
     background-color: $pt-dark-app-background-color;
   }
 }
-// scrollbar
-// /* Scrollbar size */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 10px;
-  position: fixed;
-  transition: 1.0s;
-}
 
-::-webkit-scrollbar-thumb {
-  background-color: rgba(127, 127, 127, 0.6);
-  background-clip: padding-box;
-  border: 2px solid transparent;
-  border-radius: 5px;
-  transition: 1.0s;
-  &:hover {
-    background-color: rgb(110, 110, 110);
-    transition: 0.3s;
-  }
-  &:active {
-    background: rgba(95, 91, 91, 1);
-  }
-}
-
-::-webkit-scrollbar-track {
-  background: none;
-}
-
-::-webkit-scrollbar-corner {
-  background: none;
-}
+@import "./scrollbar.scss";

@@ -1,4 +1,4 @@
-import { Tree, TreeNodeInfo } from "@blueprintjs/core";
+import { Card, Tree, TreeNodeInfo } from "@blueprintjs/core";
 import { Box, Flex } from "@chakra-ui/layout";
 
 
@@ -34,8 +34,20 @@ const treeData: TreeNodeInfo[] = [
 export default function GalleryTab() {
   return (
     <Flex width="100%" height="100%" flexGrow={1} flexDirection='row' alignItems='stretch' minHeight={0}>
-      <Box width="200px" height="100%" minHeight="0" padding="0" className="bp4-card square-card overflow-y-auto">
+      <Box width="240px" height="100%" minHeight="0" padding="0" className="pane left overflow-y-auto">
         <Tree contents={treeData}></Tree>
+      </Box>
+      <Box flexGrow={1}>
+        <Box width={100} margin={100}>
+          <div>
+            <Card>Test</Card>
+          </div>
+          <p></p>
+          <div className="bp4-dark">
+            <Card>Test</Card>
+          </div>
+        </Box>
+
       </Box>
     </Flex>
   )

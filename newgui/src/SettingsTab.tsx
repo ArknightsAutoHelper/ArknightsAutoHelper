@@ -9,7 +9,7 @@ import * as globalState from './AppGlobalState'
 import { Field } from './SchemaViewModel';
 
 const ThemeSettings = React.memo(() => {
-  const [colorScheme, setColorScheme] = globalState.colorScheme.useState();
+  const [colorScheme, setColorScheme] = globalState.colorSchemePreference.useState();
   return (
     <Flex flexDirection="row" alignItems="center" width="100%" className="dynamic-setting-field">
       <div className="flex-grow-1">主题</div>

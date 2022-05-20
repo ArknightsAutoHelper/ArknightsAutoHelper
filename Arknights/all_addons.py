@@ -25,3 +25,5 @@ with guard(): from .addons.contrib.activity import ActivityAddOn
 with guard(): from .addons.contrib.start_sp_stage import StartSpStageAddon
 
 with guard(): from .addons.contrib.plan import PlannerAddOn
+
+with guard(): from .addons import sof_nav

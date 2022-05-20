@@ -34,8 +34,8 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         return self.helper.device.screenshot(False)
 
     def delay(self, n: Real=10,  # 等待时间中值
-               MANLIKE_FLAG=True, allow_skip=False):  # 是否在此基础上设偏移量
-        if MANLIKE_FLAG:
+               randomize=True, allow_skip=False):  # 是否在此基础上设偏移量
+        if randomize:
             m = uniform(0, 0.3)
             n = uniform(n - m * 0.5 * n, n + m * n)
         self.helper.frontend.delay(n, allow_skip)
@@ -60,8 +60,8 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         ydiff = max(-1.0, min(1.0, gauss(0, 0.2)))
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
-        self.helper.device.touch_tap((tapx, tapy))
-        self.delay(post_delay, MANLIKE_FLAG=True)
+        self.helper.device.touch_tap((tapx, tapy), (0, 0))
+        self.delay(post_delay, randomize=True)
 
     def tap_quadrilateral(self, pts, post_delay=1):
         pts = np.asarray(pts)
@@ -72,15 +72,15 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         pt2 = pts[1] if bddiff > 1 else pts[3]
         halfvec = (pt2 - m) / 2
         finalpt = m + halfvec * bddiff
-        self.helper.device.touch_tap(tuple(int(x) for x in finalpt))
-        self.delay(post_delay, MANLIKE_FLAG=True)
+        self.helper.device.touch_tap(tuple(int(x) for x in finalpt), (0, 0))
+        self.delay(post_delay, randomize=True)
 
-    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1):
+    def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1, iteration=1):
         if crop is None:
             shooter = lambda: self.helper.device.screenshot(False)
         else:
             shooter = lambda: self.helper.device.screenshot(False).crop(crop)
-        screenshot = shooter()
+        prev_screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
         n = 0
@@ -88,12 +88,16 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         message_shown = False
         while (t1 := time.monotonic()) < ts:
             if check_delay > 0:
-                self.delay(check_delay, False, True)
+                self.delay(check_delay, False, False)
             screenshot2 = shooter()
-            mse = imgreco.imgops.compare_mse(screenshot, screenshot2)
+            mse = imgreco.imgops.compare_mse(prev_screenshot, screenshot2)
             if mse <= threshold:
-                return screenshot2
-            screenshot = screenshot2
+                n += 1
+                if n >= iteration:
+                    return screenshot2
+            else:
+                n = 0
+            prev_screenshot = screenshot2
             if mse < minerr:
                 minerr = mse
             if not message_shown and t1-t0 > 10:
@@ -107,46 +111,40 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
         self.helper.device.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
-    def wait_for_roi(self, roi: RoiDef, timeout: Real = 10, threshold=None, **roi_matching_args: RoiMatchingArgs) -> imgreco.common.RoiMatchingResult:
+    def wait_for_roi(self, roi: RoiDef, timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> imgreco.common.RoiMatchingResult:
         t0 = time.monotonic()
         result = imgreco.common.RoiMatchingResult.NoMatch
         while time.monotonic() < t0 + timeout:
             result = self.match_roi(roi, **roi_matching_args)
-            if threshold is not None:
-                result = result.with_threshold(threshold)
             if result:
                 break
             self.delay(0.5, False, False)
         return result
     
-    def wait_and_tap_roi(self, roi: RoiDef, timeout: Real = 10, threshold=None, **roi_matching_args: RoiMatchingArgs) -> imgreco.common.RoiMatchingResult:
-        result = self.wait_for_roi(roi, timeout, threshold, **roi_matching_args)
+    def wait_and_tap_roi(self, roi: RoiDef, timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> imgreco.common.RoiMatchingResult:
+        result = self.wait_for_roi(roi, timeout, **roi_matching_args)
         if result:
             self.tap_rect(roi.bbox.ltrb)
         return result
     
-    def wait_for_any_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, threshold=None, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, list[imgreco.common.RoiMatchingResult]]:
+    def wait_for_any_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, dict[str, imgreco.common.RoiMatchingResult]]:
         rois = [self._ensure_roi(roi) for roi in rois]
         t0 = time.monotonic()
-        results = [imgreco.common.RoiMatchingResult.NoMatch] * len(rois)
+        results = {roi.name: imgreco.common.RoiMatchingResult.NoMatch for roi in rois}
         while time.monotonic() < t0 + timeout:
-            results = [self.match_roi(roi, **roi_matching_args) for roi in rois]
-            if threshold is not None:
-                results = [result.with_threshold(threshold) for result in results]
-            if any(results):
+            results = {roi.name: self.match_roi(roi, **roi_matching_args) for roi in rois}
+            if any(results.values()):
                 return True, results
             self.delay(0.5, False, False)
         return False, results
     
-    def wait_for_all_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, threshold=None, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, list[imgreco.common.RoiMatchingResult]]:
+    def wait_for_all_roi(self, rois: Sequence[RoiDef], timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> tuple[bool, dict[str, imgreco.common.RoiMatchingResult]]:
         rois = [self._ensure_roi(roi) for roi in rois]
         t0 = time.monotonic()
-        results = [imgreco.common.RoiMatchingResult.NoMatch] * len(rois)
+        results = {roi.name: imgreco.common.RoiMatchingResult.NoMatch for roi in rois}
         while time.monotonic() < t0 + timeout:
-            results = [self.match_roi(roi, **roi_matching_args) for roi in rois]
-            if threshold is not None:
-                results = [result.with_threshold(threshold) for result in results]
-            if all(results):
+            results = {roi.name: self.match_roi(roi, **roi_matching_args) for roi in rois}
+            if all(results.values()):
                 return True, results
             self.delay(0.5, False, False)
         return False, results

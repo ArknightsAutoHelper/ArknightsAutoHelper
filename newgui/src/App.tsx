@@ -54,6 +54,10 @@ export function App() {
           <Tooltip2 content="发现新版本" placement='bottom' disabled={!hasUpdate} >
             <Button minimal intent={hasUpdate ? 'success' : null} active={activeTab === 'about'} onPointerDown={() => setActiveTab('about')} icon="info-sign" />
           </Tooltip2>
+          {/* <Button minimal icon="minus" />
+          <Button minimal icon="small-square" />
+          <Button minimal icon="duplicate" />
+          <Button minimal icon="cross" /> */}
         </Navbar.Group>
       </Navbar>
       <Box flexGrow={1} minHeight="0" position="relative">

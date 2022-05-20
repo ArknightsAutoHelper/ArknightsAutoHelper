@@ -6,6 +6,8 @@ import TaskScheduler from './TaskScheduler';
 import "./OverviewTab.scss";
 
 import * as globalState from './AppGlobalState';
+import { ILogFrame } from './ILogFrame';
+import { activeColorScheme } from './darkmode';
 
 interface IDeviceSelect {
   key: string;
@@ -28,38 +30,42 @@ const LogRecord = React.memo(({ level, time, message }: any) => {
 });
 
 function LogPanel({ autoScroll, showDebugMessage }) {
-  const scrollContainer = React.useRef<HTMLDivElement>(null);
+  const logFrame = React.useRef<HTMLIFrameElement>(null);
   const [logs, setLogs] = React.useState([]);
   // const [limit] = globalState.logScrollbackLimit.useState();
   const lastlog = logs[logs.length - 1]?.id;
   React.useEffect(() => {
     const subscription = globalState.log$.asObservable().subscribe(log => {
-      const limit = globalState.logScrollbackLimit.getValue();
-      console.log("limit=", limit);
-      setLogs(logs => [...logs.slice(-limit + 1), log]);
+      (logFrame.current?.contentWindow as ILogFrame)?.addLogRecord?.(log);
     });
-    return () => subscription.unsubscribe();
-  }, []);
+    const sub2 = globalState.logScrollbackLimit.asObservable().subscribe(limit => {
+        (logFrame.current?.contentWindow as ILogFrame)?.setScrollBackLimit?.(limit);
+    });
+    const sub3 = activeColorScheme.asObservable().subscribe(colorScheme => {
+      (logFrame.current?.contentWindow as ILogFrame)?.setDarkMode?.(colorScheme === 'dark');
+    });
+    return () => {
+      subscription.unsubscribe();
+      sub2.unsubscribe();
+      sub3.unsubscribe();
+    };
+  }, [logFrame]);
   React.useEffect(() => {
-    if (autoScroll) {
-      window.requestAnimationFrame(() => {
-        const elm = scrollContainer.current;
-        if (elm) {
-          elm.scrollTop = elm.scrollHeight;
-        }
-      });
-    }
-  }, [lastlog, autoScroll]);
+    (logFrame.current?.contentWindow as ILogFrame)?.setAutoScroll?.(autoScroll);
+  }, [logFrame, autoScroll]);
+  React.useEffect(() => {
+    (logFrame.current?.contentWindow as ILogFrame)?.setShowDebug?.(showDebugMessage);
+  }, [logFrame, showDebugMessage]);
 
-  return (
-    <Card className='card-no-padding flex-grow-1 min-height-0 user-select-text default-background'>
-      <Box ref={scrollContainer} className="overflow-y-scroll min-height-0" width="100%" height="100%" >
-        <table className={"log-container" + (showDebugMessage ? ' show-debug' : '')}>
-          <tbody>{logs.map((x, i) => <LogRecord {...x} key={x.id} />)}</tbody>
-        </table>
-      </Box>
-    </Card>
-  );
+  const onLoad = React.useCallback(() => {
+    (logFrame.current?.contentWindow as ILogFrame)?.setScrollBackLimit?.(globalState.logScrollbackLimit.getValue());
+    (logFrame.current?.contentWindow as ILogFrame)?.setDarkMode?.(activeColorScheme.getValue() === 'dark');
+    (logFrame.current?.contentWindow as ILogFrame)?.setAutoScroll?.(autoScroll);
+    (logFrame.current?.contentWindow as ILogFrame)?.setShowDebug?.(showDebugMessage);
+  }, [logFrame]);
+  return React.useMemo(() => (
+        <iframe ref={logFrame} className='log-frame flex-grow-1 min-height-0 default-background' src="log-frame.html" title="log-frame" onLoad={onLoad}></iframe>
+    ), []);
 }
 
 
@@ -70,7 +76,7 @@ export default function OverviewTab() {
   const [clearTag, setClearTag] = React.useState(() => new Date().toISOString());
   const addLog = () => {
     const level = ['DEBUG', 'INFO', 'WARNING', 'ERROR'][Math.floor(Math.random() * 4)];
-    globalState.log$.next({ level, time: new Date().toISOString().substring(11, 23), message: "Hello world! " + trollCount, id: +new Date() + Math.random().toString() })
+    globalState.log$.next({ level, time: new Date(), message: "Hello world! " + trollCount, id: +new Date() + Math.random().toString() })
     trollCount++;
   };
 
@@ -92,7 +98,8 @@ export default function OverviewTab() {
 
   return (
     <Flex flexDirection="row" alignItems="stretch" height="100%" className="card-background">
-      <Flex flexDirection="column" width={280} height="100%" alignItems="stretch" style={{ gap: "8px" }} padding="12px" className="bp4-card square-card">
+      <Flex flexDirection="column" width={280} height="100%" alignItems="stretch" className="pane left">
+        <Box className="pane top" padding="12px" >
         <H5>
           <Flex flexDirection="row" alignItems={'center'}>
             <Icon icon="link" style={{ marginRight: "0.5em" }} /><Text>连接设备</Text>
@@ -101,21 +108,24 @@ export default function OverviewTab() {
         <DeviceSelect fill={true} items={[{ key: '1', display: '127.0.0.1:5555' }, { key: '2', display: '127.0.0.1:7555' }]} itemRenderer={x => <MenuItem text={x.display} key={x.key} />} onItemSelect={(x) => { }} popoverProps={{ minimal: true, usePortal: false }} filterable={false} matchTargetWidth={true}>
           <Button fill={true} text={currentDevice === null ? '(auto)' : currentDevice} rightIcon="caret-down" alignText='left' />
         </DeviceSelect>
+        </Box>
+        
+        <Flex flexDirection="column" padding="12px" flexGrow={1}>
+          <H5>
+            <Flex flexDirection="row" alignItems={'center'}>
+              <Icon icon="property" style={{ marginRight: "0.5em" }} /><Text>任务队列</Text>
+            </Flex>
+          </H5>
 
-        <Divider />
+          {React.useMemo(() => <TaskScheduler />, [])}
+        </Flex>
 
-        <H5>
-          <Flex flexDirection="row" alignItems={'center'}>
-            <Icon icon="property" style={{ marginRight: "0.5em" }} /><Text>任务队列</Text>
-          </Flex>
-        </H5>
 
-        {React.useMemo(() => <TaskScheduler />, [])}
 
       </Flex>
-      <Flex flexDirection="column" flexGrow={1} width="0" height="100%" padding="12px" style={{ position: 'relative' }}>
-        <Flex alignItems={'center'}>
-          <H5>
+      <Flex flexDirection="column" flexGrow={1} width="0" height="100%" style={{ position: 'relative' }}>
+        <Flex className="top pane" alignItems={'center'} padding="8px 12px" >
+          <H5 style={{margin: 0}}>
             <Flex flexDirection="row" alignItems={'center'}>
               <Icon icon="console" style={{ marginRight: "0.5em" }} /><Text>运行日志</Text>
             </Flex>

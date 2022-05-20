@@ -207,6 +207,9 @@ class Image:
         array_intf_tup = tuple(array_intf.get(i, None) for i in keys)
         return builtins.hash((repr(array_intf_tup), self._mode))
 
+    def __repr__(self):
+        return f'<{self.__class__.__qualname__} {self.width}x{self.height} {self.mode} {self.dtype}>'
+
     @property
     def array(self):
         return self._mat
@@ -264,7 +267,7 @@ class Image:
     def crop(self, rect):
         return self.subview(rect).copy()
     
-    def convert(self, mode=None, matrix=NotImplemented, dither=NotImplemented, palette=NotImplemented, colors=NotImplemented):
+    def convert(self, mode=None, matrix=NotImplemented, dither=NotImplemented, palette=NotImplemented, colors=NotImplemented) -> Image:
         if matrix is not NotImplemented or dither is not NotImplemented or palette is not NotImplemented or colors is not NotImplemented:
             raise NotImplementedError()
         from_cv_mode = pil_mode_mapping[self.mode]

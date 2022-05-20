@@ -117,26 +117,33 @@ def scalecrop(img, left, top, right, bottom):
     return img.crop(rect)
 
 
-def compare_mse(mat1, mat2):
+def compare_mse(mat1, mat2, mask=None):
     """max 65025 (255**2) for 8bpc image"""
     mat1 = np.asarray(mat1)
     mat2 = np.asarray(mat2)
     assert (mat1.shape == mat2.shape)
     diff = mat1.astype(np.float32) - mat2.astype(np.float32)
+    if mask is not None:
+        mask = np.asarray(mask)
+        diff[mask == 0] = 0
     mse = np.mean(diff * diff)
     return mse
 
 
-def scale_to_height(img, height, algo=Image.BILINEAR):
+def scale_to_height(img: Image.Image, height, algo=Image.BILINEAR):
+    if img.height == height:
+        return img
     scale = height / img.height
     return img.resize((int(img.width * scale), height), algo)
 
 
-def compare_ccoeff(img1, img2):
+def compare_ccoeff(img1, img2, mask=None):
     img1 = np.asarray(img1)
     img2 = np.asarray(img2)
+    if mask is not None:
+        mask = np.asarray(mask)
     assert (img1.shape == img2.shape)
-    result = cv.matchTemplate(img1, img2, cv.TM_CCOEFF_NORMED)[0, 0]
+    result = cv.matchTemplate(img1, img2, cv.TM_CCOEFF_NORMED, mask=mask)[0, 0]
     return result
 
 
@@ -157,16 +164,19 @@ def invert_color(img):
     return Image.fromarray(resultmat, img.mode)
 
 
-def match_template(img, template, method=cv.TM_CCOEFF_NORMED, template_mask=None):
+def match_template(img, template, method=cv.TM_CCOEFF_NORMED, template_mask=None) -> tuple[tuple[int, int], float]:
+    """returns *center* point of matched template and matching score"""
     templatemat = np.asarray(template)
     mtresult = cv.matchTemplate(np.asarray(img), templatemat, method, mask=template_mask)
+    minval, maxval, minloc, maxloc = cv.minMaxLoc(mtresult)
     if method == cv.TM_SQDIFF_NORMED or method == cv.TM_SQDIFF:
-        selector = np.argmin
+        useloc = minloc
+        useval = minval
     else:
-        selector = np.argmax
-    maxidx = np.unravel_index(selector(mtresult), mtresult.shape)
-    y, x = maxidx
-    return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), mtresult[maxidx]
+        useloc = maxloc
+        useval = maxval
+    x, y = useloc
+    return (x + templatemat.shape[1] / 2, y + templatemat.shape[0] / 2), useval
 
 
 @dataclass
@@ -279,6 +289,7 @@ def _find_homography_test(templ, haystack):
 
 
 def compare_region_mse(img, region, template, threshold=3251, logger=None):
+    '''DEPPRECATED: use match_roi instead'''
     if isinstance(template, str):
         from . import resources
         template = resources.load_image_cached(template, img.mode)
@@ -291,3 +302,11 @@ def compare_region_mse(img, region, template, threshold=3251, logger=None):
     if threshold is not None:
         return mse < threshold
     return mse
+
+def pad(img, size, value=None):
+    if value is None:
+        mode = cv.BORDER_REPLICATE
+    else:
+        mode = cv.BORDER_CONSTANT
+    mat = cv.copyMakeBorder(np.asarray(img), size, size, size, size, mode, value=value)
+    return Image.fromarray(mat, img.mode)

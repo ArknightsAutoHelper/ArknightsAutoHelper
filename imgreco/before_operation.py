@@ -15,37 +15,84 @@ logger = get_logger(__name__)
 @lru_cache(1)
 def load_data():
     reco = minireco.MiniRecognizer(resources.load_pickle('minireco/NotoSansCJKsc-Medium.dat'))
-    reco2 = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Medium.dat'))
+    reco2 = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Normal.dat'))
     return (reco, reco2)
 
 @lru_cache(1)
 def recognize(img):
     vw, vh = common.get_vwvh(img.size)
+    context = common.ImageRoiMatchingContext(img)
+
+    styles = ['ep10', 'sof', 'legacy']
+    variants = ['checked', 'unchecked']
+    matches = [context.match_roi(f'before_operation/delegation_{variant}_{style}') for style in styles for variant in variants]
+    delegate_match = min(matches, key=lambda x: x.score)
+    logger.logtext('best_match=%s' % delegate_match)
+    if delegate_match.score > 3251:
+        # ASSUMPTION: 存在代理指挥按钮
+        return None
+    *_, template, style = delegate_match.roi_name.split('_')
+    delegated = template == 'checked'
+    logger.logtext(f'{delegated=}, {style=}')
+    reco_Noto, reco_Novecento = load_data()
+    check_consume_ap = False
+    if style == 'legacy':
+        # old layout
+        opidrect = (100 * vw - 55.694 * vh, 11.667 * vh, 100 * vw - 44.028 * vh, 15.139 * vh)
+        consumerect = (100 * vw - 12.870 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)
+        start_button = (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
+        ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
+        def stage_reco(img):
+            return reco_Novecento.recognize(img)
+    elif style == 'ep10':
+        # 2022-04-14: episode 10 new layout
+        opidrect = (100*vw-49.537*vh, 11.111*vh, 100*vw-37.870*vh, 15.370*vh)
+        consumerect = (100*vw-13.704*vh, 95.833*vh, 100*vw-7.315*vh, 99.074*vh)
+        start_button = (100*vw-31.759*vh, 90.093*vh, 100*vw-6.389*vh, 96.296*vh)
+        ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
+        def stage_reco(img):
+            return reco_Novecento.recognize(img)
+        check_consume_ap = True
+    elif style == 'sof':
+        # i.e. Stultifera Navis
+        opidrect = (10*vw+3.426*vh, 74.907*vh, 10*vw+11.944*vh, 78.426*vh)
+        consumerect = (90*vw+3.056*vh, 90.926*vh, 90*vw+9.537*vh, 94.259*vh)
+        start_button = (90*vw-11.667*vh, 86.574*vh, 90*vw-10.833*vh, 90.833*vh)
+        ap_rect = (100*vw-24.630*vh, 4.259*vh, 100*vw-9.259*vh, 8.611*vh)
+        def stage_reco(img):
+            from .ocr import acquire_engine_global_cached
+            engine = acquire_engine_global_cached('zh-cn')
+            img = imgops.invert_color(img)
+            return engine.recognize(img, tessedit_char_whitelist='SN-0123456789', tessedit_pageseg_mode='13').text.replace(' ', '')
+
 
     # if imgops.compare_region_mse(img, (43.333*vh, 86.111*vh, 50.185*vh, 95.093*vh), 'before_operation/interlocking/interlocking_tag.png', threshold=650, logger=logger):
     #     return recognize_interlocking(img)
 
-    apicon1 = img.crop((100*vw-29.722*vh, 2.130*vh, 100*vw-22.593*vh, 8.519*vh)).convert('RGB')
+    
+    if check_consume_ap:
+        apicon1 = img.crop((100*vw-29.722*vh, 2.130*vh, 100*vw-22.593*vh, 8.519*vh)).convert('RGB')
 
-    apicon2 = resources.load_image_cached('before_operation/ap_icon.png', 'RGB')
-    apicon1, apicon2 = imgops.uniform_size(apicon1, apicon2)
-    mse = imgops.compare_mse(apicon1, apicon2)
-    logger.logimage(apicon1)
-    logger.logtext('mse=%f' % mse)
-    consume_ap = mse < 3251
+        apicon2 = resources.load_image_cached('before_operation/ap_icon.png', 'RGB')
+        apicon1, apicon2 = imgops.uniform_size(apicon1, apicon2)
+        mse = imgops.compare_mse(apicon1, apicon2)
+        logger.logimage(apicon1)
+        logger.logtext('mse=%f' % mse)
+        consume_ap = mse < 3251
+    else:
+        consume_ap = True
 
-    apimg = img.crop((100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)).convert('L')
-    reco_Noto, reco_Novecento = load_data()
+    apimg = img.crop(ap_rect).convert('L')
     apimg = imgops.enhance_contrast(apimg, 80, 255)
     logger.logimage(apimg)
     aptext, _ = reco_Noto.recognize2(apimg, subset='0123456789/')
     logger.logtext(aptext)
     # print("AP:", aptext)
 
-    opidimg = img.crop((100 * vw - 55.694 * vh, 11.667 * vh, 100 * vw - 44.028 * vh, 15.139 * vh)).convert('L')
+    opidimg = img.crop(opidrect).convert('L')
     opidimg = imgops.enhance_contrast(opidimg, 80, 255)
     logger.logimage(opidimg)
-    opidtext = str(reco_Novecento.recognize(opidimg))
+    opidtext = stage_reco(opidimg)
     if opidtext.endswith('-'):
         opidtext = opidtext[:-1]
     opidtext = opidtext.upper()
@@ -57,15 +104,10 @@ def recognize(img):
     nofriendshiplist = ['OF-F']
     no_friendship = any(opidtext.startswith(header) for header in nofriendshiplist)
 
-    delegateimg = img.crop((100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh)).convert('L')
-    template = resources.load_image_cached('before_operation/delegation_checked.png', 'L')
-    logger.logimage(delegateimg)
-    mse = imgops.compare_mse(*imgops.uniform_size(delegateimg, template))
-    logger.logtext('mse=%f' % mse)
-    delegated = mse < 3251
+
     # print('delegated:', delegated)
 
-    consumeimg = img.crop((100 * vw - 12.870 * vh, 94.028 * vh, 100 * vw - 7.222 * vh, 97.361 * vh)).convert('L')
+    consumeimg = img.crop(consumerect).convert('L')
     consumeimg = imgops.enhance_contrast(consumeimg, 80, 255)
     logger.logimage(consumeimg)
     consumetext, minscore = reco_Noto.recognize2(consumeimg, subset='-0123456789')
@@ -86,9 +128,9 @@ def recognize(img):
         'operation': opidtext,
         'delegated': delegated,
         'consume': int(consumetext) if consumetext.isdigit() else None,
-        'style': 'main',
-        'delegate_button': (100 * vw - 32.778 * vh, 79.444 * vh, 100 * vw - 4.861 * vh, 85.417 * vh),
-        'start_button': (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
+        'style': style,
+        'delegate_button': delegate_match.bbox.ltrb,
+        'start_button': start_button
     }
     # print('consumption:', consumetext)
 
@@ -148,10 +190,8 @@ def check_ap_refill_type(img):
     context = common.ImageRoiMatchingContext(img)
     vw, vh = common.get_vwvh(img.size)
 
-    item_icon = context.match_roi('before_operation/refill_with_item_icon')
-    originium_icon = context.match_roi('before_operation/refill_with_originium_icon')
-    logger.logtext('match item_icon=%r' % (item_icon,))
-    logger.logtext('match originium_icon=%r' % (originium_icon,))
+    item_icon = context.match_roi('before_operation/refill_with_item_icon', method='ccoeff')
+    originium_icon = context.match_roi('before_operation/refill_with_originium_icon', method='ccoeff')
 
     if not item_icon and not originium_icon:
         return None

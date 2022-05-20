@@ -73,14 +73,14 @@ class RIICAddon(AddonBase):
         self.enter_riic()
         count = 0
         while count < 2:
-            if roi := self.match_roi('riic/notification', fixed_position=False, method='template_matching'):
+            if roi := self.match_roi('riic/notification2', fixed_position=False, method='mse'):
                 while True:
                     self.logger.info('发现蓝色通知')
                     self.tap_rect(roi.bbox)
                     if self.match_roi('riic/pending'):
                         break
                     self.logger.info('重试点击蓝色通知')
-                while roi := self.wait_for_roi('riic/collect_all', timeout=2, fixed_position=False, method='template_matching'):
+                while roi := self.wait_for_roi('riic/collect_all2', timeout=2, fixed_position=False, method='mse'):
                     self.logger.info('发现全部收取按钮')
                     rc = roi.bbox
                     rc.y = 93.704 * self.vh
@@ -194,6 +194,7 @@ class RIICAddon(AddonBase):
                     else:
                         y = 534
                     key = (round(x/(184/2)), y)
+                    # print(key)
                     if key not in dedup_set:
                         rc = Rect.from_xywh(x, y, 184, 411).iscale(self.scale)
                         operators.append((screenshot.subview(rc), rc))
@@ -234,13 +235,13 @@ class RIICAddon(AddonBase):
         # the effect of user-words is questionable, it seldom produce improved output (maybe we need LSTM word-dawg instead)
         ocrresult = self.ocr.recognize(name_img, ppi=240, tessedit_pageseg_mode='13', user_words_file='operators')
         name = ocrresult.text.replace(' ', '')
-        if name not in operator_set:
-            comparisions = [(n, textdistance.levenshtein(name, n)) for n in operator_set]
-            comparisions.sort(key=lambda x: x[1])
-            self.logger.debug('%s not in operator set, closest match: %s' % (name, comparisions[0][0]))
-            if comparisions[0][1] == comparisions[1][1]:
-                self.logger.warning('multiple fixes availiable for %r', ocrresult)
-            name = comparisions[0][0]
+        # if name not in operator_set:
+        #     comparisions = [(n, textdistance.levenshtein(name, n)) for n in operator_set]
+        #     comparisions.sort(key=lambda x: x[1])
+        #     self.logger.debug('%s not in operator set, closest match: %s' % (name, comparisions[0][0]))
+        #     if comparisions[0][1] == comparisions[1][1]:
+        #         self.logger.warning('multiple fixes availiable for %r', ocrresult)
+        #     name = comparisions[0][0]
         mood_img = img.subview(Rect.from_xywh(44, 358, 127, 3).iscale(self.scale)).convert('L').array
         mood_img = np.max(mood_img, axis=0)
         mask = (mood_img >= 200).astype(np.uint8)
@@ -299,9 +300,10 @@ class RIICAddon(AddonBase):
 
     def recognize_skill(self, icon, facility_hint=None) -> tuple[str, float]:
         self.richlogger.logimage(icon)
-        skill_check = np.mean(icon.array)
-        self.richlogger.logtext(f'skill_check mean={skill_check}')
-        if skill_check < 60:
+        skill_check_mean = np.mean(icon.array)
+        skill_check_max = np.max(icon.array)
+        self.richlogger.logtext(f'{skill_check_mean=} {skill_check_max=}')
+        if skill_check_mean < 60 and skill_check_max < 90:
             self.richlogger.logtext('no skill')
             return None, 114514
         from . import bskill_cache
@@ -365,18 +367,15 @@ class RIICAddon(AddonBase):
         screenshot = self.device.screenshot().convert('RGB')
         if self.match_roi('riic/clear_operator'):
             pass
-        elif roi := self.match_roi('riic/operator_button', method='template_matching', fixed_position=False, screenshot=screenshot.subview((0, 0, screenshot.height * 0.18611, screenshot.height))):
+        elif roi := self.match_roi('riic/operator_button', method='mse', fixed_position=False, screenshot=screenshot.subview((0, 0, screenshot.height * 0.18611, screenshot.height))):
             self.tap_rect(roi.bbox)
         self.tap_rect(self.load_roi('riic/first_operator_in_list').bbox)
 
     def select_operators(self, operators):
         pending_operators: list = operators[:]
-        last_page_set = set()
-        while True:
+        for current_page in self.iter_operator_list_pages():
             current_page = self.recognize_operator_select(recognize_skill=False)
-            current_page_set = set()
             for op in current_page:
-                current_page_set.add(op.name)
                 if op.name in pending_operators:
                     pending_operators.remove(op.name)
                     if op.selected:
@@ -388,8 +387,21 @@ class RIICAddon(AddonBase):
                     if op.selected:
                         self.logger.info(f'取消选择: {op.name}')
                         self.tap_rect(op.box, post_delay=0)
-            if len(pending_operators) == 0 or current_page_set == last_page_set:
+            if len(pending_operators) == 0:
                 break
+        if pending_operators:
+            self.logger.warning('未发现干员：%r', pending_operators)
+
+    def iter_operator_list_pages(self, recognize_skill=False):
+        last_page_set = set()
+        while True:
+            current_page = self.recognize_operator_select(recognize_skill=recognize_skill)
+            current_page_set = set()
+            for op in current_page:
+                current_page_set.add(op.name)
+            if current_page_set == last_page_set:
+                break
+            yield current_page
             last_page_set = current_page_set
             t0 = time.perf_counter()
             self.device.input.swipe(
@@ -398,12 +410,9 @@ class RIICAddon(AddonBase):
                 0.3, hold_before_release=0.3, interpolation='spline')
             # self.wait_for_still_image(threshold=500, check_delay=0)
             t1 = time.perf_counter()
-            self.logger.info('滑动耗时 %.3f 秒', t1-t0)
+            # self.logger.info('滑动耗时 %.3f 秒', t1-t0)
             # FIXME: overscroll animation
             time.sleep(0.6)
-        if pending_operators:
-            self.logger.warning('未发现干员：%r', pending_operators)
-
 
     def shift(self, room, operators):
         self.enter_operator_selection(room)
@@ -413,6 +422,12 @@ class RIICAddon(AddonBase):
         if roi := self.match_roi('riic/confirm_shift', method='mse'):
             self.logger.info('二次确认换班')
             self.tap_rect(roi.bbox)
+
+    def populate(self):
+        self.enter_operator_selection()
+        from pprint import pprint
+        for page in self.iter_operator_list_pages(True):
+            pprint(page)
 
     @cli_command('riic')
     def cli_riic(self, argv):
@@ -447,7 +462,8 @@ class RIICAddon(AddonBase):
             # self.recognize_operator_select(recognize_skill=True)
             pprint(warmup())
             pprint(bench())
-
+        elif cmd == 'populate':
+            self.populate()
         elif cmd == 'debug_layout':
             self.recognize_layout()
         else:

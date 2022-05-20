@@ -204,8 +204,10 @@ class RecordAddon(AddonBase):
         elif subcommand == 'new':
             argnames = ['roi_size', 'wait_seconds_after_touch', 'description', 'back_to_main', 'prefer_mode', 'threshold']
             kwargs = {k: vars(args_ns)[k] for k in argnames if k in args_ns}
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
             self.create_custom_record(args_ns.NAME, **kwargs)
         elif subcommand == 'play':
             argnames = ['back_to_main', 'mode']
             kwargs = {k: vars(args_ns)[k] for k in argnames if k in args_ns}
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
             self.replay_custom_record(args_ns.NAME, **kwargs)

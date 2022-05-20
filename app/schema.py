@@ -1,6 +1,6 @@
 from .schemadef import *
 class root(Schema):
-    __version__ = 1
+    __version__ = 3
     debug = Field(bool, False)
     @Namespace('设备连接')
     class device:
@@ -19,6 +19,7 @@ class root(Schema):
         @Namespace('企鹅物流数据统计')
         class penguin_stats:
             enabled = Field(bool, False, '掉落汇报', '将关卡掉落上传到企鹅物流数据 (penguin-stats.io)')
+            endpoint = EnumField(['global', 'cn'], 'global', '企鹅物流数据统计 API 端点', 'global: 全球站；cn: 中国镜像')
             uid = Field(str, '', '用户 ID', '用户 ID 仅用来标记您的上传身份。在不同设备上使用此 ID 登录，可让掉落数据集中于一个账号下，方便管理上传以及查看个人掉落数据。如果为空，则在下一次上传时创建并存储到配置中。')
             report_special_item = Field(bool, True, '汇报特殊活动物品', '汇报掉率随活动进度变化的特殊活动物品')
         @Namespace('代理指挥失误')
@@ -33,7 +34,7 @@ class root(Schema):
         ocr_backend = EnumField(['svm', 'dnn'], 'svm', '自动选关使用的 OCR 后端')
     @Namespace('OCR 设置（即将弃用）')
     class ocr:
-        backend = EnumField(['auto', 'tesseract', 'windows_media_ocr', 'baidu'], 'auto', '默认 OCR 后端')
+        backend = EnumField(['auto', 'tesseract', 'baidu'], 'auto', '默认 OCR 后端')
         @Namespace('百度 OCR API 设置')
         class baidu_api:
             enable = Field(bool, False)

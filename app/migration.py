@@ -65,3 +65,18 @@ def migrate_from_legacy(ydoc: Mapping):
             ydoc['grass_on_aog']['exclude'] = old_grass_on_aog_exclude
     ydoc['__version__'] = 1
     return ydoc
+
+@migrate_from(1)
+def migrate_from_1(ydoc: Mapping):
+    logger.info('Migrating from config schema version 1')
+    with contextlib.suppress(KeyError, AttributeError):
+        if ydoc['ocr']['backend'] == 'windows_media_ocr':
+            logger.warn('Windows OCR 因识别率问题已移除，设置更改为自动选择（当前仅支持 Tesseract）。')
+            ydoc['ocr']['backend'] = 'auto'
+    ydoc['__version__'] = 2
+    return ydoc
+
+@migrate_from(2)
+def migrate_from_2(ydoc: Mapping):
+    ydoc['__version__'] = 3
+    return ydoc

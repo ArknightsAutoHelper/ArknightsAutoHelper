@@ -3,6 +3,7 @@ from typing import Callable, Optional, overload
 import os
 import time
 from dataclasses import dataclass
+from imgreco.end_operation import EndOperationResult
 
 import penguin_stats.reporter
 import app
@@ -19,6 +20,7 @@ class combat_session:
     operation_start: float = 0
     first_wait: bool = True
     mistaken_delegation: bool = False
+    request_exit: bool = False
     prepare_reco: dict = None
 
 def item_name_guard(item):
@@ -119,13 +121,13 @@ class CombatAddon(AddonBase):
     def reset_refill(self):
         return self.configure_refill(False, False)
 
-    def format_recoresult(self, recoresult):
+    def format_recoresult(self, recoresult: EndOperationResult):
         result = None
         with guard(self.logger):
-            result = '[%s] %s' % (recoresult['operation'],
-                '; '.join('%s: %s' % (grpname, ', '.join('%sx%s' % (item_name_guard(itemtup[0]), item_qty_guard(itemtup[1]))
-                for itemtup in grpcont))
-                for grpname, grpcont in recoresult['items']))
+            result = '[%s] %s' % (recoresult.operation,
+                '; '.join('%s: %s' % (grpname, ', '.join('%sx%s' % (item_name_guard(item.name), item_qty_guard(item.quantity))
+                for item in grpcont))
+                for grpname, grpcont in recoresult.items))
         if result is None:
             result = '<发生错误>'
         return result
@@ -158,9 +160,9 @@ class CombatAddon(AddonBase):
                 if count != desired_count:
                     # 2019.10.06 更新逻辑后，提前点击后等待时间包括企鹅物流
                     if app.config.combat.penguin_stats.enabled:
-                        self.delay(SMALL_WAIT, MANLIKE_FLAG=True, allow_skip=True)
+                        self.delay(SMALL_WAIT, randomize=True, allow_skip=True)
                     else:
-                        self.delay(BIG_WAIT, MANLIKE_FLAG=True, allow_skip=True)
+                        self.delay(BIG_WAIT, randomize=True, allow_skip=True)
         except StopIteration:
             # count: succeeded count
             self.logger.error('未能进行第 %d 次作战', count + 1)
@@ -275,12 +277,55 @@ class CombatAddon(AddonBase):
                 else:
                     wait_time = sum(self.operation_time) / len(self.operation_time) - 7
                 self.logger.info('等待 %d s' % wait_time)
-                self.delay(wait_time, MANLIKE_FLAG=False, allow_skip=True)
                 smobj.first_wait = False
+            else:
+                wait_time = BATTLE_FINISH_DETECT
+
             t = time.monotonic() - smobj.operation_start
 
-            self.logger.info('已进行 %.1f s，判断是否结束', t)
+
+            if smobj.request_exit:
+                self.delay(1, allow_skip=True)
+            else:
+                self.delay(wait_time, allow_skip=True)
+                t = time.monotonic() - smobj.operation_start
+                self.logger.info('已进行 %.1f s，判断是否结束', t)
+
             screenshot = self.device.screenshot()
+
+            if self.match_roi('combat/topbar', method='ccoeff', screenshot=screenshot):
+                if self.match_roi('combat/lun', method='ccoeff', screenshot=screenshot) and not smobj.mistaken_delegation:
+                    self.logger.info('伦了。')
+                    smobj.mistaken_delegation = True
+                else:
+                    return
+
+            if self.match_roi('combat/topbar_camp', method='ccoeff', screenshot=screenshot):
+                if self.match_roi('combat/lun_camp', method='ccoeff', screenshot=screenshot) and not smobj.mistaken_delegation:
+                    self.logger.info('伦了。')
+                    smobj.mistaken_delegation = True
+                else:
+                    return
+
+            if smobj.mistaken_delegation and not app.config.combat.mistaken_delegation.settle:
+                if not smobj.request_exit:
+                    self.logger.info('退出关卡')
+                    self.tap_rect(self.load_roi('combat/exit_button').bbox)
+                    smobj.request_exit = True
+                    return
+
+            if self.match_roi('combat/failed', screenshot=screenshot):
+                self.logger.info("行动失败")
+                smobj.mistaken_delegation = True
+                smobj.request_exit = True
+                self.tap_rect((20*self.vw, 20*self.vh, 80*self.vw, 80*self.vh))
+                return
+
+            if self.match_roi('combat/ap_return', screenshot=screenshot):
+                self.logger.info("确认理智返还")
+                self.tap_rect((20*self.vw, 20*self.vh, 80*self.vw, 80*self.vh))
+                return
+
             if imgreco.end_operation.check_level_up_popup(screenshot):
                 self.logger.info("等级提升")
                 self.operation_time.append(t)
@@ -292,12 +337,11 @@ class CombatAddon(AddonBase):
                 if imgreco.end_operation.check_end_operation2(screenshot):
                     self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
                     screenshot = self.device.screenshot()
-                    end_flag = imgreco.end_operation.check_end_operation_main(screenshot)
+                    end_flag = imgreco.end_operation.check_end_operation_legacy(screenshot)
             if end_flag:
                 self.logger.info('战斗结束')
                 self.operation_time.append(t)
-                crop = imgreco.end_operation.get_still_check_rect(self.viewport)
-                if self.wait_for_still_image(crop=crop, timeout=15, raise_for_timeout=True):
+                if self.wait_for_still_image(timeout=15, raise_for_timeout=True, check_delay=0.5, iteration=3):
                     smobj.state = on_end_operation
                 return
             dlgtype, ocrresult = imgreco.common.recognize_dialog(screenshot)
@@ -317,24 +361,24 @@ class CombatAddon(AddonBase):
                         self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
                         # 关闭失败提示
                         self.wait_for_still_image()
-                        self.tap_rect(imgreco.common.get_reward_popup_dismiss_rect(screenshot))
-                        # FIXME: 理智返还
-                        self.delay(1)
-                        smobj.stop = True
                         return
                 elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
-                    self.logger.info('发现放弃行动提示，关闭')
-                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                    if smobj.mistaken_delegation and not app.config.combat.mistaken_delegation.settle:
+                        self.logger.info('确认退出关卡')
+                        self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
+                    else:
+                        self.logger.info('发现放弃行动提示，关闭')
+                        self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
+                    return
                 else:
                     self.logger.error('未处理的对话框：[%s] %s', dlgtype, ocrresult)
                     raise RuntimeError('unhandled dialog')
 
             self.logger.info('战斗未结束')
-            self.delay(BATTLE_FINISH_DETECT, allow_skip=True)
 
         def on_level_up_popup(smobj):
             import imgreco.end_operation
-            self.delay(SMALL_WAIT, MANLIKE_FLAG=True)
+            self.delay(SMALL_WAIT, randomize=True)
             self.logger.info('关闭升级提示')
             self.tap_rect(imgreco.end_operation.get_dismiss_level_up_popup_rect(self.viewport))
             self.wait_for_still_image()
@@ -343,8 +387,6 @@ class CombatAddon(AddonBase):
         def on_end_operation(smobj):
             import imgreco.end_operation
             screenshot = self.device.screenshot()
-            self.logger.info('离开结算画面')
-            self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
             reportresult = penguin_stats.reporter.ReportResult.NotReported
             try:
                 # 掉落识别
@@ -352,11 +394,11 @@ class CombatAddon(AddonBase):
                 self.logger.debug('%s', repr(drops))
                 self.logger.info('掉落识别结果：%s', self.format_recoresult(drops))
                 log_total = len(self.loots)
-                for _, group in drops['items']:
-                    for name, qty, item_type in group:
-                        if name is not None and qty is not None:
-                            self.loots[name] = self.loots.get(name, 0) + qty
-                self.frontend.notify("combat-result", drops)
+                for _, group in drops.items:
+                    for record in group:
+                        if record.name is not None and record.quantity is not None:
+                            self.loots[record.name] = self.loots.get(record.name, 0) + record.quantity
+                self.frontend.notify("combat-result", drops.to_json())
                 self.frontend.notify("loots", self.loots)
                 if log_total:
                     self.log_total_loots()
@@ -371,6 +413,8 @@ class CombatAddon(AddonBase):
                 with open(filename, 'wb') as f:
                     screenshot.save(f, format='PNG')
                 self.logger.error('未上报掉落截图已保存到 %s', filename)
+            self.logger.info('离开结算画面')
+            self.tap_rect(imgreco.end_operation.get_dismiss_end_operation_rect(self.viewport))
             smobj.stop = True
 
         smobj.state = on_prepare

@@ -220,7 +220,7 @@ const TaskList: React.FunctionComponent<ITaskListProps> = function (props) {
 
   return (
     <DnD.DndContext sensors={sensors} collisionDetection={DnD.closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-      <Card style={{ ...props.style, padding: "0", flexGrow: 1 }} className='tasklist-widget default-background' >
+      <Card style={{ ...props.style, flexGrow: 1 }} className='tasklist-widget default-background card-no-padding' >
         <Flex position="relative" w="100%" h="100%" flexDirection="column" className='scroller overflow-y-scroll'>
           <DnDSortable.SortableContext items={props.tasks} strategy={DnDSortable.verticalListSortingStrategy}  >
 

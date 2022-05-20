@@ -32,12 +32,16 @@ jobs:
         name: vendor-nested-zip
         path: build/vendor.zip
     - name: delete old release
-      shell: cmd
+      shell: powershell
+      continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git fetch --tags
-        hub release delete bootstrapper-package-vendor
+        $ErrorActionPreference = 'continue'
+        gh release delete bootstrapper-package-vendor -y
         git push --delete origin bootstrapper-package-vendor
-        call;
+        sleep 5
     - name: prerelease
       uses: "softprops/action-gh-release@v1"
       with:

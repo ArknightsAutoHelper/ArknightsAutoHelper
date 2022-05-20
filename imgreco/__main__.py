@@ -1,4 +1,7 @@
 import sys
+import logging
+
+logging.basicConfig(level=logging.NOTSET)
 
 if len(sys.argv) > 1:
     from util import cvimage as Image
