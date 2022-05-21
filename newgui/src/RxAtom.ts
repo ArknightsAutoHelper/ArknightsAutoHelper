@@ -25,7 +25,7 @@ export class RxAtom<T = any> {
     const [state, setState] = React.useState(this.getValue());
     React.useEffect(() => {
       const subscription = this.asObservable().subscribe(v => {
-        // console.log("setState", v);
+        console.log("setState", v);
         setState(v);
       });
       return () => subscription.unsubscribe();

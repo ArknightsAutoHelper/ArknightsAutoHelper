@@ -31,7 +31,7 @@ interface IFieldViewProps {
   valueAtom: RxAtom;
 }
 
-export const FieldView = React.memo(({ field, showFieldName, valueAtom }: IFieldViewProps) => {
+export const FieldView = React.memo(function FieldView({ field, showFieldName, valueAtom }: IFieldViewProps) {
   let inputElement = null;
   const [value, setValue] = valueAtom.useState();
   const handleChange = e => setValue(e.target.value);
@@ -89,7 +89,7 @@ export const FieldView = React.memo(({ field, showFieldName, valueAtom }: IField
 });
 
 
-export const SchemaTitle = React.memo(({ title, code, description, nestingLevel }: any) => {
+export const SchemaTitle = React.memo(function SchemaTitle({ title, code, description, nestingLevel }: any) {
   return (<div className={["dynamic-setting-schema-title", "level-" + nestingLevel].join(' ')}>
     <Flex alignItems='baseline'>
       {title && <LevelingHeader nestingLevel={nestingLevel}>{title}</LevelingHeader>}
@@ -99,30 +99,36 @@ export const SchemaTitle = React.memo(({ title, code, description, nestingLevel 
   </div>)
 });
 
+interface FieldInfo {
+  atoms: Map<string, RxAtom>;
+  values: Map<string, any>;
+}
 
-function populateFields(fields: Field[], output: Map<string, RxAtom>, onChange?: (full_name: string, atom: RxAtom, newValue) => void) {
+function populateFields(fields: Field[], outputAtoms: Map<string, RxAtom>, outputValues: Map<string, any>, onChange?: (full_name: string, atom: RxAtom, newValue) => void) {
   for (const field of fields) {
     if (field.field_type === "Namespace") {
-      populateFields(field.fields, output, onChange);
+      populateFields(field.fields, outputAtoms, outputValues, onChange);
     } else if (field.full_name) {
-      const newAtom = new RxAtom(field.value)
-      if (onChange) newAtom.asObservable().subscribe((value) => onChange(field.full_name, newAtom, value));
-      output.set(field.full_name, newAtom);
+      const atom = new RxAtom(field.value)
+      if (onChange) atom.asObservable().subscribe((value) => onChange(field.full_name, atom, value));
+      outputAtoms.set(field.full_name, atom);
+      outputValues.set(field.full_name, field.value);
     }
   }
 }
 
-export function PopulateAtomFromSchema(schema: SchemaViewModel, onChange?: (full_name: string, atom: RxAtom, newValue) => void): Map<string, RxAtom> {
-  const result = new Map<string, RxAtom>();
-  populateFields(schema.fields, result, onChange);
-  return result;
+export function PopulateSchema(schema: SchemaViewModel, onChange?: (full_name: string, atom: RxAtom, newValue) => void): FieldInfo {
+  const atoms = new Map<string, RxAtom>();
+  const values = new Map<string, any>();
+  populateFields(schema.fields, atoms, values, onChange);
+  return {atoms, values};
 }
 
 export function SchemaView(props: ISchemaViewProps) {
   let { schema, showFieldName, namespaceName, nestingLevel, valueAtoms } = props;
   nestingLevel = nestingLevel || 0;
   const description = schema.description;
-  valueAtoms = valueAtoms || PopulateAtomFromSchema(schema);
+  valueAtoms = valueAtoms || PopulateSchema(schema).atoms;
   return (
     <div className="dynamic-setting-namespace user-select-text width-100">
       <SchemaTitle title={schema.name} code={showFieldName ? namespaceName : null} {...{ description, nestingLevel }} />

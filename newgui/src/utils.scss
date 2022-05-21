@@ -39,7 +39,11 @@
 }
 
 .card-no-padding {
-  padding: 1px;
+  padding: 0;
+  // https://github.com/palantir/blueprint/issues/5312
+  .bp4-dark & {
+    padding: 1px;
+  }
 }
 
 .no-wrap {

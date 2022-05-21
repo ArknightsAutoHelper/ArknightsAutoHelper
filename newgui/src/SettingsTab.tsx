@@ -1,6 +1,6 @@
-import schema from './schema_viewmodel.json';
+import schema0 from './schema_viewmodel.json';
 
-import { FieldView, SchemaView, SchemaTitle, PopulateAtomFromSchema } from './DynamicSettings';
+import { FieldView, SchemaView, SchemaTitle, PopulateSchema } from './DynamicSettings';
 import { Box, Flex } from '@chakra-ui/layout';
 import { Button, ButtonGroup, Divider } from '@blueprintjs/core';
 import React from 'react';
@@ -60,14 +60,20 @@ const GuiSettings = React.memo(() => {
 });
 
 export default function SettingsTab() {
-  const [changed, setChanged] = React.useState(() => new Map());
+  const [changed, setChanged] = React.useState(() => new Map<string, any>());
+  const [schema, setSchema] = React.useState(schema0);
   const setValueChanged = React.useCallback((full_name, atom, new_value) => setChanged(changed => new Map(changed).set(full_name, new_value)), []);
-  const [atoms, setAtoms] = React.useState(() => PopulateAtomFromSchema(schema as any, setValueChanged));
+  const [fields, setFields] = React.useState(() => PopulateSchema(schema as any, setValueChanged));
 
   const handleDiscard = React.useCallback(() => {
+    for (const [key, value] of changed.entries()) {
+      const fieldAtom = fields.atoms.get(key);
+      if (fieldAtom) {
+        fieldAtom.setValue(fields.values.get(key));
+      }
+    }
     setChanged(new Map());
-    setAtoms(() => PopulateAtomFromSchema(schema as any, setValueChanged));
-  }, [setValueChanged]);
+  }, [changed]);
   const changedSize = changed.size;
   const handleSave = React.useCallback(() => {
     console.log(changed);
@@ -82,9 +88,9 @@ export default function SettingsTab() {
       {React.useMemo(() =>
         <Flex flexDirection="column" alignItems="center" margin="0 auto" padding="8px" maxWidth="640px" className='bp4-card square-card' >
           <GuiSettings />
-          <SchemaView namespaceName='config.yaml' schema={schema as any} showFieldName valueAtoms={atoms} />
+          <SchemaView namespaceName='config.yaml' schema={schema as any} showFieldName valueAtoms={fields.atoms} />
           <Box flexGrow={1} flexShrink={0} paddingTop={0}></Box>
-        </Flex>, [atoms])}
+        </Flex>, [fields])}
 
       {React.useMemo(() =>
         <Box position="sticky" bottom="0" visibility={changedSize > 0 ? null : 'hidden'} className="bp4-card square-card bp4-elevation-2" padding="1em">

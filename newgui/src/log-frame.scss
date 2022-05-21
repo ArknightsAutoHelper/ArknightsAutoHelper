@@ -2,8 +2,16 @@
 
 $pt-font-family-monospace: 'Monaco', 'Consolas', monospace;
 
-@import "~@blueprintjs/core/lib/css/blueprint.css";
+// @import "~@blueprintjs/core/lib/css/blueprint.css";
 @import "~@blueprintjs/core/lib/scss/variables";
+
+::-moz-selection{
+    background:$pt-text-selection-color;
+}
+
+::selection{
+    background:$pt-text-selection-color;
+}
 
 body {
     margin: 0;
