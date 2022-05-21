@@ -17,15 +17,15 @@ export class RxAtom<T = any> {
     }
   };
 
-  public asObservable(): Observable<T> {
-    return this.subject.pipe(skip(1));
+  public asObservable(emitCurrent: boolean = false): Observable<T> {
+    return emitCurrent ? this.subject : this.subject.pipe(skip(1));
   }
 
   public useState = (): [T, typeof this.setValue] => {
     const [state, setState] = React.useState(this.getValue());
     React.useEffect(() => {
       const subscription = this.asObservable().subscribe(v => {
-        console.log("setState", v);
+        // console.log("setState", v);
         setState(v);
       });
       return () => subscription.unsubscribe();

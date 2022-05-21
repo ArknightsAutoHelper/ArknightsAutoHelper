@@ -131,10 +131,10 @@ export default function OverviewTab() {
             </Flex>
           </H5>
           <Box flexGrow={1} />
-          <Button onClick={() => { setClearTag(new Date().toISOString()); trollCount = 0; }}>clear log</Button>
-          <Button onClick={batchFlood}>batch flood log</Button>
-          <Button onClick={asyncFlood}>async flood log</Button>
-          <Button onClick={addLog}>add log</Button>
+          <Button onClick={() => { setClearTag(new Date().toISOString()); trollCount = 0; }}>clear</Button>
+          <Button onClick={batchFlood}>batch</Button>
+          <Button onClick={asyncFlood}>async</Button>
+          <Button onClick={addLog}>add</Button>
           <Switch checked={showDebugMessage} onChange={(e) => setShowDebugMessage((e.target as any).checked)} label="显示调试信息" className="no-bottom-margin" />
           <Divider style={{ alignSelf: 'stretch' }} />
           <Switch checked={autoScroll} onChange={(e) => setAutoScroll((e.target as any).checked)} label="自动滚动" className="no-bottom-margin" />

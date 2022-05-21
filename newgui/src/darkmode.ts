@@ -1,9 +1,16 @@
 import { colorSchemePreference } from './AppGlobalState';
 import { RxAtom } from './RxAtom';
+import * as electronIntegration from '../electron/renderer/integration';
 
 export type DrakModePreference = "light" | "dark" | "system";
 
 export const activeColorScheme = new RxAtom<DrakModePreference>(null);
+
+if(window.electronIntegration) {
+  colorSchemePreference.asObservable(true).subscribe((preference) => {
+    window.electronIntegration.setDarkModePreference(preference);
+  });
+}
 
 function setMode(dark: boolean) {
   const html = document.documentElement;

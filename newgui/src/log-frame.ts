@@ -31,15 +31,14 @@ function reflowCallback() {
     }
 }
 
+const template = <HTMLTemplateElement>document.querySelector('#log-record-template');
+
 window.addLogRecord = function (record: ILogRecord) {
-    let template = <HTMLTemplateElement>document.querySelector('#log-record-template');
     let newRecord = <DocumentFragment>template.content.cloneNode(true);
     newRecord.querySelector('.time-field').textContent = record.time.toISOString().substring(11, 23);
     newRecord.querySelector('.level-field').textContent = record.level;
     newRecord.querySelector('.message-field').textContent = record.message;
     (<HTMLElement>newRecord.querySelector('.log-record')).dataset.loglevel = record.level;
-    const container = document.querySelector('#log-container-body');
-    // container.appendChild(newRecord);
     if (pendingRecords.childElementCount == 0) {
         window.requestAnimationFrame(reflowCallback);
     }

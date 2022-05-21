@@ -18,6 +18,13 @@
   // transition: color ease-out 0.15s, background-color ease-out 0.15s;
 };
 
+.custom-window-icon {
+  display: none;
+  .use-custom-title-bar & {
+    display: unset;
+  }
+}
+
 .default-background {
   background-color: $pt-app-background-color;
   .#{$ns}-dark & {
@@ -57,7 +64,7 @@
 }
 
 .bp4-card, .bp4-navbar {
-  transition: color ease-out 0.1s, background-color ease-out 0.15s;
+  // transition: color ease-out 0.15s, background-color ease-out 0.15s;
 }
 
 .tab-container {
