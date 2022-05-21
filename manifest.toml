@@ -1,6 +1,6 @@
 version = "1.0.0.0"
 update_page = "https://github.com/ninthDevilHAUNSTER/ArknightsAutoHelper/releases/tag/bootstrapper-release"
-release_manifest_url = "https://api.github.com/repos/ninthDevilHAUNSTER/ArknightsAutoHelper/releases"
+release_manifest_url = "https://gh.cirno.xyz/api.github.com/repos/ninthDevilHAUNSTER/ArknightsAutoHelper/releases"
 
 [[package]]
 name = "app"
