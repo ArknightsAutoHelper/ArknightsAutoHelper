@@ -261,6 +261,7 @@ class CombatAddon(AddonBase):
                     self.logger.info('伦了。')
                     smobj.mistaken_delegation = True
                 else:
+                    self.logger.info('战斗未结束')
                     return
 
             if self.match_roi('combat/topbar_camp', method='ccoeff', screenshot=screenshot):
@@ -268,6 +269,7 @@ class CombatAddon(AddonBase):
                     self.logger.info('伦了。')
                     smobj.mistaken_delegation = True
                 else:
+                    self.logger.info('战斗未结束')
                     return
 
             if smobj.mistaken_delegation and not app.config.combat.mistaken_delegation.settle:
@@ -321,12 +323,13 @@ class CombatAddon(AddonBase):
                         return
                     else:
                         self.logger.info('放弃关卡')
+                        smobj.request_exit = True
                         self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
                         # 关闭失败提示
                         self.wait_for_still_image()
                         return
                 elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
-                    if smobj.mistaken_delegation and not app.config.combat.mistaken_delegation.settle:
+                    if smobj.request_exit:
                         self.logger.info('确认退出关卡')
                         self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
                     else:
