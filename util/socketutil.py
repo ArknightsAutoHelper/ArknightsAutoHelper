@@ -6,7 +6,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-def recvexactly(sock, n):
+def recvexactly(sock, n, return_buffer=False) -> memoryview:
     buf = np.empty(n, dtype=np.uint8)
     pos = 0
     while pos < n:
@@ -16,7 +16,7 @@ def recvexactly(sock, n):
             break
     if pos != n:
         raise EOFError("recvexactly %d bytes failed" % n)
-    return buf.tobytes()
+    return buf.data if return_buffer else buf.tobytes()
 
 
 def recvall(sock, chunklen=65536, return_buffer=False):
