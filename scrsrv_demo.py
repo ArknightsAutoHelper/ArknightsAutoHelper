@@ -8,6 +8,8 @@ import time
 from collections import deque
 
 import numpy as np
+import lz4.block
+
 
 from automator.connector.ADBConnector import ADBConnector
 from util.socketutil import recvexactly
@@ -29,15 +31,24 @@ def main():
     stop = False
     fps_deque = deque(maxlen=10)
     def thread():
-        client = ScreenshotClient(device)
+        client = ScreenshotClient(device, 1)
+        def thr2():
+            while True:
+                message = client.stdio_stream.recv(1024)
+                if len(message) == 0:
+                    break
+                print(message.decode('utf-8', errors='ignore'))
+        threading.Thread(target=thr2).start()
         nonlocal img, imgchanged, stop
-        while not stop:
-            newimg = client.screenshot()
-            fps_deque.append(time.perf_counter())
-            if newimg is not None:
-                img = newimg
-                imgchanged = True
-
+        try:
+            while not stop:
+                newimg = client.screenshot()
+                fps_deque.append(time.perf_counter())
+                if newimg is not None:
+                    img = newimg
+                    imgchanged = True
+        finally:
+            client.close()
     threading.Thread(target=thread).start()
 
     try:
@@ -80,11 +91,12 @@ class ScreenshotImage:
 
 
 class ScreenshotClient:
-    def __init__(self, device: ADBConnector):
+    def __init__(self, device: ADBConnector, compress_level=0):
+        self.compress_request = struct.pack('>i', compress_level)
         self.device = device
-        server_buf = open('scrsrv-app-debug.apk', 'rb').read()
-        self.device.push("/data/local/tmp/scrsrv-app-debug.apk", server_buf)
-        cmdline = 'CLASSPATH=/data/local/tmp/scrsrv-app-debug.apk app_process /data/local/tmp xyz.cirno.scrsrv.Main'
+        server_buf = open('app-release-unsigned.apk', 'rb').read()
+        self.device.push("/data/local/tmp/app-release-unsigned.apk", server_buf)
+        cmdline = 'CLASSPATH=/data/local/tmp/app-release-unsigned.apk app_process /data/local/tmp xyz.cirno.scrsrv.Main'
         self.stdio_stream: socket.socket = self.device.device_session_factory().shell_stream(cmdline)
         response = self.stdio_stream.recv(50)
         if b'listening on AF_UNIX' not in response:
@@ -106,14 +118,17 @@ class ScreenshotClient:
         return nanosecs
 
     def screenshot(self):
-        resplen = self.send_command(b'SCAP')
-        assert resplen >= 36
-        header = recvexactly(self.data_stream, 28)
-        width, height, px, row, color, ts = struct.unpack('>iiiiiq', header)
-        rawsize = resplen - 28
+        resplen = self.send_command(b'SCAP', self.compress_request)
+        assert resplen >= 32
+        header = recvexactly(self.data_stream, 32)
+        width, height, px, row, color, ts, decompress_len = struct.unpack('>iiiiiqi', header)
+        rawsize = resplen - 32
         if rawsize == 0:
             return None
         buf = recvexactly(self.data_stream, rawsize, return_buffer=True)
+        if decompress_len != 0:
+            decompressed = lz4.block.decompress(buf, uncompressed_size=decompress_len, return_bytearray=True)
+            buf = np.frombuffer(decompressed, dtype=np.uint8)
         arr = np.lib.stride_tricks.as_strided(buf, (height, width, 4), (row, px, 1))
         arr = np.ascontiguousarray(arr)
 
