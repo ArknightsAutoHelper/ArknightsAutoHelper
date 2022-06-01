@@ -1,6 +1,6 @@
 from io import BytesIO
 import os
-import logging.config
+import logging
 from pathlib import Path
 from random import randint
 import random
@@ -140,6 +140,7 @@ def ensure_adb_alive():
             # wait for the newly started ADB server to probe emulators
             time.sleep(0.5)
             if check_adb_alive():
+                logger.info('已启动 adb server')
                 return
         except FileNotFoundError:
             pass
@@ -251,18 +252,18 @@ class _ScreenCapImplReverseLoopback:
             self.command = 'screencap -d {}'.format(self.displayid)
     def check(self):
         future = self.rch.register_cookie()
-            control_sock = self.device_session_factory().exec_stream('(echo -n %s; %s) | nc %s %d' % (future.cookie.decode(), self.command, self.loopback, self.rch.port))
+        control_sock = self.device_session_factory().exec_stream('(echo -n %s; %s) | nc %s %d' % (future.cookie.decode(), self.command, self.loopback, self.rch.port))
         with control_sock, future.result(5) as conn:
-                data = recvexactly(conn, 12)
+            data = recvexactly(conn, 12)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
         return w, h
 
     def screencap(self):
         future = self.rch.register_cookie()
-            control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
+        control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
         with control_sock, future.result(5) as conn:
-                data = recvall(conn, 8388608, True)
+            data = recvall(conn, 8388608, True)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
         return _screencap_to_image((w, h, data[12:]), self.screenshot_rotate)
@@ -371,6 +372,7 @@ class ADBConnector:
         self.screencap_impl = None
         self.screen_size = (0, 0)
         self.displayid = displayid
+        logger.debug('connecting device %s', adb_serial)
         try:
             session = self.device_session_factory()
         except RuntimeError as e:
@@ -394,9 +396,11 @@ class ADBConnector:
         return 'adb:'+self.device_serial
 
     def get_device_identifier(self):
+        logger.debug('get_device_identifier: getprop net.hostname')
         hostname = self.device_session_factory().exec('getprop net.hostname').decode().strip()
         if hostname:
             return hostname
+        logger.debug('get_device_identifier: settings get secure android_id')
         android_id = self.device_session_factory().exec('settings get secure android_id').decode().strip()
         if android_id:
             return android_id
@@ -446,18 +450,18 @@ class ADBConnector:
         for addr in loopbacks:
             logger.debug('testing loopback address %s', addr)
             future = self.rch.register_cookie()
-                cmd = 'echo -n %sOKAY | nc -w 1 %s %d' % (future.cookie.decode(), addr, self.rch.port)
-                logger.debug(cmd)
-                control_sock = self.device_session_factory().exec_stream(cmd)
-                with control_sock:
+            cmd = 'echo -n %sOKAY | nc -w 1 %s %d' % (future.cookie.decode(), addr, self.rch.port)
+            logger.debug(cmd)
+            control_sock = self.device_session_factory().exec_stream(cmd)
+            with control_sock:
                 conn = future.result(2)
-                    if conn is not None:
-                        data = recvall(conn)
-                        conn.close()
-                        if data == b'OKAY':
-                            self.loopback = addr
-                            logger.debug('found loopback address %s', addr)
-                            return True
+                if conn is not None:
+                    data = recvall(conn)
+                    conn.close()
+                    if data == b'OKAY':
+                        self.loopback = addr
+                        logger.debug('found loopback address %s', addr)
+                        return True
         return False
 
     def _init_reverse_connection(self):
@@ -569,8 +573,9 @@ class ADBConnector:
 
         if 'screenshot_rotate' not in device_record:
             device_record['screenshot_rotate'] = 0
-
+        logger.debug('probing device %s', self.device_identifier)
         try:
+            logger.debug('benchmarking gzipped raw screencap')
             gzip_impl = _ScreenCapImplDefault(self.device_session_factory, device_record['screenshot_rotate'], displayid=self.displayid)
             device_record['screenshot_type'] = 'default'
             t0 = time.perf_counter()
@@ -579,6 +584,7 @@ class ADBConnector:
             time_gzipped_raw = t1 - t0
             logger.debug('gzipped raw screencap: %dx%d image in %.03f ms ', screenshot.width, screenshot.height, time_gzipped_raw*1000)
 
+            logger.debug('benchmarking uncompressed raw screencap')
             uncompressed_impl = _ScreenCapImplDefault(self.device_session_factory, device_record['screenshot_rotate'], compression_level=0, displayid=self.displayid)
             device_record['screenshot_type'] = 'default_uncompressed'
             t0 = time.perf_counter()
@@ -625,6 +631,7 @@ class ADBConnector:
                     self.rch.stop()
 
         try:
+            logger.debug('trying scrcpy')
             self.input = ScrcpyInput(self, self.displayid)
             input_provider = 'scrcpy'
         except:
@@ -640,7 +647,7 @@ class ADBConnector:
         self.screen_size = (screenshot.width, screenshot.height)
 
     def ensure_alive(self):
-        self.device_session_factory().exec(':')
+        self.device_session_factory().service('sync:').close()
 
-    def push(self, target_path, buf):
-        sock = self.device_session_factory().push(target_path, buf)
+    def push(self, target_path, buf, mode=0o100755, mtime: int = None):
+        self.device_session_factory().push(target_path, buf, mode, mtime)
