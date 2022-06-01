@@ -239,7 +239,7 @@ class _ScreenCapImplDefault:
     __call__ = screencap
 
 class _ScreenCapImplReverseLoopback:
-    def __init__(self, device_session_factory, rotate, rch, loopback, displayid=None):
+    def __init__(self, device_session_factory, rotate, rch: revconn.ReverseConnectionHost, loopback, displayid=None):
         self.device_session_factory = device_session_factory
         self.screenshot_rotate = rotate
         self.loopback = loopback
@@ -251,10 +251,8 @@ class _ScreenCapImplReverseLoopback:
             self.command = 'screencap -d {}'.format(self.displayid)
     def check(self):
         future = self.rch.register_cookie()
-        with future:
-            command = f'(echo -n {future.cookie.decode()}'
             control_sock = self.device_session_factory().exec_stream('(echo -n %s; %s) | nc %s %d' % (future.cookie.decode(), self.command, self.loopback, self.rch.port))
-            with control_sock, future.get() as conn:
+        with control_sock, future.result(5) as conn:
                 data = recvexactly(conn, 12)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
@@ -262,9 +260,8 @@ class _ScreenCapImplReverseLoopback:
 
     def screencap(self):
         future = self.rch.register_cookie()
-        with future:
             control_sock = self.device_session_factory().exec_stream('(echo -n %s; screencap) | nc %s %d' % (future.cookie.decode(), self.loopback, self.rch.port))
-            with control_sock, future.get() as conn:
+        with control_sock, future.result(5) as conn:
                 data = recvall(conn, 8388608, True)
         w, h, f = struct.unpack_from('III', data, 0)
         assert (f == 1)
@@ -449,12 +446,11 @@ class ADBConnector:
         for addr in loopbacks:
             logger.debug('testing loopback address %s', addr)
             future = self.rch.register_cookie()
-            with future:
                 cmd = 'echo -n %sOKAY | nc -w 1 %s %d' % (future.cookie.decode(), addr, self.rch.port)
                 logger.debug(cmd)
                 control_sock = self.device_session_factory().exec_stream(cmd)
                 with control_sock:
-                    conn = future.get(2)
+                conn = future.result(2)
                     if conn is not None:
                         data = recvall(conn)
                         conn.close()
