@@ -1,7 +1,16 @@
+from util import cvimage
 from . import resources
 from PIL import ImageCms
 p3_profile = ImageCms.ImageCmsProfile(resources.open_file('DisplayP3.icm'))
 srgb_profile = ImageCms.createProfile('sRGB')
+
+def p3_to_srgb_inplace(img: cvimage.Image):
+    pil_im, copied = img.to_pil2()
+    ImageCms.profileToProfile(pil_im, p3_profile, srgb_profile, inPlace=True)
+    if copied:
+        return cvimage.from_pil(pil_im)
+    else:
+        return img
 
 
 # numpy is slower than ImageCms (LittleCMS)

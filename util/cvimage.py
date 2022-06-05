@@ -15,6 +15,9 @@ from pathlib import Path
 import cv2
 import numpy as np
 
+from PIL import Image as PILImage
+
+
 def isPath(f):
     return isinstance(f, (bytes, str, Path))
 
@@ -119,6 +122,12 @@ def fromarray(array, mode=None):
         elif ch == 4:
             mode = 'RGBA'
     return Image(array, mode)
+
+def from_pil(pil_im: PILImage.Image):
+    from util import pil_zerocopy
+    array = pil_zerocopy.asarray(pil_im)
+    array = np.ascontiguousarray(array)
+    return fromarray(array, pil_im.mode)
 
 @dataclass
 class Rect:
@@ -444,7 +453,13 @@ class Image:
         title = f'Image: {self.width}x{self.height} {self.mode} {self.dtype}'
         multiprocessing.Process(target=_cvimage_imshow_helper.imshow, args=(title, native.array)).start()
 
-    def to_pil(self, always_copy=False):
+    def to_pil(self, always_copy):
+        result, copied = self.to_pil2(always_copy)
+        return result
+
+    def to_pil2(self, always_copy=False) -> tuple[PILImage.Image, bool]:
+        """returns a PIL image and a flag indicating whether the image was copied or not"""
+        oldmat = self.array
         need_convert = None
         real_pil_mode = self.mode
         pil_internal_mode = None
@@ -468,7 +483,6 @@ class Image:
         assert mat.dtype == np.uint8
         if not mat[0].data.c_contiguous:
             mat = np.ascontiguousarray(mat)
-        from PIL import Image as PILImage
         ystride = mat.strides[0]
         ystep = 1
         if ystride < 0:
@@ -476,7 +490,7 @@ class Image:
             ystep = -1
         fulllen = ystride * h
         contmat = np.lib.stride_tricks.as_strided(mat[::ystep, ...], shape=(fulllen,), strides=(1,))
-        return PILImage.frombuffer(real_pil_mode, (w, h), contmat, 'raw', pil_internal_mode, ystride, ystep)
+        return PILImage.frombuffer(real_pil_mode, (w, h), contmat, 'raw', pil_internal_mode, ystride, ystep), mat is not oldmat
 
 def _test():
     im = open(r"D:\dant\Pictures\items\100px-道具_带框_量子二踢脚.png", cv2.IMREAD_COLOR)

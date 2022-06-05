@@ -106,22 +106,3 @@ def asarray(im: Image.Image, padding_channel='stride', allow_copy=True) -> np.nd
 #     return np.asarray(_ArrayInterfaceForObject(_pil_array_interface(im), im.getdata()))
 
 
-def fromarray(arr, mode=None, must_share_buffer=False) -> Image.Image:
-    """
-    Creates an image memory from an object exporting the array interface
-    (using the buffer protocol).
-
-    :param arr: Object with array interface
-    :param mode: Mode to use (will be determined from type if None)
-      See: :ref:`concept-modes`.
-    :returns: An image object.
-
-    .. versionadded:: 1.1.6
-    """
-    arr = np.asarray(arr)
-    height, width, *channels = arr.shape
-    if not channels:
-        channels = 1
-    else:
-        channels = channels[0]
-    
