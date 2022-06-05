@@ -51,12 +51,12 @@ def _screencap_to_image(cap, rotate=0):
         arr = cv2.rotate(arr, cv2.ROTATE_90_CLOCKWISE)
     else:
         raise ValueError('invalid rotate')
+    im = Image.fromarray(arr, 'RGBA')
     if colorspace == 2:
         from PIL import Image as PILImage, ImageCms
-        from imgreco.cms import p3_profile, srgb_profile
-        pil_im = PILImage.frombuffer('RGBA', (w, h), arr, 'raw', 'RGBA', 0, 1)
-        ImageCms.profileToProfile(pil_im, p3_profile, srgb_profile, ImageCms.INTENT_RELATIVE_COLORIMETRIC, inPlace=True)
-    return Image.fromarray(arr, 'RGBA')
+        from imgreco.cms import p3_to_srgb_inplace
+        im = p3_to_srgb_inplace(im)
+    return im
 
 
 def _ensure_pil_image(imgorfile):
@@ -280,15 +280,21 @@ def enum(devices):
         devices.append((f'ADB: {serial[0]}', ADBConnector, [serial[0]], 'strong'))
 
 
-from .scrcpy.core import Client as ScrcpyClient
-from .scrcpy import const as scrcpy_const
-class ScrcpyInput:
-    def __init__(self, device, displayid):
-        self.scrcpy = ScrcpyClient(device, displayid=displayid)
-        self.scrcpy.start()
+from . import agent
+class ControlAgentInput:
+    def __init__(self, device):
+        self.client = agent.ControlAgentClient(device)
+
+    def check(self):
+        return self.screencap().size
+
+    def screencap(self):
+        return self.client.screenshot(srgb=True).image
 
     def tap(self, x, y, hold_time=0.07):
-        self.scrcpy.control.tap(int(x), int(y), hold_time)
+        self.client.touch_event(agent.EventAction.DOWN, x, y)
+        time.sleep(hold_time)
+        self.client.touch_event(agent.EventAction.UP, x, y)
 
     def swipe(self, x0, y0, x1, y1, move_duration=1, hold_before_release=0, interpolation='linear'):
         if interpolation == 'linear':
@@ -303,7 +309,7 @@ class ScrcpyInput:
 
         start_time = time.perf_counter()
         end_time = start_time + move_duration
-        self.scrcpy.control.touch(x0, y0, scrcpy_const.ACTION_DOWN)
+        self.client.touch_event(agent.EventAction.DOWN, x0, y0)
         t1 = time.perf_counter()
         step_time = t1 - start_time
         if step_time < frame_time:
@@ -314,23 +320,23 @@ class ScrcpyInput:
                 break
             time_progress = (t0 - start_time) / move_duration
             path_progress = interpolate(time_progress)
-            self.scrcpy.control.touch(int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress), scrcpy_const.ACTION_MOVE)
+            self.client.touch_event(agent.EventAction.MOVE, int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress), flags=agent.EventFlag.ASYNC)
             t1 = time.perf_counter()
             step_time = t1 - t0
             if step_time < frame_time:
                 time.sleep(frame_time - step_time)
-        self.scrcpy.control.touch(x1, y1, scrcpy_const.ACTION_MOVE)
+        self.client.touch_event(agent.EventAction.MOVE, x1, y1)
         if hold_before_release > 0:
             time.sleep(hold_before_release)
-        self.scrcpy.control.touch(x1, y1, scrcpy_const.ACTION_UP)
+        self.client.touch_event(agent.EventAction.UP, x1, y1)
 
     def text(self, text):
-        self.scrcpy.control.text(text)
+        self.client.send_text(text)
 
     def keyboard(self, keycode: int, hold_time=0.07):
-        self.scrcpy.control.keycode(keycode, scrcpy_const.ACTION_DOWN)
+        self.client.key_event(agent.EventAction.DOWN, keycode)
         time.sleep(hold_time)
-        self.scrcpy.control.keycode(keycode, scrcpy_const.ACTION_UP)
+        self.client.key_event(agent.EventAction.UP, keycode)
 
 class ShellInput:
     def __init__(self, device: 'ADBConnector', displayid):
@@ -478,7 +484,7 @@ class ADBConnector:
         exc = None
         for attempt in range(10):
             try:
-                img = self.screencap_impl()
+                img = self.screencap_impl.screencap()
             except Exception as e:
                 exc = e
                 continue
@@ -524,24 +530,37 @@ class ADBConnector:
 
         logger.debug('using device-specific config in database')
 
+        input_provider = device_record.get('input', 'agent')
+        try:
+            if input_provider == 'agent':
+                self.input = ControlAgentInput(self)
+        except:
+            logger.debug("aah-agent failed, using fallback shell provider", exc_info=True)
+            input_provider = 'shell'
+        if input_provider == 'shell':
+            self.input = ShellInput(self, self.displayid)
+
+        if input_provider == 'agent':
+            self.screencap_impl = self.input
+
         if 'screenshot_rotate' in device_record:
             self.screenshot_rotate = int(device_record['screenshot_rotate'])
             if self.screenshot_rotate % 90 != 0:
                 raise ValueError("invalid screenshot_rotate value")
-
-        screenshot_impl = device_record.get('screenshot_type', 'default')
-        if screenshot_impl == 'safe':
-            self.screencap_impl = _ScreenCapImplPNG(self.device_session_factory, self.screenshot_rotate, displayid=self.displayid)
-        elif screenshot_impl == 'loopback' and 'loopback_address' in device_record:
-            self._init_reverse_connection()
-            self.loopback = device_record['loopback_address']
-            self.screencap_impl = _ScreenCapImplReverseLoopback(self.device_session_factory, self.screenshot_rotate, self.rch, self.loopback, displayid=self.displayid)
-        elif screenshot_impl == 'default':
-            self.screencap_impl = _ScreenCapImplDefault(self.device_session_factory, self.screenshot_rotate, displayid=self.displayid)
-        elif screenshot_impl == 'default_uncompressed':
-            self.screencap_impl = _ScreenCapImplDefault(self.device_session_factory, self.screenshot_rotate, compression_level=0, displayid=self.displayid)
-        else:
-            raise KeyError("unknown screenshot_type: %s" % screenshot_impl)
+        if self.screencap_impl is None:
+            screenshot_impl = device_record.get('screenshot_type', 'default')
+            if screenshot_impl == 'safe':
+                self.screencap_impl = _ScreenCapImplPNG(self.device_session_factory, self.screenshot_rotate, displayid=self.displayid)
+            elif screenshot_impl == 'loopback' and 'loopback_address' in device_record:
+                self._init_reverse_connection()
+                self.loopback = device_record['loopback_address']
+                self.screencap_impl = _ScreenCapImplReverseLoopback(self.device_session_factory, self.screenshot_rotate, self.rch, self.loopback, displayid=self.displayid)
+            elif screenshot_impl == 'default':
+                self.screencap_impl = _ScreenCapImplDefault(self.device_session_factory, self.screenshot_rotate, displayid=self.displayid)
+            elif screenshot_impl == 'default_uncompressed':
+                self.screencap_impl = _ScreenCapImplDefault(self.device_session_factory, self.screenshot_rotate, compression_level=0, displayid=self.displayid)
+            else:
+                raise KeyError("unknown screenshot_type: %s" % screenshot_impl)
 
         try:
             width, height = self.screencap_impl.check()
@@ -555,15 +574,7 @@ class ADBConnector:
             else:
                 self.screen_size = (width, height)
 
-        input_provider = device_record.get('input', 'scrcpy')
-        try:
-            if input_provider == 'scrcpy':
-                self.input = ScrcpyInput(self, self.displayid)
-        except:
-            logger.debug("scrcpy-server failed, using fallback shell provider", exc_info=True)
-            input_provider = 'shell'
-        if input_provider == 'shell':
-            self.input = ShellInput(self, self.displayid)
+
 
     def _probe_device_config(self, device_record):
         time_gzipped_raw = 999
@@ -574,71 +585,81 @@ class ADBConnector:
         if 'screenshot_rotate' not in device_record:
             device_record['screenshot_rotate'] = 0
         logger.debug('probing device %s', self.device_identifier)
-        try:
-            logger.debug('benchmarking gzipped raw screencap')
-            gzip_impl = _ScreenCapImplDefault(self.device_session_factory, device_record['screenshot_rotate'], displayid=self.displayid)
-            device_record['screenshot_type'] = 'default'
-            t0 = time.perf_counter()
-            screenshot = gzip_impl.screencap()
-            t1 = time.perf_counter()
-            time_gzipped_raw = t1 - t0
-            logger.debug('gzipped raw screencap: %dx%d image in %.03f ms ', screenshot.width, screenshot.height, time_gzipped_raw*1000)
-
-            logger.debug('benchmarking uncompressed raw screencap')
-            uncompressed_impl = _ScreenCapImplDefault(self.device_session_factory, device_record['screenshot_rotate'], compression_level=0, displayid=self.displayid)
-            device_record['screenshot_type'] = 'default_uncompressed'
-            t0 = time.perf_counter()
-            screenshot = uncompressed_impl.screencap()
-            t1 = time.perf_counter()
-            time_uncompressed_raw = t1 - t0
-            logger.debug('uncompressed raw screencap: %dx%d image in %.03f ms ', screenshot.width, screenshot.height, time_uncompressed_raw*1000)
-
-            if time_gzipped_raw < time_uncompressed_raw:
-                logger.debug('gzipped raw screencap is faster, using it')
-                self.screencap_impl = gzip_impl
-                device_record['screenshot_type'] = 'default'
-            else:
-                logger.debug('uncompressed raw screencap is faster, using it')
-                self.screencap_impl = uncompressed_impl
-                device_record['screenshot_type'] = 'default_uncompressed'
-
-        except:
-            logger.debug('gzipped raw screencap failed, using fail-safe PNG screencap', exc_info=True)
-            png_impl = _ScreenCapImplPNG(self.device_session_factory, device_record['screenshot_rotate'], displayid=self.displayid)
-            screenshot = png_impl.screencap()
-            logger.debug('PNG screencap: %dx%d image in %.03f secs', screenshot.width, screenshot.height, time_gzipped_raw)
-            self.screencap_impl = png_impl
-            device_record['screenshot_type'] = 'safe'
-            workaround_slow_emulator_adb = 'never'
-        
-        if workaround_slow_emulator_adb == 'auto' or workaround_slow_emulator_adb == 'always':
-            loopbacks = self._detect_loopbacks()
-            if len(loopbacks):
-                logger.debug('possible loopback addresses: %s', repr(loopbacks))
-                self._init_reverse_connection()
-                if self._test_reverse_connection(loopbacks):
-                    loopback_impl = _ScreenCapImplReverseLoopback(self.device_session_factory, device_record['screenshot_rotate'], self.rch, self.loopback, displayid=self.displayid)
-                    t0 = time.perf_counter()
-                    screenshot = loopback_impl.screencap()
-                    t1 = time.perf_counter()
-                    time_reverse_loopback = t1 - t0
-                    logger.debug('reverse connection raw screencap: %dx%d image in %.03f ms', screenshot.width, screenshot.height, time_reverse_loopback*1000)
-                    if workaround_slow_emulator_adb == 'always' or time_reverse_loopback < time_gzipped_raw:
-                        device_record['screenshot_type'] = 'loopback'
-                        device_record['loopback_address'] = self.loopback
-                        self.screencap_impl = loopback_impl
-                else:
-                    self.rch.stop()
 
         try:
-            logger.debug('trying scrcpy')
-            self.input = ScrcpyInput(self, self.displayid)
-            input_provider = 'scrcpy'
+            logger.debug('trying aah-agent')
+            self.input = ControlAgentInput(self)
+            input_provider = 'agent'
         except:
-            logger.debug("scrcpy-server failed, using fallback shell provider", exc_info=True)
+            logger.debug("aah-agent failed, using fallback shell provider", exc_info=True)
             self.input = ShellInput(self, self.displayid)
             input_provider = 'shell'
         device_record['input'] = input_provider
+
+        if input_provider == 'agent':
+            try:
+                screenshot = self.input.screencap()
+                self.screencap_impl = self.input
+            except:
+                pass
+        
+        if self.screencap_impl is None:
+
+            try:
+                logger.debug('benchmarking gzipped raw screencap')
+                gzip_impl = _ScreenCapImplDefault(self.device_session_factory, device_record['screenshot_rotate'], displayid=self.displayid)
+                device_record['screenshot_type'] = 'default'
+                t0 = time.perf_counter()
+                screenshot = gzip_impl.screencap()
+                t1 = time.perf_counter()
+                time_gzipped_raw = t1 - t0
+                logger.debug('gzipped raw screencap: %dx%d image in %.03f ms ', screenshot.width, screenshot.height, time_gzipped_raw*1000)
+
+                logger.debug('benchmarking uncompressed raw screencap')
+                uncompressed_impl = _ScreenCapImplDefault(self.device_session_factory, device_record['screenshot_rotate'], compression_level=0, displayid=self.displayid)
+                device_record['screenshot_type'] = 'default_uncompressed'
+                t0 = time.perf_counter()
+                screenshot = uncompressed_impl.screencap()
+                t1 = time.perf_counter()
+                time_uncompressed_raw = t1 - t0
+                logger.debug('uncompressed raw screencap: %dx%d image in %.03f ms ', screenshot.width, screenshot.height, time_uncompressed_raw*1000)
+
+                if time_gzipped_raw < time_uncompressed_raw:
+                    logger.debug('gzipped raw screencap is faster, using it')
+                    self.screencap_impl = gzip_impl
+                    device_record['screenshot_type'] = 'default'
+                else:
+                    logger.debug('uncompressed raw screencap is faster, using it')
+                    self.screencap_impl = uncompressed_impl
+                    device_record['screenshot_type'] = 'default_uncompressed'
+
+            except:
+                logger.debug('gzipped raw screencap failed, using fail-safe PNG screencap', exc_info=True)
+                png_impl = _ScreenCapImplPNG(self.device_session_factory, device_record['screenshot_rotate'], displayid=self.displayid)
+                screenshot = png_impl.screencap()
+                logger.debug('PNG screencap: %dx%d image in %.03f secs', screenshot.width, screenshot.height, time_gzipped_raw)
+                self.screencap_impl = png_impl
+                device_record['screenshot_type'] = 'safe'
+                workaround_slow_emulator_adb = 'never'
+            
+            if workaround_slow_emulator_adb == 'auto' or workaround_slow_emulator_adb == 'always':
+                loopbacks = self._detect_loopbacks()
+                if len(loopbacks):
+                    logger.debug('possible loopback addresses: %s', repr(loopbacks))
+                    self._init_reverse_connection()
+                    if self._test_reverse_connection(loopbacks):
+                        loopback_impl = _ScreenCapImplReverseLoopback(self.device_session_factory, device_record['screenshot_rotate'], self.rch, self.loopback, displayid=self.displayid)
+                        t0 = time.perf_counter()
+                        screenshot = loopback_impl.screencap()
+                        t1 = time.perf_counter()
+                        time_reverse_loopback = t1 - t0
+                        logger.debug('reverse connection raw screencap: %dx%d image in %.03f ms', screenshot.width, screenshot.height, time_reverse_loopback*1000)
+                        if workaround_slow_emulator_adb == 'always' or time_reverse_loopback < time_gzipped_raw:
+                            device_record['screenshot_type'] = 'loopback'
+                            device_record['loopback_address'] = self.loopback
+                            self.screencap_impl = loopback_impl
+                    else:
+                        self.rch.stop()
 
         device_record['screen_width'] = screenshot.width
         device_record['screen_height'] = screenshot.height

@@ -6,7 +6,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-def recvexactly(sock, n, return_buffer=False) -> memoryview:
+def recvexactly(sock, n, return_buffer=False):
     buf = np.empty(n, dtype=np.uint8)
     pos = 0
     while pos < n:
