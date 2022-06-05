@@ -3,8 +3,18 @@
 # top-most EditorConfig file
 root = true
 
-# Windows-style newlines with a newline ending every batch file
-[*.bat]
-end_of_line = crlf
+[*]
+end_of_line = lf
 insert_final_newline = true
 charset = utf-8
+
+[*.bat]
+end_of_line = crlf
+
+[*.py]
+indent_style = space
+indent_size = 4
+
+[*.{js,ts,jsx,tsx}]
+indent_style = space
+indent_size = 2
