@@ -1,6 +1,6 @@
 from .schemadef import *
 class root(Schema):
-    __version__ = 3
+    __version__ = 4
     debug = Field(bool, False)
     @Namespace('设备连接')
     class device:

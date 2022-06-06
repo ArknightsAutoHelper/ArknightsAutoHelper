@@ -80,3 +80,15 @@ def migrate_from_1(ydoc: Mapping):
 def migrate_from_2(ydoc: Mapping):
     ydoc['__version__'] = 3
     return ydoc
+
+@migrate_from(3)
+def migrate_from_3(ydoc: Mapping):
+    logger.info('Migrating from config schema version 3')
+    import app
+    import os
+    try:
+        os.unlink(app.config_path / 'device-config.json')
+    except:
+        pass
+    ydoc['__version__'] = 4
+    return ydoc
