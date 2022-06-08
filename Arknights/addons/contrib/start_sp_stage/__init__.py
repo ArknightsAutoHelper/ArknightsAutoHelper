@@ -118,6 +118,7 @@ class StartSpStageAddon(AddonBase):
             raise RuntimeError(f'无效的关卡: {stage_code}')
         self.scale = self.viewport[1] / 720
         if self.viewport != (1280, 720):
+            self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         stage = stage_code_map[stage_code]
         activity_id = stage['zoneId'].split('_')[0]
         activity_infos = get_activity_infos()
@@ -129,7 +130,6 @@ class StartSpStageAddon(AddonBase):
             if query_only:
                 return False
             raise
-        self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         self.after_enter_activity(stage)
         stage_linear = zone_linear_map[stage['zoneId']]
         self.logger.info(f"stage zone id: {stage['zoneId']}, stage_linear: {stage_linear}")
@@ -162,7 +162,7 @@ class StartSpStageAddon(AddonBase):
                 origin_x = random.randint(int(5.833 * vh), int(24.861 * vh))
                 origin_y = random.randint(int(57.222 * vh), int(77.917 * vh))
                 move = -random.randint(int(vh // 5), int(vh // 4))
-                self.device.touch_swipe2((origin_x, origin_y),
+                self.control.touch_swipe2((origin_x, origin_y),
                                              (random.randint(-20, 20), move), random.randint(900, 1200))
                 act_pos_map = self.get_all_act_pos(crop_flag)
                 if act_name in act_pos_map:
@@ -180,7 +180,7 @@ class StartSpStageAddon(AddonBase):
         self.delay(0.5)
 
     def screenshot(self):
-        return self.device.screenshot()
+        return self.control.screenshot()
 
     def get_all_act_pos(self, crop=False):
         act_map = {}

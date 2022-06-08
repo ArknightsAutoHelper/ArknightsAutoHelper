@@ -13,6 +13,7 @@ from typing import Optional, Sequence
 
 import ruamel.yaml
 from . import schema
+from .config_store import YamlConfigStore
 
 yaml = ruamel.yaml.YAML()
 
@@ -77,38 +78,39 @@ tessdata_prefix = Path.joinpath(vendor_root, 'tessdata')
 ##### end of paths
 
 dirty = False
+_config_store = None
 config = schema.root()
 
-def _save_config(store, file):
-    swpfile = os.fspath(file) + '.saving'
-    with open(swpfile, 'w', encoding='utf-8') as f:
-        yaml.dump(store, f)
-    os.replace(swpfile, config_file)
+class RootConfigStore(YamlConfigStore):
+    def __init__(self):
+        super().__init__(config_file)
 
-def _load_config():
-    if not config_file.exists():
-        config = schema.root()
-        _save_config(config._store, config_file)
-        return config
-    with open(config_file, 'r', encoding='utf-8') as f:
-        ydoc = yaml.load(f)
-    config_schema_version = ydoc.get('__version__', None)
-    if config_schema_version != schema.root.__version__:
-        if config_schema_version is None:
-            oldfile_suffix = '-legacy.bak'
-        else:
-            oldfile_suffix = f'-schema{config_schema_version}.bak'
-        shutil.copyfile(config_file, str(config_file).removesuffix('.yaml') + oldfile_suffix)
-        from .migration import migrate
-        ydoc = migrate(ydoc)
-        _save_config(ydoc, config_file)
-    config = schema.root(ydoc)
-    return config
+    def _load(self):
+        if not self.filename.exists():
+            self.schema = schema.root()
+            self.root = self.schema._mapping
+            self.save()
+        with open(self.filename, 'r', encoding='utf-8') as f:
+            self.root = yaml.load(f)
+        config_schema_version = self.root.get('__version__', None)
+        if config_schema_version != schema.root.__version__:
+            if config_schema_version is None:
+                oldfile_suffix = '-legacy.bak'
+            else:
+                oldfile_suffix = f'-schema{config_schema_version}.bak'
+            shutil.copyfile(self.filename, str(self.filename).removesuffix('.yaml') + oldfile_suffix)
+            from .migration import migrate
+            self.root = migrate(self.root)
+            self.save()
+        self.schema = schema.root(self.root)
+    
+    def _default_root(self):
+        return super()._default_root()
 
 initialized = False
 
 def init(extra_logging_handlers=None):
-    global config, initialized
+    global _config_store, config, initialized
     if initialized:
         return
     os.makedirs(screenshot_path, exist_ok=True)
@@ -116,7 +118,8 @@ def init(extra_logging_handlers=None):
     os.makedirs(cache_path, exist_ok=True)
     os.makedirs(extra_items_path, exist_ok=True)
     os.makedirs(logs, exist_ok=True)
-    config = _load_config()
+    _config_store = RootConfigStore()
+    config = _config_store.schema
     enable_logging(extra_logging_handlers)
     initialized = True
 
@@ -186,7 +189,8 @@ def _set_dirty():
 
 
 def save():
-    _save_config(config._store, config_file)
+    if _config_store is not None:
+        _config_store.save()
     config._dirty = False
 
 
@@ -194,7 +198,7 @@ def _dig_mapping(dig, create_parent=False):
     if isinstance(dig, str):
         dig = dig.split('/')
     parent_maps = dig[:-1]
-    current_map = config._store
+    current_map = config._mapping
     i = 0
     for k in parent_maps:
         if k not in current_map:
@@ -234,11 +238,6 @@ def set(dig, value):
     current_map, k = _dig_mapping(dig, create_parent=True)
     current_map[k] = value
     _set_dirty()
-
-
-def get_config_adb_server():
-    host, portstr = config.device.adb_server.rsplit(':', 1)
-    return host, int(portstr)
 
 
 _instanceid = None

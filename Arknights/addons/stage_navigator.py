@@ -132,7 +132,7 @@ class StageNavigator(AddonBase):
         import imgreco.map
         lastpos = None
         while True:
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
             recoresult = imgreco.map.recognize_map(screenshot, partition)
             if recoresult is None:
                 # TODO: retry
@@ -146,7 +146,7 @@ class StageNavigator(AddonBase):
                     raise RuntimeError('拖动后坐标未改变')
                 if 0 < pos[0] < self.viewport[0]:
                     self.logger.info('目标在可视区域内，点击')
-                    self.device.touch_tap(pos, offsets=(5, 5))
+                    self.control.touch_tap(pos, offsets=(5, 5))
                     self.delay(3)
                     break
                 else:
@@ -167,7 +167,7 @@ class StageNavigator(AddonBase):
                         if abs(diff) < 100:
                             diff = -120
                         diff = max(diff, -originX)
-                    self.device.touch_swipe2((originX, originY), (diff * 0.7 * uniform(0.8, 1.2), 0), max(250, diff / 2))
+                    self.control.touch_swipe2((originX, originY), (diff * 0.7 * uniform(0.8, 1.2), 0), max(250, diff / 2))
                     self.delay(5)
                     continue
 
@@ -191,7 +191,7 @@ class StageNavigator(AddonBase):
         episode_move = (400 * self.viewport[1] / 1080)
 
         while True:
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
             current_episode_tag = screenshot.crop(episode_tag_rect)
             current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
             self.logger.info(f'当前章节: {current_episode_str}')
@@ -215,7 +215,7 @@ class StageNavigator(AddonBase):
             move = min(abs(current_episode - target), 2) * episode_move * (1 if current_episode > target else -1)
             self.swipe_screen(move, 10, self.viewport[0] // 4 * 3)
             self.delay(0.5)
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
             current_episode_tag = screenshot.crop(episode_tag_rect)
             current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
             self.logger.info(f'当前章节: {current_episode_str}')
@@ -232,7 +232,7 @@ class StageNavigator(AddonBase):
             partition_map = stage_maps_linear[partition]
         target_index = partition_map.index(target)
         while True:
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
             tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot)
             if not tags_map:
                 tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot, allow_extra_icons=True)
@@ -243,7 +243,7 @@ class StageNavigator(AddonBase):
             pos = tags_map.get(target)
             if pos:
                 self.logger.info('目标在可视区域内，点击')
-                self.device.touch_tap(pos, offsets=(5, 5))
+                self.control.touch_tap(pos, offsets=(5, 5))
                 self.delay(1)
                 return
 
@@ -261,12 +261,12 @@ class StageNavigator(AddonBase):
             else:
                 self.logger.error('未能定位关卡地图')
                 raise RuntimeError('recognition failed')
-            self.device.touch_swipe2((originX, originY), (move, max(250, move // 2)))
+            self.control.touch_swipe2((originX, originY), (move, max(250, move // 2)))
             self.delay(1)
 
     def find_and_tap_daily(self, partition, target, *, recursion=0):
         import imgreco.map
-        screenshot = self.device.screenshot()
+        screenshot = self.control.screenshot()
         recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
         if target in recoresult:
             pos, conf = recoresult[target]
@@ -286,7 +286,7 @@ class StageNavigator(AddonBase):
                 else:
                     self.logger.error('未知类别')
                     raise StopIteration()
-                self.device.touch_swipe2((originX, originY), (offset, 0), 400)
+                self.control.touch_swipe2((originX, originY), (offset, 0), 400)
                 self.delay(2)
                 self.find_and_tap_daily(partition, target, recursion=recursion+1)
             else:
@@ -305,7 +305,7 @@ class StageNavigator(AddonBase):
         path = get_stage_path(stage)
         self.addon(CommonAddon).back_to_main()
         self.logger.info('进入作战')
-        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.device.screenshot()))
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.control.screenshot()))
         self.delay(TINY_WAIT)
         if path[0] == 'main':
             vw, vh = imgreco.common.get_vwvh(self.viewport)

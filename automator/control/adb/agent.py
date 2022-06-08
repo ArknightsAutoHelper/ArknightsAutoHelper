@@ -1,13 +1,11 @@
 from __future__ import annotations
-from typing import Union, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .ADBConnector import ADBConnector
+from typing import Literal, Optional, Union, TYPE_CHECKING
 
 from concurrent import futures
 from dataclasses import dataclass
-from enum import IntEnum, IntFlag
+from enum import IntFlag
 import io
+import ipaddress
 import logging
 import random
 import socket
@@ -16,26 +14,20 @@ import threading
 import time
 from contextlib import contextmanager
 
-
 import numpy as np
 import lz4.block
+
+from .client import ADBDevice
+from ..types import EventAction, EventFlag
 
 from util.socketutil import recvexactly
 from util import cvimage
 
-class EventAction(IntEnum):
-    DOWN = 0
-    UP = 1
-    MOVE = 2
 
 class DisplayFlag(IntFlag):
     SCREEN_CAPTURE = 0x1
     SCREEN_CAPTURE_SECURE = 0x3
     INPUT = 0x4
-
-class EventFlag(IntFlag):
-    ASYNC = 0x1
-    MERGE_MULTITOUCH_MOVE = 0x2
 
 
 _logger = logging.getLogger(__name__)
@@ -56,7 +48,7 @@ class ScreenshotImage:
 
     image: cvimage.Image
     colorspace: int
-    perf_counter_timestamp: float
+    capture_latency: float
 
 
 def _socket_iter_lines(sock: socket.socket):
@@ -77,8 +69,9 @@ def _socket_iter_lines(sock: socket.socket):
         linebuf.write(chunk)
 
 class ControlAgentClient:
-    def __init__(self, device: ADBConnector):
+    def __init__(self, device: ADBDevice, display_id: Optional[int] = None):
         self.device = device
+        self.display_id = display_id or 0
 
         self.ready_future = futures.Future()
         self.stdio_closed_future = futures.Future()
@@ -92,8 +85,6 @@ class ControlAgentClient:
 
         try:
             control_socket_name = 'aah-agent-' + random.randbytes(4).hex()
-            data_socket_name = 'aah-agent-' + random.randbytes(4).hex()
-            data_socket_name_bytes = data_socket_name.encode('utf-8')
 
             _logger.debug(f'{self.log_tag} deploying')
             import app
@@ -103,7 +94,7 @@ class ControlAgentClient:
 
             _logger.debug(f'{self.log_tag} starting')
             cmdline = 'CLASSPATH=/data/local/tmp/app-release-unsigned.apk app_process /data/local/tmp --nice-name=aah-agent xyz.cirno.aah.agent.Main ' + control_socket_name
-            self.stdio_stream: socket.socket = self.device.device_session_factory().shell_stream(cmdline)
+            self.stdio_stream: socket.socket = self.device.shell_stream(cmdline)
 
             stdio_thread = threading.Thread(target=self._stdio_worker)
             stdio_thread.daemon = True
@@ -114,19 +105,47 @@ class ControlAgentClient:
                 self.stdio_stream.close()
                 raise ConnectionError("Failed to start scrsrv" )
 
-            self.control_stream = SocketWithLock(self.device.device_session_factory().service(f'localabstract:{control_socket_name}').sock)
-
+            self.control_stream = SocketWithLock(self.device.service(f'localabstract:{control_socket_name}').detach())
             self._send_command(self.control_stream, b'OPEN', struct.pack('>ii', 0, 0))
-            self._send_command(self.control_stream, b'OPEN', struct.pack('>iih', 2, 2, len(data_socket_name_bytes)) + data_socket_name_bytes)
-            self.data_stream = SocketWithLock(self.device.device_session_factory().service(f'localabstract:{data_socket_name}').sock)
-            self.syncoffset = self._sync() - time.perf_counter_ns()
-            self._set_display_id(device.displayid or 0)
-        except:
+            self._send_command(self.control_stream, b'DISP', struct.pack('>ii', self.display_id, DisplayFlag.INPUT))
+        except Exception as e:
             self.close()
             raise
 
     def __del__(self):
         self.close()
+
+    def open_screenshot(self, mode: Literal['adb', 'listen', 'connect'] = 'adb', address: Optional[tuple[str, int]] = None, connect_payload: Optional[bytes] = None, connection_future: Optional[futures.Future[socket.socket]] = None):
+        if mode == 'adb':
+            data_socket_name = 'aah-agent-' + random.randbytes(4).hex()
+            data_socket_name_bytes = data_socket_name.encode('utf-8')
+            self._send_command(self.control_stream, b'OPEN', struct.pack('>iih', 2, 2, len(data_socket_name_bytes)) + data_socket_name_bytes)
+            self.data_stream = SocketWithLock(self.device.service(f'localabstract:{data_socket_name}').detach())
+        elif mode == 'connect':
+            addr = ipaddress.ip_address(address[0])
+            port = address[1]
+            if addr.version == 4:
+                family = 0
+            elif addr.version == 6:
+                family = 1
+            else:
+                raise ValueError(f'Unsupported address: {addr}')
+            if connect_payload is None:
+                connect_payload = b''
+            self._send_command(self.control_stream, b'OPEN', struct.pack('>ii', 1, family) + addr.packed + struct.pack('>H', port) + connect_payload)
+            sock = connection_future.result()
+            self.data_stream = SocketWithLock(sock)
+        elif mode == 'listen':
+            resp = self._send_command(self.control_stream, b'OPEN', struct.pack('>ii', 2, 0) + b'\x00\x00\x00\x00\x00\x00')  # bind 0.0.0.0:0
+            ip = address[0]
+            port = struct.unpack('>iH', resp)[1]
+            sock = socket.create_connection((ip, port), timeout=10)
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            self.data_stream = SocketWithLock(sock)
+        else:
+            raise NotImplementedError
+
+        self._send_command(self.data_stream, b'DISP', struct.pack('>ii', self.display_id, DisplayFlag.SCREEN_CAPTURE))
 
     def _stdio_worker(self):
         try:
@@ -141,21 +160,30 @@ class ControlAgentClient:
             _logger.debug(f'{self.log_tag} error:', exc_info=True)
         self.stdio_closed_future.set_result(None)
 
-    def _send_command(self, conn: SocketWithLock, cmd, payload=b''):
+    def _send_command_with_metrics(self, conn: SocketWithLock, cmd, payload=b''):
+        tinit = time.perf_counter()
         sock = conn.socket
         with conn.lock:
             sock.sendall(cmd + struct.pack('>i', len(payload)) + payload)
+            tsend = time.perf_counter()
             response = recvexactly(sock, 8)
+            tresp = time.perf_counter()
             token = response[:4]
             payload_len = struct.unpack('>i', response[4:])[0]
             if token == b'OKAY':
                 payload = recvexactly(sock, payload_len)
-                return payload
+                tfullresp = time.perf_counter()
+                return payload, tinit, tsend, tresp, tfullresp
             elif token == b'FAIL':
                 raise RuntimeError(recvexactly(sock, payload_len).decode('utf-8', 'ignore'))
+            else:
+                raise RuntimeError(f'Unknown response: {token}')
+
+    def _send_command(self, conn: SocketWithLock, cmd, payload=b''):
+        payload, tinit, tsend, tresp, tfullresp = self._send_command_with_metrics(conn, cmd, payload)
+        return payload
 
     def _set_display_id(self, display_id: int):
-        self._send_command(self.control_stream, b'DISP', struct.pack('>ii', display_id, DisplayFlag.INPUT))
         self._send_command(self.data_stream, b'DISP', struct.pack('>ii', display_id, DisplayFlag.SCREEN_CAPTURE))
 
     def _sync(self):
@@ -174,18 +202,17 @@ class ControlAgentClient:
         :return: screenshot image, or `None` if no frame is available
         """
         if compress:
-            resp = self._send_command(self.data_stream, b'SCAP', b'\x01\x00\x00\x00')
+            resp, tinit, tsend, tresp, tfullresp = self._send_command_with_metrics(self.data_stream, b'SCAP', b'\x01\x00\x00\x00')
         else:
-            resp = self._send_command(self.data_stream, b'SCAP', b'\x00\x00\x00\x00')
+            resp, tinit, tsend, tresp, tfullresp = self._send_command_with_metrics(self.data_stream, b'SCAP', b'\x00\x00\x00\x00')
         resplen = len(resp)
-        assert resplen >= 32
-        header = resp[:32]
-        width, height, px, row, color, ts, decompress_len = struct.unpack('>iiiiiqi', header)
+        assert resplen >= 40
+        width, height, px, row, color, ts, java_capture_latency, decompress_len = struct.unpack_from('>iiiiiqqi', resp, 0)
         # print('colorspace:', color)
-        rawsize = resplen - 32
+        rawsize = resplen - 40
         if rawsize == 0:
             return None
-        buf = np.frombuffer(resp[32:], dtype=np.uint8)
+        buf = np.frombuffer(resp[40:], dtype=np.uint8)
         if decompress_len != 0:
             decompressed = lz4.block.decompress(buf, uncompressed_size=decompress_len, return_bytearray=True)
             buf = np.frombuffer(decompressed, dtype=np.uint8)
@@ -193,13 +220,14 @@ class ControlAgentClient:
         arr = np.ascontiguousarray(arr)
 
         # offset = nanoTime - perf_counter_ns
-        local_render_time = (ts - self.syncoffset) / 1e9
         img = cvimage.fromarray(arr, 'RGBA')
         if srgb and color == ScreenshotImage.COLORSPACE_DISPLAY_P3:
             from imgreco.cms import p3_to_srgb_inplace
             img = p3_to_srgb_inplace(img)
             color = ScreenshotImage.COLORSPACE_SRGB
-        return ScreenshotImage(img, color, local_render_time)
+        xfer_time = time.perf_counter() - tresp
+        img.timestamp = ts / 1e9
+        return ScreenshotImage(img, color, java_capture_latency / 1e9 + xfer_time)
 
     def touch_event(self, action: EventAction, x: Union[int, float], y: Union[int, float], pointer_id: int = 0, pressure: float = 1.0, flags: EventFlag = 0):
         """
@@ -298,12 +326,13 @@ def _demo():
         import ctypes
         ctypes.windll.user32.SetThreadDpiAwarenessContext(ctypes.c_ssize_t(-4))
         ctypes.windll.winmm.timeBeginPeriod(1)
-    from automator.connector import auto_connect
+    from automator.control.targets import get_auto_connect_candidates
     # device = ADBConnector('172.20.7.215:5555', 1)
-    device = auto_connect()
+    device = get_auto_connect_candidates()[0].get_device()
     import cv2
     
     client = ControlAgentClient(device)
+    client.open_screenshot()
 
     mousedown = False
     lastpos = None
@@ -363,12 +392,12 @@ def _demo():
             if imgchanged:
                 imgchanged = False
                 bgrim = img.image.convert('native')
-                latency = (time.perf_counter() - img.perf_counter_timestamp) * 1000
+                timestamp = img.image.timestamp
                 fps = -1
                 if len(fps_deque) == 10:
                     fps = 9 / (fps_deque[-1] - fps_deque[0])
                 cv2.setWindowTitle('test', f'screenshot {img.image}')
-                cv2.putText(bgrim.array, f'{latency=:.2f}ms {fps=:.2f}', (10, 32), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 128, 255), 2)
+                cv2.putText(bgrim.array, f'{timestamp=:.3f}ms {fps=:.2f}', (10, 32), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 128, 255), 2)
                 cv2.imshow('test', bgrim.array)
             key = cv2.waitKey(4)
             try:

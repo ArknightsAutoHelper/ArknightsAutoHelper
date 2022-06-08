@@ -33,7 +33,7 @@ def recvall(sock, chunklen=65536, return_buffer=False):
         if rcvlen == 0:
             break
     buffers.append(current_buf[:pos])
-    result = np.concatenate(buffers)
+    result: np.ndarray = np.concatenate(buffers)
     if return_buffer:
         return result.data
     else:

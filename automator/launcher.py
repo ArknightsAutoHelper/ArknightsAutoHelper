@@ -116,36 +116,35 @@ def connect(argv):
 
 
 def _interactive_connect():
-    from automator import connector
+    from automator.control.targets import enum_targets, auto_connect
+    targets = enum_targets()
     try:
-        _connect_device(connector.auto_connect())
+        _connect_device(auto_connect(targets, app.config.device.adb_always_use_device))
     except IndexError:
-        devices = connector.enum_devices()
-        if len(devices) == 0:
+        if len(targets) == 0:
             print("当前无设备连接")
             raise
         print("检测到多台设备")
-        for i, (name, *cdr) in enumerate(devices):
-            print("%2d. %s" % (i+1, name))
+        for i, record in enumerate(targets):
+            print("%2d. %s" % (i+1, record))
         num = 0
         while True:
             try:
                 num = int(input("请输入序号选择设备: "))
-                if not 1 <= num < len(devices)+1:
+                if not 1 <= num < len(targets)+1:
                     raise ValueError()
                 break
             except ValueError:
                 print("输入不合法，请重新输入")
-        name, cls, args, binding = devices[num-1]
-        _connect_device(cls(*args))
+        target = targets[num-1]
+        _connect_device(target.create_controller())
 
 
 def _connect_adb(args):
-    from automator.connector.ADBConnector import ADBConnector, ensure_adb_alive
-    ensure_adb_alive()
+    from automator.control.adb.client import get_config_adb_server
     if len(args) >= 0:
         serial = args[0]
-        _connect_device(ADBConnector(serial))
+        _connect_device(get_config_adb_server().get_device(serial))
         return 0
     else:
         print('usage: connect adb <serial>')
@@ -155,7 +154,7 @@ def _connect_adb(args):
 def _ensure_device():
     if device is None:
         connect(['connect'])
-    device.ensure_alive()
+    device.adb.create_session().close()
 
 
 def command_internal(cmd: Union[str, list[str]]):

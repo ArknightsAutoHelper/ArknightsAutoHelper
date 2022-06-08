@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import overload
+from typing import Optional, overload
 from numbers import Real
 
 import builtins
@@ -196,6 +196,7 @@ class Rect:
         return iter((self.x, self.y, self.right(), self.bottom()))
 
 class Image:
+    timestamp: Optional[float] = None
     def __init__(self, mat: np.ndarray, mode=None):
         self._mat = mat
         valid_modes = _get_valid_modes(mat.shape, mat.dtype)
@@ -217,7 +218,7 @@ class Image:
         return builtins.hash((repr(array_intf_tup), self._mode))
 
     def __repr__(self):
-        return f'<{self.__class__.__qualname__} {self.width}x{self.height} {self.mode} {self.dtype}>'
+        return f'<{self.__class__.__qualname__} size={self.width}x{self.height} mode={self.mode} dtype={self.dtype} timestamp={self.timestamp}>'
 
     @property
     def array(self):

@@ -3,6 +3,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from typing import TypeVar, Union, Type, ForwardRef
     from .addon import AddonBase
@@ -14,7 +15,8 @@ import logging
 logger = logging.getLogger('helper')
 
 
-from .connector.ADBConnector import ADBConnector
+from .control.adb.client import get_config_adb_server
+from .control.ADBController import ADBController
 from .frontend import Frontend, DummyFrontend
 from .mixin import AddonMixin
 
@@ -28,8 +30,9 @@ class BaseAutomator(AddonMixin):
         self.addons: dict[Union[str, Type[TAddon]], TAddon] = {}
         self._cli_commands = OrderedDict()
         self.load_addons()
-
-        self._device = None
+        self.vw = 0
+        self.vh = 0
+        self._controller = None
         if device_connector is not None:
             self.connect_device(device_connector)
         if frontend is None:
@@ -52,16 +55,16 @@ class BaseAutomator(AddonMixin):
             raise TypeError("cls")
 
     def _ensure_device(self):
-        if self._device is None:
+        if self._controller is None:
             new_device = self.frontend.request_device_connector()
             if new_device is None:
                 raise RuntimeError("no device connected")
             self.connect_device(connector=new_device)
 
     @property
-    def device(self):
+    def control(self):
         self._ensure_device()
-        return self._device
+        return self._controller
 
     @property
     def viewport(self):
@@ -70,17 +73,17 @@ class BaseAutomator(AddonMixin):
 
     def connect_device(self, connector=None, *, adb_serial=None):
         if connector is not None:
-            self._device = connector
+            self._controller = connector
         elif adb_serial is not None:
-            self._device = ADBConnector(adb_serial)
+            self._controller = ADBController(get_config_adb_server().get_device(adb_serial))
         else:
-            self._device = None
+            self._controller = None
             return
-        self._viewport: tuple[int, int] = self._device.screen_size
+        self._viewport: tuple[int, int] = self._controller.screenshot().size
         self.vw = self._viewport[0] / 100
         self.vh = self._viewport[1] / 100
         self.on_device_connected()
-        self.frontend.notify('current-device', str(self._device))
+        self.frontend.notify('current-device', str(self._controller))
     
     def on_device_connected(self):
         pass

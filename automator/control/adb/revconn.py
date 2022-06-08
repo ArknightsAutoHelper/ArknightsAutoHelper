@@ -1,17 +1,28 @@
+from __future__ import annotations
+import atexit
 import socket
 import selectors
 import threading
 import secrets
 import queue
 from concurrent.futures import Future
-from typing import Any
+from typing import Any, Optional, ClassVar
 from weakref import WeakValueDictionary
 
 
 class ReverseConnectionFuture(Future[socket.socket]):
-    cookie: Any
+    cookie: bytes
 
 class ReverseConnectionHost(threading.Thread):
+    _instance: ClassVar[Optional[ReverseConnectionHost]] = None
+
+    @classmethod
+    def get_instance(cls):
+        if not hasattr(cls, 'instance'):
+            cls._instance = cls()
+            cls._instance.start()
+        return cls._instance
+
     def __init__(self, port=0):
         super().__init__()
         self.daemon = True
@@ -86,14 +97,20 @@ class ReverseConnectionHost(threading.Thread):
         else:
             self.sel.unregister(sock)
             sock.close()
-        
+
+@atexit.register
+def _cleanup():
+    instance = ReverseConnectionHost._instance
+    if instance is not None:
+        instance.stop()
+
 def main():
     worker = ReverseConnectionHost(11451)
     worker.start()
     try:
         while True:
-            worker.register_cookie(b'0000000\n')
-            sock = worker.wait_registered_socket(b'0000000\n')
+            f = worker.register_cookie(b'0000000\n')
+            sock = f.result()
             while True:
                 buf = sock.recv(4096)
                 if not buf:
