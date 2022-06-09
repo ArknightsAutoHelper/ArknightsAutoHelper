@@ -129,19 +129,16 @@ class ControlAgentClient:
         self.close()
 
     def _stdio_worker(self):
-        while True:
-            try:
-                for line in _socket_iter_lines(self.stdio_stream):
-                    strline = line.rstrip(b'\r\n').decode('utf-8', errors='replace')
-                    _logger.debug(f'{self.log_tag} stdio: {strline}')
-                    if 'bootstrap connection: listening' in strline:
-                        self.ready_future.set_result(True)
-            except OSError:
-                _logger.debug(f'{self.log_tag} stdio closed')
-                break
-            except:
-                _logger.debug(f'{self.log_tag} error:', exc_info=True)
-                pass
+        try:
+            for line in _socket_iter_lines(self.stdio_stream):
+                strline = line.rstrip(b'\r\n').decode('utf-8', errors='replace')
+                _logger.debug(f'{self.log_tag} stdio: {strline}')
+                if 'bootstrap connection: listening' in strline:
+                    self.ready_future.set_result(True)
+        except OSError:
+            _logger.debug(f'{self.log_tag} stdio closed')
+        except:
+            _logger.debug(f'{self.log_tag} error:', exc_info=True)
         self.stdio_closed_future.set_result(None)
 
     def _send_command(self, conn: SocketWithLock, cmd, payload=b''):
