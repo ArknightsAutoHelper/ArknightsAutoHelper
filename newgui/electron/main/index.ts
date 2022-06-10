@@ -13,12 +13,14 @@ let win: BrowserWindow | null = null
 async function createWindow() {
   win = new BrowserWindow({
     title: 'Main window',
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
-        color: '#ffffff',
-        symbolColor: '#1c2127'
-    }
+    // titleBarStyle: 'hidden',
+    // titleBarOverlay: {
+    //     color: '#ffffff',
+    //     symbolColor: '#1c2127'
+    // }
   })
+
+  win.setMenu(null);
 
   if (app.isPackaged) {
     win.loadFile(join(__dirname, '../renderer/index.html'))
