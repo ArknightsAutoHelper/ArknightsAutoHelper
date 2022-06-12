@@ -279,7 +279,7 @@ class CombatAddon(AddonBase):
                     smobj.request_exit = True
                     return
 
-            if self.match_roi('combat/failed', screenshot=screenshot):
+            if self.match_roi('combat/failed', mode='L', method='ccoeff', screenshot=screenshot):
                 self.logger.info("行动失败")
                 smobj.mistaken_delegation = True
                 smobj.request_exit = True
