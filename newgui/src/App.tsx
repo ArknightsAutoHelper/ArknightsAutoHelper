@@ -41,7 +41,7 @@ export function App() {
       <Navbar className='app-titlebar'>
         <Navbar.Group align={Alignment.LEFT} className='app-titlebar-left-padding' />
         <Navbar.Group align={Alignment.LEFT}>
-          <Navbar.Heading><img className='app-icon' src={logo} width="24" height="24" alt="icon" /></Navbar.Heading>
+          <Navbar.Heading className='custom-window-icon'><img className='app-icon' src={logo} width="24" height="24" alt="icon" /></Navbar.Heading>
           <ButtonGroup className='app-titlebar-controls'>
             <Button active={activeTab === 'overview'} onPointerDown={() => setActiveTab('overview')} icon="dashboard" text="总览" />
             <Button active={activeTab === 'gallery'} onPointerDown={() => setActiveTab('gallery')} icon="control" text="任务库" />
@@ -54,10 +54,6 @@ export function App() {
           <Tooltip2 content="发现新版本" placement='bottom' disabled={!hasUpdate} >
             <Button minimal intent={hasUpdate ? 'success' : null} active={activeTab === 'about'} onPointerDown={() => setActiveTab('about')} icon="info-sign" />
           </Tooltip2>
-          {/* <Button minimal icon="minus" />
-          <Button minimal icon="small-square" />
-          <Button minimal icon="duplicate" />
-          <Button minimal icon="cross" /> */}
         </Navbar.Group>
       </Navbar>
       <Box flexGrow={1} minHeight="0" position="relative">

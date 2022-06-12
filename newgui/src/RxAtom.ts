@@ -17,8 +17,8 @@ export class RxAtom<T = any> {
     }
   };
 
-  public asObservable(): Observable<T> {
-    return this.subject.pipe(skip(1));
+  public asObservable(emitCurrent: boolean = false): Observable<T> {
+    return emitCurrent ? this.subject : this.subject.pipe(skip(1));
   }
 
   public useState = (): [T, typeof this.setValue] => {

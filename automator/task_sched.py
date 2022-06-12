@@ -4,12 +4,13 @@ from dataclasses import dataclass
 import dataclasses
 import random
 import string
-from typing import Callable, ClassVar, Generic, Literal, Type, Optional, TypeVar
+from typing import Callable, ClassVar, Generic, Literal, Type, Optional, TypeVar, TYPE_CHECKING
 from collections import OrderedDict
 from app.schemadef import Schema
-from .helper import BaseAutomator
 from .addon import AddonBase
 
+if TYPE_CHECKING:
+    from .helper import BaseAutomator
 TAddon = TypeVar('TAddon', bound=AddonBase)
 TSchema = TypeVar('TSchema', bound=Schema)
 
@@ -81,6 +82,7 @@ class TaskScheduler:
         self.seq = 0
         self.current_task: _task_record = None
         self.pause = False
+        self.runing = False
 
     def notify_list_update(self):
         self.parent.frontend.notify('task_list', [serialize_task_record(x) for x in self.tasks])

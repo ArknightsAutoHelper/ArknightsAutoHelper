@@ -87,13 +87,8 @@ const TaskItem = React.forwardRef((props: ITaskItemProps, ref) => {
         icon = 'time';
         break;
       case TaskItemStatus.Skip:
-        text = '跳过';
-        icon = 'double-chevron-down';
-        break;
-      case TaskItemStatus.Stop:
-        text = '在此停止队列';
-        icon = 'ban-circle';
-        intent = 'warning';
+        text = '不运行';
+        icon = 'small-cross';
         break;
     }
     return <Tooltip2 minimal placement='top' content={text} className='task-item-icon'><Button minimal small icon={icon} {...commonProps} intent={intent} /></Tooltip2>;
@@ -324,10 +319,6 @@ export default class TaskScheduler extends React.Component {
           changed = true;
           break;
         case TaskItemStatus.Skip:
-          task.itemStatus = TaskItemStatus.Stop;
-          changed = true;
-          break;
-        case TaskItemStatus.Stop:
           task.itemStatus = TaskItemStatus.Pending;
           changed = true;
           break;

@@ -1,10 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import env from "vite-plugin-env-compatible";
-import { VitePWA } from 'vite-plugin-pwa'
 import { join, resolve } from "path";
 import electron from 'vite-plugin-electron';
-import manifest from "./public/manifest.json";
 
 export default defineConfig({
   plugins: [
@@ -13,6 +11,9 @@ export default defineConfig({
     electron({
       main: {
         entry: 'electron/main/index.ts',
+      },
+      preload: {
+        input: join(__dirname, 'electron/renderer/preload.ts'),
       },
     })
   ],
