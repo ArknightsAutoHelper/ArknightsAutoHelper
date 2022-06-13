@@ -127,6 +127,19 @@ usage: akhelper.py command [command args]
         输入材料需求创建刷图计划。使用 auto plan 命令执行刷图计划。
 ```
 
+> 如果你的电脑配置有 [Windows 终端](https://github.com/microsoft/terminal)（Windows 11已内置）和  [PowerShell Core](https://github.com/PowerShell/PowerShell)，可通过在 Windows Terminal - 设置 中增加如下配置即可一键启动命令行：
+> 1. 打开 Windows Terminal，点击顶部 `+` 按钮旁 `ˇ` 按钮下拉菜单，打开**设置**；
+> 2. 点击 **添加新配置文件**，新建空配置文件；
+> 3. 填写配置名称（例如 `Arknights Auto Helper`）；
+> 4. 命令行填写：
+> ```powershell
+> pwsh.exe -NoExit -Command "& '项目路径\venv\Scripts\Activate.ps1'; python 'akhelper.py'"
+> ```
+> 5. 启动目录填写**项目路径**，否则命令行中的 `akhelper.py` 需要替换为绝对路径；
+> 6. （可选）图标路径设置为 `项目路径\webgui2\dist\carrot.png`。
+> 
+> 配置完毕后即可在 `Windows 终端` 中跳过激活虚拟环境的步骤直接启动 akhelper。
+
 命令可使用前缀（首字母）缩写（类似 Linux iproute2），交互模式下只需输入对应命令名称即可，如：
 
 ```console
