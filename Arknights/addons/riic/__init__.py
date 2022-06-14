@@ -97,7 +97,7 @@ class RIICAddon(AddonBase):
         if not self.check_in_riic():
             raise RuntimeError('not here')
         self.logger.info('正在识别基建布局')
-        screenshot = self.device.screenshot()
+        screenshot = self.control.screenshot()
         
         t0 = time.monotonic()
         # screen_mask = None
@@ -137,7 +137,7 @@ class RIICAddon(AddonBase):
         return layout
 
     def recognize_operator_select(self, recognize_skill=False, skill_facility_hint=None) -> list[OperatorBox]:
-        screenshot = self.device.screenshot(cached=False).convert('RGB')
+        screenshot = self.control.screenshot(cached=False).convert('RGB')
         self.scale = screenshot.height / 1080
         if not (roi := self.match_roi('riic/sort_button', screenshot=screenshot)):
             raise RuntimeError('not here')
@@ -363,7 +363,7 @@ class RIICAddon(AddonBase):
 
     def enter_operator_selection(self, room='dorm1'):
         self.enter_room(room)
-        screenshot = self.device.screenshot().convert('RGB')
+        screenshot = self.control.screenshot().convert('RGB')
         if self.match_roi('riic/clear_operator'):
             pass
         elif roi := self.match_roi('riic/operator_button', method='mse', fixed_position=False, screenshot=screenshot.subview((0, 0, screenshot.height * 0.18611, screenshot.height))):
@@ -403,7 +403,7 @@ class RIICAddon(AddonBase):
             yield current_page
             last_page_set = current_page_set
             t0 = time.perf_counter()
-            self.device.input.swipe(
+            self.control.input.swipe(
                 random.uniform(85,90)*self.vw, random.uniform(40*self.vh, 60*self.vh),
                 random.uniform(60,65)*self.vh, random.uniform(40*self.vh, 60*self.vh),
                 0.3, hold_before_release=0.3, interpolation='spline')

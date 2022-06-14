@@ -1,3 +1,7 @@
+from automator.control.adb.client import get_config_adb_server
+from automator.control.adb.target import ADBControllerTarget
+
+
 def canonicalize_adb_serial(serial: str):
     """convert emulator-{X} to 127.0.0.1:{X+1}"""
     try:
@@ -13,17 +17,11 @@ def compare_adb_serial(a, b):
     b = canonicalize_adb_serial(b)
     return a == b
 
-def enum(devices):
-    from ..ADBConnector import ADBConnector
+def enum():
     import app
     targets: list[str] = app.config.device.extra_enumerators.append
     if targets is None:
-        return
+        return []
     # check if target serial is already enumerated
-    for display_name, connector_class, args, weight in devices:
-        if connector_class is ADBConnector and weight == 'strong':
-            for i, serial in enumerate(targets):
-                if len(args) == 1 and compare_adb_serial(args[0], serial):
-                    targets.pop(i)
-    for target in targets:
-        devices.append((f'ADB: {target} (append)', ADBConnector, [target], 'weak'))
+    server = get_config_adb_server()
+    return [ADBControllerTarget(server, None, 'append', target, 0, 0) for target in targets]

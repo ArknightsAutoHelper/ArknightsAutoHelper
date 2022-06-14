@@ -13,7 +13,7 @@ class CommonAddon(AddonBase):
         retry_count = 0
         max_retry = 3
         while True:
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
 
             if extra_predicate is not None and extra_predicate(screenshot):
                 self.logger.info('满足停止条件，停止导航')
@@ -68,6 +68,6 @@ class CommonAddon(AddonBase):
             if retry_count > max_retry:
                 raise RuntimeError('未知画面')
             self.logger.info('未知画面，尝试返回按钮 {}/{} 次'.format(retry_count, max_retry))
-            self.device.input.keyboard(4)  # KEYCODE_BACK
+            self.control.input.keyboard(4)  # KEYCODE_BACK
             self.delay(3)
         self.logger.info("已回到主页")

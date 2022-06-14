@@ -26,5 +26,12 @@ def GetActivationFactory(classname, interface=IActivationFactory):
     RoGetActivationFactory(classname, interface.GUID, byref(insp))
     return insp
 
+def _ro_init():
+    import sys
+    coinit_flags = getattr(sys, 'coinit_flags', 2)
+    if coinit_flags & 2:
+        RoInitialize(RO_INIT_TYPE.RO_INIT_SINGLETHREADED)
+    else:
+        RoInitialize(RO_INIT_TYPE.RO_INIT_MULTITHREADED)
 
-RoInitialize(RO_INIT_TYPE.RO_INIT_MULTITHREADED)
+# _ro_init()

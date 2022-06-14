@@ -3,16 +3,17 @@ import ctypes
 import json
 # import pprint
 import logging
-from ..ADBConnector import ADBConnector
+
+from automator.control.adb.target import ADBControllerTarget
 
 logger = logging.getLogger(__name__)
 if __name__ == '__main__':
-    logger.addHandler(logging.StreamHandler(__import__('sys').stderr))
-    logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG, force=True)
 
 
 try:
-    from rotypes.types import GUID, REFGUID, check_hresult
+    from rotypes import GUID, HRESULT
+    REFGUID = ctypes.POINTER(GUID)
     HCS_SYSTEM = ctypes.POINTER(ctypes.c_void_p)
     HCN_NETWORK = ctypes.POINTER(ctypes.c_void_p)
     HCN_ENDPOINT = ctypes.POINTER(ctypes.c_void_p)
@@ -25,59 +26,61 @@ try:
 
     HcsEnumerateComputeSystems = vmcompute.HcsEnumerateComputeSystems
     HcsEnumerateComputeSystems.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcsEnumerateComputeSystems.restype = check_hresult
+    HcsEnumerateComputeSystems.restype = HRESULT
 
     HcsOpenComputeSystem = vmcompute.HcsOpenComputeSystem
     HcsOpenComputeSystem.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(HCS_SYSTEM), ctypes.POINTER(ctypes.c_wchar_p))
-    HcsOpenComputeSystem.restype = check_hresult
+    HcsOpenComputeSystem.restype = HRESULT
 
     HcsGetComputeSystemProperties = vmcompute.HcsGetComputeSystemProperties
     HcsGetComputeSystemProperties.argtypes = (HCS_SYSTEM , ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcsGetComputeSystemProperties.restype = check_hresult
+    HcsGetComputeSystemProperties.restype = HRESULT
 
     HcsCloseComputeSystem = vmcompute.HcsCloseComputeSystem
     HcsCloseComputeSystem.argtypes = (HCS_SYSTEM,)
-    HcsCloseComputeSystem.restype = check_hresult
+    HcsCloseComputeSystem.restype = HRESULT
 
     HcnEnumerateNetworks = computenetwork.HcnEnumerateNetworks
     HcnEnumerateNetworks.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnEnumerateNetworks.restype = check_hresult
+    HcnEnumerateNetworks.restype = HRESULT
 
     HcnOpenNetwork = computenetwork.HcnOpenNetwork
     HcnOpenNetwork.argtypes = (REFGUID, ctypes.POINTER(HCN_NETWORK), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnOpenNetwork.restype = check_hresult
+    HcnOpenNetwork.restype = HRESULT
 
     HcnQueryNetworkProperties = computenetwork.HcnQueryNetworkProperties
     HcnQueryNetworkProperties.argtypes = (HCN_NETWORK , ctypes.c_void_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnQueryNetworkProperties.restype = check_hresult
+    HcnQueryNetworkProperties.restype = HRESULT
 
     HcnCloseNetwork = computenetwork.HcnCloseNetwork
     HcnCloseNetwork.argtypes = (HCN_NETWORK,)
-    HcnCloseNetwork.restype = check_hresult
+    HcnCloseNetwork.restype = HRESULT
 
     HcnEnumerateEndpoints = computenetwork.HcnEnumerateEndpoints
     HcnEnumerateEndpoints.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnEnumerateEndpoints.restype = check_hresult
+    HcnEnumerateEndpoints.restype = HRESULT
 
     HcnOpenEndpoint = computenetwork.HcnOpenEndpoint
     HcnOpenEndpoint.argtypes = (REFGUID, ctypes.POINTER(HCN_ENDPOINT), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnOpenEndpoint.restype = check_hresult
+    HcnOpenEndpoint.restype = HRESULT
 
     HcnQueryEndpointProperties = computenetwork.HcnQueryEndpointProperties
     HcnQueryEndpointProperties.argtypes = (HCN_ENDPOINT , ctypes.c_void_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnQueryEndpointProperties.restype = check_hresult
+    HcnQueryEndpointProperties.restype = HRESULT
 
     HcnCloseEndpoint = computenetwork.HcnCloseEndpoint
     HcnCloseEndpoint.argtypes = (HCN_ENDPOINT,)
-    HcnCloseEndpoint.restype = check_hresult
+    HcnCloseEndpoint.restype = HRESULT
     availiable = True
 except Exception as e:
-    logger.debug("HCN API not availiable")
+    logger.debug("HCN API not availiable", exc_info=True)
     availiable = False
 
 if availiable:
-    from .append import compare_adb_serial
-    def enum(devices):
+    from automator.control.adb.client import get_config_adb_server
+    server = get_config_adb_server()
+    def enum():
+        devices = []
         with contextlib.suppress(Exception):
             response = ctypes.c_wchar_p()
             HcsEnumerateComputeSystems('{"State":"Running"}', ctypes.byref(response), None)
@@ -86,7 +89,7 @@ if availiable:
             logger.debug("running compute systems: %r", runningsystems)
             if not runningsystems:
                 logger.debug("no running compute systems, skipping")
-                return
+                return []
             runningids = [GUID(x['RuntimeId']) for x in runningsystems]
             
             HcnEnumerateEndpoints(None, ctypes.byref(response), None)
@@ -104,9 +107,6 @@ if availiable:
                 jdoc = ctypes.wstring_at(response)
                 CoTaskMemFree(response)
                 obj = json.loads(jdoc)
-                # print(obj)
-                # logger.debug("HcnQueryEndpointProperties(%r) => %r", guid, jdoc)
-                # pprint.pprint(obj)
                 HcnCloseEndpoint(nethandle)
                 if obj.get('VirtualNetworkName', None) not in ('BluestacksNetwork', 'BluestacksNxt'):
                     continue
@@ -116,20 +116,19 @@ if availiable:
                     for policy in policies:
                         if policy.get("InternalPort", None) == 5555:
                             port = policy['ExternalPort']
-                            logger.debug("found bluestacks hyperv adb port %s for vm %s", port, vmguid)
-                            adb_serial = '127.0.0.1:%d' % port
                             vmname = [x.get('Id') for x in runningsystems if GUID(x.get('RuntimeId')) == vmguid][0]
-                            for i, defs in enumerate(devices):
-                                if defs[1] is ADBConnector and len(defs[2]) == 1:
-                                    if compare_adb_serial(defs[2][0], adb_serial):
-                                        devices.pop(i)
-                            devices.append((f'ADB: {adb_serial} (BlueStacks: {vmname})', ADBConnector, [adb_serial], 'strong'))
+                            logger.debug("found bluestacks hyperv adb port %s for vm %s (%s)", port, vmguid, vmname)
+                            adb_address = '127.0.0.1:%d' % port
+                            preload = {'emulator_hypervisor': 'hyper-v'}
+                            if 'IPAddress' in obj:
+                                preload['host_l2_reachable'] = obj['IPAddress']
+                            devices.append(ADBControllerTarget(server, None, f'BlueStacks: {vmname}', adb_address, 2, 1, override_identifier=f'hyperv:bstk:{vmname}', preload_device_info=preload))
+        return devices
 else:
-    def enum(devices):
-        pass
+    def enum():
+        return []
 
 if __name__ == '__main__':
-    devices = []
-    enum(devices)
+    devices = enum()
     from pprint import pprint
     pprint(devices)

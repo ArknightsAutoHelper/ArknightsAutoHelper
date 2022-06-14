@@ -92,3 +92,24 @@ def migrate_from_3(ydoc: Mapping):
         pass
     ydoc['__version__'] = 4
     return ydoc
+
+@migrate_from(4)
+def migrate_from_4(ydoc: Mapping):
+    logger.info('Migrating from config schema version 4')
+    with contextlib.suppress(KeyError, AttributeError):
+        if ydoc['device']['cache_screenshot']:
+            ydoc['device']['screenshot_rate_limit'] = -1
+            del ydoc['device']['cache_screenshot']
+    # with contextlib.suppress(KeyError, AttributeError):
+    ydoc['device']['defaults'] = schemadef._generate_default_store(schema.root.device.type.defaults, 4)
+    with contextlib.suppress(KeyError, AttributeError):
+        if ydoc['device']['compat_screenshot']:
+            ydoc['device']['defaults']['screenshot_method'] = 'aosp-screencap'
+            ydoc['device']['defaults']['aosp_screencap_encoding'] = 'png'
+            del ydoc['device']['compat_screenshot']
+    with contextlib.suppress(KeyError, AttributeError):
+        if not ydoc['device']['workaround_slow_emulator_adb']:
+            ydoc['device']['defaults']['screenshot_transport'] = 'adb'
+        del ydoc['device']['workaround_slow_emulator_adb']
+    ydoc['__version__'] = 5
+    return ydoc
