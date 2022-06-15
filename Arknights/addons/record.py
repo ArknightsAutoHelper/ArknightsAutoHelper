@@ -37,14 +37,14 @@ class RecordAddon(AddonBase):
         half_roi = roi_size // 2
         self.logger.info('滑动屏幕以退出录制.')
         self.logger.info('开始录制, 请点击相关区域...')
-        sock = self.device.device_session_factory().shell_stream('getevent')
+        sock = self.control.device_session_factory().shell_stream('getevent')
         f = sock.makefile('rb')
         while True:
             x = 0
             y = 0
             point_list = []
             touch_down = False
-            screen = self.device.screenshot()
+            screen = self.control.screenshot()
             while True:
                 line = f.readline().decode('utf-8', 'replace').strip()
                 # print(line)
@@ -137,7 +137,7 @@ class RecordAddon(AddonBase):
                 threshold = record.get('threshold', 0.7)
                 for _ in range(repeat):
                     if mode == 'match_template':
-                        screen = self.device.screenshot()
+                        screen = self.control.screenshot()
                         gray_screen = screen.convert('L')
                         if ratio != 1:
                             gray_screen = gray_screen.resize((int(self.viewport[0] * ratio), record_height))
@@ -157,7 +157,7 @@ class RecordAddon(AddonBase):
                         x, y = record['point']
                         x = x // ratio
                         y = y // ratio
-                    self.device.touch_tap((x, y), offsets=(5, 5))
+                    self.control.touch_tap((x, y), offsets=(5, 5))
                     if record.get('wait_seconds_after_touch'):
                         self.delay(record['wait_seconds_after_touch'])
 

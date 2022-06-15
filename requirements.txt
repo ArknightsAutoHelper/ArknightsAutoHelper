@@ -9,9 +9,11 @@ ruamel.yaml==0.17.17
 colorama==0.4.4; sys_platform == 'win32'
 textdistance==4.2.1
 dataclasses_json
+lz4
+pywin32; sys_platform == 'win32'
 
 # webgui2
-bottle==0.12.19
+bottle==0.12.20
 bottle-websocket==0.2.9
 # not using pywebview on win32 python >= 3.9 as one dependency (pythonnet) has no binary wheel (yet)
 # we will fallback to a customized Chrome/Chromium/Edge

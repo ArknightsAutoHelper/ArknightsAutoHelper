@@ -1,94 +1,39 @@
-import os
 import app
 import copy
-import json
+from app import schemadef
 
-_ydoc = None
-db_file = app.config_path / 'device-config.json'
-if db_file.exists():
-    with open(db_file, 'r', encoding='utf-8') as f:
-        try:
-            _ydoc = json.load(f)
-        except json.JSONDecodeError:
-            f.seek(0)
-            jdoc = f.read().strip()
-            if not jdoc:
-                _ydoc = None
-            else:
-                raise
-            
-if _ydoc is None:
-    _ydoc = {'$schema':'device-config.schema.json'}
+from app.schema import ControllerConfig
 
-def _set_dirty():
-    global _dirty
-    _dirty = True
+from .config_store import YamlConfigStore
 
-def _save():
-    global _dirty
-    if _dirty:
-        swpfile = str(db_file) + '.saving'
-        with open(swpfile, 'w', encoding='utf-8') as f:
-            json.dump(_ydoc, f, indent=2)
-        os.replace(swpfile, db_file)
-        dirty = False
+db_file = app.config_path / 'device-config-v2.yaml'
 
-class DeviceConfig:
-    def __init__(self, name, source):
-        self._name = name
-        self._source = source
-        if source is not None:
-            self._mapping = copy.deepcopy(source)
-        else:
-            self._mapping = {}
-        self._ops = []
+store = YamlConfigStore(db_file)
 
-    def __getitem__(self, name):
-        if name not in self._mapping:
-            raise KeyError(name)
-        return self._mapping[name]
+class PresistentDeviceConfig(ControllerConfig):
+    device_identifier: str = None
+    _parent_store: YamlConfigStore = None
 
-    def get(self, key, default):
-        return self._mapping.get(key, default)
-
-    def __contains__(self, name):
-        return name in self._mapping
-
-    def __setitem__(self, name, value):
-        _set_dirty()
-        value = copy.deepcopy(value)
-        self._mapping[name] = value
-        def op():
-            self._source[name] = value
-        self._ops.append(op)
-
-    def __delitem__(self, name):
-        del self._mapping[name]
-
-    def __dict__(self):
-        return copy.deepcopy(dict(self._mapping))
-
-    def __repr__(self):
-        return 'DeviceConfig[%r, %r]' % (self._name, self._mapping)
-
-    def is_new_record(self):
-        return self._source is None
+    def __init__(self, mapping, device_identifier: str, store: YamlConfigStore):
+        super().__init__(mapping)
+        self.device_identifier = device_identifier
+        self._parent_store = store
 
     def save(self):
-        if self._source is None:
-            _ydoc[self._name] = copy.deepcopy(self._mapping)
-        else:
-            for op in self._ops:
-                op()
-        self._ops.clear()
-        _save()
-    
+        self._parent_store.root[self.device_identifier] = copy.deepcopy(self._mapping)
+        self._parent_store.save()
+
+
 def get_device(name):
-    if name in _ydoc:
-        return DeviceConfig(name, _ydoc[name])
+    if name in store.root:
+        record_store = store.root[name]
+        record = PresistentDeviceConfig(record_store, name, store)
     else:
-        record = DeviceConfig(name, None)
-        return record
+        mapping = schemadef._generate_default_store(PresistentDeviceConfig, 2)
+        mapping.update(app.config.device.defaults._mapping)
+        mapping.yaml_end_comment_extend(['\n'])
+        record = PresistentDeviceConfig(mapping, name, store)
+    return record
 
 def contains(name):
-    return name in _ydoc
+    return name in store.root

@@ -31,7 +31,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         viewport: tuple[int, int]
     
     def _implicit_screenshot(self) -> Image:
-        return self.helper.device.screenshot(False)
+        return self.helper.control.screenshot(False)
 
     def delay(self, n: Real=10,  # 等待时间中值
                randomize=True, allow_skip=False):  # 是否在此基础上设偏移量
@@ -45,7 +45,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         rx, ry = randomness
         x += randint(-rx, rx)
         y += randint(-ry, ry)
-        self.helper.device.touch_tap((x, y))
+        self.helper.control.touch_tap((x, y))
         self.delay(post_delay)
 
     def tap_rect(self, rc: Union[TupleRect, Rect], post_delay=1):
@@ -60,7 +60,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         ydiff = max(-1.0, min(1.0, gauss(0, 0.2)))
         tapx = int(midx + xdiff * hwidth)
         tapy = int(midy + ydiff * hheight)
-        self.helper.device.touch_tap((tapx, tapy), (0, 0))
+        self.helper.control.touch_tap((tapx, tapy), (0, 0))
         self.delay(post_delay, randomize=True)
 
     def tap_quadrilateral(self, pts, post_delay=1):
@@ -72,14 +72,14 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
         pt2 = pts[1] if bddiff > 1 else pts[3]
         halfvec = (pt2 - m) / 2
         finalpt = m + halfvec * bddiff
-        self.helper.device.touch_tap(tuple(int(x) for x in finalpt), (0, 0))
+        self.helper.control.touch_tap(tuple(int(x) for x in finalpt), (0, 0))
         self.delay(post_delay, randomize=True)
 
     def wait_for_still_image(self, threshold=16, crop=None, timeout=60, raise_for_timeout=True, check_delay=1, iteration=1):
         if crop is None:
-            shooter = lambda: self.helper.device.screenshot(False)
+            shooter = lambda: self.helper.control.screenshot(False)
         else:
-            shooter = lambda: self.helper.device.screenshot(False).crop(crop)
+            shooter = lambda: self.helper.control.screenshot(False).crop(crop)
         prev_screenshot = shooter()
         t0 = time.monotonic()
         ts = t0 + timeout
@@ -109,7 +109,7 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
     def swipe_screen(self, move, rand=100, origin_x=None, origin_y=None):
         origin_x = (origin_x or self.viewport[0] // 2) + randint(-rand, rand)
         origin_y = (origin_y or self.viewport[1] // 2) + randint(-rand, rand)
-        self.helper.device.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
+        self.helper.control.touch_swipe2((origin_x, origin_y), (move, max(250, move // 2)), randint(600, 900))
 
     def wait_for_roi(self, roi: RoiDef, timeout: Real = 10, **roi_matching_args: RoiMatchingArgs) -> imgreco.common.RoiMatchingResult:
         t0 = time.monotonic()

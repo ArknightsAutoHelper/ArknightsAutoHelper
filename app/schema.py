@@ -1,20 +1,31 @@
 from .schemadef import *
+
+class ControllerConfig(Schema):
+    screenshot_method = EnumField(['aah-agent', 'aosp-screencap'], 'aah-agent', '截图方式', 'aah-agent：截图速度更快，且支持 wm size 动态调整分辨率，但部分模拟器不兼容（截图黑屏或卡死）\naosp-screencap：使用 AOSP screencap 命令，速度较慢，但兼容性好。')
+    input_method = EnumField(['aah-agent', 'aosp-input'], 'aah-agent', '输入注入方式', 'aah-agent：使用 aah-agent；\naosp-input：使用 input 命令')
+    screenshot_transport = EnumField(['auto', 'adb', 'vm_network'], 'auto', '截图传输方式', 'auto：在 adb 连接较慢时尝试 vm_network。\nadb：总是使用 adb')
+    aah_agent_compress = Field(bool, False, 'aah-agent 截图压缩', '使用 lz4 压缩截图数据，提高截图速度，但同时提高 CPU 占用。')
+    aosp_screencap_encoding = EnumField(['auto', 'raw', 'gzip', 'png'], 'auto', 'AOSP screencap 截图压缩', '仅通过 adb 传输时可用，raw 为不压缩。')
+
+
 class root(Schema):
-    __version__ = 3
-    debug = Field(bool, False)
-    @Namespace('设备连接')
+    __version__ = 5
+    @Namespace('ADB 控制设置')
     class device:
-        adb_server = Field(str, '127.0.0.1:5037', 'ADB server 端口', '如 ADB server 端口冲突（表现为 server 频繁退出），可尝试更换端口。')
         adb_binary = Field(str, '', 'ADB 可执行文件', """需要启动 adb server 时，使用的 adb 命令。\n为空时则尝试: 1. PATH 中的 adb；2. ADB/{sys.platform}/adb; 3. 查找 Android SDK（ANDROID_SDK_ROOT 和默认安装目录）""")
-        adb_always_use_device = Field(str, '', '只连接特定设备')
-        @Namespace('额外的设备枚举逻辑')
+        adb_always_use_device = Field(str, '', '自动连接设备', '自动选择设备进行连接时，只选择此设备。')
+        screenshot_rate_limit = Field(int, -1, '截图频率限制', '每秒最多截图次数，超出限制时直接返回上次截图。0 表示不限制，-1 表示根据上次截图耗时自动限制。')
+        @Namespace('设备列表')
         class extra_enumerators:
-            bluestacks_hyperv = Field(bool, True, '尝试探测 Bluestacks (Hyper-V) 设备')
-            append = ListField(str, ['127.0.0.1:5555', '127.0.0.1:7555'], '尝试连接 ADB 端口', '在设备列表中追加以下 ADB TCP/IP 端口')
-        compat_screenshot = Field(bool, True, '使用兼容性较好（但较慢）的截图方式')
-        workaround_slow_emulator_adb = EnumField(['auto', 'never', 'always'], 'auto', '尝试优化 ADB 数据传输', '通过 adb 传输模拟器截图数据较慢时，尝试绕过 adbd 传输截图数据\n模拟器判断逻辑：1. 设备名称以 "emulator-" 或 "127.0.0.1:" 开头；2. ro.product.board 包含 goldfish（SDK emulator）或存在 vboxguest 模块')
-        cache_screenshot = Field(bool, True, '截图缓存', '如果两次截图间隔小于上次截图耗时，则直接使用上次的截图')
-    @Namespace('作战模块', '回复体力设置已移除，请使用命令行参数或在 GUI 中设置')
+            vbox_emulators = Field(bool, True, '尝试探测基于 VirtualBox 的模拟器（Windows）', '通过 VirtualBox COM API 探测正在运行的模拟器')
+            bluestacks_hyperv = Field(bool, True, '尝试探测 Bluestacks (Hyper-V) 设备（Windows）', '通过 Host Compute System 和 Host Compute Network API 探测正在运行的 Bluestacks Hyper-V 实例')
+            append = ListField(str, ['127.0.0.1:5555', '127.0.0.1:7555'], '追加 ADB 端口', '在设备列表中追加以下 ADB TCP/IP 端口')
+        @Namespace('设备默认设置')
+        class defaults(ControllerConfig):
+            pass
+        
+        adb_server = Field(str, '127.0.0.1:5037', 'ADB server 端口', '大部分情况下不需要修改。')
+    @Namespace('作战模块')
     class combat:
         @Namespace('企鹅物流数据统计')
         class penguin_stats:
@@ -45,3 +56,4 @@ class root(Schema):
     class grass_on_aog:
         exclude = ListField(str, ['固源岩组'], '不刷以下材料')
 
+    debug = Field(bool, False)

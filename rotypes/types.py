@@ -1,8 +1,6 @@
 from ctypes import *
 from ctypes.wintypes import *
 
-HRESULT = LONG
-
 VOIDPP = POINTER(c_void_p)
 
 S_OK = 0

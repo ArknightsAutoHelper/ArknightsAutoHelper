@@ -50,7 +50,7 @@ def asarray(im: Image.Image, padding_channel='stride', allow_copy=True) -> np.nd
     make_copy = False
     shape, typestr = Image._conv_type_shape(im)
     pilbuf = dict(imdata.unsafe_ptrs)
-    if pilbuf.get('pixel32', 0) != 0:
+    if len(im.mode) >= 3:
         pixel_advance = 4
         if shape[-1] == 3:
             if padding_channel == 'passthrough':
@@ -72,7 +72,7 @@ def asarray(im: Image.Image, padding_channel='stride', allow_copy=True) -> np.nd
     pil_strides = np.diff(line_ptrs)
     if np.all(pil_strides == pil_strides[0]):
         # found fixed stride, construct numpy array interface
-        data = (line_ptrs[0], False)
+        data = (int(line_ptrs[0]), False)
         arr_strides = (pil_strides[0], pixel_advance, 1) if pixel_advance > 1 else (pil_strides[0], 1)
         array_intf = {
             'version': 3,
@@ -106,22 +106,3 @@ def asarray(im: Image.Image, padding_channel='stride', allow_copy=True) -> np.nd
 #     return np.asarray(_ArrayInterfaceForObject(_pil_array_interface(im), im.getdata()))
 
 
-def fromarray(arr, mode=None, must_share_buffer=False) -> Image.Image:
-    """
-    Creates an image memory from an object exporting the array interface
-    (using the buffer protocol).
-
-    :param arr: Object with array interface
-    :param mode: Mode to use (will be determined from type if None)
-      See: :ref:`concept-modes`.
-    :returns: An image object.
-
-    .. versionadded:: 1.1.6
-    """
-    arr = np.asarray(arr)
-    height, width, *channels = arr.shape
-    if not channels:
-        channels = 1
-    else:
-        channels = channels[0]
-    

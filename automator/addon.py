@@ -90,22 +90,19 @@ class AddonBase(AddonMixin):
         """callback"""
 
     @property
-    def device(self):
-        return self.helper.device
+    def control(self):
+        return self.helper.control
 
     @property
     def viewport(self):
-        self.helper._ensure_device()
         return self.helper.viewport
 
     @property
     def vw(self):
-        self.helper._ensure_device()
         return self.helper.vw
 
     @property
     def vh(self):
-        self.helper._ensure_device()
         return self.helper.vh
 
     @property

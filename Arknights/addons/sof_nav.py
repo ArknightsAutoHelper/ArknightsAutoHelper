@@ -65,7 +65,7 @@ class ShipOfFoolsNavigator(AddonBase):
         swipe_count = 0
 
         while True:
-            screenshot = imgops.scale_to_height(self.device.screenshot().convert('RGB'), 1080)
+            screenshot = imgops.scale_to_height(self.control.screenshot().convert('RGB'), 1080)
             scale = self.viewport[1] / 1080
             passed_icon = self.load_roi('maps/sof/passed_stage')
             current_page_stages = {}
@@ -119,7 +119,7 @@ class ShipOfFoolsNavigator(AddonBase):
 
 
     def swipe_left(self):
-        self.device.input.swipe(random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)
+        self.control.input.touch_swipe(random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)
 
     def swipe_right(self):
-        self.device.input.swipe(random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)
+        self.control.input.touch_swipe(random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)

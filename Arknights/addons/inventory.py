@@ -14,7 +14,7 @@ class InventoryAddon(AddonBase):
         last_screen_items = None
         move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
         self.swipe_screen(move)
-        screenshot = self.device.screenshot()
+        screenshot = self.control.screenshot()
         while True:
             move = -randint(self.viewport[0] // 4, self.viewport[0] // 3)
             self.swipe_screen(move)
@@ -32,7 +32,7 @@ class InventoryAddon(AddonBase):
             last_screen_items = screen_item_ids
             items += screen_items
             # break
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
         if show_item_name:
             self.logger.info('items_map: %s' % {item['itemName']: item['quantity'] for item in items})
         return {item['itemId']: item['quantity'] for item in items}

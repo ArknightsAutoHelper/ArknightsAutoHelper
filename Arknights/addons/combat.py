@@ -188,7 +188,7 @@ class CombatAddon(AddonBase):
         def on_prepare(smobj):
             count_times = 0
             while True:
-                screenshot = self.device.screenshot()
+                screenshot = self.control.screenshot()
                 recoresult = imgreco.before_operation.recognize(screenshot)
                 if recoresult is not None:
                     self.logger.debug('当前画面关卡：%s', recoresult['operation'])
@@ -218,7 +218,7 @@ class CombatAddon(AddonBase):
                     self.logger.info('尝试回复理智')
                     self.tap_rect(recoresult['start_button'])
                     self.delay(SMALL_WAIT)
-                    screenshot = self.device.screenshot()
+                    screenshot = self.control.screenshot()
                     refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
                     confirm_refill = False
                     if refill_type == 'item' and self.refill_with_item:
@@ -251,7 +251,7 @@ class CombatAddon(AddonBase):
             count_times = 0
             while True:
                 self.delay(TINY_WAIT, False)
-                screenshot = self.device.screenshot()
+                screenshot = self.control.screenshot()
                 recoresult = imgreco.before_operation.check_confirm_troop_rect(screenshot)
                 if recoresult:
                     self.logger.info('确认编队')
@@ -291,13 +291,14 @@ class CombatAddon(AddonBase):
                 t = time.monotonic() - smobj.operation_start
                 self.logger.info('已进行 %.1f s，判断是否结束', t)
 
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
 
             if self.match_roi('combat/topbar', method='ccoeff', screenshot=screenshot):
                 if self.match_roi('combat/lun', method='ccoeff', screenshot=screenshot) and not smobj.mistaken_delegation:
                     self.logger.info('伦了。')
                     smobj.mistaken_delegation = True
                 else:
+                    self.logger.info('战斗未结束')
                     return
 
             if self.match_roi('combat/topbar_camp', method='ccoeff', screenshot=screenshot):
@@ -305,6 +306,7 @@ class CombatAddon(AddonBase):
                     self.logger.info('伦了。')
                     smobj.mistaken_delegation = True
                 else:
+                    self.logger.info('战斗未结束')
                     return
 
             if smobj.mistaken_delegation and not app.config.combat.mistaken_delegation.settle:
@@ -314,7 +316,7 @@ class CombatAddon(AddonBase):
                     smobj.request_exit = True
                     return
 
-            if self.match_roi('combat/failed', screenshot=screenshot):
+            if self.match_roi('combat/failed', mode='L', method='ccoeff', screenshot=screenshot):
                 self.logger.info("行动失败")
                 smobj.mistaken_delegation = True
                 smobj.request_exit = True
@@ -336,7 +338,7 @@ class CombatAddon(AddonBase):
             if not end_flag and t > 300:
                 if imgreco.end_operation.check_end_operation2(screenshot):
                     self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
-                    screenshot = self.device.screenshot()
+                    screenshot = self.control.screenshot()
                     end_flag = imgreco.end_operation.check_end_operation_legacy(screenshot)
             if end_flag:
                 self.logger.info('战斗结束')
@@ -358,12 +360,13 @@ class CombatAddon(AddonBase):
                         return
                     else:
                         self.logger.info('放弃关卡')
+                        smobj.request_exit = True
                         self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot))
                         # 关闭失败提示
                         self.wait_for_still_image()
                         return
                 elif dlgtype == 'yesno' and '将会恢复' in ocrresult:
-                    if smobj.mistaken_delegation and not app.config.combat.mistaken_delegation.settle:
+                    if smobj.request_exit:
                         self.logger.info('确认退出关卡')
                         self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot))
                     else:
@@ -386,7 +389,7 @@ class CombatAddon(AddonBase):
 
         def on_end_operation(smobj):
             import imgreco.end_operation
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
             reportresult = penguin_stats.reporter.ReportResult.NotReported
             try:
                 # 掉落识别

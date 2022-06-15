@@ -8,7 +8,7 @@ common_cache_config = {
     'character_table': {
         'type': 'net_json',
         'filename': 'character_table_cache.json',
-        'url': 'https://raw.fastgit.org/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/character_table.json',
+        'url': 'https://gh.cirno.xyz/raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/character_table.json',
         'encoding': 'utf-8'
     },
 }
@@ -51,5 +51,5 @@ def load_common_cache(cache_name, force_update=False):
 
 
 def load_game_data(table_name, force_update=False):
-    url = f'https://cdn.jsdelivr.net/gh/Kengxxiao/ArknightsGameData@master/zh_CN/gamedata/excel/{table_name}.json'
+    url = f'https://gh.cirno.xyz/raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/{table_name}.json'
     return load_net_json_cache(f'{table_name}_cache.json', url, 'utf-8', force_update)
