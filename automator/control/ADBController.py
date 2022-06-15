@@ -411,13 +411,17 @@ class ADBController:
         return self.input.get_input_capabilities() | self._screenshot_adapter.get_screenshot_capabilities()
 
     def screenshot(self, cached: bool = True) -> cvimage.Image:
-        if not cached or app.config.device.screenshot_rate_limit == 0:
+        rate_limit = app.config.device.screenshot_rate_limit
+        if rate_limit == 0:
             return self._screenshot_adapter.screenshot()
         t0 = time.perf_counter()
-        if self._last_screenshot is None or t0 > self._last_screenshot_expire:
+        if not cached or self._last_screenshot is None or t0 > self._last_screenshot_expire:
             self._last_screenshot = self._screenshot_adapter.screenshot()
             t1 = time.perf_counter()
-            self._last_screenshot_expire = t1 + (t1 - t0)
+            if rate_limit == -1:
+                self._last_screenshot_expire = t1 + (t1 - t0)
+            else:
+                self._last_screenshot_expire = t0 + (1 / rate_limit)
         return self._last_screenshot
         
     def touch_swipe2(self, origin, movement, duration=None):
