@@ -403,7 +403,7 @@ class RIICAddon(AddonBase):
             yield current_page
             last_page_set = current_page_set
             t0 = time.perf_counter()
-            self.control.input.swipe(
+            self.control.input.touch_swipe(
                 random.uniform(85,90)*self.vw, random.uniform(40*self.vh, 60*self.vh),
                 random.uniform(60,65)*self.vh, random.uniform(40*self.vh, 60*self.vh),
                 0.3, hold_before_release=0.3, interpolation='spline')

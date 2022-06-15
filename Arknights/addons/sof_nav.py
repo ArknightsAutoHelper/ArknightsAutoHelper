@@ -119,7 +119,7 @@ class ShipOfFoolsNavigator(AddonBase):
 
 
     def swipe_left(self):
-        self.control.input.swipe(random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)
+        self.control.input.touch_swipe(random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)
 
     def swipe_right(self):
-        self.control.input.swipe(random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)
+        self.control.input.touch_swipe(random.uniform(5, 15)*self.vw, random.uniform(40, 60)*self.vh, random.uniform(85, 95)*self.vw, random.uniform(40, 60)*self.vh, move_duration=0.5, hold_before_release=0.5)

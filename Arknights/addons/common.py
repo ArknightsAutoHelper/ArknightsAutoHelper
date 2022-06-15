@@ -68,6 +68,6 @@ class CommonAddon(AddonBase):
             if retry_count > max_retry:
                 raise RuntimeError('未知画面')
             self.logger.info('未知画面，尝试返回按钮 {}/{} 次'.format(retry_count, max_retry))
-            self.control.input.keyboard(4)  # KEYCODE_BACK
+            self.control.input.send_key(4)  # KEYCODE_BACK
             self.delay(3)
         self.logger.info("已回到主页")
