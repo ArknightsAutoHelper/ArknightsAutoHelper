@@ -183,7 +183,7 @@ class ShellScreenshotAdapter(ScreenshotProtocol):
         hdrlen = 0
         if self.controller.sdk_version >= 28:
             # new format for Android P
-            colorspace = struct.unpack_from('<I', pixels, 12)[0]
+            colorspace = struct.unpack_from('<I', data, 12)[0]
             hdrlen = 16
         else:
             colorspace = 0
