@@ -45,9 +45,6 @@ class root(Schema):
     @Namespace('作战计划')
     class plan:
         calc_mode = EnumField(['online', 'local-aog'], 'online', '计算方式', 'online: 从企鹅物流数据统计接口获取刷图计划\nlocal-aog: 本地计算刷图计划, 使用 aog 推荐的关卡优化')
-    @Namespace('关卡导航')
-    class stage_navigator:
-        ocr_backend = EnumField(['svm', 'dnn'], 'svm', '自动选关使用的 OCR 后端')
     @Namespace('OCR 设置（即将弃用）')
     class ocr:
         backend = EnumField(['auto', 'tesseract', 'baidu'], 'auto', '默认 OCR 后端')

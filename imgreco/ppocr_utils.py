@@ -49,5 +49,5 @@ def detect_box(screen: Image, target_name: str, drop_score=0.3, box_thresh=0.1, 
     cv2.circle(dbg_screen.array, box_center, 4, (0, 0, 255), -1)
     richlogger.logimage(dbg_screen)
     richlogger.logtext(f"result {max_res}, box_center: {box_center}")
-    logger.info(f"result {max_res}, box_center: {box_center}, score: {max_score}")
+    logger.info(f"result {max_res}, box_center: {box_center}, score: {max_score:.3f}")
     return box_center, max_score

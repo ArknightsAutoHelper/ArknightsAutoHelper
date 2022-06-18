@@ -149,5 +149,5 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
             self.delay(0.5, False, False)
         return False, results
 
-    def screenshot(self, mode='RGB') -> Image:
+    def screenshot(self, mode='BGR') -> Image:
         return self.helper.control.screenshot().convert(mode)

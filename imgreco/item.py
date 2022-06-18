@@ -98,7 +98,9 @@ def get_quantity(itemimg):
         richlogger.logimage(numimg)
         from .ocr import acquire_engine_global_cached
         eng = acquire_engine_global_cached('zh-cn')
-        result = eng.recognize(numimg, char_whitelist='0123456789.万', tessedit_pageseg_mode='13')
+        from imgreco.ocr import OcrHint
+        result = eng.recognize(numimg, char_whitelist='0123456789.万', tessedit_pageseg_mode='13',
+                               hints=[OcrHint.SINGLE_LINE])
         qty_text = result.text
         richlogger.logtext(f'{qty_text=}')
         try:
@@ -129,7 +131,7 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False) -> Recogniz
     if with_quantity:
         quantity = get_quantity(itemimg)
 
-    prob, dnnitem = predict_item_dnn(common.convert_to_cv(itemimg.convert('RGB')))
+    prob, dnnitem = predict_item_dnn(itemimg.array)
     item_id = dnnitem.item_id
     name = dnnitem.item_name
     item_type = dnnitem.item_type
