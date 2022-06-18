@@ -53,13 +53,11 @@ class CommonAddon(AddonBase):
             self.logger.debug(f"检查对话框：{dlgtype}, {ocr}")
             if dlgtype == 'yesno':
                 if '基建' in ocr or '停止招募' in ocr or '好友列表' in ocr:
-                    self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot), post_delay=2)
+                    self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot), post_delay=5)
                     continue
-                elif '招募干员' in ocr or '加急' in ocr:
+                elif '招募干员' in ocr or '加急' in ocr or '退出游戏' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot), post_delay=2)
                     continue
-                if '退出游戏' in ocr:
-                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot), post_delay=2)
                 else:
                     raise RuntimeError('未适配的对话框')
             elif dlgtype == 'ok':
