@@ -1,17 +1,18 @@
-import contextlib
-import ctypes
-import json
-# import pprint
+import sys
 import logging
 
-from automator.control.adb.target import ADBControllerTarget
-
 logger = logging.getLogger(__name__)
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, force=True)
 
+def enum():
+    return []
 
-try:
+def _init():
+    import contextlib
+    import ctypes
+    import json
+    # import pprint
+
+    from automator.control.adb.target import ADBControllerTarget
     from rotypes import GUID, HRESULT
     REFGUID = ctypes.POINTER(GUID)
     HCS_SYSTEM = ctypes.POINTER(ctypes.c_void_p)
@@ -71,15 +72,11 @@ try:
     HcnCloseEndpoint = computenetwork.HcnCloseEndpoint
     HcnCloseEndpoint.argtypes = (HCN_ENDPOINT,)
     HcnCloseEndpoint.restype = HRESULT
-    availiable = True
-except Exception as e:
-    logger.debug("HCN API not availiable", exc_info=True)
-    availiable = False
 
-if availiable:
-    from automator.control.adb.client import get_config_adb_server
-    server = get_config_adb_server()
+    global enum
     def enum():
+        from automator.control.adb.client import get_config_adb_server
+        server = get_config_adb_server()
         devices = []
         with contextlib.suppress(Exception):
             response = ctypes.c_wchar_p()
@@ -124,11 +121,16 @@ if availiable:
                                 preload['host_l2_reachable'] = obj['IPAddress']
                             devices.append(ADBControllerTarget(server, None, f'BlueStacks: {vmname}', adb_address, 2, 1, override_identifier=f'hyperv:bstk:{vmname}', preload_device_info=preload))
         return devices
-else:
-    def enum():
-        return []
+
+if sys.platform == 'win32':
+    try:
+        _init()
+    except Exception:
+        logger.debug("failed to initialize hyper-v enumerator", exc_info=True)
+        raise
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG, force=True)
     devices = enum()
     from pprint import pprint
     pprint(devices)
