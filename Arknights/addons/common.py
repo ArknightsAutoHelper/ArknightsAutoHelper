@@ -8,6 +8,8 @@ class CommonAddon(AddonBase):
         import imgreco.main
         if extra_predicate is None:
             self.logger.info("正在返回主页")
+            from Arknights.addons.record import RecordAddon
+            self.addon(RecordAddon).try_replay_record('back_to_main', quiet=True)
         else:
             self.logger.info("返回上层")
         retry_count = 0
