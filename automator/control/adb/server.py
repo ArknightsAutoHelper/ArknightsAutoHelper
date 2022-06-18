@@ -82,6 +82,7 @@ def start_adb_server():
             adb_binaries.append(findadb)
     else:
         adb_binaries = [adbbin]
+    from .client import ADBServer
     for adbbin in adb_binaries:
         try:
             logger.debug('trying %r', adbbin)
@@ -92,7 +93,7 @@ def start_adb_server():
                 subprocess.run([adbbin, 'start-server'], check=True)
             # wait for the newly started ADB server to probe emulators
             time.sleep(0.5)
-            if check_adb_alive(server):
+            if check_adb_alive(ADBServer()):
                 logger.info('已启动 adb server')
                 return
         except FileNotFoundError:

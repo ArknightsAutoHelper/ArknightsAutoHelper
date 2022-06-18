@@ -60,7 +60,7 @@ class _TouchEventsInputImpl(InputProtocol):
                 break
             time_progress = (t0 - start_time) / move_duration
             path_progress = interpolate(time_progress)
-            self.touch_event(EventAction.MOVE, int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress), flags=EventFlag.ASYNC)
+            self.touch_event(EventAction.MOVE, int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress))
             t1 = time.perf_counter()
             step_time = t1 - t0
             if step_time < frame_time:
