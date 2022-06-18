@@ -363,14 +363,14 @@ def _demo():
     fps_deque = deque(maxlen=10)
     target_fps = 30
     target_frame_time = 1 / target_fps
+    current_frame_time = 0
     def thread():
-        nonlocal img, imgchanged, stop
+        nonlocal img, imgchanged, stop, current_frame_time
         last_frame_time = 0
-        current_frame_time = 0
         overhead = 0
         try:
             while not stop:
-                newimg = client.screenshot(compress=True)
+                newimg = client.screenshot(compress=False)
                 current_frame_time = time.perf_counter()
                 fps_deque.append(current_frame_time)
                 if newimg is not None:
@@ -397,7 +397,8 @@ def _demo():
                 if len(fps_deque) == 10:
                     fps = 9 / (fps_deque[-1] - fps_deque[0])
                 cv2.setWindowTitle('test', f'screenshot {img.image}')
-                cv2.putText(bgrim.array, f'{timestamp=:.3f}ms {fps=:.2f}', (10, 32), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 128, 255), 2)
+                latency = time.perf_counter() - current_frame_time + img.capture_latency
+                cv2.putText(bgrim.array, f'{timestamp=:.3f} {fps=:.2f} latency={latency*1000:.3f}ms', (10, 32), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 128, 255), 2)
                 cv2.imshow('test', bgrim.array)
             key = cv2.waitKey(4)
             try:
