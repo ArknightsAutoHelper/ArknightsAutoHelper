@@ -2,7 +2,7 @@ def enum_targets():
     import app
     result = []
     if app.config.device.extra_enumerators.bluestacks_hyperv:
-        from .bluestacks_hyperv import enum as enum_bluestacks_hyperv, availiable as hyperv_enabled
+        from .bluestacks_hyperv import enum as enum_bluestacks_hyperv
         result.extend(enum_bluestacks_hyperv())
     if app.config.device.extra_enumerators.vbox_emulators:
         from .vbox import enum as enum_vbox

@@ -1,10 +1,18 @@
 import sys
+import logging
+logger = logging.getLogger(__name__)
+
+def enum():
+    return []
 
 def _init_win32():
-    import logging
-    logger = logging.getLogger(__name__)
+    try:
+        import win32com.client
+    except ImportError:
+        logger.debug('pywin32 not installed, disabling vbox enumerator')
+        return
+
     import ctypes
-    import win32com.client
     import numpy as np
     vbox_clsids = [
         ('{20190809-47b9-4a1e-82b2-07ccd5323c3f}', 'LDPlayer', 'ld'),
@@ -76,9 +84,6 @@ def _init_win32():
 
 if sys.platform == 'win32':
     _init_win32()
-else:
-    def enum():
-        return []
 
 def _main():
     import logging
