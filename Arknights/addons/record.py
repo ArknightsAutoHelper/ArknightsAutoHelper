@@ -266,7 +266,7 @@ class RecordAddon(AddonBase):
         try:
             self.replay_custom_record(record_name, quiet=quiet)
             return True
-        except RuntimeError as e:
+        except Exception as e:
             self.logger.log(logging.DEBUG if quiet else logging.INFO, f'skip {record_name}, {e}')
             return False
 
