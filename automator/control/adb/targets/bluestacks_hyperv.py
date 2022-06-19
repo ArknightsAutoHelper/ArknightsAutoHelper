@@ -127,7 +127,6 @@ if sys.platform == 'win32':
         _init()
     except Exception:
         logger.debug("failed to initialize hyper-v enumerator", exc_info=True)
-        raise
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, force=True)
