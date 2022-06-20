@@ -1,4 +1,3 @@
-import json
 import logging
 from logging import DEBUG, INFO
 
@@ -6,41 +5,15 @@ import cv2
 import numpy as np
 
 import app
-from Arknights.addons.contrib.common_cache import load_aog_data, read_from_common_cache, save_to_common_cache
+from Arknights.addons.contrib.common_cache import read_from_common_cache, save_to_common_cache
 from automator import AddonBase
-from imgreco import inventory, resources
+from imgreco import inventory, common
 from imgreco.stage_ocr import do_tag_ocr
+from util import cvimage
 from util.cvimage import Image
 
 logger = logging.getLogger(__name__)
 credit_store_item_values_file = app.config_path.joinpath('credit_store_item_values.yaml')
-get_credit1 = resources.load_image('contrib/auto_credit_store/get_credit1.png').convert('L')
-get_credit2 = resources.load_image('contrib/auto_credit_store/get_credit2.png').convert('L')
-
-def load_credit_store_item_value_from_aog():
-    aog_data = load_aog_data()
-    value_map = {}
-    enum_store_value(aog_data, value_map)
-    value_map['龙门币'] = 0.0036
-    return value_map
-
-
-def enum_store_value(data, value_map):
-    if isinstance(data, dict):
-        if data.get('credit_store_value') is not None:
-            value_map[data['name']] = float(data['credit_store_value']['normal'])
-            return
-        else:
-            for k, v in data.items():
-                enum_store_value(v, value_map)
-    if isinstance(data, list):
-        for v in data:
-            enum_store_value(v, value_map)
-
-
-def show_img(img):
-    cv2.imshow('test', img)
-    cv2.waitKey()
 
 
 def get_credit_price(cv_screen, item_pos, ratio):
@@ -122,15 +95,14 @@ class AutoCreditStoreAddOn(AddonBase):
 
     def get_credit(self):
         self.logger.debug('尝试收取商店的信用点')
-        max_val, max_loc = self._find_template(get_credit1, True)
-        if max_val < 0.7:
+        res = self.match_roi('contrib/auto_credit_store/get_store_credit_btn')
+        if not res:
             self.logger.debug('没有可收取的信用点')
             return
         self.logger.info('收取信用点...')
-        self.tap_point(max_loc, 2)
-        max_val, max_loc = self._find_template(get_credit2, True)
-        if max_val > 0.7:
-            self.tap_point(max_loc, 2)
+        self.tap_rect(res.bbox, post_delay=2)
+        if common.check_get_item_popup(self.screenshot()):
+            self.tap_rect(common.get_reward_popup_dismiss_rect(self.viewport), post_delay=2)
             self.logger.info('成功收取商店中的信用点.')
 
     def goto_credit_store(self):
@@ -165,8 +137,8 @@ class AutoCreditStoreAddOn(AddonBase):
     def get_total_credit(self, screen):
         vh, vw = self.vh, self.vw
         rect = tuple(map(int, (100 * vw - 20.139 * vh, 3.333 * vh, 100 * vw - 2.361 * vh, 7.500 * vh)))
-        credit_img = cv2.cvtColor(np.asarray(screen.crop(rect)), cv2.COLOR_BGR2RGB)
-        credit_img = cv2.cvtColor(credit_img, cv2.COLOR_RGB2GRAY)
+        credit_img = screen.crop(rect).array
+        credit_img = cv2.cvtColor(credit_img, cv2.COLOR_BGR2GRAY)
         credit_img = cv2.threshold(credit_img, 140, 255, cv2.THRESH_BINARY)[1]
         return int(do_tag_ocr(credit_img, 1))
 
@@ -175,6 +147,8 @@ class AutoCreditStoreAddOn(AddonBase):
         if item_name in self.value_map:
             sanity = self.value_map[item_name]
             return int(quantity * sanity * 100)
+        self.logger.warning(f'未定义价值的物品: {item_name}')
+        return 0
 
     def calc_items(self, screen: Image):
         self.richlogger.logimage(screen)
@@ -216,18 +190,6 @@ class AutoCreditStoreAddOn(AddonBase):
     def log_text(self, text, level=INFO):
         self.richlogger.logtext(text)
         self.logger.log(level, text)
-
-    def gray_screenshot(self, base_height=720):
-        screen = self.screenshot()
-        gray_screen = screen.convert('L')
-        scale = self.viewport[1] / base_height
-        if self.viewport[1] != base_height:
-            gray_screen = gray_screen.resize((int(self.viewport[0] / scale), base_height))
-        return gray_screen, scale
-
-    def _find_template(self, template: Image, center_pos=False):
-        gray_screen, scale = self.gray_screenshot()
-        return _find_template2(template.array, gray_screen.array, scale, center_pos)
 
 
 if __name__ == '__main__':

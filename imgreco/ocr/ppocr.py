@@ -26,12 +26,14 @@ class PaddleOcr(OcrEngine):
         cv_img = cv2.cvtColor(np.asarray(image), cv2.COLOR_GRAY2RGB)
         if hints is not None and OcrHint.SINGLE_LINE in hints:
             res = ocr.ocr_single_line(cv_img)
-            if res:
+            logging.debug(f'PaddleOcr.recognize: {res}')
+            if res and res[1] > 0.7:
                 return OcrResult([OcrLine([OcrWord(Rect(0, 0), w) for w in res[0].strip()])])
             else:
                 return OcrResult([])
         else:
             result = ocr.detect_and_ocr(cv_img)
+            logging.debug(f'PaddleOcr.recognize: {result}')
             line = [OcrLine([OcrWord(Rect(0, 0), w) for w in box.ocr_text]) for box in result]
             return OcrResult(line)
 

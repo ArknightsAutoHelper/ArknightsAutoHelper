@@ -88,19 +88,6 @@ def get_item_img(pil_screen, cv_screen, dbg_screen, center_x, center_y):
             'item_pos': (int((x + itemreco_box_size // 2) / ratio), int((y + itemreco_box_size // 2) / ratio))}
 
 
-def remove_holes(img):
-    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for i in range(len(contours)):
-        area = cv2.contourArea(contours[i])
-        if area < 8:
-            cv2.drawContours(img, [contours[i]], 0, 0, -1)
-
-
-def crop_num_img(item_img):
-    img_h, img_w = item_img.shape[:2]
-    l, t, r, b = tuple(map(int, (img_w * 0.39, img_h * 0.68, img_w * 0.82, img_h * 0.87)))
-    return item_img[t:b, l:r]
-
 
 def get_circles(gray_img, min_radius=56, max_radius=68):
     circles = cv2.HoughCircles(gray_img, cv2.HOUGH_GRADIENT, 1, 100, param1=128,
@@ -115,8 +102,9 @@ def get_all_item_in_screen(screen):
     imgs = get_all_item_img_in_screen(screen)
     item_count_map = {}
     for item_img in imgs:
-        logger.logimage(Image.fromarray(item_img['item_img'], 'BGR'))
-        itemreco = item.tell_item(Image.fromarray(item_img['item_img'], 'BGR'), with_quantity=True)
+        itemimg = Image.fromarray(item_img['item_img'], 'BGR')
+        logger.logimage(itemimg)
+        itemreco = item.tell_item(itemimg, with_quantity=True)
         logger.logtext('%r' % itemreco)
         if itemreco.item_id is None or itemreco.item_id in exclude_items or itemreco.item_type == 'ACTIVITY_ITEM':
             continue
@@ -135,8 +123,9 @@ def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_t
     imgs = get_all_item_img_in_screen(screen)
     res = []
     for item_img in imgs:
-        logger.logimage(Image.fromarray(item_img['item_img'], 'BGR'))
-        itemreco = item.tell_item(Image.fromarray(item_img['item_img']), with_quantity=True)
+        itemimg = Image.fromarray(item_img['item_img'], 'BGR')
+        logger.logimage(itemimg)
+        itemreco = item.tell_item(itemimg, with_quantity=True)
         logger.logtext('%r' % itemreco)
         if itemreco.item_id is None:
             continue
