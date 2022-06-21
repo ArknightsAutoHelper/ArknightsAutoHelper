@@ -1,7 +1,8 @@
 coloredlogs==15.0.1
 scipy
 numpy
-opencv-python
+opencv-python  # make pip happy for packages requiring ^opencv-python$
+opencv-contrib-python  # overwrites files installed by opencv-python
 pillow
 requests
 requests-cache
@@ -16,6 +17,3 @@ pywin32; sys_platform == 'win32'
 # webgui2
 bottle==0.12.20
 bottle-websocket==0.2.9
-# not using pywebview on win32 python >= 3.9 as one dependency (pythonnet) has no binary wheel (yet)
-# we will fallback to a customized Chrome/Chromium/Edge
-pywebview==3.5; sys_platform != 'win32' or python_version < '3.9'
