@@ -6,6 +6,11 @@ class ControllerConfig(Schema):
     screenshot_transport = EnumField(['auto', 'adb', 'vm_network'], 'auto', '截图传输方式', 'auto：在 adb 连接较慢时尝试 vm_network。\nadb：总是使用 adb')
     aah_agent_compress = Field(bool, False, 'aah-agent 截图压缩', '使用 lz4 压缩截图数据，提高截图速度，但同时提高 CPU 占用。')
     aosp_screencap_encoding = EnumField(['auto', 'raw', 'gzip', 'png'], 'auto', 'AOSP screencap 截图压缩', '仅通过 adb 传输时可用，raw 为不压缩。')
+    touch_x_min = Field(int, 0, '触摸 X 轴最小值', '触摸 X 轴的最小值，用于计算触摸坐标。')
+    touch_x_max = Field(int, 0, '触摸 X 轴最大值', '触摸 X 轴的最大值，用于计算触摸坐标。')
+    touch_y_min = Field(int, 0, '触摸 Y 轴最小值', '触摸 Y 轴的最小值，用于计算触摸坐标。')
+    touch_y_max = Field(int, 0, '触摸 Y 轴最大值', '触摸 Y 轴的最大值，用于计算触摸坐标。')
+    touch_event = Field(str, '', '触摸事件', '触摸事件 device')
 
 
 class root(Schema):
@@ -40,9 +45,6 @@ class root(Schema):
     @Namespace('作战计划')
     class plan:
         calc_mode = EnumField(['online', 'local-aog'], 'online', '计算方式', 'online: 从企鹅物流数据统计接口获取刷图计划\nlocal-aog: 本地计算刷图计划, 使用 aog 推荐的关卡优化')
-    @Namespace('关卡导航')
-    class stage_navigator:
-        ocr_backend = EnumField(['svm', 'dnn'], 'svm', '自动选关使用的 OCR 后端')
     @Namespace('OCR 设置（即将弃用）')
     class ocr:
         backend = EnumField(['auto', 'tesseract', 'baidu'], 'auto', '默认 OCR 后端')

@@ -1,7 +1,7 @@
 coloredlogs==15.0.1
 scipy
 numpy
-opencv-contrib-python>=4.5.4.58
+opencv-python
 pillow
 requests
 requests-cache
@@ -10,6 +10,7 @@ colorama==0.4.4; sys_platform == 'win32'
 textdistance==4.2.1
 dataclasses_json
 lz4
+ppocr-onnx
 pywin32; sys_platform == 'win32'
 
 # webgui2

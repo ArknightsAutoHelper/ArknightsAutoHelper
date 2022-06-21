@@ -13,9 +13,9 @@ itemreco_box_size = 142  # dimension that compatible with imgreco.item
 half_box = itemreco_box_size // 2
 
 
-def convert_pil_screen(pil_screen):
+def scale_screen(screen: np.ndarray):
     # 720p
-    cv_screen = cv2.cvtColor(np.asarray(pil_screen), cv2.COLOR_BGR2RGB)
+    cv_screen = screen
     img_h, img_w = cv_screen.shape[:2]
     ratio = 720 / img_h
     if ratio != 1:
@@ -40,8 +40,8 @@ def group_pos(ys):
     return res
 
 
-def get_all_item_img_in_screen(pil_screen, use_group_pos=True):
-    cv_screen = convert_pil_screen(pil_screen)
+def get_all_item_img_in_screen(screen, use_group_pos=True):
+    cv_screen = scale_screen(screen.array)
     gray_screen = cv2.cvtColor(cv_screen, cv2.COLOR_BGR2GRAY)
     dbg_screen = cv_screen.copy()
     # cv2.HoughCircles seems works fine for now
@@ -61,13 +61,13 @@ def get_all_item_img_in_screen(pil_screen, use_group_pos=True):
             x2 = x + itemreco_box_size
             if x2 < img_w:
                 for center_y in center_ys:
-                    res.append(get_item_img(pil_screen, cv_screen, dbg_screen, center_x, center_y))
+                    res.append(get_item_img(screen, cv_screen, dbg_screen, center_x, center_y))
     for center_x, center_y, r in circles:
         cv2.circle(dbg_screen, (int(center_x), int(center_y)), int(r), (0, 0, 255), 2)
         if not use_group_pos:
-            res.append(get_item_img(pil_screen, cv_screen, dbg_screen, center_x, center_y))
+            res.append(get_item_img(screen, cv_screen, dbg_screen, center_x, center_y))
 
-    logger.logimage(convert_to_pil(dbg_screen))
+    logger.logimage(Image.fromarray(dbg_screen, 'BGR'))
     return res
 
 
@@ -85,45 +85,8 @@ def get_item_img(pil_screen, cv_screen, dbg_screen, center_x, center_y):
     numimg = imgops.scalecrop(original_item_img, 0.39, 0.705, 0.82, 0.85).convert('L')
     cv2.rectangle(dbg_screen, (x, y), (x + itemreco_box_size, y + itemreco_box_size), (255, 0, 0), 2)
     return {'item_img': cv_item_img, 'num_img': numimg,
-            'item_pos': (int((x + itemreco_box_size // 2)*ratio), int((y + itemreco_box_size // 2)*ratio))}
+            'item_pos': (int((x + itemreco_box_size // 2) / ratio), int((y + itemreco_box_size // 2) / ratio))}
 
-
-def remove_holes(img):
-    contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for i in range(len(contours)):
-        area = cv2.contourArea(contours[i])
-        if area < 8:
-            cv2.drawContours(img, [contours[i]], 0, 0, -1)
-
-
-def crop_num_img(item_img):
-    img_h, img_w = item_img.shape[:2]
-    l, t, r, b = tuple(map(int, (img_w * 0.39, img_h * 0.68, img_w * 0.82, img_h * 0.87)))
-    return item_img[t:b, l:r]
-
-
-def get_quantity2(item_img):
-    from . import ocr
-    engine = ocr.acquire_engine_global_cached('zh-cn')
-    num_img = crop_num_img(item_img)
-    num_img = cv2.cvtColor(num_img, cv2.COLOR_RGB2GRAY)
-    num_img[num_img < 173] = 0
-    remove_holes(num_img)
-    num_img = cv2.cvtColor(num_img, cv2.COLOR_GRAY2RGB)
-    logger.logimage(convert_to_pil(num_img))
-    # cn_ocr.set_cand_alphabet('0123456789万')
-    res = engine.recognize(convert_to_pil(num_img), hints=[ocr.OcrHint.SINGLE_LINE], char_whitelist='0123456789万').text.replace(' ', '')
-    # res = ''.join(cn_ocr.ocr_for_single_line(num_img)).strip()
-    # cn_ocr.set_cand_alphabet(None)
-    logger.logtext(f'get_quantity2: {res}')
-    factor = 1
-    num = None
-    if res.endswith('万'):
-        factor = 10000
-        res = res[:-1]
-    if res.isdigit():
-        num = int(float(res)) * factor
-    return num
 
 
 def get_circles(gray_img, min_radius=56, max_radius=68):
@@ -131,24 +94,17 @@ def get_circles(gray_img, min_radius=56, max_radius=68):
                                param2=30, minRadius=min_radius, maxRadius=max_radius)
     return circles[0]
 
-
-def show_img(cv_img):
-    cv2.imshow('test', cv_img)
-    cv2.waitKey()
-
-
-from .item import get_quantity
-
 def convert_to_pil(cv_img):
-    return Image.fromarray(cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB))
+    return Image.fromarray(cv_img)
 
 
 def get_all_item_in_screen(screen):
     imgs = get_all_item_img_in_screen(screen)
     item_count_map = {}
     for item_img in imgs:
-        logger.logimage(convert_to_pil(item_img['item_img']))
-        itemreco = item.tell_item(Image.fromarray(item_img['item_img'], 'BGR'), with_quantity=True)
+        itemimg = Image.fromarray(item_img['item_img'], 'BGR')
+        logger.logimage(itemimg)
+        itemreco = item.tell_item(itemimg, with_quantity=True)
         logger.logtext('%r' % itemreco)
         if itemreco.item_id is None or itemreco.item_id in exclude_items or itemreco.item_type == 'ACTIVITY_ITEM':
             continue
@@ -167,8 +123,9 @@ def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_t
     imgs = get_all_item_img_in_screen(screen)
     res = []
     for item_img in imgs:
-        logger.logimage(convert_to_pil(item_img['item_img']))
-        itemreco = item.tell_item(Image.fromarray(item_img['item_img'], 'BGR'), with_quantity=True)
+        itemimg = Image.fromarray(item_img['item_img'], 'BGR')
+        logger.logimage(itemimg)
+        itemreco = item.tell_item(itemimg, with_quantity=True)
         logger.logtext('%r' % itemreco)
         if itemreco.item_id is None:
             continue
@@ -176,7 +133,6 @@ def get_all_item_details_in_screen(screen, exclude_item_ids=None, exclude_item_t
             continue
         if only_normal_items and (not itemreco.item_id.isdigit() or len(itemreco.item_id) < 5 or itemreco.item_type != 'MATERIAL'):
             continue
-        # get_quantity2(item_img['item_img'])
         res.append({'itemId': itemreco.item_id, 'itemName': itemreco.name, 'itemType': itemreco.item_type,
                     'quantity': itemreco.quantity, 'itemPos': item_img['item_pos']})
     logger.logtext('res: %s' % res)
