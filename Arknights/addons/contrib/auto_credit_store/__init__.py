@@ -7,9 +7,9 @@ import numpy as np
 import app
 from Arknights.addons.contrib.common_cache import read_from_common_cache, save_to_common_cache
 from automator import AddonBase
+from automator.addon import cli_command
 from imgreco import inventory, common
 from imgreco.stage_ocr import do_tag_ocr
-from util import cvimage
 from util.cvimage import Image
 
 logger = logging.getLogger(__name__)
@@ -191,6 +191,18 @@ class AutoCreditStoreAddOn(AddonBase):
         self.richlogger.logtext(text)
         self.logger.log(level, text)
 
+    @cli_command
+    def cli_credit(self, argv):
+        """
+        credit [friends]
+        收取信用点并自动购买信用商店
+            friends: 访问好友
+        """
+        collect_friends = False
+        for token in argv:
+            if token.tolower() == 'friends':
+                collect_friends = True
+        self.run(collect_friends)        
 
 if __name__ == '__main__':
     from Arknights.configure_launcher import helper
