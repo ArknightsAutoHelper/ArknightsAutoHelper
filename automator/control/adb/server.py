@@ -65,7 +65,7 @@ def ensure_adb_alive(server: ADBServer):
         raise RuntimeError('ADB server is not running on localhost, please start it manually')
     start_adb_server()
 
-def start_adb_server():
+def start_adb_server(server: ADBServer):
     logger.info('尝试启动 adb server')
     import subprocess
     import app
@@ -82,14 +82,19 @@ def start_adb_server():
             adb_binaries.append(findadb)
     else:
         adb_binaries = [adbbin]
+    port = server.address[1]
     for adbbin in adb_binaries:
         try:
             logger.debug('trying %r', adbbin)
+            if port != 5037:
+                env = {**os.environ, 'ANDROID_ADB_SERVER_PORT': str(port)}
+            else:
+                env = os.environ
             if os.name == 'nt' and app.background:
                 si = subprocess.STARTUPINFO(dwFlags=subprocess.STARTF_USESHOWWINDOW, wShowWindow=subprocess.SW_HIDE)
-                subprocess.run([adbbin, 'start-server'], check=True, startupinfo=si)
+                subprocess.run([adbbin, 'start-server'], env=env, check=True, startupinfo=si)
             else:
-                subprocess.run([adbbin, 'start-server'], check=True)
+                subprocess.run([adbbin, 'start-server'], env=env, check=True)
             # wait for the newly started ADB server to probe emulators
             time.sleep(0.5)
             if check_adb_alive(server):
