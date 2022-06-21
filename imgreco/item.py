@@ -131,7 +131,7 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False) -> Recogniz
     if with_quantity:
         quantity = get_quantity(itemimg)
 
-    prob, dnnitem = predict_item_dnn(itemimg.array)
+    prob, dnnitem = predict_item_dnn(itemimg.convert('BGR').array)
     item_id = dnnitem.item_id
     name = dnnitem.item_name
     item_type = dnnitem.item_type
