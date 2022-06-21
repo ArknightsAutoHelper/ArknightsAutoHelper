@@ -63,7 +63,7 @@ def ensure_adb_alive(server: ADBServer):
         return
     if server.address[0] != '127.0.0.1' and server.address[0] != 'localhost':
         raise RuntimeError('ADB server is not running on localhost, please start it manually')
-    start_adb_server()
+    start_adb_server(server)
 
 def start_adb_server(server: ADBServer):
     logger.info('尝试启动 adb server')
