@@ -1,12 +1,8 @@
-from penguin_stats import arkplanner
-import requests
-from datetime import datetime
-import json
-import os
 import app
+from Arknights.addons.contrib.common_cache import load_inventory, load_aog_data
+from Arknights.addons.stage_navigator import StageNavigator, custom_stage
 from automator import AddonBase
-from ...stage_navigator import StageNavigator, custom_stage
-from ...inventory import InventoryAddon
+from penguin_stats import arkplanner
 
 desc = f"""
 {__file__}
@@ -30,27 +26,6 @@ aog_cache_file = app.cache_path.joinpath('aog_cache.json')
 inventory_cache_file = app.cache_path.joinpath('inventory_items_cache.json')
 
 
-def get_items_from_aog_api():
-    resp = requests.get('https://arkonegraph.herokuapp.com/total/CN')
-    return resp.json()
-
-
-def update_aog_cache():
-    data = {'aog': get_items_from_aog_api(), 'cacheTime': datetime.now().strftime(cache_key)}
-    with open(aog_cache_file, 'w') as f:
-        json.dump(data, f)
-    return data
-
-
-def load_aog_cache():
-    if os.path.exists(aog_cache_file):
-        with open(aog_cache_file, 'r') as f:
-            data = json.load(f)
-            if data['cacheTime'] == datetime.now().strftime(cache_key):
-                return data
-    return update_aog_cache()
-
-
 def order_stage(item):
     if item['lowest_ap_stages']['normal'] and item['lowest_ap_stages']['event']:
         stage_type = 'lowest_ap_stages'
@@ -65,12 +40,13 @@ def order_stage(item):
 
 class GrassAddOn(AddonBase):
     @custom_stage('grass', ignore_count=True, title='一键长草', description='检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料')
-    def run(self, argv):
+    def run(self):
         exclude_names = app.config.grass_on_aog.exclude
         self.logger.info('不刷以下材料: %r', exclude_names)
         self.logger.info('加载库存信息...')
-        aog_cache = load_aog_cache()
-        my_items = self.load_inventory()
+        aog_cache = load_aog_data(cache_key=cache_key)
+
+        my_items = load_inventory(self.helper, cache_key=cache_key)
         all_items = arkplanner.get_all_items()
 
         l = []
@@ -83,7 +59,7 @@ class GrassAddOn(AddonBase):
                           'rarity': item['rarity']})
         l = sorted(l, key=lambda x: x['count'])
         print('require item: %s, owned: %s' % (l[0]['name'], l[0]['count']))
-        aog_items = aog_cache['aog']
+        aog_items = aog_cache
         t3_items = aog_items['tier']['t3']
         stage = ''
         for t3_item in t3_items:
@@ -95,24 +71,10 @@ class GrassAddOn(AddonBase):
                 break
         self.addon(StageNavigator).navigate_and_combat(stage, 1000)
 
-    def load_inventory(self):
-        if os.path.exists(inventory_cache_file):
-            with open(inventory_cache_file, 'r') as f:
-                data = json.load(f)
-                if data['cacheTime'] == datetime.now().strftime(cache_key):
-                    return data
-        return self.update_inventory()
-
-    def update_inventory(self):
-        data = self.addon(InventoryAddon).get_inventory_items(True)
-        data['cacheTime'] = datetime.now().strftime(cache_key)
-        with open(inventory_cache_file, 'w') as f:
-            json.dump(data, f)
-        return data
 
 __all__ = ['GrassAddOn']
 
 
 if __name__ == '__main__':
-    addon = GrassAddOn()
-    addon.run()
+    from Arknights.configure_launcher import helper
+    helper.addon(GrassAddOn).run()

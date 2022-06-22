@@ -1,8 +1,11 @@
-import requests
-import os
 import json
-import app
+import os
+from datetime import datetime
 
+import requests
+
+import app
+from automator import BaseAutomator
 
 common_cache_config = {
     'character_table': {
@@ -19,6 +22,7 @@ def get_cache_path(cache_file_name):
 
 
 common_cache_file = get_cache_path('common_cache.json')
+inventory_cache_file = app.cache_path.joinpath('inventory_items_cache.json')
 
 
 def update_net_cache(cache_file_name, url):
@@ -94,12 +98,30 @@ def save_to_common_cache(cache_name: str, cache_value):
         json.dump(common_cache, f)
 
 
-def load_aog_data(force_update: bool = None):
+def load_aog_data(force_update: bool = None, cache_key='%Y--%V'):
     if force_update is None:
-        force_update = _check_is_need_to_force_update('aog_data', '%Y--%V') \
+        force_update = _check_is_need_to_force_update('aog_data', cache_key) \
                        or not get_cache_path('aog_cache.json').exists()
     url = 'https://arkonegraph.herokuapp.com/total/CN'
     data = load_net_json_cache('aog_cache.json', url, 'utf-8', force_update)
     if force_update:
-        update_common_cache_by_cache_time_key('aog_data', '%Y--%V')
+        update_common_cache_by_cache_time_key('aog_data', cache_key)
+    return data
+
+
+def load_inventory(helper: BaseAutomator, force_update=False, cache_key='%Y--%V'):
+    if os.path.exists(inventory_cache_file) and not force_update:
+        with open(inventory_cache_file, 'r') as f:
+            data = json.load(f)
+            if data['cacheTime'] == datetime.now().strftime(cache_key):
+                return data
+    return update_inventory(helper)
+
+
+def update_inventory(helper: BaseAutomator, cache_key='%Y--%V'):
+    from Arknights.addons.inventory import InventoryAddon
+    data = helper.addon(InventoryAddon).get_inventory_items(True, False)
+    data['cacheTime'] = datetime.now().strftime(cache_key)
+    with open(inventory_cache_file, 'w') as f:
+        json.dump(data, f)
     return data

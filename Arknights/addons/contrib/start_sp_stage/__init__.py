@@ -117,7 +117,9 @@ class StartSpStageAddon(AddonBase):
         activity = activity_infos[activity_id]
         self.logger.debug(f'stage: {stage}, activity: {activity}')
         try:
-            self.enter_activity(activity)
+            self.enter_activity(activity, query_only)
+            if query_only:
+                return True
         except Exception as e:
             if query_only:
                 return False
@@ -139,11 +141,13 @@ class StartSpStageAddon(AddonBase):
             if zone_act['type'] == 'custom_record':
                 self.addon(RecordAddon).replay_custom_record(zone_act['record_name'])
 
-    def enter_activity(self, activity):
+    def enter_activity(self, activity, query_only):
         vh = self.vh
         act_name = get_activity_name(activity)
         if act_name not in get_available_activity():
             raise RuntimeError(f'无效的活动: {act_name}')
+        if query_only:
+            return True
         self.open_terminal()
         if activity['displayType'] == 'BRANCHLINE':
             self.tap_branch_line()
@@ -176,9 +180,6 @@ class StartSpStageAddon(AddonBase):
         vw, vh = self.vw, self.vh
         self.helper.tap_rect((2.222 * vh, 1.944 * vh, 22.361 * vh, 8.333 * vh))
         self.delay(0.5)
-
-    def screenshot(self):
-        return self.control.screenshot()
 
     def get_all_act_pos(self, crop=False):
         act_map = {}
