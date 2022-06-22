@@ -8,14 +8,13 @@ import textdistance
 
 import app
 from Arknights.addons.common import CommonAddon
-from automator import AddonBase
 from Arknights.addons.contrib.common_cache import load_game_data
-from imgreco import main
-from penguin_stats import arkplanner
-
-from Arknights.addons.stage_navigator import StageNavigator, navigator
 from Arknights.addons.record import RecordAddon
+from Arknights.addons.stage_navigator import StageNavigator, navigator
+from automator import AddonBase
+from imgreco import main
 from imgreco.ppocr_utils import detect_box, get_ppocr
+from penguin_stats import arkplanner
 from util.cvimage import Image
 
 stage_cache_file = app.cache_path.joinpath('stage_cache.json')
@@ -170,7 +169,7 @@ class ActivityAddOn(AddonBase):
         if query_only:
             return self.addon(RecordAddon).get_record_path(record_name) or has_success_detect(target_stage["zoneId"])
         self.logger.info(f"{target_stage['code']}: {target_stage['name']}, 关卡掉落: {stage_drops}")
-        if has_success_detect(target_stage["zoneId"]) or not self.addon(RecordAddon).try_replay_record(record_name, True):
+        if has_success_detect(target_stage["zoneId"]) or not self.addon(RecordAddon).get_record_path(record_name):
             pos = self.try_detect_and_enter_zone(target_stage)
             if pos != [-1, -1]:
                 self.try_find_and_tap_stage_by_ocr(target_stage['zoneId'], target_stage_code, stage_linear, pos)
@@ -178,6 +177,8 @@ class ActivityAddOn(AddonBase):
                 self.logger.info(f'执行操作记录 {record_name}')
                 self.addon(RecordAddon).replay_custom_record(record_name)
                 self.addon(StageNavigator).find_and_tap_stage_by_ocr(None, target_stage_code, stage_linear)
+        elif self.addon(RecordAddon).try_replay_record(record_name, True):
+            self.addon(StageNavigator).find_and_tap_stage_by_ocr(None, target_stage_code, stage_linear)
 
     def nav_and_combat(self, target_stage_code, times=1000):
         self.run(target_stage_code)
@@ -301,4 +302,4 @@ class ActivityAddOn(AddonBase):
 
 if __name__ == '__main__':
     from Arknights.configure_launcher import helper
-    helper.addon(ActivityAddOn).nav_and_combat('le-7', 1)
+    helper.addon(ActivityAddOn).nav_and_combat('le-6', 1)
