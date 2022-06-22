@@ -1,7 +1,7 @@
-from dataclasses import dataclass
-import os
-import logging
 import json
+import logging
+import os
+from dataclasses import dataclass
 from functools import lru_cache
 
 import cv2
@@ -79,6 +79,7 @@ def update_net():
         with open(index_file, 'r', encoding='utf-8') as f:
             local_rel = json.load(f)
             model_gen_time = local_rel['time'] / 1000
+            local_cache_time = local_rel['time']
         now = time.time()
         logger.debug(f'{cache_mtime=} {now=} {model_gen_time=}')
         if cache_mtime > model_gen_time and now - cache_mtime < 60 * 60 * 8:
