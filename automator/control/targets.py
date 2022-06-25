@@ -41,8 +41,8 @@ def get_auto_connect_candidates(targets: list[ControllerTarget] = ..., preferenc
                 if target.adb_address == preference:
                     return [target]
         if _is_valid_ip_port(preference):
-            from .adb.client import get_config_adb_server
-            return [get_config_adb_server().get_device(preference)]
+            from .adb.targets import get_target_from_adb_serial
+            return [get_target_from_adb_serial(preference, [])]
         raise IndexError(f'preference {preference} not found')
     max_priority = max(x.auto_connect_priority for x in targets)
     max_tier_targets = [x for x in targets if x.auto_connect_priority == max_priority]

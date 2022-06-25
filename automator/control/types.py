@@ -58,6 +58,8 @@ class Controller(Protocol):
         raise NotImplementedError
     def screenshot() -> cvimage.Image:
         raise NotImplementedError
+    def close():
+        pass
 
 class ControllerTarget(Protocol):
     auto_connect_priority: int

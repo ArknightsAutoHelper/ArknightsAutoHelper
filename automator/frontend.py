@@ -3,6 +3,8 @@ import time
 from contextlib import AbstractContextManager, nullcontext
 from abc import ABC, abstractmethod
 
+from automator.control.types import Controller
+
 class Frontend(ABC):
     @abstractmethod
     def attach(self, helper):
@@ -21,7 +23,7 @@ class Frontend(ABC):
         time.sleep(secs)
 
     @abstractmethod
-    def request_device_connector(self):
+    def request_device_connector(self) -> Controller:
         """request a device connector (interactively) from frontend"""
         return None
 
