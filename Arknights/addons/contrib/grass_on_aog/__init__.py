@@ -40,7 +40,7 @@ def order_stage(item):
 
 class GrassAddOn(AddonBase):
     @custom_stage('grass', ignore_count=True, title='一键长草', description='检查库存中最少的蓝材料, 然后去 aog 上推荐的地图刷材料')
-    def run(self):
+    def run(self, _):
         exclude_names = app.config.grass_on_aog.exclude
         self.logger.info('不刷以下材料: %r', exclude_names)
         self.logger.info('加载库存信息...')
