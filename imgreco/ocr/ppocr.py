@@ -23,8 +23,13 @@ def check_supported():
 
 class PaddleOcr(OcrEngine):
     def recognize(self, image, ppi=70, hints=None, **kwargs):
-        cv_img = cv2.cvtColor(np.asarray(image), cv2.COLOR_GRAY2RGB)
+        if image.mode != 'BGR':
+            image = image.convert('BGR')
+        cv_img = image.array
+        single_line_flag = image.height < 35 or image.width / 3 > image.height
         if hints is not None and OcrHint.SINGLE_LINE in hints:
+            single_line_flag = True
+        if single_line_flag:
             res = ocr.ocr_single_line(cv_img)
             logging.debug(f'PaddleOcr.recognize: {res}')
             if res and res[1] > 0.7:
