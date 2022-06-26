@@ -24,7 +24,7 @@ from .adb.client import ADBDevice, ADBServer
 from .adb.info import ADBControllerDeviceInfo
 from .adb.agent import ControlAgentClient
 
-from .types import EventAction, EventFlag, InputProtocol, ScreenshotProtocol, ControllerCapabilities
+from .types import Controller, EventAction, EventFlag, InputProtocol, ScreenshotProtocol, ControllerCapabilities
 
 logger = logging.getLogger(__name__)
 
@@ -321,7 +321,7 @@ def _check_invalid_screenshot(image: cvimage.Image):
     if np.all(alpha_channel == 0):
         raise io.UnsupportedOperation('screenshot with all pixels alpha = 0')
 
-class ADBController:
+class ADBController(Controller):
     def __init__(self, device: ADBDevice, display_id: Optional[int] = None, preload_device_info: dict = {}, override_identifier: Optional[str] = None):
         """
         Creates a new ADBController instance.
