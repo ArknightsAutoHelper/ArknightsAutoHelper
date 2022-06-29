@@ -56,9 +56,9 @@ class Controller(Protocol):
     input: InputProtocol
     def get_controller_capabilities(self) -> ControllerCapabilities:
         raise NotImplementedError
-    def screenshot() -> cvimage.Image:
+    def screenshot(self) -> cvimage.Image:
         raise NotImplementedError
-    def close():
+    def close(self):
         pass
 
 class ControllerTarget(Protocol):
