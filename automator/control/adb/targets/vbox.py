@@ -7,13 +7,13 @@ def enum():
 
 def _init_win32():
     try:
+        import util.dummy_gencache
         import win32com.client
     except ImportError:
         logger.debug('pywin32 not installed, disabling vbox enumerator')
         return
 
     import ctypes
-    import numpy as np
     vbox_clsids = [
         ('{20190809-47b9-4a1e-82b2-07ccd5323c3f}', 'LDPlayer', 'ld'),
         ('{88888888-47b9-4a1e-82b2-07ccd5323c3f}', 'Nox', 'nox'),
