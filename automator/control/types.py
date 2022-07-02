@@ -29,12 +29,16 @@ class InputProtocol(Protocol):
         raise NotImplementedError
     def send_text(self, text: str) -> None:
         raise NotImplementedError
+    def close(self) -> None:
+        pass
 
 class ScreenshotProtocol(Protocol):
     def get_screenshot_capabilities(self) -> ControllerCapabilities:
         return ControllerCapabilities(0)
     def screenshot(self) -> cvimage.Image:
         raise NotImplementedError
+    def close(self) -> None:
+        pass
 
 class ControllerCapabilities(enum.Flag):
     SCREENSHOT_TIMESTAMP = enum.auto()
@@ -58,7 +62,7 @@ class Controller(Protocol):
         raise NotImplementedError
     def screenshot(self) -> cvimage.Image:
         raise NotImplementedError
-    def close(self):
+    def close(self) -> None:
         pass
 
 class ControllerTarget(Protocol):

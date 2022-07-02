@@ -91,12 +91,11 @@ def _alarm_context_factory():
 
 def _connect_device(newdevice):
     global device
-    olddevice = device
     device = newdevice
     if helper is not None:
-        helper.connect_device(device)
-    if olddevice is not None:
-        olddevice.close()
+        olddevice = helper.connect_device(device)
+        if olddevice is not None:
+            olddevice.close()
 
 
 def connect(argv):
