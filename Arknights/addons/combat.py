@@ -57,6 +57,9 @@ def _parse_opt(argv):
                 break
             else:
                 raise ValueError('unrecognized token: %r in option %r' % (c, opts))
+        def op(helper):
+            helper.addon('CombatAddon').refill_count = 0
+        ops.append(op)
     return ops
 
 
@@ -415,6 +418,7 @@ class CombatAddon(AddonBase):
             count = 114514
         for op in ops:
             op(self)
+        self.refill_count = 0
         with self.helper.frontend.context:
             self.combat_on_current_stage(count)
         return 0
