@@ -1,22 +1,20 @@
 import logging
-import os
 import random
-import time
 from functools import lru_cache
 
 import cv2
 import numpy as np
 
 import imgreco.main
+from Arknights.addons.common import CommonAddon
+from Arknights.addons.contrib.activity import get_stage_map
+from Arknights.addons.contrib.base import pil2cv, crop_cv_by_rect
+from Arknights.addons.contrib.common_cache import load_game_data
+from Arknights.addons.record import RecordAddon
+from Arknights.addons.stage_navigator import StageNavigator, navigator
 from automator import AddonBase
-from ..activity import get_stage_map
-from ..base import pil2cv, crop_cv_by_rect, show_img
-from ..common_cache import load_game_data
-from ...common import CommonAddon
-from ...stage_navigator import StageNavigator, navigator
-from ...record import RecordAddon
-from imgreco import resources, ocr
-from util import cvimage as Image
+from imgreco import resources
+from imgreco.ppocr_utils import get_ppocr
 
 icon1 = resources.load_image('contrib/start_sp_stage/icon1.png', imread_flags=cv2.IMREAD_GRAYSCALE).array
 icon2 = resources.load_image('contrib/start_sp_stage/icon2.png', imread_flags=cv2.IMREAD_GRAYSCALE).array
@@ -61,16 +59,10 @@ def crop_image_only_outside(gray_img, raw_img, threshold=128, padding=3):
     return raw_img[row_start - padding:row_end + padding, col_start - padding:col_end + padding]
 
 
-def ocr_for_single_line(img, cand_alphabet: str = None, engine=None):
-    if engine is None:
-        from imgreco import ocr
-        engine = ocr.acquire_engine_global_cached('zh-cn')
-    from util import cvimage as Image
-    extra_args = {}
-    if cand_alphabet:
-        extra_args['char_whitelist'] = cand_alphabet
-    res = engine.recognize(Image.fromarray(img), hints=[ocr.OcrHint.SINGLE_LINE], **extra_args).text.replace(' ', '')
-    return res
+def ocr_for_single_line(img):
+    res = get_ppocr().ocr_single_line(img)
+    if res:
+        return res[0]
 
 
 def search_in_list(s_list, x, min_score=0.5):
@@ -90,8 +82,8 @@ def search_in_list(s_list, x, min_score=0.5):
         return res, max_sim
 
 
-def ocr_and_correct(img, s_list, cand_alphabet: str = None, min_score=0.5, log_level=None):
-    ocr_str = ocr_for_single_line(img, cand_alphabet)
+def ocr_and_correct(img, s_list, min_score=0.5, log_level=None):
+    ocr_str = ocr_for_single_line(img)
     res = search_in_list(s_list, ocr_str, min_score)
     if log_level:
         logging.log(log_level, f'ocr_str, res: {ocr_str, res}')
@@ -118,22 +110,29 @@ class StartSpStageAddon(AddonBase):
             raise RuntimeError(f'无效的关卡: {stage_code}')
         self.scale = self.viewport[1] / 720
         if self.viewport != (1280, 720):
+            self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         stage = stage_code_map[stage_code]
         activity_id = stage['zoneId'].split('_')[0]
         activity_infos = get_activity_infos()
         activity = activity_infos[activity_id]
         self.logger.debug(f'stage: {stage}, activity: {activity}')
         try:
-            self.enter_activity(activity)
+            self.enter_activity(activity, query_only)
+            if query_only:
+                return True
         except Exception as e:
             if query_only:
                 return False
             raise
-        self.logger.warning('It may produce some weird effects when the resolution is not 1280x720.')
         self.after_enter_activity(stage)
         stage_linear = zone_linear_map[stage['zoneId']]
-        self.logger.info(f"stage zone id: {stage['zoneId']}, stage_linear: {stage_linear}")
+        self.logger.debug(f"stage zone id: {stage['zoneId']}, stage_linear: {stage_linear}")
         self.addon(StageNavigator).find_and_tap_stage_by_ocr(None, stage_code, stage_linear)
+
+    def nav_and_combat(self, target_stage_code, times=1000):
+        self.run(target_stage_code)
+        from Arknights.addons.combat import CombatAddon
+        return self.addon(CombatAddon).combat_on_current_stage(times)
 
     def after_enter_activity(self, stage):
         zone_id = stage['zoneId']
@@ -142,11 +141,13 @@ class StartSpStageAddon(AddonBase):
             if zone_act['type'] == 'custom_record':
                 self.addon(RecordAddon).replay_custom_record(zone_act['record_name'])
 
-    def enter_activity(self, activity):
+    def enter_activity(self, activity, query_only):
         vh = self.vh
         act_name = get_activity_name(activity)
         if act_name not in get_available_activity():
             raise RuntimeError(f'无效的活动: {act_name}')
+        if query_only:
+            return True
         self.open_terminal()
         if activity['displayType'] == 'BRANCHLINE':
             self.tap_branch_line()
@@ -161,9 +162,10 @@ class StartSpStageAddon(AddonBase):
             while True:
                 origin_x = random.randint(int(5.833 * vh), int(24.861 * vh))
                 origin_y = random.randint(int(57.222 * vh), int(77.917 * vh))
-                move = -random.randint(int(vh // 5), int(vh // 4))
-                self.device.touch_swipe2((origin_x, origin_y),
+                move = -random.randint(int(self.viewport[1] // 5), int(self.viewport[1] // 4))
+                self.control.touch_swipe2((origin_x, origin_y),
                                              (random.randint(-20, 20), move), random.randint(900, 1200))
+                self.delay(0.5)
                 act_pos_map = self.get_all_act_pos(crop_flag)
                 if act_name in act_pos_map:
                     break
@@ -178,9 +180,6 @@ class StartSpStageAddon(AddonBase):
         vw, vh = self.vw, self.vh
         self.helper.tap_rect((2.222 * vh, 1.944 * vh, 22.361 * vh, 8.333 * vh))
         self.delay(0.5)
-
-    def screenshot(self):
-        return self.device.screenshot()
 
     def get_all_act_pos(self, crop=False):
         act_map = {}
@@ -206,8 +205,8 @@ class StartSpStageAddon(AddonBase):
         dbg_screen = raw_screen.copy()
         available_activity = get_available_activity()
         for pt in zip(*loc[::-1]):
-            pos_key = (pt[0] // 100, pt[1] // 100)
-            pos_key2 = (int(pt[0] / 100 + 0.5), int(pt[1] / 100 + 0.5))
+            pos_key = (pt[0] // 50, pt[1] // 50)
+            pos_key2 = (int(pt[0] / 50 + 0.5), int(pt[1] / 50 + 0.5))
             if pos_key in tag_set or pos_key2 in tag_set2:
                 continue
             tag_set.add(pos_key)
@@ -225,16 +224,11 @@ class StartSpStageAddon(AddonBase):
                 tag_img = crop_image_only_outside(gray_tag, tag_img, 160)
             factor = 2.5 - self.scale
             if factor > 1:
-                # print(factor)
                 tag_img = cv2.resize(tag_img, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_LINEAR)
-            # show_img(tag_img)
-            # conv-lite-fc has better accuracy, but it is slower than densenet-lite-fc.
-            name = ocr_and_correct(tag_img, available_activity, cand_alphabet=''.join(set(c for s in available_activity for c in s)), log_level=logging.INFO)
-            print(name)
+            name = ocr_and_correct(tag_img, available_activity, log_level=logging.DEBUG)
             if name:
                 res[name] = (int(l + 85 * self.scale), int(t + 20 * self.scale))
             cv2.rectangle(dbg_screen, (l, t), (l + tw, t + th), (255, 255, 0), 2)
-        # show_img(dbg_screen)
         return res
 
     def tap_side_story(self):
@@ -263,5 +257,8 @@ class StartSpStageAddon(AddonBase):
 
 
 if __name__ == '__main__':
-    StartSpStageAddon().run('OF-F4', 0, False)
-    # StartSpStageAddon().get_all_act_pos()
+    from Arknights.configure_launcher import helper
+    helper.addon(StartSpStageAddon).run('sv-8')
+    helper.addon(StartSpStageAddon).run('tw-6')
+    helper.addon(StartSpStageAddon).run('wr-1')
+    helper.addon(StartSpStageAddon).run('of-f4')

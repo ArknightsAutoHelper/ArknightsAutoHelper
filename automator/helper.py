@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING
 from automator.task_sched import TaskScheduler
 
 if TYPE_CHECKING:
-    from typing import TypeVar, Union, Type, ForwardRef
+    from typing import TypeVar, Union, Type, ForwardRef, Optional
     from .addon import AddonBase
+    from automator.control.types import Controller
     TAddon = TypeVar('TAddon')
 del TYPE_CHECKING
 
@@ -16,7 +17,8 @@ import logging
 logger = logging.getLogger('helper')
 
 
-from .connector.ADBConnector import ADBConnector
+from .control.adb.client import get_config_adb_server
+from .control.ADBController import ADBController
 from .frontend import Frontend, DummyFrontend
 from .mixin import AddonMixin
 
@@ -31,8 +33,9 @@ class BaseAutomator(AddonMixin):
         self.scheduler = TaskScheduler(self)
         self._cli_commands = OrderedDict()
         self.load_addons()
-
-        self._device = None
+        self.vw = 0
+        self.vh = 0
+        self._controller: Optional[Controller] = None
         if device_connector is not None:
             self.connect_device(device_connector)
         if frontend is None:
@@ -55,35 +58,38 @@ class BaseAutomator(AddonMixin):
             raise TypeError("cls")
 
     def _ensure_device(self):
-        if self._device is None:
+        if self._controller is None:
             new_device = self.frontend.request_device_connector()
             if new_device is None:
                 raise RuntimeError("no device connected")
             self.connect_device(connector=new_device)
 
     @property
-    def device(self):
+    def control(self):
         self._ensure_device()
-        return self._device
+        return self._controller
 
     @property
     def viewport(self):
         self._ensure_device()
         return self._viewport
 
-    def connect_device(self, connector=None, *, adb_serial=None):
+    def connect_device(self, connector=None, *, adb_serial=None) -> Optional[Controller]:
+        old_controller = self._controller
         if connector is not None:
-            self._device = connector
+            self._controller = connector
         elif adb_serial is not None:
-            self._device = ADBConnector(adb_serial)
+            from automator.control.adb.targets import get_target_from_adb_serial
+            self._controller = get_target_from_adb_serial(adb_serial).create_controller()
         else:
-            self._device = None
-            return
-        self._viewport: tuple[int, int] = self._device.screen_size
+            self._controller = None
+            return old_controller
+        self._viewport: tuple[int, int] = self._controller.screenshot().size
         self.vw = self._viewport[0] / 100
         self.vh = self._viewport[1] / 100
         self.on_device_connected()
-        self.frontend.notify('current-device', str(self._device))
+        self.frontend.notify('current-device', str(self._controller))
+        return old_controller
     
     def on_device_connected(self):
         pass

@@ -105,7 +105,7 @@ def recognize_dialog(img):
     from . import ocr
     vw, vh = get_vwvh(img.size)
     content = img.crop((0, 22.222*vh, 100.000*vw, 64.167*vh)).convert('L')
-    return dlgtype, ocr.acquire_engine_global_cached('zh-cn').recognize(content, int(vh * 20), tessedit_pageseg_mode=7)
+    return dlgtype, ocr.acquire_engine_global_cached('zh-cn').recognize(content, int(vh * 20), tessedit_pageseg_mode=11)
 
 def get_dialog_left_button_rect(img):
     vw, vh = get_vwvh(img)

@@ -1,7 +1,7 @@
-from dataclasses import dataclass
-import os
-import logging
 import json
+import logging
+import os
+from dataclasses import dataclass
 from functools import lru_cache
 
 import cv2
@@ -79,6 +79,7 @@ def update_net():
         with open(index_file, 'r', encoding='utf-8') as f:
             local_rel = json.load(f)
             model_gen_time = local_rel['time'] / 1000
+            local_cache_time = local_rel['time']
         now = time.time()
         logger.debug(f'{cache_mtime=} {now=} {model_gen_time=}')
         if cache_mtime > model_gen_time and now - cache_mtime < 60 * 60 * 8:
@@ -86,14 +87,14 @@ def update_net():
     except:
         pass
     logger.info('检查物品识别模型更新')
-    resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/index_itemid_relation.json')
+    resp = retry_get('https://gh.cirno.xyz/raw.githubusercontent.com/triwinds/arknights-ml/master/inventory/index_itemid_relation.json')
     remote_relation = resp.json()
     if remote_relation['time'] > local_cache_time:
         from datetime import datetime
         logger.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
         with open(index_file, 'w', encoding='utf-8') as f:
             json.dump(remote_relation, f, ensure_ascii=False)
-        resp = retry_get('https://cdn.jsdelivr.net/gh/triwinds/arknights-ml@latest/inventory/ark_material.onnx')
+        resp = retry_get('https://gh.cirno.xyz/raw.githubusercontent.com/triwinds/arknights-ml/master/inventory/ark_material.onnx')
         with open(net_file, 'wb') as f:
             f.write(resp.content)
         _update_index_info.cache_clear()

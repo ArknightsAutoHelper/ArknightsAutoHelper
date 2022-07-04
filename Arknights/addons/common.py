@@ -8,12 +8,14 @@ class CommonAddon(AddonBase):
         import imgreco.main
         if extra_predicate is None:
             self.logger.info("正在返回主页")
+            from Arknights.addons.record import RecordAddon
+            self.addon(RecordAddon).try_replay_record('back_to_main', quiet=True)
         else:
             self.logger.info("返回上层")
         retry_count = 0
         max_retry = 3
         while True:
-            screenshot = self.device.screenshot()
+            screenshot = self.control.screenshot()
 
             if extra_predicate is not None and extra_predicate(screenshot):
                 self.logger.info('满足停止条件，停止导航')
@@ -51,13 +53,11 @@ class CommonAddon(AddonBase):
             self.logger.debug(f"检查对话框：{dlgtype}, {ocr}")
             if dlgtype == 'yesno':
                 if '基建' in ocr or '停止招募' in ocr or '好友列表' in ocr:
-                    self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot), post_delay=2)
+                    self.tap_rect(imgreco.common.get_dialog_right_button_rect(screenshot), post_delay=5)
                     continue
-                elif '招募干员' in ocr or '加急' in ocr:
+                elif '招募干员' in ocr or '加急' in ocr or '退出游戏' in ocr:
                     self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot), post_delay=2)
                     continue
-                if '退出游戏' in ocr:
-                    self.tap_rect(imgreco.common.get_dialog_left_button_rect(screenshot), post_delay=2)
                 else:
                     raise RuntimeError('未适配的对话框')
             elif dlgtype == 'ok':
@@ -68,6 +68,6 @@ class CommonAddon(AddonBase):
             if retry_count > max_retry:
                 raise RuntimeError('未知画面')
             self.logger.info('未知画面，尝试返回按钮 {}/{} 次'.format(retry_count, max_retry))
-            self.device.input.keyboard(4)  # KEYCODE_BACK
+            self.control.input.send_key(4)  # KEYCODE_BACK
             self.delay(3)
         self.logger.info("已回到主页")

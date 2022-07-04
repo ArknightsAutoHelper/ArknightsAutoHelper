@@ -9,8 +9,7 @@ import queue as threading_Queue
 
 import Arknights.helper
 import app
-from automator import connector
-from automator.connector.ADBConnector import ADBConnector
+from automator.control.ADBController import ADBController
 from util.excutil import format_exception
 from typing import Mapping
 
@@ -91,9 +90,10 @@ class WorkerThread(threading.Thread):
         }
 
     def notify_availiable_devices(self):
-        devices = connector.enum_devices()
+        from automator.control.targets import enum_targets
+        devices = enum_targets()
         self.devices = devices
-        self.notify("web:availiable-devices", [x[0] for x in devices])
+        self.notify("web:availiable-devices", [str(x) for x in devices])
 
     # threading.Thread
     def run(self):
@@ -141,8 +141,9 @@ class WorkerThread(threading.Thread):
         logger.info("sending notify %s %r", name, value)
         self.output.put(dict(type="notify", name=name, value=value))
     def request_device_connector(self):
+        from automator.control.targets import auto_connect
         try:
-            return connector.auto_connect()
+            return auto_connect(preference=app.config.device.adb_always_use_device)
         except:
             self.notify_availiable_devices()
             self.notify('web:show-devices')
@@ -168,15 +169,18 @@ class WorkerThread(threading.Thread):
         print(dev.split(':', 1))
         connector_type, cookie = dev.split(':', 1)
         if connector_type == 'list':
-            name, cls, args, binding = self.devices[int(cookie)]
-            new_connector = cls(*args)
+            record = self.devices[int(cookie)]
+            new_connector = record.create_controller()
         elif connector_type == 'adb':
-            new_connector = ADBConnector(cookie)
+            from automator.control.adb.targets import get_target_from_adb_serial
+            new_connector = get_target_from_adb_serial(cookie).create_controller()
         else:
             raise KeyError("unknown connector type " + connector_type)
         connector_str = str(new_connector)
-        self.helper.connect_device(new_connector)
-    
+        old_controller = self.helper.connect_device(new_connector)
+        if old_controller is not None:
+            old_controller.close()
+
 
     def set_max_refill_count(self, count):
         self.helper.addon('CombatAddon').refill_count = 0

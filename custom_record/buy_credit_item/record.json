@@ -1,0 +1,33 @@
+{
+    "back_to_main": false,
+    "description": "购买商品",
+    "prefer_mode": "match_template",
+    "records": [
+        {
+            "img": "step0.png",
+            "point": [
+                858,
+                581
+            ],
+            "raise_exception": true,
+            "repeat": 1,
+            "threshold": 0.7,
+            "type": "tap",
+            "wait_seconds_after_touch": 2
+        },
+        {
+            "img": "step1.png",
+            "point": [
+                642,
+                643
+            ],
+            "raise_exception": true,
+            "repeat": 1,
+            "threshold": 0.5,
+            "type": "tap",
+            "wait_seconds_after_touch": 1
+        }
+    ],
+    "screen_height": 720,
+    "screen_width": 1280
+}
