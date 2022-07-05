@@ -13,7 +13,7 @@ from util import cvimage
 class _richlog_worker(threading.Thread):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.queue = Queue()
+        self.queue = Queue(32)
         self.lock = threading.Lock()
         self.files = {}
         self.daemon = True
