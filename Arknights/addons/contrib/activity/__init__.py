@@ -147,6 +147,10 @@ def save_detect_result(zone_id, pos):
 
 
 class ActivityAddOn(AddonBase):
+    def __init__(self, helper):
+        super().__init__(helper)
+        self.delay_after_open_activity = 5
+
     @navigator
     def nav(self, stage):
         return self.run(stage, query_only=True)
@@ -240,14 +244,14 @@ class ActivityAddOn(AddonBase):
             activity_rect = (14.583 * vh, 71.944 * vh, 57.639 * vh, 83.333 * vh)
             logger.info('open current activity')
             self.tap_rect(activity_rect)
-            self.delay(3)
+            self.delay(self.delay_after_open_activity)
         else:
             box_center = self.detect_middle_activity(screen, activity_name)
             if box_center is None:
                 self.logger.error(f'cannot find activity {activity_name}')
                 raise RuntimeError(f'cannot find activity {activity_name}')
             self.logger.info(f'open activity {activity_name}')
-            self.tap_point(box_center, 3, randomness=(2, 2))
+            self.tap_point(box_center, self.delay_after_open_activity, randomness=(2, 2))
 
     def check_current_activity(self, screen: Image, activity_name):
         vh, vw = self.vh, self.vw
@@ -286,7 +290,7 @@ class ActivityAddOn(AddonBase):
         box_center, max_score = detect_box(screen, activity_name)
         if max_score > 0.4:
             logger.info(f"检测到 {activity_name} 活动, 可能是当前活动, 尝试打开...")
-            self.tap_point(box_center, 3)
+            self.tap_point(box_center, self.delay_after_open_activity)
             return True
         return False
 
@@ -302,4 +306,4 @@ class ActivityAddOn(AddonBase):
 
 if __name__ == '__main__':
     from Arknights.configure_launcher import helper
-    helper.addon(ActivityAddOn).nav_and_combat('le-6', 1)
+    helper.addon(ActivityAddOn).nav_and_combat('dv-8', 1)
