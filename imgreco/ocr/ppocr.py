@@ -1,3 +1,4 @@
+from util import cvimage
 from .common import *
 import cv2
 import numpy as np
@@ -25,22 +26,27 @@ class PaddleOcr(OcrEngine):
     def recognize(self, image, ppi=70, hints=None, **kwargs):
         if image.mode != 'BGR':
             image = image.convert('BGR')
+        if 'char_whitelist' in kwargs:
+            ocr.set_char_whitelist(kwargs['char_whitelist'])
         cv_img = image.array
-        single_line_flag = image.height < 35 or image.width / 3 > image.height
+        single_line_flag = image.height < 35
         if hints is not None and OcrHint.SINGLE_LINE in hints:
             single_line_flag = True
         if single_line_flag:
             res = ocr.ocr_single_line(cv_img)
             logging.debug(f'PaddleOcr.recognize: {res}')
-            if res and res[1] > 0.7:
-                return OcrResult([OcrLine([OcrWord(Rect(0, 0), w) for w in res[0].strip()])])
+            if res and res[1] > 0.55:
+                result = OcrResult([OcrLine([OcrWord(Rect(0, 0), w) for w in res[0].strip()])])
             else:
-                return OcrResult([])
+                result = OcrResult([])
         else:
             result = ocr.detect_and_ocr(cv_img)
             logging.debug(f'PaddleOcr.recognize: {result}')
             line = [OcrLine([OcrWord(Rect(0, 0), w) for w in box.ocr_text]) for box in result]
-            return OcrResult(line)
+            result = OcrResult(line)
+        if 'char_whitelist' in kwargs:
+            ocr.set_char_whitelist(None)
+        return result
 
 
 def ocr_for_single_line(img, cand_alphabet: str = None):
