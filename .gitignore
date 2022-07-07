@@ -141,3 +141,6 @@ resources.zip
 packaging/*/bin
 packaging/*/obj
 *proj.user
+
+node_modules
+dist
