@@ -12,23 +12,23 @@ idx2id = ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 
 logger = get_logger(__name__)
 
 
-@lru_cache(maxsize=1)
-def _load_onnx_model():
-    with resources.open_file('stage_ocr/chars.onnx') as f:
+@lru_cache(maxsize=2)
+def _load_onnx_model(model_name='chars'):
+    with resources.open_file(f'stage_ocr/{model_name}.onnx') as f:
         data = f.read()
         net = cv2.dnn.readNetFromONNX(data)
         return net
 
 
-def predict_cv(img, noise_size=None):
+def predict_cv(img, noise_size=None, model_name='chars'):
     char_imgs = crop_char_img(img, noise_size)
     if not char_imgs:
         return ''
-    return predict_char_images(char_imgs)
+    return predict_char_images(char_imgs, model_name)
 
 
-def predict_char_images(char_imgs):
-    net = _load_onnx_model()
+def predict_char_images(char_imgs, model_name='chars'):
+    net = _load_onnx_model(model_name)
     roi_list = [np.expand_dims(resize_char(x), 2) for x in char_imgs]
     blob = cv2.dnn.blobFromImages(roi_list)
     net.setInput(blob)
@@ -181,15 +181,15 @@ def recognize_stage_tags(pil_screen, template, ccoeff_threshold=0.75):
     return res
 
 
-def do_tag_ocr(img, noise_size=None):
+def do_tag_ocr(img, noise_size=None, model_name='chars'):
     logger.logimage(common.convert_to_pil(img))
-    res = do_tag_ocr_dnn(img, noise_size)
+    res = do_tag_ocr_dnn(img, noise_size, model_name)
     logger.logtext('res: %s' % res)
     return res
 
 
-def do_tag_ocr_dnn(img, noise_size=None):
-    return predict_cv(img, noise_size)
+def do_tag_ocr_dnn(img, noise_size=None, model_name='chars'):
+    return predict_cv(img, noise_size, model_name)
 
 
 def do_img_ocr(pil_img):

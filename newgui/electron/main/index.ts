@@ -19,6 +19,7 @@ function getBackgroundColor() {
   return nativeTheme.shouldUseDarkColors ? '#383e47' : '#ffffff';
 }
 
+// https://github.com/electron/electron/issues/27247
 const titleBarStyle = 'overlay';
 
 function getTitleBarWindowOptions(style): BrowserWindowConstructorOptions {
@@ -66,7 +67,7 @@ async function createWindow() {
   })
 
   nativeTheme.on('updated', () => {
-    win.setTitleBarOverlay(getWindowTitleOverlaySetting());
+    win?.setTitleBarOverlay(getWindowTitleOverlaySetting());
   })
 }
 

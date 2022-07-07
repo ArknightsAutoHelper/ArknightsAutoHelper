@@ -172,13 +172,15 @@ class WorkerThread(threading.Thread):
             record = self.devices[int(cookie)]
             new_connector = record.create_controller()
         elif connector_type == 'adb':
-            from automator.control.adb.client import get_config_adb_server
-            new_connector = ADBController(get_config_adb_server().get_device(cookie))
+            from automator.control.adb.targets import get_target_from_adb_serial
+            new_connector = get_target_from_adb_serial(cookie).create_controller()
         else:
             raise KeyError("unknown connector type " + connector_type)
         connector_str = str(new_connector)
-        self.helper.connect_device(new_connector)
-    
+        old_controller = self.helper.connect_device(new_connector)
+        if old_controller is not None:
+            old_controller.close()
+
 
     def set_max_refill_count(self, count):
         self.helper.addon('CombatAddon').refill_count = 0

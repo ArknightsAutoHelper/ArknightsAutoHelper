@@ -56,7 +56,7 @@
     ]
   },
   "devDependencies": {
-    "electron": "^18.2.4",
+    "electron": "^19.0.7",
     "vite-plugin-electron": "^0.4.4",
     "vite-plugin-pwa": "^0.12.0"
   }

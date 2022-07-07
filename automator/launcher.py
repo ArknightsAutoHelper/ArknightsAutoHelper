@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from typing import Union
+    from typing import Union, Optional
     from automator import BaseAutomator
+    from automator.control.types import Controller
 del TYPE_CHECKING
 import sys
 import os
@@ -18,7 +19,7 @@ app.init()
 helper: BaseAutomator = None
 prompt_prefix = 'akhelper'
 
-device = None
+device: Optional[Controller] = None
 
 def skipcallback(handler):
     raise StopIteration
@@ -92,7 +93,9 @@ def _connect_device(newdevice):
     global device
     device = newdevice
     if helper is not None:
-        helper.connect_device(device)
+        olddevice = helper.connect_device(device)
+        if olddevice is not None:
+            olddevice.close()
 
 
 def connect(argv):
@@ -141,10 +144,10 @@ def _interactive_connect():
 
 
 def _connect_adb(args):
-    from automator.control.adb.client import get_config_adb_server
+    from automator.control.adb.targets import get_target_from_adb_serial
     if len(args) >= 0:
         serial = args[0]
-        _connect_device(get_config_adb_server().get_device(serial))
+        _connect_device(get_target_from_adb_serial(serial).create_controller())
         return 0
     else:
         print('usage: connect adb <serial>')

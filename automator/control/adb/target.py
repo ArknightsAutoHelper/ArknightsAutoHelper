@@ -49,8 +49,12 @@ def dedup_targets(targets: list[ADBControllerTarget]) -> list[ADBControllerTarge
     """
     dedup targets by adb_address
     """
+    groups = {}
     deduped = []
-    for address, group in itertools.groupby(targets, lambda x: (x.adb_address, x.display_id)):
+    for x in targets:
+        key = (x.adb_address, x.display_id)
+        groups.setdefault(key, []).append(x)
+    for group in groups.values():
         group_targets = list(group)
         group_targets.sort(key=lambda x: x.dedup_priority)
         merged_target = group_targets[0]

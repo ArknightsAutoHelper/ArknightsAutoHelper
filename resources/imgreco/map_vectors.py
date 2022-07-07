@@ -79,26 +79,14 @@ def initialize():
 
 
     # materials
-    material1 = vec(0, 0)
-    material2 = material1 + vec(277, -50)
-    material3 = material1 + vec(477, -165)
-    material4 = material1 + vec(643, -279)
-    material5 = material1 + vec(743, -394)
     for prefix in ['LS', 'AP', 'CA', 'CE', 'SK']:
-        stage_maps[prefix] = {prefix + '-1': material1, prefix + '-2': material2, prefix + '-3': material3,
-                              prefix + '-4': material4, prefix + '-5': material5}
-        map_anchors[prefix] = [prefix + '-1']
-        stage_maps_linear[prefix] = stage_maps[prefix].keys()
+        stage_maps_linear[prefix] = [f'{prefix}-{i}' for i in range(1, 6)]
+    stage_maps_linear['CE'].append('CE-6')
+    stage_maps_linear['LS'].append('LS-6')
 
     # socs
     for infix in 'ABCD':
-        map_anchors['PR-' + infix] = ['PR-%s-1' % infix]
         stage_maps_linear['PR-%s' % infix] = ['PR-%s-1' % infix, 'PR-%s-2' % infix]
-    vec0 = vec(0, 0)
-    stage_maps['PR-A'] = {'PR-A-1': vec0, 'PR-A-2': vec(401, -188)}
-    stage_maps['PR-B'] = {'PR-B-1': vec0, 'PR-B-2': vec(456, -197)}
-    stage_maps['PR-C'] = {'PR-C-1': vec0, 'PR-C-2': vec(445, -154)}
-    stage_maps['PR-D'] = {'PR-D-1': vec0, 'PR-D-2': vec(426, -173)}
 
     stage_maps_linear['ep00'] = ['0-1', 'TR-1', '0-2', 'TR-2', '0-3', 'TR-3', '0-4', 'TR-4', '0-5', '0-6', 'TR-5',
                                  '0-7', 'TR-6', '0-8', '0-9', 'TR-7', '0-10', '0-11']

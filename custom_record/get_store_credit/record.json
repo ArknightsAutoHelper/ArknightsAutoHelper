@@ -1,0 +1,57 @@
+{
+    "back_to_main": true,
+    "description": "收商店信用点",
+    "prefer_mode": "match_template",
+    "records": [
+        {
+            "img": "step0.png",
+            "point": [
+                811,
+                491
+            ],
+            "raise_exception": true,
+            "repeat": 1,
+            "threshold": 0.7,
+            "type": "tap",
+            "wait_seconds_after_touch": 2
+        },
+        {
+            "img": "step1.png",
+            "point": [
+                1158,
+                94
+            ],
+            "raise_exception": true,
+            "repeat": 1,
+            "threshold": 0.7,
+            "type": "tap",
+            "wait_seconds_after_touch": 2
+        },
+        {
+            "img": "step2.png",
+            "point": [
+                1012,
+                38
+            ],
+            "raise_exception": false,
+            "repeat": 1,
+            "threshold": 0.7,
+            "type": "tap",
+            "wait_seconds_after_touch": 2
+        },
+        {
+            "img": "step3.png",
+            "point": [
+                638,
+                644
+            ],
+            "raise_exception": false,
+            "repeat": 1,
+            "threshold": 0.7,
+            "type": "tap",
+            "wait_seconds_after_touch": 2
+        }
+    ],
+    "screen_height": 720,
+    "screen_width": 1280
+}

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import OrderedDict
 import inspect
 from collections.abc import Mapping
 from typing import Any, Callable, ClassVar, Sequence, Type, TypeVar, Generic, Optional, Union
@@ -123,7 +124,6 @@ class Namespace(Field[SubType]):
 
 class Schema:
     _parent_schema: ClassVar[Optional[Type[Schema]]] = None
-    _fields: ClassVar[OrderedDict[str, Field]]
     def __init__(self, store: Optional[Mapping] = None, parent: Optional[Schema] = None):
         if store is None:
             store = _generate_default_store(self.__class__)
@@ -131,7 +131,8 @@ class Schema:
         self._namespaces = {}
         self._parent = parent
         self._dirty = False
-        for name, defn in self.__class__._fields.items():
+        self._fields = _get_declared_fields(self.__class__)
+        for name, defn in self._fields.items():
             if isinstance(defn, Namespace):
                 self._namespaces[name] = defn.type(store.get(name, None), self)
     def _set_dirty(self):

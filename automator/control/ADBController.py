@@ -24,7 +24,7 @@ from .adb.client import ADBDevice, ADBServer
 from .adb.info import ADBControllerDeviceInfo
 from .adb.agent import ControlAgentClient
 
-from .types import EventAction, EventFlag, InputProtocol, ScreenshotProtocol, ControllerCapabilities
+from .types import Controller, EventAction, EventFlag, InputProtocol, ScreenshotProtocol, ControllerCapabilities
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ class _TouchEventsInputImpl(InputProtocol):
                 break
             time_progress = (t0 - start_time) / move_duration
             path_progress = interpolate(time_progress)
-            self.touch_event(EventAction.MOVE, int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress), flags=EventFlag.ASYNC)
+            self.touch_event(EventAction.MOVE, int(x0 + (x1 - x0) * path_progress), int(y0 + (y1 - y0) * path_progress))
             t1 = time.perf_counter()
             step_time = t1 - t0
             if step_time < frame_time:
@@ -183,7 +183,7 @@ class ShellScreenshotAdapter(ScreenshotProtocol):
         hdrlen = 0
         if self.controller.sdk_version >= 28:
             # new format for Android P
-            colorspace = struct.unpack_from('<I', pixels, 12)[0]
+            colorspace = struct.unpack_from('<I', data, 12)[0]
             hdrlen = 16
         else:
             colorspace = 0
@@ -310,18 +310,23 @@ class AahAgentClientAdapter(_TouchEventsInputImpl, ScreenshotProtocol):
         return self.client.send_key(keycode, metastate)
     
     def send_text(self, text: str) -> None:
-        return super().send_text(text)
+        return self.client.send_text(text)
     
     def screenshot(self) -> cvimage.Image:
         wrapped_img = self.client.screenshot(compress=self.compress, srgb=True)
         return wrapped_img.image
+    
+    def close(self) -> None:
+        if self.client is not None:
+            self.client.close()
+            self.client = None
 
 def _check_invalid_screenshot(image: cvimage.Image):
     alpha_channel: np.ndarray = image.array[..., 3]
     if np.all(alpha_channel == 0):
         raise io.UnsupportedOperation('screenshot with all pixels alpha = 0')
 
-class ADBController:
+class ADBController(Controller):
     def __init__(self, device: ADBDevice, display_id: Optional[int] = None, preload_device_info: dict = {}, override_identifier: Optional[str] = None):
         """
         Creates a new ADBController instance.
@@ -423,7 +428,11 @@ class ADBController:
             else:
                 self._last_screenshot_expire = t0 + (1 / rate_limit)
         return self._last_screenshot
-        
+
+    def close(self):
+        self.input.close()
+        self._screenshot_adapter.close()
+
     def touch_swipe2(self, origin, movement, duration=None):
         """DEPRECATED: use input.touch_swipe() instead"""
         # sleep(1)
