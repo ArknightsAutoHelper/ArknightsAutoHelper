@@ -16,6 +16,7 @@ def _init_win32():
     import ctypes
     vbox_clsids = [
         ('{20190809-47b9-4a1e-82b2-07ccd5323c3f}', 'LDPlayer', 'ld'),
+        ('{20191216-47b9-4a1e-82b2-07ccd5323c3f}', 'LDPlayer9', 'ld9'),
         ('{88888888-47b9-4a1e-82b2-07ccd5323c3f}', 'Nox', 'nox'),
         ('{baf3f651-58d8-429d-97ad-2b5699b43567}', 'BlueStacks', 'bstk'),
         ('{b1a7a4f2-47b9-4a1e-82b2-07ccd5323c3a}', 'Memu', 'memu'),
