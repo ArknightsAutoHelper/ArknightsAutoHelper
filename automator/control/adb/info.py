@@ -140,7 +140,7 @@ def _test_reverse_connection(device: ADBDevice, loopbacks: list[str], nc_command
     for addr in loopbacks:
         logger.debug('testing loopback address %s', addr)
         future = rch.register_cookie()
-        cmd = 'echo -n %sOKAY | nc -w 1 %s %d' % (future.cookie.decode(), addr, rch.port)
+        cmd = 'echo -n %sOKAY | %s -w 1 %s %d' % (future.cookie.decode(), nc_command, addr, rch.port)
         logger.debug(cmd)
         control_sock = device.exec_stream(cmd)
         with control_sock:
