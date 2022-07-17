@@ -231,10 +231,11 @@ class ShellScreenshotAdapter(ScreenshotProtocol):
         return self._decode_screencap(data)
 
     def _screenshot_nc_connect(self):
+        nc_command = self.controller.device_info.nc_command
         nat_address = self.controller.device_info.nat_to_host_loopback
         rch = ReverseConnectionHost.get_instance()
         future = rch.register_cookie()
-        with self.controller.adb.exec_stream(f'(echo {future.cookie.decode()}; screencap) | nc {nat_address} {rch.port}'):
+        with self.controller.adb.exec_stream(f'(echo {future.cookie.decode()}; screencap) | {nc_command} {nat_address} {rch.port}'):
             with future.result(10) as sock:
                 data = recvall(sock, 8388608, True)
         return self._decode_screencap(data)

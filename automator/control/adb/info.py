@@ -81,7 +81,7 @@ class ADBControllerDeviceInfo(Schema):
             arp = self._controller.adb.exec('cat /proc/net/arp')
             possible_loopbacks = [x[:x.find(b' ')].decode() for x in arp.splitlines()[1:]]
             if possible_loopbacks:
-                loopback = _test_reverse_connection(self._controller.adb, possible_loopbacks)
+                loopback = _test_reverse_connection(self._controller.adb, possible_loopbacks, self.nc_command)
                 return loopback
         return None
 
@@ -103,6 +103,19 @@ class ADBControllerDeviceInfo(Schema):
                     pass
         return None
     
+    @UserReadOnlyField(str, title='nc 命令', doc='用于绕过 adb 连接的 nc 命令')
+    def nc_command(self):
+        candidates = ['nc', 'busybox nc']
+        # TODO: push static busybox to device
+        for candidate in candidates:
+            response = self._controller.adb.exec(f'{candidate} 127.0.0.1 0')
+            if response.startswith(b'nc: '):
+                # nc: port number too small: 0
+                # nc: connect: Connection refused
+                # nc: can't connect to remote host (127.0.0.1): Connection refused
+                return candidate
+        return None
+
     # @UserReadOnlyField(int, title='窗口句柄')
     # def hwnd(self) -> Optional[int]:
     #     """
@@ -119,7 +132,7 @@ class ADBControllerDeviceInfo(Schema):
     #     """
     #     return None
 
-def _test_reverse_connection(device: ADBDevice, loopbacks: list[str]):
+def _test_reverse_connection(device: ADBDevice, loopbacks: list[str], nc_command: str = 'nc'):
     if not loopbacks:
         return None
     from automator.control.adb.revconn import ReverseConnectionHost
