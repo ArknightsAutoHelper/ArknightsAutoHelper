@@ -1,0 +1,24 @@
+@import "~@blueprintjs/core/lib/scss/variables";
+.version-label {
+    color: $gray3;
+    margin-bottom: 0.5em;
+}
+
+.log-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.auto-scroll {
+    * {
+        overflow-anchor: none;
+    }
+    &::after {
+        content: '';
+        height: 5px;
+        display: block;
+        overflow-anchor: auto;
+    }
+}
+

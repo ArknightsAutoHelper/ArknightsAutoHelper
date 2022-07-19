@@ -1,4 +1,4 @@
-from automator import AddonBase, cli_command
+from automator import AddonBase, cli_command, task_sched
 from Arknights.flags import *
 from .common import CommonAddon
 class QuestAddon(AddonBase):
@@ -49,3 +49,11 @@ class QuestAddon(AddonBase):
         with self.helper.frontend.context:
             self.clear_task()
         return 0
+
+    @task_sched.task(category='日常收菜', title='领取任务奖励')
+    class CollectQuestTask(task_sched.Schema):
+        pass
+
+    @CollectQuestTask.handler
+    def handle_task(self, task: CollectQuestTask):
+        self.cli_collect([])

@@ -11,6 +11,7 @@ from automator import BaseAutomator
 
 logger = logging.getLogger('helper')
 
+from . import all_addons
 class ArknightsHelper(BaseAutomator):
     def on_device_connected(self):
         if self.viewport[1] < 720 or Fraction(self.viewport[0], self.viewport[1]) < Fraction(16, 9):
@@ -28,26 +29,3 @@ class ArknightsHelper(BaseAutomator):
                 if msg is not None:
                     logger.warn(msg)
             self.frontend.alert(title, body, 'warn', details)
-
-    def load_addons(self):
-        from .addons.common import CommonAddon
-        from .addons.combat import CombatAddon
-        from .addons.stage_navigator import StageNavigator
-        from .addons.recruit import RecruitAddon
-        from .addons.quest import QuestAddon
-        from .addons.record import RecordAddon
-        from .addons.riic import RIICAddon
-
-        
-        from .addons.contrib.grass_on_aog import GrassAddOn
-
-        from .addons.contrib.activity import ActivityAddOn
-        
-        try:
-            from .addons.contrib.start_sp_stage import StartSpStageAddon
-        except Exception:
-            pass
-
-        from .addons.contrib.plan import PlannerAddOn
-
-        from .addons import sof_nav

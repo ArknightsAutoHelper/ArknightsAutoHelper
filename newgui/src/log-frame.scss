@@ -1,0 +1,125 @@
+@import "~normalize.css";
+
+$pt-font-family-monospace: 'Monaco', 'Consolas', monospace;
+
+// @import "~@blueprintjs/core/lib/css/blueprint.css";
+@import "~@blueprintjs/core/lib/scss/variables";
+
+::-moz-selection{
+    background:$pt-text-selection-color;
+}
+
+::selection{
+    background:$pt-text-selection-color;
+}
+
+body {
+    margin: 0;
+    overflow-y: scroll;
+    overflow-y: overlay;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    background-color: $pt-app-background-color;
+    .#{$ns}-dark & {
+      background-color: $pt-dark-app-background-color;
+    }
+    padding-bottom: 8px;
+}
+
+.log-container {
+    // display: table;
+    font-size: 14px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-family: ui-monospace, "SFMono-Regular", "SF Mono", "Menlo", "Consolas", "Liberation Mono", monospace;
+    table-layout: fixed;
+    width: 100%;
+    .log-record {
+        // display: table-row;
+        &:hover {
+            background-color: rgba(255,255,255, 0.8);
+        }
+        &[data-loglevel="ERROR"] {
+            color: $red2;
+        }
+        &[data-loglevel="WARNING"] {
+            color: $orange2;
+        }
+        &[data-loglevel="DEBUG"] {
+            color: $gray2;
+            display: none;
+        }
+    }
+    pre.log-record {
+        margin: 0;
+        width: 100%;
+    }
+    &.show-debug {
+        .log-record[data-loglevel="DEBUG"] {
+            display: table-row;
+        }
+    }
+    
+}
+.log-record-field {
+    white-space: pre-wrap;
+    // display: table-cell;
+    vertical-align: top;
+    padding: 0 4px;
+    border-left: 1px solid $pt-divider-black;
+    border-right: 1px solid $pt-divider-black;
+    &.time-field {
+        border-left: none !important;
+        box-sizing: content-box;
+        width: 12.5ch;
+    }
+    &.level-field {
+        box-sizing: content-box;
+        width: 7ch;
+    }
+    &.message-field {
+        border-right: none !important;
+    }
+}
+
+.log-field-separator {
+    width: 0px;
+    height: 0px;
+    font-size: 0;
+    background-color: $pt-divider-black;
+    color: transparent;
+    text-overflow: clip;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline;
+    flex-shrink: 0;
+}
+
+body.#{$ns}-dark {
+    background-color: $pt-dark-app-background-color;
+    color: $pt-dark-text-color;
+}
+
+.#{$ns}-dark {
+    .log-record {
+        &:hover {
+            background-color: rgba(255,255,255, 0.05);
+            // background-color: $dark-gray4;
+        }
+        .log-record-field {
+            border-left: 1px solid $pt-dark-divider-white;
+            border-right: 1px solid $pt-dark-divider-white;
+        }
+        &[data-loglevel="ERROR"] {
+            color: $red5;
+        }
+        &[data-loglevel="WARNING"] {
+            color: $orange5;
+        }
+        &[data-loglevel="DEBUG"] {
+            color: $gray4;
+        }
+    }
+}
+
+@import "./scrollbar.scss";

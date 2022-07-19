@@ -1,0 +1,67 @@
+.user-select-text {
+  user-select: text;
+}
+
+.overflow-y-scroll {
+  overflow-y: scroll;
+  overflow-y: overlay;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+  overflow-y: overlay;
+  scrollbar-width: thin;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+.square-card {
+  border-radius: 0;
+}
+
+.no-bottom-margin {
+  margin-bottom: 0;
+}
+
+.flex-grow-1 {
+  flex-grow: 1;
+}
+
+.min-height-0 {
+  min-height: 0;
+}
+
+.card-no-padding {
+  padding: 0;
+  // https://github.com/palantir/blueprint/issues/5312
+  .bp4-dark & {
+    padding: 1px;
+  }
+}
+
+.no-wrap {
+  white-space: pre;
+}
+
+.text-align-right {
+  text-align: right;
+}
+
+.opacity-80 {
+  opacity: 0.8;
+}
+
+.width-100 {
+  width: 100%;
+}
+
+.max-width-540 {
+  max-width: 540px;
+}

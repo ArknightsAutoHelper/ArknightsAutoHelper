@@ -1,8 +1,10 @@
 import app
+from app.schemadef import ListField
+from penguin_stats import arkplanner
+from automator import AddonBase, task_sched
+from ...combat import CombatAddon, RefillConfigurationMixin
 from Arknights.addons.contrib.common_cache import load_inventory, load_aog_data
 from Arknights.addons.stage_navigator import StageNavigator, custom_stage
-from automator import AddonBase
-from penguin_stats import arkplanner
 
 desc = f"""
 {__file__}
@@ -71,6 +73,15 @@ class GrassAddOn(AddonBase):
                 break
         self.addon(StageNavigator).navigate_and_combat(stage, 1000)
 
+
+    @task_sched.task(category='代理指挥作战', title='一键长草')
+    class GrassTask(task_sched.Schema, RefillConfigurationMixin):
+        exclude = ListField(str, ['固源岩组'], '不刷以下材料')
+
+    @GrassTask.handler
+    def handle_task(self, task: GrassTask):
+        self.addon(CombatAddon).configure_refill(task)
+        self.run([])
 
 __all__ = ['GrassAddOn']
 

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Optional
+from typing import Callable, Optional, overload
 import os
 import time
 from dataclasses import dataclass
@@ -63,6 +63,17 @@ def _parse_opt(argv):
     return ops
 
 
+class RefillConfigurationMixin:
+    refill_type: str
+    max_refill_count: int
+
+    def __init_subclass__(cls) -> None:
+        from app.schemadef import EnumField, IntField
+        cls.refill_type = EnumField(['none', 'item', 'item+originium'], '自动回复体力', 'none：不回复\nitem：使用道具\nitem+originium：使用道具+源石')
+        cls.refill_type.__set_name__(cls, 'refill_type')
+        cls.max_refill_count = IntField(0, '最大回复次数', '0代表不限制\n自动选择多个应急理智小样(+10)算作一次', min=0)
+        cls.max_refill_count.__set_name__(cls, 'max_refill_count')
+
 class CombatAddon(AddonBase):
     def on_attach(self):
         self.operation_time = []
@@ -76,13 +87,39 @@ class CombatAddon(AddonBase):
 
         # self.helper.register_gui_handler(self.gui_handler)
 
-    def configure_refill(self, with_item: Optional[bool] = None, with_originium: Optional[bool] = None):
+    def _configure_refill_with_values(self, with_item: Optional[bool] = None, with_originium: Optional[bool] = None, count: Optional[int] = None):
         if with_item is not None:
             self.refill_with_item = bool(with_item)
         if with_originium is not None:
             self.refill_with_originium = bool(with_originium)
         self.use_refill = self.refill_with_item or self.refill_with_originium
+        if count is not None:
+            self.max_refill_count = count
         return self
+
+    def _configure_refill_with_schema(self, config: RefillConfigurationMixin):
+        if config.refill_type == 'none':
+            self._configure_refill_with_values(False, False)
+        elif config.refill_type == 'item':
+            self._configure_refill_with_values(True, False, count=config.max_refill_count)
+        elif config.refill_type == 'item+originium':
+            self._configure_refill_with_values(True, True, count=config.max_refill_count)
+        else:
+            raise ValueError('invalid refill_type: %r' % config.refill_type)
+
+    @overload
+    def configure_refill(self, with_item: Optional[bool] = None, with_originium: Optional[bool] = None, count: Optional[int] = None):
+        ...
+    
+    @overload
+    def configure_refill(self, config: RefillConfigurationMixin):
+        ...
+    
+    def configure_refill(self, with_item = None, with_originium = None, count = None):
+        if isinstance(with_item, RefillConfigurationMixin):
+            self._configure_refill_with_schema(with_item)
+        else:
+            self._configure_refill_with_values(with_item, with_originium, count)
 
     def reset_refill(self):
         return self.configure_refill(False, False)

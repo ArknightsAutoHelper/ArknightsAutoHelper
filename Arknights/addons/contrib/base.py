@@ -1,5 +1,4 @@
 
-from Arknights.helper import ArknightsHelper
 import cv2
 from util import cvimage as Image
 import numpy as np

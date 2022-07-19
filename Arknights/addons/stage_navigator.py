@@ -1,15 +1,19 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from typing import Callable, Any, Sequence, ClassVar, Optional, Type
+from types import FunctionType
+from app.schemadef import EnumField, Field, IntField
+from typing import Callable, Any, Sequence, ClassVar, Optional, Type, TypeVar, Generic, cast
+TFunc = TypeVar('TFunc', bound=FunctionType)
 
-from automator import AddonBase, cli_command
+
+from automator import AddonBase, cli_command, task_sched
 from .common import CommonAddon
-from .combat import CombatAddon, _parse_opt
+from .combat import CombatAddon, _parse_opt, RefillConfigurationMixin
 from dataclasses import dataclass
 from collections import OrderedDict
 from random import randint, uniform
 from Arknights.flags import *
+
+
 
 from resources.imgreco.map_vectors import stage_maps_linear, is_invalid_stage
 known_stages_ocr = [x for v in stage_maps_linear.values() for x in v]
@@ -50,7 +54,7 @@ class _navigator_record:
 
 _custom_stage_registry: OrderedDict[str, _custom_stage_record] = OrderedDict()
 _navigator_registry: list[_navigator_record] = []
-class custom_stage:
+class custom_stage(Generic[TFunc]):
     def __init__(self, name, ignore_count=False, title: Optional[str] = None, description: Optional[str] = None):
         if callable(name):
             self.fn = self.name
@@ -62,13 +66,18 @@ class custom_stage:
         self.title = title
         self.description = description
     
-    def __call__(self, func):
+    def __call__(self, func: TFunc):
         self.fn = func
         return self
     
     def __set_name__(self, owner, name):
         _custom_stage_registry[self.name] = _custom_stage_record(owner, self.name, self.fn, self.title, self.description, self.ignore_count)
         setattr(owner, name, self.fn)
+
+    def __get__(self, instance, owner):
+        # we will never get here, but make language servers happy
+        method = cast(TFunc, self.fn).__get__(cast(object, instance), owner)
+        return method
 
 class navigator:
     def __init__(self, tag=None, *, query: Optional[Callable[[Type[AddonBase], str], bool]] = None, naivgate: Optional[Callable[[Type[AddonBase], str], None]] = None):
@@ -94,6 +103,10 @@ class navigator:
             self.tag = owner.__name__
         _navigator_registry.append(_navigator_record(owner, self.tag, self._query, self._navigate))
         setattr(owner, name, self.navigate)
+    def __get__(self, instance, owner):
+        # we will never get here, but make language servers happy
+        method = cast(FunctionType, self._query).__get__(cast(object, instance), owner)
+        return method
 
 def _auto_extra_help():
     append_helptext = ['']
@@ -294,11 +307,16 @@ class StageNavigator(AddonBase):
 
     @navigator('builtin')
     def is_stage_supported_builtin(self, c_id):
+        if c_id == '':
+            return True
         result = is_stage_supported_ocr(c_id)
         return result
 
     @is_stage_supported_builtin.navigate
     def goto_stage_builtin(self, stage):
+        if stage == '':
+            return
+        # TODO: stage == 'last'
         import imgreco.common
         import imgreco.main
         import imgreco.map
@@ -397,3 +415,17 @@ class StageNavigator(AddonBase):
     @cli_auto.dynamic_help
     def cli_auto_help(self):
         return self.cli_auto.__doc__.rstrip() + _auto_extra_help()
+
+    @task_sched.task(category='代理指挥作战', title='指定关卡')
+    class CombatTask(task_sched.Schema, RefillConfigurationMixin):
+        stage = Field(str, '1-7', '关卡', '特殊值：\n留空：当前画面的关卡\nlast：终端内显示的上一次关卡')
+        count = IntField(9999, '次数', '特殊值：\n留空：无限次\n0：不作战', min=0)
+
+    @CombatTask.validate
+    def validate_task(self, task: CombatTask):
+        return self.is_stage_supported(task.stage)
+    
+    @CombatTask.handler
+    def handle_task(self, task: CombatTask):
+        self.addon(CombatAddon).configure_refill(task)
+        self.navigate_and_combat(task.stage, task.count)

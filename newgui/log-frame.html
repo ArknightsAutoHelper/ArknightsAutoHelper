@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <title>log frame</title>
+        <link rel="stylesheet" href="/src/log-frame.scss" />
+    </head>
+    <body>
+        <table class="log-container">
+            <tbody id="log-container-body">
+
+            </tbody>
+        </table>
+        <template id="log-record-template">
+            <tr class='log-record' data-loglevel="{level}">
+                <td class='log-record-field no-wrap text-align-right time-field'>{time}</td>
+                <td class='log-record-field text-align-right level-field'>{level}</td>
+                <td class='log-record-field message-field'>{message}</td>
+            </tr>
+        </template>
+        <script type="module" src="/src/log-frame.ts"></script>
+
+    </body>
+</html>
