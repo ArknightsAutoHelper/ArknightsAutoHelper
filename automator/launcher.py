@@ -103,9 +103,9 @@ def connect(argv):
     connect [connector type] [connector args ...]
         连接到设备
         支持的设备类型：
-        connect adb [serial or tcpip endpoint]
+        connect adb <serial or tcpip endpoint>
+        connect ident [identifier]
     """
-    connector_type = 'adb'
     if len(argv) > 1:
         connector_type = argv[1]
         connector_args = argv[2:]
@@ -113,6 +113,8 @@ def connect(argv):
         return _interactive_connect()
     if connector_type == 'adb':
         return _connect_adb(connector_args)
+    elif connector_type == 'ident':
+        return _connect_ident(connector_args)
     else:
         print('unknown connector type:', connector_type)
     return 1
@@ -153,6 +155,19 @@ def _connect_adb(args):
         print('usage: connect adb <serial>')
         return 1
 
+def _connect_ident(args):
+    from automator.control.targets import enum_targets
+    targets = {x.override_identifier: x for x in enum_targets() if getattr(x, 'override_identifier', None) is not None}
+
+    if len(args) == 0:
+        print('usage: connect ident [identifier]')
+        print('current enumerated identifiers:')
+        for key in targets:
+            print(key)
+        return
+    ident = args[0]
+    _connect_device(targets[ident].create_controller())
+    return 0
 
 def _ensure_device():
     if device is None:
