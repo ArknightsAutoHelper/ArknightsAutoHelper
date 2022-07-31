@@ -147,7 +147,7 @@ def _interactive_connect():
 
 def _connect_adb(args):
     from automator.control.adb.targets import get_target_from_adb_serial
-    if len(args) >= 0:
+    if len(args) == 1:
         serial = args[0]
         _connect_device(get_target_from_adb_serial(serial).create_controller())
         return 0
@@ -159,7 +159,7 @@ def _connect_ident(args):
     from automator.control.targets import enum_targets
     targets = {x.override_identifier: x for x in enum_targets() if getattr(x, 'override_identifier', None) is not None}
 
-    if len(args) == 0:
+    if len(args) != 1:
         print('usage: connect ident [identifier]')
         print('current enumerated identifiers:')
         for key in targets:
