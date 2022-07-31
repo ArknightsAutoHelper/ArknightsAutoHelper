@@ -52,6 +52,7 @@ class PenguinStatsReporter:
         self.noop = False
         self.stage_map: dict[str, Stage] = {}
         self.item_map: dict[str, Item] = {}
+        self.item_name_map: dict[str, Item] = {}
         self.cache_client = CachedSession(backend='memory', cache_control=True)
         self.client = requests.session()
 
@@ -100,6 +101,7 @@ class PenguinStatsReporter:
             self.stage_map[s['code']] = s
         for i in items:
             self.item_map[i['itemId']] = i
+            self.item_name_map[i['name']] = i
             name_to_id_map[i['name']] = i['itemId']
         import imgreco.itemdb
         unrecognized_items = set(self.item_map.keys()) - set(imgreco.itemdb.dnn_items_by_item_id.keys()) - set(EXTRA_KNOWN_ITEMS)
@@ -185,7 +187,10 @@ class PenguinStatsReporter:
             if item.item_id in stage.get('recognitionOnly', []):
                 logger.debug('不汇报识别结果中的物品（recognitionOnly）：%s', item.item_id)
                 continue
-            penguin_item = self.item_map.get(item.item_id, None)
+            if item.item_type == 'special_report_item' and app.config.combat.penguin_stats.report_special_item:
+                penguin_item = self.item_name_map.get(item.name, None)
+            else:
+                penguin_item = self.item_map.get(item.item_id, None)
             if penguin_item is None:
                 logger.warning("%s 不在企鹅数据物品列表内", item.name)
                 return ReportResult.NotReported
