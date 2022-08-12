@@ -290,12 +290,10 @@ def recognize_legacy(im, learn_unrecognized_item):
 
     operation_id = lower.crop((0, 4.444 * vh, 23.611 * vh, 11.388 * vh)).convert('L')
     # logger.logimage(operation_id)
-    operation_id = imgops.enhance_contrast(imgops.crop_blackedge(operation_id), 80, 220)
+    cv2.threshold(operation_id.array, 180, 255, cv2.THRESH_BINARY, operation_id.array)
     logger.logimage(operation_id)
-    operation_id_str = reco_novecento_bold.recognize(operation_id).upper()
-    fixup, operation_id_str = minireco.fix_stage_name(operation_id_str)
-    if fixup:
-        logger.logtext('fixed to ' + operation_id_str)
+    from imgreco import stage_ocr
+    operation_id_str = stage_ocr.do_tag_ocr(operation_id.array, model_name='chars_end')
     # operation_name = lower.crop((0, 14.074*vh, 23.611*vh, 20*vh)).convert('L')
     # operation_name = imgops.enhance_contrast(imgops.crop_blackedge(operation_name))
     # logger.logimage(operation_name)
@@ -372,14 +370,12 @@ def recognize_ep10(im: Image.Image, learn_unrecognized_item=False):
 
     logger.logimage(im)
 
-    operation_id = im.subview((20.278*vh, 10.000*vh, 43.889*vh, 15.093*vh)).convert('L')
+    operation_id = im.subview((20.278*vh, 10.000*vh, 39.889*vh, 15.093*vh)).convert('L')
     # logger.logimage(operation_id)
-    operation_id = imgops.enhance_contrast(imgops.crop_blackedge(operation_id, value_threshold=200), 80, 220)
+    cv2.threshold(operation_id.array, 180, 255, cv2.THRESH_BINARY, operation_id.array)
     logger.logimage(operation_id)
-    operation_id_str = reco_novecento_medium.recognize(operation_id).upper()
-    fixup, operation_id_str = minireco.fix_stage_name(operation_id_str)
-    if fixup:
-        logger.logtext('fixed to ' + operation_id_str)
+    from imgreco import stage_ocr
+    operation_id_str = stage_ocr.do_tag_ocr(operation_id.array, model_name='chars_end')
     # operation_name = lower.crop((0, 14.074*vh, 23.611*vh, 20*vh)).convert('L')
     # operation_name = imgops.enhance_contrast(imgops.crop_blackedge(operation_name))
     # logger.logimage(operation_name)
@@ -448,18 +444,16 @@ def recognize_ep10(im: Image.Image, learn_unrecognized_item=False):
 def recognize_interlocking(im):
     import time
     t0 = time.monotonic()
-    from . import stage_ocr
+    from imgreco import stage_ocr
     vw, vh = common.get_vwvh(im.size)
     operation_id = im.crop((100*vw-26.204*vh, 21.852*vh, 100*vw-9.907*vh, 26.204*vh)).convert('L')
     thr = int(0.833*vh)
     left, _, _, _ = imgops.cropbox_blackedge2(operation_id, x_threshold=0.833*vh)
     operation_id = operation_id.crop((left-thr, 0, operation_id.width, operation_id.height))
+    cv2.threshold(operation_id.array, 180, 255, cv2.THRESH_BINARY, operation_id.array)
     logger.logimage(operation_id)
-    operation_id_str = stage_ocr.do_img_ocr(operation_id.convert('RGB')).upper()
-    logger.logtext(operation_id_str)
-    fixup, operation_id_str = minireco.fix_stage_name(operation_id_str)
-    if fixup:
-        logger.logtext('fixed to ' + operation_id_str)
+    from imgreco import stage_ocr
+    operation_id_str = stage_ocr.do_tag_ocr(operation_id.array, model_name='chars_end')
 
     stars = im.crop((100*vw-41.667*vh, 10.000*vh, 100*vw-11.204*vh, 20.185*vh))
     logger.logimage(stars)

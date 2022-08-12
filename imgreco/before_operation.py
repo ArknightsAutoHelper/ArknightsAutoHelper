@@ -1,6 +1,7 @@
 import sys
 from functools import lru_cache
 
+import cv2
 import numpy as np
 from util import cvimage as Image
 
@@ -43,7 +44,10 @@ def recognize(img):
         start_button = (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
         ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
         def stage_reco(img):
-            return reco_Novecento.recognize(img)
+            operation_id = img.copy().convert('L')
+            cv2.threshold(operation_id.array, 180, 255, cv2.THRESH_BINARY, operation_id.array)
+            from imgreco import stage_ocr
+            return stage_ocr.do_tag_ocr(operation_id.array, model_name='chars_end')
     elif style == 'ep10':
         # 2022-04-14: episode 10 new layout
         opidrect = (100*vw-49.537*vh, 11.111*vh, 100*vw-37.870*vh, 15.370*vh)
@@ -51,7 +55,10 @@ def recognize(img):
         start_button = (100*vw-31.759*vh, 90.093*vh, 100*vw-6.389*vh, 96.296*vh)
         ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
         def stage_reco(img):
-            return reco_Novecento.recognize(img)
+            operation_id = img.copy().convert('L')
+            cv2.threshold(operation_id.array, 180, 255, cv2.THRESH_BINARY, operation_id.array)
+            from imgreco import stage_ocr
+            return stage_ocr.do_tag_ocr(operation_id.array, model_name='chars_end')
         check_consume_ap = True
     elif style == 'sof':
         # i.e. Stultifera Navis
