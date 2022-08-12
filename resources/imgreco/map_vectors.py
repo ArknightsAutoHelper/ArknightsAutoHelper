@@ -6,6 +6,7 @@ map_anchors = {}
 ep2region: Dict[int, int] = {}
 region2ep: Dict[int, List[int]] = {}
 stage_maps_linear: Dict[str, List[str]] = {}
+mainline_stages = set()
 _invalid_stages = []
 
 def vec(*scalars, dtype=numpy.int32):
@@ -118,6 +119,9 @@ def initialize():
     _invalid_stages = ['1-2', '1-11', '5-11', '6-13', '6-17', '6-18', '7-1', '7-7', '7-19', '7-20', 'M8-1', 'M8-2',
                        'M8-3', 'M8-4', 'M8-5', 'EG-1', 'EG-2', 'EG-3', 'JT8-1', 'EG-4', 'END8-1', 'EG-5',
                        'H6-1', 'H6-4']
+    for k in stage_maps_linear:
+        if k.startswith('ep'):
+            mainline_stages.update(stage_maps_linear[k])
     tmp = []
     for i in range(4):
         ep2region[i] = 0
