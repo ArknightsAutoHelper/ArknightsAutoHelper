@@ -135,4 +135,6 @@ def fix_stage_name(s):
         return True, 'BI-' + s[3:]
     elif s.startswith('-W-'):
         return True, 'IW-' + s[3:]
+    elif s.startswith('-C-'):
+        return True, 'IC-' + s[3:]
     return False, s
