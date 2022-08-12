@@ -57,5 +57,9 @@ class root(Schema):
     @Namespace('一键长草设置')
     class grass_on_aog:
         exclude = ListField(str, ['固源岩组'], '不刷以下材料')
+        prefer_activity_stage = Field(bool, True, '优先刷活动中的关卡')
+        no_aog_data_action = Field(str, 'none', '在启用 prefer_activity_stage 且 aog 没有当前活动关卡数据的情况下的操作',
+                                   'auto_t3: 刷最少的蓝材料; 1-7: 刷指定关卡; none: 无操作')
+        normal_action = Field(str, 'auto_t3', '没有活动时的默认操作', 'auto_t3: 刷最少的蓝材料; 1-7: 刷指定关卡; none: 无操作')
 
     debug = Field(bool, False)
