@@ -14,17 +14,11 @@ def _init():
 
     from automator.control.adb.target import ADBControllerTarget
     from rotypes import GUID, HRESULT
-    REFGUID = ctypes.POINTER(GUID)
+    from rotypes.inspectable import CoTaskMemFree
+
     HCS_SYSTEM = ctypes.POINTER(ctypes.c_void_p)
-    HCN_NETWORK = ctypes.POINTER(ctypes.c_void_p)
-    HCN_ENDPOINT = ctypes.POINTER(ctypes.c_void_p)
 
     vmcompute = ctypes.windll.vmcompute
-    computenetwork = ctypes.windll.computenetwork
-
-    CoTaskMemFree = ctypes.windll.ole32.CoTaskMemFree
-    CoTaskMemFree.argtypes = (ctypes.c_void_p,)
-
     HcsEnumerateComputeSystems = vmcompute.HcsEnumerateComputeSystems
     HcsEnumerateComputeSystems.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
     HcsEnumerateComputeSystems.restype = HRESULT
@@ -41,37 +35,23 @@ def _init():
     HcsCloseComputeSystem.argtypes = (HCS_SYSTEM,)
     HcsCloseComputeSystem.restype = HRESULT
 
-    HcnEnumerateNetworks = computenetwork.HcnEnumerateNetworks
-    HcnEnumerateNetworks.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnEnumerateNetworks.restype = HRESULT
+    def enum_compute_system(query: dict):
+        response = ctypes.c_wchar_p()
+        try:
+            HcsEnumerateComputeSystems(json.dumps(query), ctypes.byref(response), None)
+            return json.loads(ctypes.wstring_at(response))
+        finally:
+            if response.value:
+                CoTaskMemFree(response) 
 
-    HcnOpenNetwork = computenetwork.HcnOpenNetwork
-    HcnOpenNetwork.argtypes = (REFGUID, ctypes.POINTER(HCN_NETWORK), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnOpenNetwork.restype = HRESULT
-
-    HcnQueryNetworkProperties = computenetwork.HcnQueryNetworkProperties
-    HcnQueryNetworkProperties.argtypes = (HCN_NETWORK , ctypes.c_void_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnQueryNetworkProperties.restype = HRESULT
-
-    HcnCloseNetwork = computenetwork.HcnCloseNetwork
-    HcnCloseNetwork.argtypes = (HCN_NETWORK,)
-    HcnCloseNetwork.restype = HRESULT
-
-    HcnEnumerateEndpoints = computenetwork.HcnEnumerateEndpoints
-    HcnEnumerateEndpoints.argtypes = (ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnEnumerateEndpoints.restype = HRESULT
-
-    HcnOpenEndpoint = computenetwork.HcnOpenEndpoint
-    HcnOpenEndpoint.argtypes = (REFGUID, ctypes.POINTER(HCN_ENDPOINT), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnOpenEndpoint.restype = HRESULT
-
-    HcnQueryEndpointProperties = computenetwork.HcnQueryEndpointProperties
-    HcnQueryEndpointProperties.argtypes = (HCN_ENDPOINT , ctypes.c_void_p, ctypes.POINTER(ctypes.c_wchar_p), ctypes.POINTER(ctypes.c_wchar_p))
-    HcnQueryEndpointProperties.restype = HRESULT
-
-    HcnCloseEndpoint = computenetwork.HcnCloseEndpoint
-    HcnCloseEndpoint.argtypes = (HCN_ENDPOINT,)
-    HcnCloseEndpoint.restype = HRESULT
+    def dump_endpoints():
+        try:
+            from .hnsapi import dump_endpoints_state
+            return dump_endpoints_state()
+        except Exception:
+            logger.debug('HNS API failed, trying read registry directly')
+            from .hnsdump import dump_endpoints_state
+            return dump_endpoints_state()
 
     global enum
     def enum():
@@ -79,32 +59,17 @@ def _init():
         server = get_config_adb_server()
         devices = []
         with contextlib.suppress(Exception):
-            response = ctypes.c_wchar_p()
-            HcsEnumerateComputeSystems('{"State":"Running"}', ctypes.byref(response), None)
-            runningsystems = json.loads(ctypes.wstring_at(response))
-            CoTaskMemFree(response)
+            runningsystems = enum_compute_system({"State":"Running"})
             logger.debug("running compute systems: %r", runningsystems)
             if not runningsystems:
                 logger.debug("no running compute systems, skipping")
                 return []
             runningids = [GUID(x['RuntimeId']) for x in runningsystems]
             
-            HcnEnumerateEndpoints(None, ctypes.byref(response), None)
-            endpoints = json.loads(ctypes.wstring_at(response))
-            CoTaskMemFree(response)
-            logger.debug("endpoints: %r", endpoints)
+            endpoints = dump_endpoints()
 
-            for guidstr in endpoints:
+            for guidstr, obj in endpoints.items():
                 logger.debug("probing endpoint %s", guidstr)
-                guid = GUID(guidstr)
-                nethandle = HCN_NETWORK()
-                HcnOpenEndpoint(ctypes.byref(guid), ctypes.byref(nethandle), None)
-                response = ctypes.c_wchar_p()
-                HcnQueryEndpointProperties(nethandle, "", ctypes.byref(response), None)
-                jdoc = ctypes.wstring_at(response)
-                CoTaskMemFree(response)
-                obj = json.loads(jdoc)
-                HcnCloseEndpoint(nethandle)
                 if obj.get('VirtualNetworkName', None) not in ('BluestacksNetwork', 'BluestacksNxt'):
                     continue
                 if (vmguid := GUID(obj.get("VirtualMachine"))) not in runningids:
