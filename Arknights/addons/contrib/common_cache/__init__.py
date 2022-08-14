@@ -6,15 +6,13 @@ import requests
 
 import app
 from automator import BaseAutomator
+import logging
 
-common_cache_config = {
-    'character_table': {
-        'type': 'net_json',
-        'filename': 'character_table_cache.json',
-        'url': 'https://gh.cirno.xyz/raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/character_table.json',
-        'encoding': 'utf-8'
-    },
-}
+
+logger = logging.getLogger(__name__)
+app.init()
+game_data_url = app.get('game_data_url', 'https://gh.cirno.xyz/raw.githubusercontent.com'
+                                         '/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel')
 
 
 def get_cache_path(cache_file_name):
@@ -48,18 +46,9 @@ def load_net_json_cache(cache_file_name, url, encoding='utf-8', force_update=Fal
         return json.load(f)
 
 
-def load_common_cache(cache_name, force_update=False):
-    info = common_cache_config.get(cache_name)
-    if not info:
-        raise RuntimeError(f'[{cache_name}] is not exists.')
-    if info['type'] == 'net_json':
-        return load_net_json_cache(info['filename'], info['url'], info.get('encoding', 'utf-8'), force_update)
-    raise RuntimeError(f"Unknown type {info['type']}.")
-
-
-def load_game_data(table_name, force_update=False):
-    url = f'https://gh.cirno.xyz/raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/zh_CN/gamedata/excel/{table_name}.json'
-    return load_net_json_cache(f'{table_name}_cache.json', url, 'utf-8', force_update)
+def load_game_data(table_name):
+    url = f'{game_data_url}/{table_name}.json'
+    return load_net_json_cache(f'{table_name}_gd_cache.json', url, 'utf-8', False)
 
 
 def _check_is_need_to_force_update(cache_name: str, cache_time_key: str):
@@ -109,6 +98,26 @@ def load_aog_data(force_update: bool = None, cache_key='%Y--%V'):
     return data
 
 
+def check_game_data_version():
+    url = f'{game_data_url}/data_version.txt'
+    resp = requests.get(url)
+    if os.path.exists(get_cache_path('data_version.txt')):
+        with open(get_cache_path('data_version.txt'), 'rb') as f:
+            cache_version = f.read()
+        if cache_version == resp.content:
+            logger.debug('Game data is up to date.')
+            return
+    with open(get_cache_path('data_version.txt'), 'wb') as f:
+        f.write(resp.content)
+    logger.debug(f'Game data version changed, purge all game data cache.')
+    for cache_path in app.cache_path.glob('*_gd_cache.json'):
+        logger.debug(f'delete {cache_path}')
+        os.remove(cache_path)
+
+
+check_game_data_version()
+
+
 def load_inventory(helper: BaseAutomator, force_update=False, cache_key='%Y--%V'):
     if os.path.exists(inventory_cache_file) and not force_update:
         with open(inventory_cache_file, 'r') as f:
@@ -125,3 +134,4 @@ def update_inventory(helper: BaseAutomator, cache_key='%Y--%V'):
     with open(inventory_cache_file, 'w') as f:
         json.dump(data, f)
     return data
+

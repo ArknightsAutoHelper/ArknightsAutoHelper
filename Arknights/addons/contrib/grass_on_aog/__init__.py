@@ -44,27 +44,23 @@ def order_stage(item):
     return event if event['efficiency'] >= normal['efficiency'] else normal
 
 
-def get_activities(force_update=False):
-    return load_game_data('activity_table', force_update)['basicInfo']
+def get_activities():
+    return load_game_data('activity_table')['basicInfo']
 
 
-def get_available_activities(force_update=False):
-    activity_table = get_activities(force_update)
+def get_available_activities():
+    activity_table = get_activities()
     cur_time = time.time()
     return [activity_table[aid] for aid in activity_table
             if activity_table[aid]['startTime'] < cur_time < activity_table[aid]['endTime']]
 
 
 def get_available_activity_stages(force_update=False):
-    available_activities = get_available_activities(force_update)
+    available_activities = get_available_activities()
     if not available_activities:
-        if force_update:
-            logger.info('No available activities.')
-            return []
-        else:
-            logger.info(f'Updating activity cache...')
-            return get_available_activity_stages(True)
-    zones_table = load_game_data('zone_table', force_update)['zones']
+        logger.info('No available activities.')
+        return []
+    zones_table = load_game_data('zone_table')['zones']
     zone_ids = [zid for zid in zones_table]
     available_zone_ids = []
     for activity in available_activities:
@@ -75,7 +71,7 @@ def get_available_activity_stages(force_update=False):
     if not available_zone_ids:
         logger.debug('No available activity zones.')
         return []
-    stage_table = load_game_data('stage_table', force_update)['stages']
+    stage_table = load_game_data('stage_table')['stages']
     available_stages = []
     for zid in available_zone_ids:
         for sid in stage_table:

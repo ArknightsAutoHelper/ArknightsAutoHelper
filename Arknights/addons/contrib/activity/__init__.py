@@ -24,8 +24,8 @@ detect_cache_file = app.cache_path.joinpath('activity_detect_cache.json')
 logger = logging.getLogger(__name__)
 
 
-def get_stage_map(force_update=False):
-    stages = load_game_data('stage_table', force_update)['stages']
+def get_stage_map():
+    stages = load_game_data('stage_table')['stages']
     return process_stages(stages)
 
 
@@ -43,33 +43,22 @@ def process_stages(stages):
     return stage_code_map, zone_linear_map
 
 
-def get_activities(force_update=False):
-    return load_game_data('activity_table', force_update)['basicInfo']
+def get_activities():
+    return load_game_data('activity_table')['basicInfo']
 
 
-def get_zones(force_update=False):
-    return load_game_data('zone_table', force_update=force_update)['zones']
+def get_zones():
+    return load_game_data('zone_table')['zones']
 
 
 def get_stage(target_stage_code):
     stage_code_map, zone_linear_map = get_stage_map()
     if target_stage_code not in stage_code_map:
-        stage_code_map, zone_linear_map = get_stage_map(force_update=True)
-        if target_stage_code not in stage_code_map:
-            raise RuntimeError(f'无效的关卡: {target_stage_code}')
+        raise RuntimeError(f'无效的关卡: {target_stage_code}')
     target_stage = stage_code_map[target_stage_code]
-    # print(target_stage)
     if not check_activity_available(target_stage['zoneId']):
-        # 活动复刻关卡的 zone id 会变化, 所以需要更新关卡信息
-        stage_code_map, zone_linear_map = get_stage_map(force_update=True)
-        if target_stage_code not in stage_code_map:
-            raise RuntimeError(f'无效的关卡: {target_stage_code}')
-        target_stage = stage_code_map[target_stage_code]
-        # print(target_stage)
-        if not check_activity_available(target_stage['zoneId']):
-            raise RuntimeError('活动未开放')
+        raise RuntimeError('活动未开放')
     stage_linear = zone_linear_map.get(target_stage['zoneId'])
-    # print(stage_linear)
     return target_stage, stage_linear
 
 
@@ -98,19 +87,10 @@ def check_activity_available(zone_id):
     activity_id = zone_id.split('_')[0]
     activities = get_activities()
     if activity_id not in activities:
-        activities = get_activities(force_update=True)
-        if activity_id not in activities:
-            return False
+        return False
     cur_time = time.time()
     activity_info = activities[activity_id]
     return activity_info['startTime'] < cur_time < activity_info['endTime']
-
-
-def update_cache():
-    logger.info('更新缓存...')
-    get_zones(True)
-    get_activities(True)
-    get_stage_map(True)
 
 
 @lru_cache(1)
@@ -207,7 +187,6 @@ class ActivityAddOn(AddonBase):
     def try_detect_and_enter_zone(self, target_stage):
         detect_result = get_detect_result_from_cache(target_stage['zoneId'])
         if detect_result is None:
-            update_cache()
             logger.info('No detect cache found, try to detect zone with ppocr.')
             self.open_target_activity(target_stage)
             return self.detect_and_enter_zone(target_stage)

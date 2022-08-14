@@ -142,7 +142,7 @@ class RecordAddon(AddonBase):
                         duration = time.time() - st
                         break
             self.logger.debug(f'point_list: {point_list}')
-            if len(point_list) == 1:
+            if len(point_list) < 3:
                 point = point_list[0]
                 x1 = max(0, point[0] - half_roi)
                 x2 = min(self.viewport[0] - 1, point[0] + half_roi)
