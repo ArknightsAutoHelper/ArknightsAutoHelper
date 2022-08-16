@@ -100,6 +100,8 @@ class PenguinStatsReporter:
         for s in stages:
             self.stage_map[s['code']] = s
         for i in items:
+            if i.get('itemType') == 'RECRUIT_TAG':
+                continue
             self.item_map[i['itemId']] = i
             self.item_name_map[i['name']] = i
             name_to_id_map[i['name']] = i['itemId']
