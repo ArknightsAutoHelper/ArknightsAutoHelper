@@ -40,12 +40,11 @@ def predict_item_dnn(cv_img, box_size=137):
     cv_img = cv2.resize(cv_img, (box_size, box_size))
     mid_img = crop_item_middle_img(cv_img)
     from .itemdb import load_net, dnn_items_by_class
-    ark_material_net = load_net()
-    blob = cv2.dnn.blobFromImage(mid_img)
-    ark_material_net.setInput(blob)
-    out = ark_material_net.forward()
+    sess = load_net()
+    input_name = sess.get_inputs()[0].name
+    mid_img = np.moveaxis(mid_img, -1, 0)
+    out = sess.run(None, {input_name: [mid_img.astype(np.float32)]})[0]
 
-    # Get a class with a highest score.
     out = out.flatten()
     probs = common.softmax(out)
     classId = np.argmax(out)
@@ -136,7 +135,7 @@ def tell_item(itemimg, with_quantity=True, learn_unrecognized=False) -> Recogniz
     name = dnnitem.item_name
     item_type = dnnitem.item_type
     richlogger.logtext(f'dnn matched {dnnitem} with prob {prob}')
-    if prob < 0.8 or item_id == 'other':
+    if prob < 0.5 or item_id == 'other':
 # scale = 48/itemimg.height
         img4reco = np.array(itemimg.resize((48, 48), Image.BILINEAR).convert('RGB'))
         img4reco[itemdb.itemmask] = 0

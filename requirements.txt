@@ -17,3 +17,4 @@ pywin32; sys_platform == 'win32'
 # webgui2
 bottle==0.12.20
 bottle-websocket==0.2.9
+onnxruntime

@@ -13,7 +13,7 @@ from util import cvimage as Image
 logger = logging.getLogger(__name__)
 
 net_file = app.cache_path / 'ark_material.onnx'
-index_file = app.cache_path / 'index_itemid_relation.json'
+material_model_gen_time_file = app.cache_path / 'material_model_gen_time.txt'
 model_timestamp = 0
 
 @dataclass
@@ -29,17 +29,17 @@ dnn_items_by_item_name : dict[str, DnnItemRecord] = {}
 
 @lru_cache(1)
 def load_net():
-    update_index_info()
-    with open(net_file, 'rb') as f:
-        data = f.read()
-        net = cv2.dnn.readNetFromONNX(data)
-    return net
+    update_net()
+    import onnxruntime as ort
+    sess = ort.InferenceSession(str(net_file.absolute()))
+    _update_index_info(sess)
+    return sess
 
 
-@lru_cache(1)
-def _update_index_info():
-    with open(index_file, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+def _update_index_info(sess):
+    import json
+    metadata_map = sess.get_modelmeta().custom_metadata_map
+    data = json.loads(metadata_map['relation'])
     global model_timestamp
     model_timestamp = data['time']
     idx2id, id2idx, idx2name, idx2type = data['idx2id'], data['id2idx'], data['idx2name'], data['idx2type']
@@ -51,10 +51,6 @@ def _update_index_info():
         dnn_items_by_class[index] = record
         dnn_items_by_item_id[item_id] = record
         dnn_items_by_item_name[idx2name[index]] = record
-
-def update_index_info():
-    update_net()
-    return _update_index_info()
 
 def retry_get(url, max_retry=5, timeout=3):
     import requests
@@ -72,14 +68,13 @@ def retry_get(url, max_retry=5, timeout=3):
 def update_net():
     local_cache_time = 0
     import time
-    os.makedirs(os.path.dirname(index_file), exist_ok=True)
+    os.makedirs(os.path.dirname(material_model_gen_time_file), exist_ok=True)
     try:
-        stat = os.stat(index_file)
+        stat = os.stat(material_model_gen_time_file)
         cache_mtime = stat.st_mtime
-        with open(index_file, 'r', encoding='utf-8') as f:
-            local_rel = json.load(f)
-            model_gen_time = local_rel['time'] / 1000
-            local_cache_time = local_rel['time']
+        with open(material_model_gen_time_file, 'r', encoding='utf-8') as f:
+            local_cache_time = int(f.read())
+            model_gen_time = local_cache_time / 1000
         now = time.time()
         logger.debug(f'{cache_mtime=} {now=} {model_gen_time=}')
         if cache_mtime > model_gen_time and now - cache_mtime < 60 * 60 * 8:
@@ -87,19 +82,18 @@ def update_net():
     except:
         pass
     logger.info('检查物品识别模型更新')
-    resp = retry_get('https://gh.cirno.xyz/raw.githubusercontent.com/triwinds/arknights-ml/master/inventory/index_itemid_relation.json')
-    remote_relation = resp.json()
-    if remote_relation['time'] > local_cache_time:
+    resp = retry_get('https://gh.cirno.xyz/raw.githubusercontent.com/triwinds/arknights-ml/master/inventory/gen_time.txt')
+    remote_time = int(resp.text)
+    if remote_time > local_cache_time:
         from datetime import datetime
-        logger.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_relation["time"]/1000).strftime("%Y-%m-%d %H:%M:%S")}')
-        with open(index_file, 'w', encoding='utf-8') as f:
-            json.dump(remote_relation, f, ensure_ascii=False)
+        logger.info(f'更新物品识别模型, 模型生成时间: {datetime.fromtimestamp(remote_time/1000).strftime("%Y-%m-%d %H:%M:%S")}')
+        with open(material_model_gen_time_file, 'w', encoding='utf-8') as f:
+            json.dump(remote_time, f, ensure_ascii=False)
         resp = retry_get('https://gh.cirno.xyz/raw.githubusercontent.com/triwinds/arknights-ml/master/inventory/ark_material.onnx')
         with open(net_file, 'wb') as f:
             f.write(resp.content)
-        _update_index_info.cache_clear()
     else:
-        os.utime(index_file, None)
+        os.utime(material_model_gen_time_file, None)
 
 
 def _update_mat_collection(collection, name, img):
