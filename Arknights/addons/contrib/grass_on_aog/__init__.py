@@ -109,8 +109,8 @@ def filter_latest_activity_t3_item_stage(my_items, available_activity_stages):
             if reward["type"] == "MATERIAL" and reward["dropType"] == 2 and reward["id"] in t3_ids:
                 item_stage = item_stage_map.get(reward["id"])
                 stage['startTime'] = get_activity_info(stage['zoneId'])['startTime']
-                # if stage['startTime'] < now + 48 * 3600 * 1000:
-                #     continue
+                if stage['startTime'] < now + 48 * 3600 * 1000:
+                    continue
                 if item_stage is None:
                     item_stage_map[reward['id']] = stage
                 elif stage['startTime'] > item_stage['startTime']:
