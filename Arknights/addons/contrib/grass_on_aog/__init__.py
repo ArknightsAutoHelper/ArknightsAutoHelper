@@ -91,6 +91,37 @@ def filter_items_with_activity(t3_items, available_activity_stages):
     return filtered_t3_items
 
 
+def filter_latest_activity_t3_item_stage(my_items, available_activity_stages):
+    from Arknights.addons.contrib.activity import get_stage_map, get_activity_info
+    stage_code_map, zone_linear_map = get_stage_map()
+    t3_items = load_aog_data()['tier']['t3']
+    t3_ids = set([i['id'] for i in t3_items])
+    item_stage_map = {}
+    for stage_code in available_activity_stages:
+        stage = stage_code_map.get(stage_code)
+        if stage is None:
+            continue
+        rewards = stage['stageDropInfo'].get('displayDetailRewards')
+        if not rewards:
+            continue
+        now = time.time() * 1000
+        for reward in rewards:
+            if reward["type"] == "MATERIAL" and reward["dropType"] == 2 and reward["id"] in t3_ids:
+                item_stage = item_stage_map.get(reward["id"])
+                stage['startTime'] = get_activity_info(stage['zoneId'])['startTime']
+                # if stage['startTime'] < now + 48 * 3600 * 1000:
+                #     continue
+                if item_stage is None:
+                    item_stage_map[reward['id']] = stage
+                elif stage['startTime'] > item_stage['startTime']:
+                    item_stage_map[reward['id']] = stage
+    logger.debug(f'item_stage_map: {[(k, item_stage_map[k]["code"]) for k in item_stage_map]}')
+    if item_stage_map:
+        for my_item in my_items:
+            if my_item['itemId'] in item_stage_map:
+                return item_stage_map[my_item['itemId']]['code']
+
+
 def get_stage(aog_items, my_items, prefer_activity=True):
     t3_items = aog_items['tier']['t3']
     normal_action = app.config.grass_on_aog.normal_action
@@ -104,6 +135,16 @@ def get_stage(aog_items, my_items, prefer_activity=True):
             if filtered_t3_items:
                 return get_stage_with_action('auto_t3', my_items, filtered_t3_items)
             else:
+                logger.info('Refresh aog data.')
+                t3_items = load_aog_data(True)['tier']['t3']
+                filtered_t3_items = filter_items_with_activity(t3_items, available_activity_stages)
+                if filtered_t3_items:
+                    return get_stage_with_action('auto_t3', my_items, filtered_t3_items)
+                else:
+                    stage = filter_latest_activity_t3_item_stage(my_items, available_activity_stages)
+                    if stage:
+                        logger.info(f'没有在 aog 中找到活动关卡相关的材料, 尝试刷最近活动的 t3 材料关卡 [{stage}]')
+                        return stage
                 logger.info('没有在 aog 中找到活动关卡相关的材料, 这可能是因为 aog 数据还没有更新, 或者这次活动关卡的效率还不如普通关卡.')
                 logger.info('可以试试在一段时间后删除 cache/aog_cache.json 以强制刷新 aog 数据缓存.')
                 no_aog_data_action = app.config.grass_on_aog.no_aog_data_action
@@ -148,7 +189,7 @@ class GrassAddOn(AddonBase):
         my_items_with_count = sorted(my_items_with_count, key=lambda x: x['count'])
         stage = get_stage(aog_cache, my_items_with_count, prefer_activity=app.config.grass_on_aog.prefer_activity_stage)
         if stage:
-            self.addon(StageNavigator).navigate_and_combat(stage, 1000)
+            return self.addon(StageNavigator).navigate_and_combat(stage, 1000)
 
 
 __all__ = ['GrassAddOn']

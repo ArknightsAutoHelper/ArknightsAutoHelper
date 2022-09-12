@@ -83,13 +83,20 @@ def get_zone_name(zone_id):
     return zone_name
 
 
-def check_activity_available(zone_id):
+def get_activity_info(zone_id):
     activity_id = zone_id.split('_')[0]
     activities = get_activities()
     if activity_id not in activities:
-        return False
-    cur_time = time.time()
+        return None
     activity_info = activities[activity_id]
+    return activity_info
+
+
+def check_activity_available(zone_id):
+    cur_time = time.time()
+    activity_info = get_activity_info(zone_id)
+    if activity_info is None:
+        return False
     return activity_info['startTime'] < cur_time < activity_info['endTime']
 
 
