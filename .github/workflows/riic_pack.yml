@@ -1,0 +1,52 @@
+name: riic resource pack
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5,10 * * *'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
+        architecture: x64
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        # This path is specific to Ubuntu
+        path: ~/.cache/pip
+        # Look to see if there is a cache hit for the corresponding requirements file
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          ${{ runner.os }}-
+
+    - name: Cache teddy
+      uses: actions/cache@v2
+      with:
+        path: cache/teddy-repo
+        key: teddy-repo
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: build pack
+      run: |
+        python -m Arknights.addons.riic.riic_resource cache/riic_pack.xz
+
+    - name: upload release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        if [ -f cache/riic_pack.xz ]
+        then
+          gh release create riic_pack || true
+          gh release upload riic_pack cache/riic_pack.xz --clobber
+        fi
