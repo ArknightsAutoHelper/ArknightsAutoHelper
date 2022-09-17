@@ -120,7 +120,7 @@ def refresh_pack():
     try:
         from Arknights.gamedata_loader import session
         resp = session.get('https://gh.cirno.xyz/github.com/ArknightsAutoHelper/ArknightsAutoHelper/releases/download/riic_pack/riic_pack.xz')
-        if resp.from_cache:
+        if pack_version != '' and resp.from_cache:
             return
         resp.raise_for_status()
         bio = io.BytesIO(resp.content)
