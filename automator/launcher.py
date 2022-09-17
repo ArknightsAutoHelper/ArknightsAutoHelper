@@ -28,7 +28,7 @@ class ShellNextFrontend:
     def __init__(self, use_status_line,):
         self.use_status_line = use_status_line
         if use_status_line:
-            io = sys.stdout.buffer
+            io = getattr(sys.stdout, 'buffer', sys.stdout)
             if hasattr(io, 'raw'):
                 io = io.raw
             line = fancywait.StatusLine(io)

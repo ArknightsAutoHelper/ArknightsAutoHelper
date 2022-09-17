@@ -8,7 +8,7 @@ from .termop import TermOp
 
 logger = logging.getLogger('fancywait')
 
-stdinfd = sys.stdout.buffer
+stdinfd = getattr(sys.stdout, 'buffer', sys.stdout)
 stdinfd = getattr(stdinfd, 'raw', stdinfd)
 
 has_tty_input = isatty(stdinfd)
