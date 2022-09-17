@@ -156,4 +156,4 @@ def update_pack(filename):
     return True
 
 if __name__ == '__main__':
-    sys.exit(not update_pack(sys.argv[1]))
+    update_pack(sys.argv[1])
