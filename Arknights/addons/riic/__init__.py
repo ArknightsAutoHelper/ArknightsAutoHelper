@@ -56,6 +56,12 @@ def batch_compare_mse(roi, stacked_templates):
     all_mse = np.average(all_diff, axis=tuple(range(len(all_diff.shape)))[1:])
     return all_mse
 
+def deblend(image, blend_color, blend_alpha, dtype=np.uint8):
+    blend = np.asarray(image).astype(np.float32)
+    blend_alpha = np.float32(blend_alpha)
+    base = (blend - np.asarray(blend_color).astype(np.float32) * blend_alpha) / (1 - blend_alpha)
+    return np.clip(base, 0, 255, base).astype(dtype, copy=False)
+
 class RIICAddon(AddonBase):
     def on_attach(self) -> None:
         self.sync_richlog()
@@ -254,17 +260,27 @@ class RIICAddon(AddonBase):
         self.richlogger.logtext(f"time elapsed: {t:.06f} s")
         return result
 
-    def match_box_portrait(self, boximg, selected_hint=False):
-        from .riic_resource import portrait_mask_64, portrait_names, portrait_stack, portrait_select_stack
-        usestack = portrait_select_stack if selected_hint else portrait_stack
+    def match_box_portrait(self, boximg, red_hint=False):
+        from .riic_resource import portrait_mask_64, portrait_names, portrait_stack
         portrait2match = boximg.crop(Rect.from_ltrb(5,15,183,370)).resize(portrait_mask_64.size, Image.BILINEAR)
-        mse_stack = batch_compare_mse_alpha(portrait2match.convert('L').array, portrait_mask_64.array[..., 3], usestack)
+        if red_hint:
+            portrait2match = Image.fromarray(deblend(portrait2match.array, [100, 0, 0], 0.5), 'RGB')
+        mse_stack = batch_compare_mse_alpha(portrait2match.convert('L').array, portrait_mask_64.array[..., 3], portrait_stack)
         minidx = np.argmin(mse_stack)
         self.richlogger.logtext(f'max mse={mse_stack.max()}')
         return portrait_names[minidx], mse_stack[minidx]
 
     def recognize_operator_box(self, img: Image.Image, full_recognize=False, face_hint=None) -> OperatorBox:
         t00 = time.perf_counter()
+
+        selected_check = np.mean(np.power(img.array[0:5].astype(np.float32) - [0, 152, 220], 2))
+        self.richlogger.logtext(f'selected_check mse={selected_check}')
+        selected = selected_check < 3251  # has drop shadow over it
+
+        if selected:
+            img = Image.fromarray(deblend(img.array, [0, 152, 220], 0.2), 'RGB')
+            self.richlogger.logimage(img)
+
         name_img = img.subview((0, 375*self.scale, img.width, img.height - 2*self.scale)).convert('L')
         name_img = imgops.enhance_contrast(name_img, 90, 220)
         name_img = imgops.crop_blackedge2(name_img, x_threshold=name_img.height * 0.3)
@@ -304,17 +320,11 @@ class RIICAddon(AddonBase):
         elif imgops.compare_mse(tagimg, rest) < 3251:
             tag = 'rest'
         
-        selected_check = np.mean(np.power(img.array[0:5].astype(np.float32) - [0, 152, 220], 2))
-        self.richlogger.logtext(f'selected_check mse={selected_check}')
-        selected = selected_check < 3251  # has drop shadow over it
-        if selected:
-            has_room_check_color = [48, 79, 93]  # blue-tinted
-        else:
-            has_room_check_color = [60, 60, 60]
+        has_room_check_color = [60, 60, 60]
         room = None
 
         t0 = time.perf_counter()
-        portrait_id, mse = self.match_box_portrait(img,selected)
+        portrait_id, mse = self.match_box_portrait(img, face_hint == 'red')
         t = time.perf_counter() - t0
         self.richlogger.logtext(f'matched {portrait_id} with {mse=} in {t*1000} ms')
 
@@ -322,8 +332,8 @@ class RIICAddon(AddonBase):
             t0 = time.perf_counter()
             skill1_icon = img.subview(Rect.from_xywh(4,285,54,54).iscale(self.scale))
             skill2_icon = img.subview(Rect.from_xywh(67,285,54,54).iscale(self.scale))
-            skill1, score1 = self.recognize_skill(skill1_icon, selected_hint=selected)
-            skill2, score2 = self.recognize_skill(skill2_icon, selected_hint=selected)
+            skill1, score1 = self.recognize_skill(skill1_icon)
+            skill2, score2 = self.recognize_skill(skill2_icon)
             t = time.perf_counter() - t0
             self.richlogger.logtext(f'skill recognized in {t*1000} ms')
 
@@ -357,7 +367,7 @@ class RIICAddon(AddonBase):
         self.richlogger.logtext(f'box recognized in {(t01-t00)*1000} ms')
         return result
 
-    def recognize_skill(self, icon, selected_hint=False) -> tuple[str, float]:
+    def recognize_skill(self, icon) -> tuple[str, float]:
         self.richlogger.logimage(icon)
         skill_check_mean = np.mean(icon.array)
         skill_check_max = np.max(icon.array)
@@ -368,13 +378,7 @@ class RIICAddon(AddonBase):
         from . import riic_resource
         icon = icon.resize(riic_resource.icon_size, Image.BILINEAR)
         
-        if selected_hint and skill_check_max > 200:
-            self.richlogger.logtext('using stack normal_select_stack')
-            use_stack = riic_resource.normal_select_stack
-        elif selected_hint:
-            self.richlogger.logtext('using stack dark_select_stack')
-            use_stack = riic_resource.dark_select_stack
-        elif skill_check_max > 200:
+        if skill_check_max > 200:
             self.richlogger.logtext('using stack normal_icons_stack')
             use_stack = riic_resource.normal_icons_stack
         else:

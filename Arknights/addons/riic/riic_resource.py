@@ -19,8 +19,6 @@ pack_version: str = ''
 icon_names: list[str]
 normal_icons_stack: NDArray[np.float32]
 dark_icons_stack: NDArray[np.float32]
-normal_select_stack: NDArray[np.float32]
-dark_select_stack: NDArray[np.float32]
 
 portrait_names: list[str]
 portrait_stack: NDArray[np.float32]
@@ -32,14 +30,12 @@ portrait_mask_64 = portrait_mask.resize((32, 64), Image.BILINEAR)
 select_tint = np.array([0, 152, 220], dtype=np.float32)
 select_alpha = np.float32(0.2)
 
-__store_keys__ = ['pack_version', 'gamedata_version', 'icon_names', 'normal_icons_stack', 'dark_icons_stack', 'normal_select_stack', 'dark_select_stack', 'portrait_names', 'portrait_stack', 'portrait_select_stack']
+__store_keys__ = ['pack_version', 'gamedata_version', 'icon_names', 'normal_icons_stack', 'dark_icons_stack', 'portrait_names', 'portrait_stack']
 
 def build_pack(repopath: Path):
     icon_names = []
     normal_icons = []
     dark_icons = []
-    normal_select_icons = []
-    dark_select_icons = []
 
     with open(repopath / 'version', 'r', encoding='utf-8') as f:
         pack_version = f.read()
@@ -67,16 +63,11 @@ def build_pack(repopath: Path):
         icon_names.append(name)
         normal_icons.append(normal_blend)
         dark_icons.append(dark_blend)
-        normal_select_icons.append(normal_select)
-        dark_select_icons.append(dark_select)
     normal_icons_stack = np.concatenate([img[None, ...] for img in normal_icons]).astype(np.float32)
     dark_icons_stack = np.concatenate([img[None, ...] for img in dark_icons]).astype(np.float32)
-    normal_select_stack = np.concatenate([img[None, ...] for img in normal_select_icons]).astype(np.float32)
-    dark_select_stack = np.concatenate([img[None, ...] for img in dark_select_icons]).astype(np.float32)
 
     portrait_names = []
     portrait_images = []
-    portrait_select_images = []
     all_portrait_files = glob.glob(str(repopath / 'portrait' / '*.png'))
     for filename in all_portrait_files:
         portrait_names.append(os.path.basename(filename)[:-4])
@@ -86,9 +77,7 @@ def build_pack(repopath: Path):
         select_img = (img.array[..., :3] * (1-select_alpha) + select_alpha * select_tint)
         grayselect_img = np.dstack((Image.fromarray(select_img.astype(np.uint8), 'RGB').convert('L').array, img.array[..., -1]))
         portrait_images.append(grayalpha_img)
-        portrait_select_images.append(grayselect_img)
     portrait_stack = np.concatenate([img[None, ...] for img in portrait_images]).astype(np.float32)
-    portrait_select_stack = np.concatenate([img[None, ...] for img in portrait_select_images]).astype(np.float32)
 
     locals_dump = locals()
     store = {k: locals_dump[k] for k in __store_keys__}
