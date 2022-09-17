@@ -47,6 +47,6 @@ jobs:
       run: |
         if [ -f cache/riic_pack.xz ]
         then
-          gh release create riic_pack || true
+          gh release create riic_pack --prerelease || true
           gh release upload riic_pack cache/riic_pack.xz --clobber
         fi
