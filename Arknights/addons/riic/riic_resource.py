@@ -6,6 +6,7 @@ import glob
 import pickle
 import io
 import numpy as np
+import cv2
 from util import cvimage as Image
 from imgreco import imgops
 import logging
@@ -22,10 +23,13 @@ dark_icons_stack: NDArray[np.float32]
 
 portrait_names: list[str]
 portrait_stack: NDArray[np.float32]
-portrait_select_stack: NDArray[np.float32]
+portrait_maskclip_stack: NDArray[np.float32]
 
 portrait_mask = resources.load_image('riic/portrait_mask.png', 'RGBA')
 portrait_mask_64 = portrait_mask.resize((32, 64), Image.BILINEAR)
+portrait_mask_64_clipbox = Image.Rect.from_xywh(*cv2.boundingRect((portrait_mask_64.array[..., -1] == 255).astype(np.uint8)))
+portrait_mask_64_clipslice = (slice(portrait_mask_64_clipbox.y, portrait_mask_64_clipbox.bottom), slice(portrait_mask_64_clipbox.x, portrait_mask_64_clipbox.right))
+portrait_mask_64_clip = portrait_mask_64.crop(portrait_mask_64_clipbox)
 
 select_tint = np.array([0, 152, 220], dtype=np.float32)
 select_alpha = np.float32(0.2)
@@ -105,6 +109,12 @@ def load_pack(stream):
         store = RestrictedUnpickler(f).load()
     return store
 
+def apply_pack(store):
+    global portrait_maskclip_stack
+    for k in __store_keys__:
+        globals()[k] = store[k]
+    portrait_maskclip_stack = portrait_stack[(slice(None), *portrait_mask_64_clipslice)]
+
 def refresh_pack():
     try:
         from Arknights.gamedata_loader import session
@@ -119,12 +129,11 @@ def refresh_pack():
         import app
         bio = open(app.cache_path / 'riic_pack.xz', 'rb')
     store = load_pack(bio)
+    bio.close()
     from Arknights import gamedata_loader
     if store['gamedata_version'].strip() != gamedata_loader.get_version().strip():
         logger.warning('riic_pack gamedata version mismatch')
-    bio.close()
-    for k in __store_keys__:
-        globals()[k] = store[k]
+    apply_pack(store)
 
 def update_pack(filename):
     import lzma

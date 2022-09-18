@@ -260,12 +260,13 @@ class RIICAddon(AddonBase):
         self.richlogger.logtext(f"time elapsed: {t:.06f} s")
         return result
 
-    def match_box_portrait(self, boximg, red_hint=False):
-        from .riic_resource import portrait_mask_64, portrait_names, portrait_stack
-        portrait2match = boximg.crop(Rect.from_ltrb(5,15,183,370)).resize(portrait_mask_64.size, Image.BILINEAR)
+    def match_box_portrait(self, boximg: Image.Image, red_hint=False):
+        from .riic_resource import portrait_mask_64, portrait_names, portrait_maskclip_stack, portrait_mask_64_clipbox, portrait_mask_64_clip
+        portrait2match = boximg.subview(Rect.from_ltrb(5,15,183,370)).resize(portrait_mask_64.size, Image.BILINEAR).subview(portrait_mask_64_clipbox)
         if red_hint:
             portrait2match = Image.fromarray(deblend(portrait2match.array, [100, 0, 0], 0.5), 'RGB')
-        mse_stack = batch_compare_mse_alpha(portrait2match.convert('L').array, portrait_mask_64.array[..., 3], portrait_stack)
+            self.richlogger.logimage(portrait2match)
+        mse_stack = batch_compare_mse_alpha(portrait2match.convert('L').array, portrait_mask_64_clip.array[..., 3], portrait_maskclip_stack)
         minidx = np.argmin(mse_stack)
         self.richlogger.logtext(f'max mse={mse_stack.max()}')
         return portrait_names[minidx], mse_stack[minidx]
