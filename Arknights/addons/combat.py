@@ -161,8 +161,7 @@ class CombatAddon(AddonBase):
                     if c_id is not None:
                         # 如果传入了关卡 ID，检查识别结果
                         if recoresult['operation'] != c_id:
-                            self.logger.error('不在关卡界面')
-                            raise StopIteration()
+                            self.logger.warning(f"cid mismatch, ocr: {recoresult['operation']}, target: {self.c_id}")
                     break
                 else:
                     count_times += 1

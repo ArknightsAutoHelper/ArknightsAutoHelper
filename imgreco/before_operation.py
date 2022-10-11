@@ -19,6 +19,28 @@ def load_data():
     reco2 = minireco.MiniRecognizer(resources.load_pickle('minireco/Novecentosanswide_Normal.dat'))
     return (reco, reco2)
 
+
+def ocr_stage_id(img):
+    # reco_Noto, reco_Novecento = load_data()
+    # print(reco_Novecento.recognize(img))
+    from imgreco.minireco import split_chars
+    from imgreco.stage_ocr import predict_char_images
+    if img.mode != 'L':
+        img = img.convert('L')
+    cv2.threshold(img.array, 105, 255, cv2.THRESH_BINARY, img.array)
+    chars = [char_img.array for char_img in split_chars(img)]
+    if not chars or len(chars) < 3:
+        return ''
+    min_size = min([s.size for s in chars[:-1]])
+    if min_size > chars[-1].size:
+        chars = chars[:-1]
+    else:
+        y = int(chars[-1].shape[0]/4)
+        chars[-1][0:y, -2:] = 0
+        chars[-1] = imgops.crop_blackedge(Image.fromarray(chars[-1], 'L'), 127).array
+    return predict_char_images(chars, 'chars_end')
+
+
 @lru_cache(1)
 def recognize(img):
     vw, vh = common.get_vwvh(img.size)
@@ -44,8 +66,7 @@ def recognize(img):
         start_button = (100 * vw - 30.972 * vh, 88.241 * vh, 100 * vw - 3.611 * vh, 95.556 * vh)
         ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
         def stage_reco(img):
-            from imgreco.ocr.ppocr import ocr_for_single_line
-            return ocr_for_single_line(img.convert('RGB').array)
+            return ocr_stage_id(img)
     elif style == 'ep10':
         # 2022-04-14: episode 10 new layout
         opidrect = (100*vw-49.537*vh, 11.111*vh, 100*vw-37.870*vh, 15.370*vh)
@@ -53,8 +74,7 @@ def recognize(img):
         start_button = (100*vw-31.759*vh, 90.093*vh, 100*vw-6.389*vh, 96.296*vh)
         ap_rect = (100 * vw - 21.019 * vh, 2.917 * vh, 100 * vw, 8.194 * vh)
         def stage_reco(img):
-            from imgreco.ocr.ppocr import ocr_for_single_line
-            return ocr_for_single_line(img.convert('RGB').array)
+            return ocr_stage_id(img)
         check_consume_ap = True
     elif style == 'sof':
         # i.e. Stultifera Navis
