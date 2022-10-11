@@ -113,7 +113,7 @@ class RecordAddon(AddonBase):
         while True:
             point_list = []
             touch_down = False
-            screen = self.control.screenshot()
+            screen = self.screenshot()
             x, y, st, duration = 0, 0, 0, 0
             while True:
                 line = f.readline().decode('utf-8', 'replace').strip()
@@ -235,7 +235,7 @@ class RecordAddon(AddonBase):
         threshold = record.get('threshold', 0.7)
         for _ in range(repeat):
             if mode == 'match_template':
-                screen = self.control.screenshot()
+                screen = self.screenshot()
                 gray_screen = screen.convert('L')
                 if ratio != 1:
                     gray_screen = gray_screen.resize((int(self.viewport[0] * ratio), record_height))

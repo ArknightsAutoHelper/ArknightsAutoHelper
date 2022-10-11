@@ -15,7 +15,7 @@ class CommonAddon(AddonBase):
         retry_count = 0
         max_retry = 3
         while True:
-            screenshot = self.control.screenshot()
+            screenshot = self.screenshot()
 
             if extra_predicate is not None and extra_predicate(screenshot):
                 self.logger.info('满足停止条件，停止导航')

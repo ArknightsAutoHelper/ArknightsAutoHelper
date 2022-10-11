@@ -131,7 +131,7 @@ class StageNavigator(AddonBase):
         import imgreco.map
         lastpos = None
         while True:
-            screenshot = self.control.screenshot()
+            screenshot = self.screenshot()
             recoresult = imgreco.map.recognize_map(screenshot, partition)
             if recoresult is None:
                 # TODO: retry
@@ -190,7 +190,7 @@ class StageNavigator(AddonBase):
         episode_move = (400 * self.viewport[1] / 1080)
 
         while True:
-            screenshot = self.control.screenshot()
+            screenshot = self.screenshot()
             current_episode_tag = screenshot.crop(episode_tag_rect)
             current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
             self.logger.info(f'当前章节: {current_episode_str}')
@@ -214,7 +214,7 @@ class StageNavigator(AddonBase):
             move = min(abs(current_episode - target), 2) * episode_move * (1 if current_episode > target else -1)
             self.swipe_screen(move, 10, self.viewport[0] // 4 * 3)
             self.delay(0.5)
-            screenshot = self.control.screenshot()
+            screenshot = self.screenshot()
             current_episode_tag = screenshot.crop(episode_tag_rect)
             current_episode_str = imgreco.stage_ocr.do_img_ocr(current_episode_tag)
             self.logger.info(f'当前章节: {current_episode_str}')
@@ -231,7 +231,7 @@ class StageNavigator(AddonBase):
             partition_map = stage_maps_linear[partition]
         target_index = partition_map.index(target)
         while True:
-            screenshot = self.control.screenshot()
+            screenshot = self.screenshot()
             tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot)
             if not tags_map:
                 tags_map = imgreco.stage_ocr.recognize_all_screen_stage_tags(screenshot, allow_extra_icons=True)
@@ -265,7 +265,7 @@ class StageNavigator(AddonBase):
 
     def find_and_tap_daily(self, partition, target, *, recursion=0):
         import imgreco.map
-        screenshot = self.control.screenshot()
+        screenshot = self.screenshot()
         recoresult = imgreco.map.recognize_daily_menu(screenshot, partition)
         if target in recoresult:
             pos, conf = recoresult[target]
@@ -304,7 +304,7 @@ class StageNavigator(AddonBase):
         path = get_stage_path(stage)
         self.addon(CommonAddon).back_to_main()
         self.logger.info('进入作战')
-        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.control.screenshot()))
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.screenshot()))
         self.delay(TINY_WAIT)
         if path[0] == 'main':
             vw, vh = imgreco.common.get_vwvh(self.viewport)

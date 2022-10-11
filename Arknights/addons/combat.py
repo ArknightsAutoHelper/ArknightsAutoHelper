@@ -154,7 +154,7 @@ class CombatAddon(AddonBase):
         def on_prepare(smobj):
             count_times = 0
             while True:
-                screenshot = self.control.screenshot()
+                screenshot = self.screenshot()
                 recoresult = imgreco.before_operation.recognize(screenshot)
                 if recoresult is not None:
                     self.logger.debug('当前画面关卡：%s', recoresult['operation'])
@@ -183,7 +183,7 @@ class CombatAddon(AddonBase):
                     self.logger.info('尝试回复理智')
                     self.tap_rect(recoresult['start_button'])
                     self.delay(SMALL_WAIT)
-                    screenshot = self.control.screenshot()
+                    screenshot = self.screenshot()
                     refill_type = imgreco.before_operation.check_ap_refill_type(screenshot)
                     confirm_refill = False
                     if refill_type == 'item' and self.refill_with_item:
@@ -216,7 +216,7 @@ class CombatAddon(AddonBase):
             count_times = 0
             while True:
                 self.delay(TINY_WAIT, False)
-                screenshot = self.control.screenshot()
+                screenshot = self.screenshot()
                 recoresult = imgreco.before_operation.check_confirm_troop_rect(screenshot)
                 if recoresult:
                     self.logger.info('确认编队')
@@ -256,7 +256,7 @@ class CombatAddon(AddonBase):
                 t = time.monotonic() - smobj.operation_start
                 self.logger.info('已进行 %.1f s，判断是否结束', t)
 
-            screenshot = self.control.screenshot()
+            screenshot = self.screenshot()
 
             if self.match_roi('combat/topbar', method='ccoeff', screenshot=screenshot):
                 if self.match_roi('combat/lun', method='ccoeff', screenshot=screenshot) and not smobj.mistaken_delegation:
@@ -303,7 +303,7 @@ class CombatAddon(AddonBase):
             if not end_flag and t > 300:
                 if imgreco.end_operation.check_end_operation2(screenshot):
                     self.tap_rect(imgreco.end_operation.get_end2_rect(screenshot))
-                    screenshot = self.control.screenshot()
+                    screenshot = self.screenshot()
                     end_flag = imgreco.end_operation.check_end_operation_legacy(screenshot)
             if end_flag:
                 self.logger.info('战斗结束')
@@ -354,7 +354,7 @@ class CombatAddon(AddonBase):
 
         def on_end_operation(smobj):
             import imgreco.end_operation
-            screenshot = self.control.screenshot()
+            screenshot = self.screenshot()
             reportresult = penguin_stats.reporter.ReportResult.NotReported
             try:
                 # 掉落识别

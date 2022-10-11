@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, TypedDict
 
+import app
+
 if TYPE_CHECKING:
     from typing import Annotated, Literal, Optional, Sequence, Union
     from numbers import Real
@@ -149,5 +151,16 @@ class AddonMixin(imgreco.common.RoiMatchingMixin):
             self.delay(0.5, False, False)
         return False, results
 
-    def screenshot(self, mode='BGR') -> Image:
-        return self.helper.control.screenshot().convert(mode)
+    def screenshot(self, mode='BGR', cached=None) -> Image:
+        raw_screen = self.helper.control.screenshot(cached=cached).convert(mode)
+        if not app.config.device.wait_for_slow_network:
+            return raw_screen
+        vw, vh = self.helper.vw, self.helper.vh
+        roi_rect = (58.984*vw, 89.167*vh, 68.281*vw, 95.556*vh)
+        roi = raw_screen.crop(roi_rect)
+        from imgreco.ocr.ppocr import ocr_for_single_line
+        while '提交反馈' in ocr_for_single_line(roi.array):
+            self.delay(0.5, False)
+            raw_screen = self.helper.control.screenshot(cached=False).convert(mode)
+            roi = raw_screen.crop(roi_rect)
+        return raw_screen

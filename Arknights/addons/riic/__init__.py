@@ -135,7 +135,7 @@ class RIICAddon(AddonBase):
         if not self.check_in_riic():
             raise RuntimeError('not here')
         self.logger.info('正在识别基建布局')
-        screenshot = self.control.screenshot()
+        screenshot = self.screenshot()
         
         t0 = time.monotonic()
         # screen_mask = None
@@ -175,7 +175,7 @@ class RIICAddon(AddonBase):
         return layout
 
     def recognize_operator_select(self, full_recognize=False, skill_facility_hint=None) -> list[OperatorBox]:
-        screenshot = self.control.screenshot(cached=False).convert('RGB')
+        screenshot = self.screenshot(cached=False).convert('RGB')
         self.scale = screenshot.height / 1080
         if not (roi := self.match_roi('riic/sort_button', screenshot=screenshot)):
             raise RuntimeError('not here')
@@ -431,7 +431,7 @@ class RIICAddon(AddonBase):
 
     def enter_operator_selection(self, room='dorm1'):
         self.enter_room(room)
-        screenshot = self.control.screenshot().convert('RGB')
+        screenshot = self.screenshot().convert('RGB')
         if self.match_roi('riic/clear_operator'):
             pass
         elif roi := self.match_roi('riic/operator_button', method='mse', fixed_position=False, screenshot=screenshot.subview((0, 0, screenshot.height * 0.18611, screenshot.height))):

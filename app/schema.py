@@ -20,6 +20,7 @@ class root(Schema):
         adb_binary = Field(str, '', 'ADB 可执行文件', """需要启动 adb server 时，使用的 adb 命令。\n为空时则尝试: 1. PATH 中的 adb；2. ADB/{sys.platform}/adb; 3. 查找 Android SDK（ANDROID_SDK_ROOT 和默认安装目录）""")
         adb_always_use_device = Field(str, '', '自动连接设备', '自动选择设备进行连接时，只选择此设备。')
         screenshot_rate_limit = Field(int, -1, '截图频率限制', '每秒最多截图次数，超出限制时直接返回上次截图。0 表示不限制，-1 表示根据上次截图耗时自动限制。')
+        wait_for_slow_network = Field(bool, True, '等待网络稳定后再执行操作', '等待网络稳定后再执行操作')
         @Namespace('设备列表')
         class extra_enumerators:
             vbox_emulators = Field(bool, True, '尝试探测基于 VirtualBox 的模拟器（Windows）', '通过 VirtualBox COM API 探测正在运行的模拟器')

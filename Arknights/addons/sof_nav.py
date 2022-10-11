@@ -65,7 +65,7 @@ class ShipOfFoolsNavigator(AddonBase):
         swipe_count = 0
 
         while True:
-            screenshot = imgops.scale_to_height(self.control.screenshot().convert('RGB'), 1080)
+            screenshot = imgops.scale_to_height(self.screenshot().convert('RGB'), 1080)
             scale = self.viewport[1] / 1080
             passed_icon = self.load_roi('maps/sof/passed_stage')
             current_page_stages = {}
