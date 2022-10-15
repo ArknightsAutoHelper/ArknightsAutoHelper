@@ -1,4 +1,5 @@
 from __future__ import annotations
+import random
 from typing import Callable, Optional
 import os
 import time
@@ -240,7 +241,7 @@ class CombatAddon(AddonBase):
                 if len(self.operation_time) == 0:
                     wait_time = BATTLE_NONE_DETECT_TIME
                 else:
-                    wait_time = sum(self.operation_time) / len(self.operation_time) - 7
+                    wait_time = sum(self.operation_time) / len(self.operation_time) - 7 + random.uniform(-8, 8)
                 self.logger.info('等待 %d s' % wait_time)
                 smobj.first_wait = False
             else:
@@ -252,7 +253,7 @@ class CombatAddon(AddonBase):
             if smobj.request_exit:
                 self.delay(1, allow_skip=True)
             else:
-                self.delay(wait_time, allow_skip=True)
+                self.delay(wait_time, randomize=False, allow_skip=True)
                 t = time.monotonic() - smobj.operation_start
                 self.logger.info('已进行 %.1f s，判断是否结束', t)
 
