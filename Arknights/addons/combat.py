@@ -161,8 +161,8 @@ class CombatAddon(AddonBase):
                     self.logger.debug('当前画面关卡：%s', recoresult['operation'])
                     if c_id is not None:
                         # 如果传入了关卡 ID，检查识别结果
-                        if recoresult['operation'] != c_id:
-                            self.logger.warning(f"cid mismatch, ocr: {recoresult['operation']}, target: {self.c_id}")
+                        if recoresult['operation'] != c_id and c_id != 'LATEST':
+                            self.logger.warning(f"cid mismatch, ocr: {recoresult['operation']}, target: {c_id}")
                     break
                 else:
                     count_times += 1

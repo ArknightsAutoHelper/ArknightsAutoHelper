@@ -170,7 +170,8 @@
         </select>
         <button id="cropbtn">crop</button>
         <button id="resetbtn">reset</button>
-        <pre>(<span id="leftpos">0</span>, <span id="toppos">0</span>, <span id="rightpos">0</span>, <span id="bottompos">0</span>)</pre>
+        <pre id="pos-info1">(<span id="leftpos">0</span>, <span id="toppos">0</span>, <span id="rightpos">0</span>, <span id="bottompos">0</span>)</pre>
+        <pre id="pos-info2"></pre>
     </div>
     <div class="upperpanel">
         <div id="imgbox" class="imgbox">
@@ -284,6 +285,8 @@
                     break
                 }
             }
+            let text1 = $('#pos-info1').textContent.replaceAll('vh', 'self.vh').replaceAll('vw', 'self.vw')
+            $('#pos-info2').innerText = text1
         }
         const imgbox = $('#imgbox')
         const imgelt = $('#imgelt')

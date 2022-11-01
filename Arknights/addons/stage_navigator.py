@@ -323,12 +323,24 @@ class StageNavigator(AddonBase):
                             c_id: str,  # 选择的关卡
                             set_count=1000):  # 作战次数
         c_id = c_id.upper()
-        if self.is_stage_supported(c_id):
+        if c_id == 'LATEST':
+            self.goto_latest_stage()
+        elif self.is_stage_supported(c_id):
             self.goto_stage(c_id)
         else:
             self.logger.error('不支持的关卡：%s', c_id)
             raise ValueError(c_id)
         return self.addon(CombatAddon).combat_on_current_stage(set_count, c_id)
+
+    def goto_latest_stage(self):
+        self.addon(CommonAddon).back_to_main()
+        self.logger.info('进入作战')
+        import imgreco.main
+        self.tap_quadrilateral(imgreco.main.get_ballte_corners(self.screenshot()))
+        self.delay(TINY_WAIT)
+        self.logger.info('打开最近关卡')
+        self.tap_rect((100*self.vw-42.917*self.vh, 75.306*self.vh, 100*self.vw-3.611*self.vh, 85.306*self.vh))
+        self.delay(1.5)
 
     def main_handler(self, task_list: Sequence[tuple[str, int]]):
         if len(task_list) == 0:
