@@ -323,8 +323,8 @@ class StageNavigator(AddonBase):
                             c_id: str,  # 选择的关卡
                             set_count=1000):  # 作战次数
         c_id = c_id.upper()
-        if c_id == 'LATEST':
-            self.goto_latest_stage()
+        if c_id == 'LAST':
+            self.goto_last_stage()
         elif self.is_stage_supported(c_id):
             self.goto_stage(c_id)
         else:
@@ -332,7 +332,7 @@ class StageNavigator(AddonBase):
             raise ValueError(c_id)
         return self.addon(CombatAddon).combat_on_current_stage(set_count, c_id)
 
-    def goto_latest_stage(self):
+    def goto_last_stage(self):
         self.addon(CommonAddon).back_to_main()
         self.logger.info('进入作战')
         import imgreco.main
