@@ -450,7 +450,7 @@ class RIICAddon(AddonBase):
                     else:
                         self.logger.info('选择干员：%s', op.name)
                         self.tap_rect(op.box, post_delay=0)
-                else:
+                elif op.name not in operators:
                     if op.selected:
                         self.logger.info(f'取消选择: {op.name}')
                         self.tap_rect(op.box, post_delay=0)
