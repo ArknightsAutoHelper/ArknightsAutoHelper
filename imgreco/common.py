@@ -40,7 +40,9 @@ def check_nav_button(img):
     vw, vh = get_vwvh(img.size)
     icon1 = img.crop((3.194 * vh, 2.222 * vh, 49.722 * vh, 7.917 * vh)).convert('RGB')
     icon2 = resources.load_image_cached('common/navbutton.png', 'RGB')
-
+    threshold = 200
+    icon1 = icon1.convert("L").point(lambda p: p > threshold and 255)
+    icon2 = icon2.convert("L").point(lambda p: p > threshold and 255)
     icon1, icon2 = imgops.uniform_size(icon1, icon2)
     ccoeff = imgops.compare_ccoeff(np.asarray(icon1), np.asarray(icon2))
     richlogger.logimage(icon1)
