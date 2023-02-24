@@ -47,13 +47,16 @@ def calculate(tags):
         if len(operators):
             operator_for_tags[comb3] = operators
 
+    result = {}
     for tags in operator_for_tags:
         ops = list(operator_for_tags[tags])
         if '高级资深干员' not in tags:
             ops = [op for op in ops if op[1] != 5]
-        ops.sort(key=lambda x: x[1], reverse=True)
-        operator_for_tags[tags] = ops
-    items = list(operator_for_tags.items())
+        if len(ops):
+            ops.sort(key=lambda x: x[1], reverse=True)
+            result[tags] = ops
+
+    items = list(result.items())
     combs = [(tags, ops, _rank(ops)) for tags, ops in items]
     return sorted(combs, key=lambda x: x[2], reverse=True)
 
